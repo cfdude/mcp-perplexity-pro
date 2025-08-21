@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  mcp-perplexity-pro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-perplexity-pro
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    volumes:
+      # Mount project storage to persist chat history
+      - ./storage:/app/storage
+      # Mount calling project directory for project-aware storage
+      - ${PROJECT_ROOT:-/workspace}:/workspace:ro
+    networks:
+      - mcp-network
+    # MCP servers typically use stdio, not network ports
+    # ports:
+    #   - "3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('MCP Server healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Development service with hot reload
+  mcp-perplexity-pro-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mcp-perplexity-pro-dev
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/node_modules
+      # Mount storage
+      - ./storage:/app/storage
+      - ${PROJECT_ROOT:-/workspace}:/workspace
+    networks:
+      - mcp-network
+    profiles:
+      - dev
+
+networks:
+  mcp-network:
+    driver: bridge

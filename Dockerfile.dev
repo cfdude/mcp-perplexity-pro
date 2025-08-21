@@ -1,0 +1,30 @@
+# Development Dockerfile with hot reload
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Install development tools globally
+RUN npm install -g nodemon ts-node
+
+# Create non-root user for development
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 mcpdev
+
+# Create storage directory with proper permissions
+RUN mkdir -p /app/storage && chown -R mcpdev:nodejs /app
+
+# Copy source code
+COPY --chown=mcpdev:nodejs . .
+
+# Switch to non-root user
+USER mcpdev
+
+# Expose development port
+EXPOSE 3000
+
+# Development command with hot reload
+CMD ["npm", "run", "dev"]
