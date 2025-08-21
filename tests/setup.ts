@@ -1,6 +1,11 @@
 import { jest } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Setup test environment
 beforeAll(() => {
@@ -28,6 +33,16 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+// Note: node-fetch mocking is handled per-test to avoid conflicts
+
+// Mock proper-lockfile for tests to avoid filesystem locking issues
+jest.unstable_mockModule('proper-lockfile', () => ({
+  default: {
+    lock: jest.fn(() => Promise.resolve()),
+    unlock: jest.fn(() => Promise.resolve()),
+  },
+}));
 
 // Mock process.stdout and process.stderr for MCP testing
 const originalStdout = process.stdout.write;

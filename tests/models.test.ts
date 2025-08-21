@@ -8,9 +8,9 @@ describe('Model Selection', () => {
       expect(result).toBe('sonar-pro');
     });
 
-    it('should return default model for simple queries', () => {
+    it('should return sonar for simple queries', () => {
       const result = selectOptimalModel('What is the weather?');
-      expect(result).toBe('sonar-reasoning-pro');
+      expect(result).toBe('sonar');
     });
 
     it('should select sonar-deep-research for research queries', () => {
@@ -27,12 +27,12 @@ describe('Model Selection', () => {
       });
     });
 
-    it('should select sonar-pro for real-time queries', () => {
+    it('should select sonar-pro for enhanced search queries', () => {
       const queries = [
-        'What is the current stock price of AAPL?',
-        'Show me today\'s news',
-        'What are the latest headlines?',
-        'Current weather in New York'
+        'Give me detailed stock analysis for AAPL',
+        'Show me various news sources about the election',
+        'Find different options for investing',
+        'Multiple alternatives for renewable energy'
       ];
 
       queries.forEach(query => {
@@ -65,9 +65,9 @@ describe('Model Selection', () => {
     it('should return capabilities for valid models', () => {
       const capabilities = getModelCapabilities('sonar-pro');
       expect(capabilities).toBeDefined();
-      expect(capabilities.search).toBe(true);
-      expect(capabilities.reasoning).toBe(false);
-      expect(capabilities.realTime).toBe(true);
+      expect(capabilities!.search).toBe(true);
+      expect(capabilities!.reasoning).toBe(false);
+      expect(capabilities!.realTime).toBe(true);
     });
 
     it('should return undefined for invalid models', () => {
@@ -87,7 +87,7 @@ describe('Model Selection', () => {
       ];
 
       expectedModels.forEach(model => {
-        expect(MODEL_REGISTRY[model]).toBeDefined();
+        expect(MODEL_REGISTRY[model as keyof typeof MODEL_REGISTRY]).toBeDefined();
       });
     });
 

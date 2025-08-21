@@ -1,4 +1,4 @@
-import type { ModelRegistry, PerplexityModel } from './types.js';
+import type { ModelRegistry, PerplexityModel, ModelCapability } from './types.js';
 
 // Comprehensive model registry with capabilities and use cases
 export const MODEL_REGISTRY: ModelRegistry = {
@@ -15,6 +15,12 @@ export const MODEL_REGISTRY: ModelRegistry = {
     ],
     description:
       'Lightweight, cost-effective search model with grounding. Best for quick factual queries and simple information retrieval.',
+    capabilities: {
+      search: true,
+      reasoning: false,
+      realTime: true,
+      research: false,
+    },
   },
   'sonar-pro': {
     type: 'search',
@@ -29,6 +35,12 @@ export const MODEL_REGISTRY: ModelRegistry = {
     ],
     description:
       'Advanced search offering with grounding, supporting complex queries and follow-ups. Ideal for detailed information synthesis.',
+    capabilities: {
+      search: true,
+      reasoning: false,
+      realTime: true,
+      research: false,
+    },
   },
   'sonar-reasoning': {
     type: 'reasoning',
@@ -43,6 +55,12 @@ export const MODEL_REGISTRY: ModelRegistry = {
     ],
     description:
       'Fast, real-time reasoning model designed for problem-solving with search capabilities. Excellent for analytical tasks.',
+    capabilities: {
+      search: true,
+      reasoning: true,
+      realTime: true,
+      research: false,
+    },
   },
   'sonar-reasoning-pro': {
     type: 'reasoning',
@@ -57,6 +75,12 @@ export const MODEL_REGISTRY: ModelRegistry = {
     ],
     description:
       'Precise reasoning offering powered by DeepSeek-R1 with Chain of Thought (CoT). Best for complex analytical tasks requiring detailed thinking.',
+    capabilities: {
+      search: true,
+      reasoning: true,
+      realTime: true,
+      research: false,
+    },
   },
   'sonar-deep-research': {
     type: 'research',
@@ -71,6 +95,12 @@ export const MODEL_REGISTRY: ModelRegistry = {
     ],
     description:
       'Expert-level research model conducting exhaustive searches and generating comprehensive reports. Ideal for thorough research projects.',
+    capabilities: {
+      search: true,
+      reasoning: true,
+      realTime: false,
+      research: true,
+    },
   },
 };
 
@@ -199,8 +229,20 @@ export function isValidModel(model: string): model is PerplexityModel {
 /**
  * Gets model information by name
  */
-export function getModelInfo(model: PerplexityModel) {
+export function getModelInfo(model: PerplexityModel): ModelCapability {
   return MODEL_REGISTRY[model];
+}
+
+/**
+ * Gets model capabilities in boolean format for compatibility
+ */
+export function getModelCapabilities(model: string): { search: boolean; reasoning: boolean; realTime: boolean; research: boolean } | undefined {
+  if (!isValidModel(model)) {
+    return undefined;
+  }
+  
+  const info = MODEL_REGISTRY[model];
+  return info.capabilities;
 }
 
 /**

@@ -29,7 +29,9 @@ export class StorageManager {
   constructor(config: Config) {
     this.projectRoot = config.project_root;
     this.storagePath = path.join(config.project_root, config.storage_path);
-    this.sessionId = config.session_id;
+    if (config.session_id) {
+      this.sessionId = config.session_id;
+    }
   }
 
   /**
@@ -72,11 +74,14 @@ export class StorageManager {
     const lockPath = `${filePath}.lock`;
     
     try {
+      // Ensure directory exists for both the file and lock
+      const fileDir = path.dirname(filePath);
+      await fs.mkdir(fileDir, { recursive: true });
+      
       // Acquire lock with timeout
       await lockfile.lock(lockPath, {
         stale: 10000, // 10 seconds
         retries: 3,
-        retryWait: 100,
       });
 
       try {

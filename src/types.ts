@@ -31,6 +31,47 @@ export interface Message {
   content: string;
 }
 
+// Extended message type with timestamp
+export interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+// Chat completion request type
+export interface ChatCompletionRequest {
+  model: PerplexityModel;
+  messages: Message[];
+  temperature?: number;
+  max_tokens?: number;
+}
+
+// Async chat request type
+export interface AsyncChatRequest {
+  model: PerplexityModel;
+  messages: Message[];
+  temperature?: number;
+  max_tokens?: number;
+}
+
+// Async job report type
+export interface AsyncJobReport {
+  id: string;
+  query: string;
+  model: PerplexityModel;
+  response?: string;
+  created_at?: string;
+  completed_at?: string;
+}
+
+// MCP response format
+export interface MCPResponse {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+}
+
 // Chat conversation metadata
 export interface ChatMetadata {
   id: string;
@@ -146,6 +187,12 @@ export interface ModelCapability {
   cost: 'low' | 'medium' | 'high';
   bestFor: string[];
   description: string;
+  capabilities: {
+    search: boolean;
+    reasoning: boolean;
+    realTime: boolean;
+    research: boolean;
+  };
 }
 
 export type ModelRegistry = Record<PerplexityModel, ModelCapability>;
@@ -153,6 +200,7 @@ export type ModelRegistry = Record<PerplexityModel, ModelCapability>;
 // Tool parameter schemas
 export const askPerplexitySchema = z.object({
   query: z.string().describe('Your question or prompt'),
+  project_name: z.string().optional().describe('Project name for organizing conversations (auto-detected if not provided)'),
   model: z
     .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
     .optional()
@@ -166,6 +214,7 @@ export const askPerplexitySchema = z.object({
 
 export const chatPerplexitySchema = z.object({
   message: z.string().describe('Your message'),
+  project_name: z.string().optional().describe('Project name for organizing conversations (auto-detected if not provided)'),
   chat_id: z.string().optional().describe('Continue existing conversation'),
   title: z.string().optional().describe('Required for new chat - conversation title'),
   model: z
@@ -178,6 +227,7 @@ export const chatPerplexitySchema = z.object({
 
 export const researchPerplexitySchema = z.object({
   topic: z.string().describe('Research topic or question'),
+  project_name: z.string().optional().describe('Project name for organizing research reports (auto-detected if not provided)'),
   save_report: z.boolean().optional().describe('Save report to project directory'),
   model: z
     .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
@@ -204,9 +254,21 @@ export const readChatSchema = z.object({
   chat_id: z.string().describe('Conversation identifier'),
 });
 
+// Project management schemas
+export const listProjectsSchema = z.object({
+  detailed: z.boolean().optional().describe('Include detailed statistics for each project'),
+});
+
+export const deleteProjectSchema = z.object({
+  project_name: z.string().describe('Name of the project to delete (all data will be permanently removed)'),
+  confirm: z.boolean().describe('Confirmation that you want to permanently delete all project data'),
+});
+
 export type AskPerplexityParams = z.infer<typeof askPerplexitySchema>;
 export type ChatPerplexityParams = z.infer<typeof chatPerplexitySchema>;
 export type ResearchPerplexityParams = z.infer<typeof researchPerplexitySchema>;
 export type AsyncPerplexityParams = z.infer<typeof asyncPerplexitySchema>;
 export type CheckAsyncParams = z.infer<typeof checkAsyncSchema>;
 export type ReadChatParams = z.infer<typeof readChatSchema>;
+export type ListProjectsParams = z.infer<typeof listProjectsSchema>;
+export type DeleteProjectParams = z.infer<typeof deleteProjectSchema>;

@@ -4,8 +4,9 @@ import type {
   Config,
   PerplexityResponse,
   ErrorResponse,
+  MCPResponse,
 } from '../types.js';
-import { PerplexityApiClient, PerplexityApiError } from '../perplexity-api.js';
+import { PerplexityApiClient } from '../perplexity-api.js';
 import { StorageManager, StorageError } from '../storage.js';
 import { selectOptimalModel } from '../models.js';
 
@@ -15,7 +16,7 @@ import { selectOptimalModel } from '../models.js';
 export async function handleAskPerplexity(
   params: AskPerplexityParams,
   config: Config
-): Promise<PerplexityResponse | ErrorResponse> {
+): Promise<MCPResponse> {
   try {
     const apiClient = new PerplexityApiClient(config);
     
@@ -37,17 +38,26 @@ export async function handleAskPerplexity(
 
     const response = await apiClient.chatCompletion(request);
 
-    // Add model selection info to the response
+    // Convert to MCP response format
+    const content = response.choices[0]?.message?.content || 'No response generated';
     return {
-      ...response,
-      selected_model: selectedModel,
-      model_selection_reason: params.model ? 'user_specified' : 'auto_selected',
-    } as PerplexityResponse & { selected_model: string; model_selection_reason: string };
+      content: [{
+        type: 'text',
+        text: content
+      }]
+    };
   } catch (error) {
-    return PerplexityApiClient.handleError(error, {
+    const errorResponse = PerplexityApiClient.handleError(error, {
       model: params.model || config.default_model,
       query: params.query,
     });
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `Error: ${errorResponse.error.message}`
+      }]
+    };
   }
 }
 

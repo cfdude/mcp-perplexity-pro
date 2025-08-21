@@ -46,10 +46,10 @@ export class PerplexityApiClient {
           Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: method === 'POST' ? JSON.stringify(body) : undefined,
+        body: method === 'POST' ? JSON.stringify(body) : null,
       });
 
-      const data = await response.json();
+      const data: any = await response.json();
 
       if (!response.ok) {
         throw new PerplexityApiError(
@@ -171,6 +171,13 @@ export class PerplexityApiClient {
   }
 
   /**
+   * Alias for backward compatibility
+   */
+  async createAsyncChat(request: PerplexityRequest): Promise<AsyncJob> {
+    return this.createAsyncChatCompletion(request);
+  }
+
+  /**
    * Lists async chat completion jobs
    */
   async listAsyncJobs(
@@ -209,9 +216,9 @@ export class PerplexityApiClient {
             details: {
               suggestion: 'Wait before retrying or use async_perplexity for queuing',
               retry_after: error.response?.headers?.['retry-after'] || 60,
-              fallback_model: context?.model
-                ? suggestFallbackModel(context.model as any, 'rate_limit')
-                : undefined,
+              ...(context?.model && {
+                fallback_model: suggestFallbackModel(context.model as any, 'rate_limit'),
+              }),
             },
           },
         };
@@ -288,3 +295,6 @@ export class PerplexityApiClient {
     };
   }
 }
+
+// Export alias for backward compatibility
+export { PerplexityApiClient as PerplexityAPI };

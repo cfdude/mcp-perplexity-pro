@@ -1,1 +1,103 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';\nimport fs from 'fs';\nimport path from 'path';\nimport { handleAskPerplexity } from '../src/tools/query.js';\nimport { handleChatPerplexity, handleListChats } from '../src/tools/chat.js';\nimport { handleAsyncPerplexity, handleCheckAsync } from '../src/tools/async.js';\nimport type { MCPConfig } from '../src/types.js';\n\n// Mock fetch globally\nglobal.fetch = jest.fn() as jest.MockedFunction<typeof fetch>;\n\ndescribe('Integration Tests', () => {\n  let testProjectRoot: string;\n  let testConfig: MCPConfig;\n\n  beforeEach(() => {\n    testProjectRoot = path.join(__dirname, '../test-integration');\n    testConfig = {\n      api_key: 'test-api-key',\n      default_model: 'sonar-reasoning-pro',\n      project_root: testProjectRoot,\n      storage_path: '.perplexity/test',\n      session_id: 'test-session'\n    };\n\n    // Clean up test directory\n    if (fs.existsSync(testProjectRoot)) {\n      fs.rmSync(testProjectRoot, { recursive: true, force: true });\n    }\n    fs.mkdirSync(testProjectRoot, { recursive: true });\n\n    jest.clearAllMocks();\n  });\n\n  afterEach(() => {\n    if (fs.existsSync(testProjectRoot)) {\n      fs.rmSync(testProjectRoot, { recursive: true, force: true });\n    }\n  });\n\n  describe('Query Tool Integration', () => {\n    it('should handle ask_perplexity request end-to-end', async () => {\n      const mockResponse = {\n        id: 'test-id',\n        object: 'chat.completion',\n        created: Date.now(),\n        model: 'sonar-reasoning-pro',\n        choices: [{\n          message: {\n            role: 'assistant',\n            content: 'This is a test response from Perplexity AI.'\n          },\n          finish_reason: 'stop',\n          index: 0\n        }],\n        usage: {\n          prompt_tokens: 10,\n          completion_tokens: 12,\n          total_tokens: 22\n        }\n      };\n\n      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({\n        ok: true,\n        status: 200,\n        json: async () => mockResponse\n      } as Response);\n\n      const result = await handleAskPerplexity({\n        query: 'What is artificial intelligence?',\n        model: 'sonar-reasoning-pro'\n      }, testConfig);\n\n      expect(result.content[0].type).toBe('text');\n      expect(result.content[0].text).toContain('This is a test response from Perplexity AI.');\n      expect(fetch).toHaveBeenCalledWith(\n        'https://api.perplexity.ai/chat/completions',\n        expect.objectContaining({\n          method: 'POST',\n          headers: expect.objectContaining({\n            'Authorization': 'Bearer test-api-key'\n          })\n        })\n      );\n    });\n\n    it('should handle API errors gracefully', async () => {\n      const errorResponse = {\n        error: {\n          type: 'rate_limit_error',\n          message: 'Rate limit exceeded'\n        }\n      };\n\n      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({\n        ok: false,\n        status: 429,\n        json: async () => errorResponse\n      } as Response);\n\n      const result = await handleAskPerplexity({\n        query: 'Test query'\n      }, testConfig);\n\n      expect(result.content[0].type).toBe('text');\n      expect(result.content[0].text).toContain('Error');\n      expect(result.content[0].text).toContain('429');\n      expect(result.content[0].text).toContain('Rate limit exceeded');\n    });\n  });\n\n  describe('Chat Tool Integration', () => {\n    it('should create and manage chat conversations', async () => {\n      const mockResponse = {\n        id: 'chat-response-id',\n        object: 'chat.completion',\n        created: Date.now(),\n        model: 'sonar-reasoning-pro',\n        choices: [{\n          message: {\n            role: 'assistant',\n            content: 'Hello! How can I help you today?'\n          },\n          finish_reason: 'stop',\n          index: 0\n        }],\n        usage: {\n          prompt_tokens: 5,\n          completion_tokens: 8,\n          total_tokens: 13\n        }\n      };\n\n      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({\n        ok: true,\n        status: 200,\n        json: async () => mockResponse\n      } as Response);\n\n      // Create a new chat\n      const chatResult = await handleChatPerplexity({\n        message: 'Hello',\n        title: 'Test Chat'\n      }, testConfig);\n\n      expect(chatResult.content[0].type).toBe('text');\n      const responseText = chatResult.content[0].text;\n      expect(responseText).toContain('Hello! How can I help you today?');\n      expect(responseText).toContain('Chat ID:');\n\n      // Extract chat ID from response\n      const chatIdMatch = responseText.match(/Chat ID: ([\\w-]+)/);\n      expect(chatIdMatch).toBeTruthy();\n      const chatId = chatIdMatch![1];\n\n      // List chats to verify it was created\n      const listResult = await handleListChats({}, testConfig);\n      expect(listResult.content[0].type).toBe('text');\n      expect(listResult.content[0].text).toContain('Test Chat');\n      expect(listResult.content[0].text).toContain(chatId);\n    });\n\n    it('should continue existing conversations', async () => {\n      // First, create a chat\n      (fetch as jest.MockedFunction<typeof fetch>)\n        .mockResolvedValueOnce({\n          ok: true,\n          status: 200,\n          json: async () => ({\n            choices: [{ message: { content: 'First response' } }]\n          })\n        } as Response)\n        .mockResolvedValueOnce({\n          ok: true,\n          status: 200,\n          json: async () => ({\n            choices: [{ message: { content: 'Follow-up response' } }]\n          })\n        } as Response);\n\n      // Create initial chat\n      const firstResult = await handleChatPerplexity({\n        message: 'Hello',\n        title: 'Continuing Chat'\n      }, testConfig);\n\n      // Extract chat ID\n      const chatIdMatch = firstResult.content[0].text.match(/Chat ID: ([\\w-]+)/);\n      const chatId = chatIdMatch![1];\n\n      // Continue the conversation\n      const secondResult = await handleChatPerplexity({\n        chat_id: chatId,\n        message: 'Follow up question'\n      }, testConfig);\n\n      expect(secondResult.content[0].text).toContain('Follow-up response');\n    });\n  });\n\n  describe('Async Tool Integration', () => {\n    it('should create and monitor async jobs', async () => {\n      const createResponse = {\n        id: 'async-job-123',\n        object: 'async_chat',\n        status: 'pending',\n        model: 'sonar-deep-research',\n        created_at: new Date().toISOString()\n      };\n\n      const checkResponse = {\n        id: 'async-job-123',\n        object: 'async_chat',\n        status: 'completed',\n        model: 'sonar-deep-research',\n        created_at: createResponse.created_at,\n        completed_at: new Date().toISOString(),\n        choices: [{\n          message: {\n            role: 'assistant',\n            content: 'Comprehensive research results...'\n          },\n          finish_reason: 'stop',\n          index: 0\n        }],\n        usage: {\n          prompt_tokens: 50,\n          completion_tokens: 200,\n          total_tokens: 250\n        }\n      };\n\n      (fetch as jest.MockedFunction<typeof fetch>)\n        .mockResolvedValueOnce({\n          ok: true,\n          status: 200,\n          json: async () => createResponse\n        } as Response)\n        .mockResolvedValueOnce({\n          ok: true,\n          status: 200,\n          json: async () => checkResponse\n        } as Response);\n\n      // Create async job\n      const createResult = await handleAsyncPerplexity({\n        query: 'Research climate change impacts',\n        model: 'sonar-deep-research'\n      }, testConfig);\n\n      expect(createResult.content[0].text).toContain('async-job-123');\n      expect(createResult.content[0].text).toContain('pending');\n\n      // Check job status\n      const checkResult = await handleCheckAsync({\n        job_id: 'async-job-123'\n      }, testConfig);\n\n      expect(checkResult.content[0].text).toContain('completed');\n      expect(checkResult.content[0].text).toContain('Comprehensive research results');\n    });\n\n    it('should handle async job errors', async () => {\n      const errorResponse = {\n        error: {\n          type: 'not_found_error',\n          message: 'Async job not found'\n        }\n      };\n\n      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({\n        ok: false,\n        status: 404,\n        json: async () => errorResponse\n      } as Response);\n\n      const result = await handleCheckAsync({\n        job_id: 'non-existent-job'\n      }, testConfig);\n\n      expect(result.content[0].text).toContain('Error');\n      expect(result.content[0].text).toContain('404');\n      expect(result.content[0].text).toContain('not found');\n    });\n  });\n\n  describe('Storage Integration', () => {\n    it('should persist data across tool calls', async () => {\n      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({\n        ok: true,\n        status: 200,\n        json: async () => ({\n          choices: [{ message: { content: 'Test response' } }]\n        })\n      } as Response);\n\n      // Create multiple chats\n      await handleChatPerplexity({\n        message: 'Chat 1',\n        title: 'First Chat'\n      }, testConfig);\n\n      await handleChatPerplexity({\n        message: 'Chat 2', \n        title: 'Second Chat'\n      }, testConfig);\n\n      // List chats should show both\n      const listResult = await handleListChats({}, testConfig);\n      const listText = listResult.content[0].text;\n      \n      expect(listText).toContain('First Chat');\n      expect(listText).toContain('Second Chat');\n      expect(listText).toContain('Total chats: 2');\n\n      // Verify storage directory exists\n      const storagePath = path.join(testProjectRoot, '.perplexity/test');\n      expect(fs.existsSync(storagePath)).toBe(true);\n      expect(fs.existsSync(path.join(storagePath, 'chats'))).toBe(true);\n    });\n  });\n\n  describe('Model Selection Integration', () => {\n    it('should automatically select appropriate models', async () => {\n      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({\n        ok: true,\n        status: 200,\n        json: async () => ({\n          choices: [{ message: { content: 'Response' } }]\n        })\n      } as Response);\n\n      // Research query should select sonar-deep-research\n      await handleAskPerplexity({\n        query: 'I need comprehensive research on quantum computing developments'\n      }, testConfig);\n\n      expect(fetch).toHaveBeenCalledWith(\n        expect.any(String),\n        expect.objectContaining({\n          body: expect.stringContaining('sonar-deep-research')\n        })\n      );\n\n      jest.clearAllMocks();\n\n      // Real-time query should select sonar-pro\n      await handleAskPerplexity({\n        query: 'What is the current price of Bitcoin?'\n      }, testConfig);\n\n      expect(fetch).toHaveBeenCalledWith(\n        expect.any(String),\n        expect.objectContaining({\n          body: expect.stringContaining('sonar-pro')\n        })\n      );\n    });\n  });\n});
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import fs from 'fs';
+import path from 'path';
+
+// Mock node-fetch before any imports that use it
+const mockFetch = jest.fn() as jest.MockedFunction<any>;
+jest.unstable_mockModule('node-fetch', () => ({
+  default: mockFetch
+}));
+
+// Dynamic import after mocking
+const { handleAskPerplexity } = await import('../src/tools/query.js');
+
+describe('Integration Tests', () => {
+  let testProjectRoot: string;
+  let testConfig: any;
+
+  beforeEach(() => {
+    testProjectRoot = path.join(process.cwd(), 'test-integration');
+    testConfig = {
+      api_key: 'test-api-key',
+      default_model: 'sonar-reasoning-pro',
+      project_root: testProjectRoot,
+      storage_path: '.perplexity/test',
+      session_id: 'test-session'
+    };
+
+    // Clean up test directory
+    if (fs.existsSync(testProjectRoot)) {
+      fs.rmSync(testProjectRoot, { recursive: true, force: true });
+    }
+    fs.mkdirSync(testProjectRoot, { recursive: true });
+
+    jest.clearAllMocks();
+    mockFetch.mockClear();
+  });
+
+  afterEach(() => {
+    if (fs.existsSync(testProjectRoot)) {
+      fs.rmSync(testProjectRoot, { recursive: true, force: true });
+    }
+  });
+
+  describe('Query Tool Integration', () => {
+    it('should handle ask_perplexity request end-to-end', async () => {
+      const mockResponse = {
+        id: 'test-id',
+        object: 'chat.completion',
+        created: Date.now(),
+        model: 'sonar-reasoning-pro',
+        choices: [{
+          message: {
+            role: 'assistant',
+            content: 'This is a test response from Perplexity AI.'
+          },
+          finish_reason: 'stop',
+          index: 0
+        }],
+        usage: {
+          prompt_tokens: 10,
+          completion_tokens: 12,
+          total_tokens: 22
+        }
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse),
+        blob: async () => new Blob(),
+        arrayBuffer: async () => new ArrayBuffer(0),
+        formData: async () => new FormData(),
+        bytes: async () => new Uint8Array(),
+        clone: jest.fn(function(this: any) { return this; }),
+        body: null,
+        bodyUsed: false,
+        redirected: false,
+        type: 'basic',
+        url: ''
+      } as Response);
+
+      const result = await handleAskPerplexity({
+        query: 'What is artificial intelligence?',
+        model: 'sonar-reasoning-pro'
+      }, testConfig);
+
+      expect(result.content[0].type).toBe('text');
+      expect(result.content[0].text).toContain('This is a test response from Perplexity AI.');
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.perplexity.ai/chat/completions',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer test-api-key'
+          })
+        })
+      );
+    });
+  });
+});

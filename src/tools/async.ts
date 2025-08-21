@@ -154,7 +154,7 @@ export async function handleListAsyncJobs(
 
     return {
       jobs: enrichedJobs,
-      next_token: response.next_token,
+      ...(response.next_token && { next_token: response.next_token }),
       total_jobs: response.jobs.length,
     };
   } catch (error) {

@@ -1,14 +1,10 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+#!/usr/bin/env node
+
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-import {
-  configSchema,
-  askPerplexitySchema,
-  chatPerplexitySchema,
-  researchPerplexitySchema,
-  asyncPerplexitySchema,
-  checkAsyncSchema,
-  readChatSchema,
-} from './types.js';
+import { configSchema } from './types.js';
 import { handleAskPerplexity, handleResearchPerplexity } from './tools/query.js';
 import {
   handleChatPerplexity,
@@ -21,258 +17,317 @@ import {
   handleCheckAsync,
   handleListAsyncJobs,
 } from './tools/async.js';
+import { handleListProjects, handleDeleteProject } from './tools/projects.js';
 import { getModelSummary } from './models.js';
 
 // Export configuration schema for Smithery
 export { configSchema };
 
-export default function createServer({ config }: { config: z.infer<typeof configSchema> }) {
-  const server = new McpServer({
-    name: 'mcp-perplexity-pro',
-    version: '1.0.0',
+export class PerplexityServer {
+  private server: Server;
+
+  constructor(private config: z.infer<typeof configSchema>) {
+    this.server = new Server(
+      {
+        name: 'mcp-perplexity-pro',
+        version: '1.0.0',
+      },
+      {
+        capabilities: {
+          tools: {},
+        },
+      }
+    );
+
+    this.setupHandlers();
+  }
+
+  private setupHandlers() {
+    // List available tools
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: [
+        {
+          name: 'ask_perplexity',
+          description: 'Query Perplexity with automatic model selection based on complexity.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Your question or prompt' },
+              project_name: { type: 'string', description: 'Project name for organizing conversations (auto-detected if not provided)' },
+              model: { type: 'string', enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'], description: 'Override default model' },
+              temperature: { type: 'number', minimum: 0, maximum: 1, description: '0.0-1.0, default 0.2' },
+              max_tokens: { type: 'number', minimum: 1, description: 'Maximum response length' },
+              search_domain_filter: { type: 'array', items: { type: 'string' }, description: 'Limit search to specific domains' },
+              return_images: { type: 'boolean', description: 'Include images in response' },
+              return_related_questions: { type: 'boolean', description: 'Include related questions' },
+            },
+            required: ['query'],
+          },
+        },
+        {
+          name: 'chat_perplexity',
+          description: 'Maintain conversations with Perplexity stored in project directory.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', description: 'Your message' },
+              project_name: { type: 'string', description: 'Project name for organizing conversations (auto-detected if not provided)' },
+              chat_id: { type: 'string', description: 'Continue existing conversation' },
+              title: { type: 'string', description: 'Required for new chat - conversation title' },
+              model: { type: 'string', enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'], description: 'Override default model' },
+              temperature: { type: 'number', minimum: 0, maximum: 1, description: '0.0-1.0, default 0.2' },
+              max_tokens: { type: 'number', minimum: 1, description: 'Maximum response length' },
+            },
+            required: ['message'],
+          },
+        },
+        {
+          name: 'research_perplexity',
+          description: 'Conduct comprehensive research using sonar-deep-research model.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              topic: { type: 'string', description: 'Research topic or question' },
+              project_name: { type: 'string', description: 'Project name for organizing research reports (auto-detected if not provided)' },
+              save_report: { type: 'boolean', description: 'Save report to project directory' },
+              model: { type: 'string', enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'], description: 'Override default model (defaults to sonar-deep-research)' },
+              max_tokens: { type: 'number', minimum: 1, description: 'Maximum response length' },
+            },
+            required: ['topic'],
+          },
+        },
+        {
+          name: 'async_perplexity',
+          description: 'Create async jobs for complex queries that may take longer to process.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Your question or prompt' },
+              model: { type: 'string', enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'], description: 'Override default model' },
+              temperature: { type: 'number', minimum: 0, maximum: 1, description: '0.0-1.0, default 0.2' },
+              max_tokens: { type: 'number', minimum: 1, description: 'Maximum response length' },
+            },
+            required: ['query'],
+          },
+        },
+        {
+          name: 'check_async_perplexity',
+          description: 'Check status and retrieve results of async Perplexity jobs.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              job_id: { type: 'string', description: 'Async job identifier' },
+            },
+            required: ['job_id'],
+          },
+        },
+        {
+          name: 'list_async_jobs',
+          description: 'List all async Perplexity jobs with status and timing information.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              project_name: { type: 'string', description: 'Project name (auto-detected if not provided)' },
+              limit: { type: 'number', minimum: 1, maximum: 100, description: 'Maximum number of jobs to return (default: 20)' },
+              next_token: { type: 'string', description: 'Token for pagination' },
+            },
+          },
+        },
+        {
+          name: 'list_chats_perplexity',
+          description: 'List all conversations stored in the current project.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              project_name: { type: 'string', description: 'Project name (auto-detected if not provided)' },
+            },
+          },
+        },
+        {
+          name: 'read_chat_perplexity',
+          description: 'Retrieve complete conversation history from project storage.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              chat_id: { type: 'string', description: 'Conversation identifier' },
+            },
+            required: ['chat_id'],
+          },
+        },
+        {
+          name: 'storage_stats_perplexity',
+          description: 'Get storage statistics for the current project\'s Perplexity data.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              project_name: { type: 'string', description: 'Project name (auto-detected if not provided)' },
+            },
+          },
+        },
+        {
+          name: 'list_projects_perplexity',
+          description: 'List all existing projects with optional detailed statistics.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              detailed: { type: 'boolean', description: 'Include detailed statistics for each project' },
+            },
+          },
+        },
+        {
+          name: 'delete_project_perplexity',
+          description: 'Safely delete a project and all its data.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              project_name: { type: 'string', description: 'Name of the project to delete (all data will be permanently removed)' },
+              confirm: { type: 'boolean', description: 'Confirmation that you want to permanently delete all project data' },
+            },
+            required: ['project_name', 'confirm'],
+          },
+        },
+        {
+          name: 'model_info_perplexity',
+          description: 'Get detailed information about available Perplexity models.',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+      ],
+    }));
+
+    // Handle tool calls
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      try {
+        switch (name) {
+          case 'ask_perplexity': {
+            const result = await handleAskPerplexity(args as any, this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'chat_perplexity': {
+            const result = await handleChatPerplexity(args as any, this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'research_perplexity': {
+            const result = await handleResearchPerplexity(args as any, this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'async_perplexity': {
+            const result = await handleAsyncPerplexity(args as any, this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'check_async_perplexity': {
+            const result = await handleCheckAsync(args as any, this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'list_async_jobs': {
+            const result = await handleListAsyncJobs(this.config, (args as any)?.limit, (args as any)?.next_token);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'list_chats_perplexity': {
+            const result = await handleListChats(this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'read_chat_perplexity': {
+            const result = await handleReadChat(args as any, this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'storage_stats_perplexity': {
+            const result = await handleStorageStats(this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'list_projects_perplexity': {
+            const result = await handleListProjects(args as any, this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'delete_project_perplexity': {
+            const result = await handleDeleteProject(args as any, this.config);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'model_info_perplexity': {
+            const modelInfo = {
+              available_models: getModelSummary(),
+              default_model: this.config.default_model,
+              automatic_selection: 'Enabled - models selected based on query complexity and requirements',
+              override_capability: 'All tools accept optional "model" parameter to override automatic selection',
+              selection_factors: [
+                'Query complexity and length',
+                'Keywords indicating specific needs (research, analysis, etc.)',
+                'Task type (facts vs reasoning vs research)',
+                'Performance vs cost trade-offs',
+              ],
+            };
+            return {
+              content: [{ type: 'text', text: JSON.stringify(modelInfo, null, 2) }],
+            };
+          }
+
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        };
+      }
+    });
+  }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+  }
+}
+
+// Main execution for stdio transport
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const config = {
+    api_key: process.env.PERPLEXITY_API_KEY || '',
+    default_model: 'sonar-reasoning-pro' as const,
+    project_root: process.cwd(),
+    storage_path: '.perplexity',
+  };
+
+  const server = new PerplexityServer(config);
+  server.run().catch((error: unknown) => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
   });
-
-  // Tool: ask_perplexity - Stateless query with intelligent model selection
-  server.tool(
-    'ask_perplexity',
-    `Query Perplexity with automatic model selection based on complexity.
-
-**Model Selection:**
-- sonar: Quick facts, simple queries, basic summaries
-- sonar-pro: Complex queries, follow-ups, detailed summaries  
-- sonar-reasoning: Problem-solving, analysis, step-by-step thinking
-- sonar-reasoning-pro: Complex analysis, detailed reasoning, multi-step problems
-- sonar-deep-research: Comprehensive reports, exhaustive research, literature reviews
-
-**Default:** sonar-reasoning-pro for balanced performance
-**Override:** Use 'model' parameter to specify a different model
-
-Returns response with citations and search results when available.`,
-    askPerplexitySchema.shape,
-    async params => {
-      const result = await handleAskPerplexity(params, config);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: chat_perplexity - Conversational interface with storage
-  server.tool(
-    'chat_perplexity',
-    `Maintain conversations with Perplexity stored in project directory.
-
-**Usage:**
-- New chat: Provide 'message' and 'title'
-- Continue chat: Provide 'message' and 'chat_id'
-
-**Storage:** Saves conversations to {project_root}/{storage_path}/
-**Model Selection:** Automatically selects optimal model for new chats, or specify with 'model' parameter
-
-Returns response with chat_id for continuation and conversation metadata.`,
-    chatPerplexitySchema.shape,
-    async params => {
-      const result = await handleChatPerplexity(params, config);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: research_perplexity - Deep research with optional saving
-  server.tool(
-    'research_perplexity',
-    `Conduct comprehensive research using sonar-deep-research model (or override).
-
-**Features:**
-- Optimized for exhaustive research and detailed reports
-- Optional report saving to project directory
-- Enhanced search context and citations
-- Multiple perspectives and source analysis
-
-**Best for:** Market analysis, literature reviews, comprehensive topic reports
-
-Returns detailed research with citations, optionally saved as markdown report.`,
-    researchPerplexitySchema.shape,
-    async params => {
-      const result = await handleResearchPerplexity(params, config);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: async_perplexity - Create async jobs for long-running queries
-  server.tool(
-    'async_perplexity',
-    `Create async jobs for complex queries that may take longer to process.
-
-**When to use:**
-- Complex research requiring extensive search
-- Rate limit mitigation
-- Non-urgent queries
-- Batch processing
-
-**Features:**
-- Immediate job ID return
-- Estimated completion time
-- Status tracking with check_async_perplexity
-
-Returns job information with estimated completion time.`,
-    asyncPerplexitySchema.shape,
-    async params => {
-      const result = await handleAsyncPerplexity(params, config);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: check_async_perplexity - Check status of async jobs
-  server.tool(
-    'check_async_perplexity',
-    `Check status and retrieve results of async Perplexity jobs.
-
-**Status types:**
-- CREATED: Job queued, not started
-- STARTED: Job in progress  
-- COMPLETED: Job finished, results available
-- FAILED: Job failed, error details provided
-
-Returns job status with completion percentage and next check recommendation.`,
-    checkAsyncSchema.shape,
-    async params => {
-      const result = await handleCheckAsync(params, config);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: list_async_jobs - List all async jobs
-  server.tool(
-    'list_async_jobs',
-    `List all async Perplexity jobs with status and timing information.
-
-**Information provided:**
-- Job status and progress
-- Time since creation
-- Estimated time remaining for active jobs
-- Model used and creation details
-
-Useful for monitoring multiple research tasks and managing workload.`,
-    {
-      limit: z.number().min(1).max(100).optional().describe('Maximum number of jobs to return (default: 20)'),
-      next_token: z.string().optional().describe('Token for pagination'),
-    },
-    async params => {
-      const result = await handleListAsyncJobs(config, params.limit, params.next_token);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: list_chats_perplexity - List all conversations
-  server.tool(
-    'list_chats_perplexity',
-    `List all conversations stored in the current project.
-
-**Information provided:**
-- Chat ID, title, and creation/update times
-- Message count and model used
-- Sorted by most recent activity
-
-**Storage location:** {project_root}/{storage_path}/
-
-Useful for finding and resuming previous conversations.`,
-    {},
-    async () => {
-      const result = await handleListChats(config);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: read_chat_perplexity - Retrieve conversation history
-  server.tool(
-    'read_chat_perplexity',
-    `Retrieve complete conversation history from project storage.
-
-**Usage:**
-- Provide chat_id from list_chats_perplexity
-- Returns full message history with metadata
-- Useful for context review and conversation analysis
-
-Returns complete conversation with all messages and metadata.`,
-    readChatSchema.shape,
-    async params => {
-      const result = await handleReadChat(params, config);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: storage_stats_perplexity - Get project storage statistics
-  server.tool(
-    'storage_stats_perplexity',
-    `Get storage statistics for the current project's Perplexity data.
-
-**Information provided:**
-- Total conversations and messages
-- Storage size in bytes
-- Last activity timestamp
-- Storage path location
-
-Useful for understanding project usage and managing storage.`,
-    {},
-    async () => {
-      const result = await handleStorageStats(config);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-      };
-    }
-  );
-
-  // Tool: model_info_perplexity - Get information about available models
-  server.tool(
-    'model_info_perplexity',
-    `Get detailed information about available Perplexity models.
-
-**Model Categories:**
-- **Search Models:** sonar, sonar-pro (information retrieval and synthesis)
-- **Reasoning Models:** sonar-reasoning, sonar-reasoning-pro (complex analysis and problem-solving)  
-- **Research Models:** sonar-deep-research (comprehensive reports and investigations)
-
-**Selection Guidance:**
-- Speed vs Quality trade-offs
-- Cost considerations  
-- Use case recommendations
-- Model capabilities and limitations
-
-Returns comprehensive model information and selection guidance.`,
-    {},
-    async () => {
-      const modelInfo = {
-        available_models: getModelSummary(),
-        default_model: config.default_model,
-        automatic_selection: 'Enabled - models selected based on query complexity and requirements',
-        override_capability: 'All tools accept optional "model" parameter to override automatic selection',
-        selection_factors: [
-          'Query complexity and length',
-          'Keywords indicating specific needs (research, analysis, etc.)',
-          'Task type (facts vs reasoning vs research)',
-          'Performance vs cost trade-offs',
-        ],
-      };
-
-      return {
-        content: [{ type: 'text', text: JSON.stringify(modelInfo, null, 2) }],
-      };
-    }
-  );
-
-  return server.server;
 }
