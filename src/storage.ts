@@ -72,14 +72,23 @@ export class StorageManager {
    */
   private async withLock<T>(filePath: string, operation: () => Promise<T>): Promise<T> {
     const lockPath = `${filePath}.lock`;
-    
+
     try {
       // Ensure directory exists for both the file and lock
       const fileDir = path.dirname(filePath);
       await fs.mkdir(fileDir, { recursive: true });
-      
+
+      // Ensure the target file exists (create empty file if it doesn't exist)
+      // This is needed for proper-lockfile to work correctly
+      try {
+        await fs.access(filePath);
+      } catch {
+        // File doesn't exist, create empty file
+        await fs.writeFile(filePath, '', 'utf-8');
+      }
+
       // Acquire lock with timeout
-      await lockfile.lock(lockPath, {
+      await lockfile.lock(filePath, {
         stale: 10000, // 10 seconds
         retries: 3,
       });
@@ -88,7 +97,7 @@ export class StorageManager {
         return await operation();
       } finally {
         // Always release the lock
-        await lockfile.unlock(lockPath);
+        await lockfile.unlock(filePath);
       }
     } catch (error) {
       if (error instanceof Error && error.message.includes('EEXIST')) {
@@ -190,7 +199,11 @@ export class StorageManager {
       // Filter for conversation files (not reports)
       const conversationFiles = files.filter(file => {
         if (this.sessionId) {
-          return file.startsWith(`${this.sessionId}_`) && file.endsWith('.json') && !file.includes('report_');
+          return (
+            file.startsWith(`${this.sessionId}_`) &&
+            file.endsWith('.json') &&
+            !file.includes('report_')
+          );
         }
         return file.endsWith('.json') && !file.includes('report_');
       });
@@ -322,7 +335,8 @@ ${content}
               type: 'storage_error',
               message: error.message,
               details: {
-                suggestion: 'Check the conversation ID and try again, or list conversations to see available IDs',
+                suggestion:
+                  'Check the conversation ID and try again, or list conversations to see available IDs',
               },
             },
           };

@@ -28,7 +28,19 @@ export async function handleChatPerplexity(
 > {
   try {
     const apiClient = new PerplexityApiClient(config);
-    const storageManager = new StorageManager(config);
+    
+    // Detect project and create project-aware config
+    const { detectProjectWithSuggestions } = await import('./projects.js');
+    const projectName = await detectProjectWithSuggestions(params.project_name, config);
+    
+    // Create project-specific storage config with chat subdirectory
+    const projectConfig = {
+      ...config,
+      project_root: config.project_root,
+      storage_path: `projects/${projectName}/chat`
+    };
+    
+    const storageManager = new StorageManager(projectConfig);
 
     let conversation: Conversation;
     let chatId: string;
@@ -95,6 +107,50 @@ export async function handleChatPerplexity(
     // Get updated conversation for final message count
     const updatedConversation = await storageManager.getConversation(chatId);
 
+    // Save conversation report if requested
+    let reportSaved = false;
+    let reportPath: string | undefined;
+    
+    if (params.save_report && response.choices[0]?.message?.content) {
+      try {
+        // Create a formatted conversation export
+        const conversationExport = {
+          chat_id: chatId,
+          title: updatedConversation.metadata.title,
+          model: selectedModel,
+          created_at: updatedConversation.metadata.created_at,
+          updated_at: updatedConversation.metadata.updated_at,
+          message_count: updatedConversation.messages.length,
+          conversation: updatedConversation.messages.map((msg, index) => ({
+            message_number: index + 1,
+            role: msg.role,
+            content: msg.content,
+            timestamp: 'N/A' // Messages don't have individual timestamps
+          }))
+        };
+        
+        const reportContent = `# Chat Export: ${updatedConversation.metadata.title}\n\n` +
+          `**Chat ID:** ${chatId}\n` +
+          `**Model:** ${selectedModel}\n` +
+          `**Created:** ${new Date(updatedConversation.metadata.created_at).toLocaleString()}\n` +
+          `**Messages:** ${updatedConversation.messages.length}\n\n` +
+          '## Conversation\n\n' +
+          updatedConversation.messages.map((msg, index) => 
+            `### Message ${index + 1} (${msg.role})\n\n${msg.content}\n`
+          ).join('\n');
+        
+        const reportId = await storageManager.saveReport(
+          reportContent, 
+          `Chat: ${updatedConversation.metadata.title}`
+        );
+        reportSaved = true;
+        reportPath = `projects/${params.project_name || 'default-project'}/chat/reports/${reportId}`;
+      } catch (storageError) {
+        // Don't fail the entire request if saving fails
+        console.warn('Failed to save chat report:', storageError);
+      }
+    }
+
     return {
       ...response,
       chat_id: chatId,
@@ -102,14 +158,18 @@ export async function handleChatPerplexity(
       model_selection_reason: params.model
         ? 'user_specified'
         : isNewChat
-        ? 'auto_selected'
-        : 'conversation_default',
+          ? 'auto_selected'
+          : 'conversation_default',
       conversation_length: updatedConversation.messages.length,
+      ...(params.save_report && { report_saved: reportSaved }),
+      ...(reportPath && { report_path: reportPath }),
     } as PerplexityResponse & {
       chat_id: string;
       selected_model: string;
       model_selection_reason: string;
       conversation_length: number;
+      report_saved?: boolean;
+      report_path?: string;
     };
   } catch (error) {
     if (error instanceof StorageError) {
@@ -127,7 +187,16 @@ export async function handleChatPerplexity(
  */
 export async function handleListChats(config: Config): Promise<ChatMetadata[] | ErrorResponse> {
   try {
-    const storageManager = new StorageManager(config);
+    // Use default project for listing chats
+    const { detectProjectWithSuggestions } = await import('./projects.js');
+    const projectName = await detectProjectWithSuggestions(undefined, config);
+    
+    const projectConfig = {
+      ...config,
+      storage_path: `projects/${projectName}/chat`
+    };
+    
+    const storageManager = new StorageManager(projectConfig);
     return await storageManager.listConversations();
   } catch (error) {
     if (error instanceof StorageError) {
@@ -153,7 +222,16 @@ export async function handleReadChat(
   config: Config
 ): Promise<Conversation | ErrorResponse> {
   try {
-    const storageManager = new StorageManager(config);
+    // Use default project for reading chats
+    const { detectProjectWithSuggestions } = await import('./projects.js');
+    const projectName = await detectProjectWithSuggestions(undefined, config);
+    
+    const projectConfig = {
+      ...config,
+      storage_path: `projects/${projectName}/chat`
+    };
+    
+    const storageManager = new StorageManager(projectConfig);
     return await storageManager.getConversation(params.chat_id);
   } catch (error) {
     if (error instanceof StorageError) {
@@ -185,12 +263,21 @@ export async function handleStorageStats(config: Config): Promise<
   | ErrorResponse
 > {
   try {
-    const storageManager = new StorageManager(config);
-    const stats = await storageManager.getStorageStats();
+    // Use default project for storage stats
+    const { detectProjectWithSuggestions } = await import('./projects.js');
+    const projectName = await detectProjectWithSuggestions(undefined, config);
     
+    const projectConfig = {
+      ...config,
+      storage_path: `projects/${projectName}/chat`
+    };
+    
+    const storageManager = new StorageManager(projectConfig);
+    const stats = await storageManager.getStorageStats();
+
     return {
       ...stats,
-      storage_path: config.storage_path,
+      storage_path: `projects/${projectName}/chat`,
     };
   } catch (error) {
     if (error instanceof StorageError) {
@@ -199,7 +286,8 @@ export async function handleStorageStats(config: Config): Promise<
     return {
       error: {
         type: 'storage_error',
-        message: error instanceof Error ? error.message : 'Unknown error getting storage statistics',
+        message:
+          error instanceof Error ? error.message : 'Unknown error getting storage statistics',
         details: {
           suggestion: 'Check storage configuration and file permissions',
         },

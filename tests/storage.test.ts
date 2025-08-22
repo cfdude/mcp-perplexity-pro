@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -21,10 +21,10 @@ describe('StorageManager', () => {
       api_key: 'test-key',
       default_model: 'sonar-reasoning-pro',
       project_root: testProjectRoot,
-      storage_path: testStoragePath
+      storage_path: testStoragePath,
     };
     storage = new StorageManager(config);
-    
+
     // Ensure clean test environment
     if (fs.existsSync(testProjectRoot)) {
       fs.rmSync(testProjectRoot, { recursive: true, force: true });
@@ -41,7 +41,7 @@ describe('StorageManager', () => {
   describe('Conversation Management', () => {
     it('should create a new conversation', async () => {
       const chatId = await storage.createConversation('Test Chat', 'sonar-reasoning-pro');
-      
+
       expect(chatId).toBeDefined();
       expect(typeof chatId).toBe('string');
       expect(chatId.length).toBeGreaterThan(0);
@@ -49,10 +49,10 @@ describe('StorageManager', () => {
 
     it('should save and retrieve conversation messages', async () => {
       const chatId = await storage.createConversation('Test Chat', 'sonar-reasoning-pro');
-      
+
       const message: Message = {
         role: 'user',
-        content: 'Test message'
+        content: 'Test message',
       };
 
       await storage.addMessage(chatId, message);
@@ -75,14 +75,16 @@ describe('StorageManager', () => {
     });
 
     it('should handle non-existent conversation gracefully', async () => {
-      await expect(storage.getConversation('non-existent-id')).rejects.toThrow('Failed to read conversation');
+      await expect(storage.getConversation('non-existent-id')).rejects.toThrow(
+        'Conversation not found'
+      );
     });
 
     it('should delete conversation', async () => {
       const chatId = await storage.createConversation('Test Chat', 'sonar-reasoning-pro');
       await storage.deleteConversation(chatId);
 
-      await expect(storage.getConversation(chatId)).rejects.toThrow('Failed to read conversation');
+      await expect(storage.getConversation(chatId)).rejects.toThrow('Conversation not found');
     });
   });
 
@@ -90,9 +92,9 @@ describe('StorageManager', () => {
     it('should save research reports', async () => {
       const content = 'This is a test research report content';
       const title = 'Test Research Report';
-      
+
       const reportId = await storage.saveReport(content, title);
-      
+
       expect(reportId).toBeDefined();
       expect(typeof reportId).toBe('string');
       expect(reportId.length).toBeGreaterThan(0);
@@ -105,7 +107,7 @@ describe('StorageManager', () => {
       const chatId = await storage.createConversation('Test Chat', 'sonar-reasoning-pro');
       await storage.addMessage(chatId, {
         role: 'user',
-        content: 'Test message'
+        content: 'Test message',
       });
 
       const stats = await storage.getStorageStats();
@@ -140,7 +142,7 @@ describe('StorageManager', () => {
       for (let i = 0; i < 3; i++) {
         await storage.addMessage(chatId, {
           role: 'user',
-          content: `Message ${i}`
+          content: `Message ${i}`,
         });
       }
 
@@ -156,22 +158,22 @@ describe('StorageManager', () => {
           api_key: 'test-key',
           default_model: 'sonar-reasoning-pro',
           project_root: '/invalid/path/that/cannot/be/created',
-          storage_path: '.test'
+          storage_path: '.test',
         };
         new StorageManager(config);
       }).not.toThrow();
     });
 
     it('should handle filesystem errors gracefully', async () => {
-      // Create storage with non-existent directory 
+      // Create storage with non-existent directory
       const config: Config = {
         api_key: 'test-key',
         default_model: 'sonar-reasoning-pro',
         project_root: '/tmp/non-existent-path-that-should-fail',
-        storage_path: '.test'
+        storage_path: '.test',
       };
       const invalidStorage = new StorageManager(config);
-      
+
       // These operations should not throw but return sensible defaults
       const conversations = await invalidStorage.listConversations();
       expect(Array.isArray(conversations)).toBe(true);

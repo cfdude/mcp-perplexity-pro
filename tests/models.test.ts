@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { selectOptimalModel, getModelCapabilities, MODEL_REGISTRY } from '../src/models.js';
 
 describe('Model Selection', () => {
@@ -18,7 +18,7 @@ describe('Model Selection', () => {
         'I need a comprehensive analysis of climate change',
         'Please research the latest developments in AI',
         'Give me a detailed report on market trends',
-        'I need thorough research on quantum computing'
+        'I need thorough research on quantum computing',
       ];
 
       queries.forEach(query => {
@@ -32,7 +32,7 @@ describe('Model Selection', () => {
         'Give me detailed stock analysis for AAPL',
         'Show me various news sources about the election',
         'Find different options for investing',
-        'Multiple alternatives for renewable energy'
+        'Multiple alternatives for renewable energy',
       ];
 
       queries.forEach(query => {
@@ -46,7 +46,7 @@ describe('Model Selection', () => {
         'How does quantum entanglement work?',
         'Explain the economic implications of inflation',
         'What are the ethical considerations of AI?',
-        'Analyze the pros and cons of renewable energy'
+        'Analyze the pros and cons of renewable energy',
       ];
 
       queries.forEach(query => {
@@ -80,10 +80,10 @@ describe('Model Selection', () => {
     it('should contain all expected models', () => {
       const expectedModels = [
         'sonar',
-        'sonar-pro', 
+        'sonar-pro',
         'sonar-reasoning',
         'sonar-reasoning-pro',
-        'sonar-deep-research'
+        'sonar-deep-research',
       ];
 
       expectedModels.forEach(model => {

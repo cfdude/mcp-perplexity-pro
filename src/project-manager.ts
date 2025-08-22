@@ -33,7 +33,7 @@ export class ProjectManager {
    */
   async listExistingProjects(): Promise<string[]> {
     const projectsDir = path.join(this.storageRoot, 'projects');
-    
+
     try {
       await fs.access(projectsDir);
       const entries = await fs.readdir(projectsDir, { withFileTypes: true });
@@ -61,7 +61,7 @@ export class ProjectManager {
         path: projectPath,
         chatCount: 0,
         reportCount: 0,
-        jobCount: 0
+        jobCount: 0,
       };
 
       try {
@@ -95,7 +95,6 @@ export class ProjectManager {
         // Get last used date from directory modification time
         const stats = await fs.stat(projectPath);
         info.lastUsed = stats.mtime.toISOString();
-
       } catch (error) {
         // Error reading project info, but include the project anyway
       }
@@ -155,7 +154,15 @@ export class ProjectManager {
    */
   private extractProjectFromPath(filePath: string): string | null {
     const segments = filePath.split(path.sep).filter(Boolean);
-    const commonProjectPaths = ['Projects', 'workspace', 'code', 'repos', 'src', 'development', 'dev'];
+    const commonProjectPaths = [
+      'Projects',
+      'workspace',
+      'code',
+      'repos',
+      'src',
+      'development',
+      'dev',
+    ];
 
     // Look for common project directory patterns
     for (let i = 0; i < segments.length - 1; i++) {
@@ -207,11 +214,23 @@ export class ProjectManager {
    */
   private isValidProjectName(name: string): boolean {
     // Avoid common non-project directory names
-    const invalidNames = ['src', 'app', 'lib', 'dist', 'build', 'node_modules', '.git', 'temp', 'tmp'];
-    return !invalidNames.includes(name.toLowerCase()) && 
-           name.length > 0 && 
-           name.length < 100 &&
-           /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name); // Valid filesystem name
+    const invalidNames = [
+      'src',
+      'app',
+      'lib',
+      'dist',
+      'build',
+      'node_modules',
+      '.git',
+      'temp',
+      'tmp',
+    ];
+    return (
+      !invalidNames.includes(name.toLowerCase()) &&
+      name.length > 0 &&
+      name.length < 100 &&
+      /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name)
+    ); // Valid filesystem name
   }
 
   /**
@@ -227,15 +246,15 @@ export class ProjectManager {
   async rememberProject(sessionId: string | undefined, projectName: string): Promise<void> {
     if (!sessionId) return;
 
-    const session = this.sessions.get(sessionId) || { 
-      projects: new Set(), 
-      lastUsed: new Date().toISOString() 
+    const session = this.sessions.get(sessionId) || {
+      projects: new Set(),
+      lastUsed: new Date().toISOString(),
     };
-    
+
     session.currentProject = projectName;
     session.projects.add(projectName);
     session.lastUsed = new Date().toISOString();
-    
+
     this.sessions.set(sessionId, session);
     await this.persistSessions();
   }
@@ -263,12 +282,12 @@ export class ProjectManager {
       await fs.mkdir(path.dirname(this.sessionFile), { recursive: true });
       const data = await fs.readFile(this.sessionFile, 'utf-8');
       const parsed = JSON.parse(data);
-      
+
       // Convert plain objects back to Map with Set
       for (const [sessionId, sessionData] of Object.entries(parsed)) {
         this.sessions.set(sessionId, {
-          ...sessionData as any,
-          projects: new Set((sessionData as any).projects || [])
+          ...(sessionData as any),
+          projects: new Set((sessionData as any).projects || []),
         });
       }
     } catch (error) {
@@ -283,16 +302,16 @@ export class ProjectManager {
   private async persistSessions(): Promise<void> {
     try {
       await fs.mkdir(path.dirname(this.sessionFile), { recursive: true });
-      
+
       // Convert Map with Set to plain object for JSON serialization
       const toSerialize: Record<string, any> = {};
       for (const [sessionId, sessionData] of this.sessions.entries()) {
         toSerialize[sessionId] = {
           ...sessionData,
-          projects: Array.from(sessionData.projects)
+          projects: Array.from(sessionData.projects),
         };
       }
-      
+
       await fs.writeFile(this.sessionFile, JSON.stringify(toSerialize, null, 2));
     } catch (error) {
       console.error('Failed to persist session data:', error);
@@ -328,7 +347,7 @@ Ask Perplexity: "Your question here" (project_name: "my-project")
       existingProjects.slice(0, 10).forEach(project => {
         message += `- \`${project}\`\n`;
       });
-      
+
       if (existingProjects.length > 10) {
         message += `... and ${existingProjects.length - 10} more (use list_projects_perplexity to see all)\n`;
       }
@@ -356,7 +375,9 @@ Make sure you're in your project folder when using this tool for auto-detection.
   /**
    * Deletes a project and all its data permanently
    */
-  async deleteProject(projectName: string): Promise<{ deleted: boolean; message: string; stats?: any }> {
+  async deleteProject(
+    projectName: string
+  ): Promise<{ deleted: boolean; message: string; stats?: any }> {
     const normalizedName = this.normalizeProjectName(projectName);
     const projectPath = this.getProjectStoragePath(normalizedName);
 
@@ -366,17 +387,17 @@ Make sure you're in your project folder when using this tool for auto-detection.
     } catch (error) {
       return {
         deleted: false,
-        message: `Project "${normalizedName}" does not exist.`
+        message: `Project "${normalizedName}" does not exist.`,
       };
     }
 
     try {
       // Get stats before deletion
       const stats = await this.getProjectStats(normalizedName);
-      
+
       // Remove the entire project directory
       await fs.rm(projectPath, { recursive: true, force: true });
-      
+
       // Clean up from all sessions
       for (const sessionData of this.sessions.values()) {
         if (sessionData.currentProject === normalizedName) {
@@ -384,19 +405,18 @@ Make sure you're in your project folder when using this tool for auto-detection.
         }
         sessionData.projects.delete(normalizedName);
       }
-      
+
       await this.persistSessions();
 
       return {
         deleted: true,
         message: `Project "${normalizedName}" and all its data have been permanently deleted.`,
-        stats
+        stats,
       };
-
     } catch (error) {
       return {
         deleted: false,
-        message: `Failed to delete project "${normalizedName}": ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to delete project "${normalizedName}": ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -410,7 +430,7 @@ Make sure you're in your project folder when using this tool for auto-detection.
       chatCount: 0,
       reportCount: 0,
       jobCount: 0,
-      totalFiles: 0
+      totalFiles: 0,
     };
 
     try {
@@ -442,7 +462,6 @@ Make sure you're in your project folder when using this tool for auto-detection.
       }
 
       stats.totalFiles = stats.chatCount + stats.reportCount + stats.jobCount;
-      
     } catch (error) {
       // Error reading project stats
     }

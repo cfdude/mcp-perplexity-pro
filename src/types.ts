@@ -161,7 +161,15 @@ export interface AsyncJob {
   response?: PerplexityResponse;
   failed_at?: number;
   error_message?: string;
+  error?: string;
   status: 'CREATED' | 'STARTED' | 'COMPLETED' | 'FAILED';
+  choices?: Choice[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  estimated_completion?: string;
 }
 
 // Error response structure
@@ -200,7 +208,10 @@ export type ModelRegistry = Record<PerplexityModel, ModelCapability>;
 // Tool parameter schemas
 export const askPerplexitySchema = z.object({
   query: z.string().describe('Your question or prompt'),
-  project_name: z.string().optional().describe('Project name for organizing conversations (auto-detected if not provided)'),
+  project_name: z
+    .string()
+    .optional()
+    .describe('Project name for organizing conversations (auto-detected if not provided)'),
   model: z
     .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
     .optional()
@@ -210,11 +221,15 @@ export const askPerplexitySchema = z.object({
   search_domain_filter: z.array(z.string()).optional().describe('Limit search to specific domains'),
   return_images: z.boolean().optional().describe('Include images in response'),
   return_related_questions: z.boolean().optional().describe('Include related questions'),
+  save_report: z.boolean().optional().describe('Save response as a report to project directory'),
 });
 
 export const chatPerplexitySchema = z.object({
   message: z.string().describe('Your message'),
-  project_name: z.string().optional().describe('Project name for organizing conversations (auto-detected if not provided)'),
+  project_name: z
+    .string()
+    .optional()
+    .describe('Project name for organizing conversations (auto-detected if not provided)'),
   chat_id: z.string().optional().describe('Continue existing conversation'),
   title: z.string().optional().describe('Required for new chat - conversation title'),
   model: z
@@ -223,11 +238,15 @@ export const chatPerplexitySchema = z.object({
     .describe('Override default model'),
   temperature: z.number().min(0).max(1).optional().describe('0.0-1.0, default 0.2'),
   max_tokens: z.number().positive().optional().describe('Maximum response length'),
+  save_report: z.boolean().optional().describe('Save conversation to project directory'),
 });
 
 export const researchPerplexitySchema = z.object({
   topic: z.string().describe('Research topic or question'),
-  project_name: z.string().optional().describe('Project name for organizing research reports (auto-detected if not provided)'),
+  project_name: z
+    .string()
+    .optional()
+    .describe('Project name for organizing research reports (auto-detected if not provided)'),
   save_report: z.boolean().optional().describe('Save report to project directory'),
   model: z
     .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
@@ -260,8 +279,12 @@ export const listProjectsSchema = z.object({
 });
 
 export const deleteProjectSchema = z.object({
-  project_name: z.string().describe('Name of the project to delete (all data will be permanently removed)'),
-  confirm: z.boolean().describe('Confirmation that you want to permanently delete all project data'),
+  project_name: z
+    .string()
+    .describe('Name of the project to delete (all data will be permanently removed)'),
+  confirm: z
+    .boolean()
+    .describe('Confirmation that you want to permanently delete all project data'),
 });
 
 export type AskPerplexityParams = z.infer<typeof askPerplexitySchema>;

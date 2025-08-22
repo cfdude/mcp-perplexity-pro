@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 
-// Mock node-fetch before any imports that use it
-const mockFetch = jest.fn() as jest.MockedFunction<any>;
-jest.unstable_mockModule('node-fetch', () => ({
-  default: mockFetch
+// Mock node-fetch with Vitest
+const mockFetch = vi.fn();
+vi.mock('node-fetch', () => ({
+  default: mockFetch,
 }));
 
 // Dynamic import after mocking
@@ -22,7 +22,7 @@ describe('Integration Tests', () => {
       default_model: 'sonar-reasoning-pro',
       project_root: testProjectRoot,
       storage_path: '.perplexity/test',
-      session_id: 'test-session'
+      session_id: 'test-session',
     };
 
     // Clean up test directory
@@ -31,7 +31,7 @@ describe('Integration Tests', () => {
     }
     fs.mkdirSync(testProjectRoot, { recursive: true });
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockClear();
   });
 
@@ -48,19 +48,21 @@ describe('Integration Tests', () => {
         object: 'chat.completion',
         created: Date.now(),
         model: 'sonar-reasoning-pro',
-        choices: [{
-          message: {
-            role: 'assistant',
-            content: 'This is a test response from Perplexity AI.'
+        choices: [
+          {
+            message: {
+              role: 'assistant',
+              content: 'This is a test response from Perplexity AI.',
+            },
+            finish_reason: 'stop',
+            index: 0,
           },
-          finish_reason: 'stop',
-          index: 0
-        }],
+        ],
         usage: {
           prompt_tokens: 10,
           completion_tokens: 12,
-          total_tokens: 22
-        }
+          total_tokens: 22,
+        },
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -74,18 +76,23 @@ describe('Integration Tests', () => {
         arrayBuffer: async () => new ArrayBuffer(0),
         formData: async () => new FormData(),
         bytes: async () => new Uint8Array(),
-        clone: jest.fn(function(this: any) { return this; }),
+        clone: vi.fn(function (this: any) {
+          return this;
+        }),
         body: null,
         bodyUsed: false,
         redirected: false,
         type: 'basic',
-        url: ''
+        url: '',
       } as Response);
 
-      const result = await handleAskPerplexity({
-        query: 'What is artificial intelligence?',
-        model: 'sonar-reasoning-pro'
-      }, testConfig);
+      const result = await handleAskPerplexity(
+        {
+          query: 'What is artificial intelligence?',
+          model: 'sonar-reasoning-pro',
+        },
+        testConfig
+      );
 
       expect(result.content[0].type).toBe('text');
       expect(result.content[0].text).toContain('This is a test response from Perplexity AI.');
@@ -94,8 +101,8 @@ describe('Integration Tests', () => {
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'Authorization': 'Bearer test-api-key'
-          })
+            Authorization: 'Bearer test-api-key',
+          }),
         })
       );
     });

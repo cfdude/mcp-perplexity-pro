@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -27,20 +27,20 @@ afterAll(() => {
 // Mock console methods in tests
 global.console = {
   ...console,
-  log: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
+  log: vi.fn(),
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
 };
 
 // Note: node-fetch mocking is handled per-test to avoid conflicts
 
 // Mock proper-lockfile for tests to avoid filesystem locking issues
-jest.unstable_mockModule('proper-lockfile', () => ({
+vi.mock('proper-lockfile', () => ({
   default: {
-    lock: jest.fn(() => Promise.resolve()),
-    unlock: jest.fn(() => Promise.resolve()),
+    lock: vi.fn(() => Promise.resolve()),
+    unlock: vi.fn(() => Promise.resolve()),
   },
 }));
 
@@ -50,7 +50,7 @@ const originalStderr = process.stderr.write;
 
 beforeEach(() => {
   // Reset mocks before each test
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 afterEach(() => {

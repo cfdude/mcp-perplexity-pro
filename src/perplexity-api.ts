@@ -49,7 +49,17 @@ export class PerplexityApiClient {
         body: method === 'POST' ? JSON.stringify(body) : null,
       });
 
-      const data: any = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let data: any;
+      
+      if (contentType?.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, get the text for better error messages
+        const text = await response.text();
+        data = { error: { message: `Non-JSON response: ${text.substring(0, 200)}...` } };
+      }
 
       if (!response.ok) {
         throw new PerplexityApiError(
@@ -89,7 +99,9 @@ export class PerplexityApiClient {
       ...(request.return_related_questions !== undefined && {
         return_related_questions: request.return_related_questions,
       }),
-      ...(request.search_recency_filter && { search_recency_filter: request.search_recency_filter }),
+      ...(request.search_recency_filter && {
+        search_recency_filter: request.search_recency_filter,
+      }),
       ...(request.search_after_date_filter && {
         search_after_date_filter: request.search_after_date_filter,
       }),
@@ -260,9 +272,7 @@ export class PerplexityApiClient {
             message: 'Perplexity API server error',
             details: {
               suggestion: 'Try again later or use a different model',
-              fallback_model: context?.model
-                ? suggestFallbackModel(context.model as any)
-                : 'sonar',
+              fallback_model: context?.model ? suggestFallbackModel(context.model as any) : 'sonar',
             },
           },
         };

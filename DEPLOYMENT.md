@@ -171,11 +171,13 @@ pm2 startup
 ### Heroku
 
 1. Create `Procfile`:
+
 ```
 web: node dist/index.js
 ```
 
 2. Deploy:
+
 ```bash
 heroku create your-app-name
 heroku config:set NODE_ENV=production
@@ -192,24 +194,25 @@ git push heroku main
 ### DigitalOcean App Platform
 
 1. Create `app.yaml`:
+
 ```yaml
 name: mcp-perplexity-pro
 services:
-- name: server
-  source_dir: /
-  github:
-    repo: your-username/mcp-perplexity-pro
-    branch: main
-  run_command: node dist/index.js
-  environment_slug: node-js
-  instance_count: 1
-  instance_size_slug: basic-xxs
-  envs:
-  - key: NODE_ENV
-    value: production
-  - key: PERPLEXITY_API_KEY
-    value: your-api-key
-    type: SECRET
+  - name: server
+    source_dir: /
+    github:
+      repo: your-username/mcp-perplexity-pro
+      branch: main
+    run_command: node dist/index.js
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PERPLEXITY_API_KEY
+        value: your-api-key
+        type: SECRET
 ```
 
 ## Kubernetes Deployment
@@ -222,9 +225,9 @@ kind: ConfigMap
 metadata:
   name: mcp-perplexity-config
 data:
-  NODE_ENV: "production"
-  DEFAULT_MODEL: "sonar-reasoning-pro"
-  STORAGE_PATH: ".perplexity"
+  NODE_ENV: 'production'
+  DEFAULT_MODEL: 'sonar-reasoning-pro'
+  STORAGE_PATH: '.perplexity'
 ```
 
 ### 2. Create Secret
@@ -236,7 +239,7 @@ metadata:
   name: mcp-perplexity-secret
 type: Opaque
 stringData:
-  PERPLEXITY_API_KEY: "your-api-key"
+  PERPLEXITY_API_KEY: 'your-api-key'
 ```
 
 ### 3. Create Deployment
@@ -257,22 +260,22 @@ spec:
         app: mcp-perplexity-pro
     spec:
       containers:
-      - name: server
-        image: mcp-perplexity-pro:latest
-        ports:
-        - containerPort: 3000
-        envFrom:
-        - configMapRef:
-            name: mcp-perplexity-config
-        - secretRef:
-            name: mcp-perplexity-secret
-        volumeMounts:
-        - name: storage
-          mountPath: /app/storage
+        - name: server
+          image: mcp-perplexity-pro:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: mcp-perplexity-config
+            - secretRef:
+                name: mcp-perplexity-secret
+          volumeMounts:
+            - name: storage
+              mountPath: /app/storage
       volumes:
-      - name: storage
-        persistentVolumeClaim:
-          claimName: mcp-storage-pvc
+        - name: storage
+          persistentVolumeClaim:
+            claimName: mcp-storage-pvc
 ```
 
 ## Monitoring and Logging
@@ -403,6 +406,7 @@ find "$BACKUP_DIR" -name "mcp-perplexity-*.tar.gz" -mtime +30 -delete
 ## Support
 
 For deployment issues:
+
 - Check GitHub Issues: https://github.com/cfdude/mcp-perplexity-pro/issues
 - Review logs for error messages
 - Ensure all prerequisites are met

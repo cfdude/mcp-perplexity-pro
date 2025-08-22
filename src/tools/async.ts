@@ -25,6 +25,16 @@ export async function handleAsyncPerplexity(
   try {
     const apiClient = new PerplexityApiClient(config);
 
+    // Detect project and create project-aware config
+    const { detectProjectWithSuggestions } = await import('./projects.js');
+    const projectName = await detectProjectWithSuggestions(undefined, config);
+    
+    // Create project-specific storage config with async subdirectory
+    const projectConfig = {
+      ...config,
+      storage_path: `projects/${projectName}/async`
+    };
+
     // Select optimal model based on query or use explicit model
     const selectedModel = selectOptimalModel(params.query, params.model, config.default_model);
 
@@ -75,6 +85,9 @@ export async function handleCheckAsync(
 > {
   try {
     const apiClient = new PerplexityApiClient(config);
+    
+    // Note: async job checking doesn't need project-aware config since
+    // job IDs are global and not project-specific
     const response = await apiClient.getAsyncJob(params.job_id);
 
     // Add helpful metadata for job monitoring
@@ -130,6 +143,9 @@ export async function handleListAsyncJobs(
 > {
   try {
     const apiClient = new PerplexityApiClient(config);
+    
+    // Note: listing async jobs doesn't need project-aware config since
+    // jobs are listed globally, not per project
     const response = await apiClient.listAsyncJobs(limit, nextToken);
 
     // Add helpful metadata to each job
@@ -170,7 +186,7 @@ export async function handleListAsyncJobs(
 function getEstimatedCompletionTime(model: string, query: string): number {
   // Base times in minutes
   const baseTimes = {
-    'sonar': 0.5,
+    sonar: 0.5,
     'sonar-pro': 1,
     'sonar-reasoning': 1.5,
     'sonar-reasoning-pro': 3,

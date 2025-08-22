@@ -1,17 +1,11 @@
 {
   "env": {
     "node": true,
-    "es2022": true,
-    "jest": true
+    "es2022": true
   },
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint",
-    "jest"
-  ],
+  "plugins": ["@typescript-eslint", "vitest"],
   "overrides": [
     {
       "files": ["src/**/*.ts"],
@@ -30,6 +24,9 @@
     },
     {
       "files": ["tests/**/*.ts"],
+      "env": {
+        "vitest/env": true
+      },
       "parserOptions": {
         "ecmaVersion": 2022,
         "sourceType": "module",
@@ -44,9 +41,5 @@
       }
     }
   ],
-  "ignorePatterns": [
-    "dist/",
-    "node_modules/",
-    "*.js"
-  ]
+  "ignorePatterns": ["dist/", "node_modules/", "*.js"]
 }

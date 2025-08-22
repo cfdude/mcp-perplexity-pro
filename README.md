@@ -56,28 +56,34 @@ Add to your Claude Desktop `claude_desktop_config.json`:
 ### Query Tools
 
 #### `ask_perplexity`
+
 Ask questions with intelligent model selection based on query type.
 
 **Parameters:**
+
 - `query` (required): Your question or prompt
 - `model` (optional): Specific model to use
 - `temperature` (optional): Response creativity (0.0-2.0)
 - `max_tokens` (optional): Maximum response length
 
 **Example:**
+
 ```
 Ask Perplexity: "What are the latest developments in quantum computing?"
 ```
 
 #### `research_perplexity`
+
 Conduct comprehensive research with detailed reports saved to your project.
 
 **Parameters:**
+
 - `query` (required): Research topic or question
 - `model` (optional): Defaults to `sonar-deep-research`
 - `save_report` (optional): Save detailed report to project
 
 **Example:**
+
 ```
 Research: "Market analysis of renewable energy trends in 2024"
 ```
@@ -85,65 +91,78 @@ Research: "Market analysis of renewable energy trends in 2024"
 ### Chat Tools
 
 #### `chat_perplexity`
+
 Start or continue conversations with full context.
 
 **Parameters:**
+
 - `message` (required): Your message
 - `chat_id` (optional): Continue existing conversation
 - `title` (optional): Title for new conversation
 - `model` (optional): Model selection
 
 **Example:**
+
 ```
 Chat: "Hello, I'd like to discuss AI ethics" (title: "AI Ethics Discussion")
 ```
 
 #### `list_chats_perplexity`
+
 List all conversations in your project.
 
 #### `read_chat_perplexity`
+
 Retrieve full conversation history.
 
 **Parameters:**
+
 - `chat_id` (required): Conversation ID
 
 ### Async Tools
 
 #### `async_perplexity`
+
 Create long-running research jobs for complex queries.
 
 **Parameters:**
+
 - `query` (required): Research question
 - `model` (optional): Defaults to `sonar-deep-research`
 
 #### `check_async_perplexity`
+
 Check status of async research job.
 
 **Parameters:**
+
 - `job_id` (required): Job identifier
 
 #### `list_async_jobs`
+
 List all async jobs in your project.
 
 ### Utility Tools
 
 #### `storage_stats_perplexity`
+
 Get storage statistics and usage information.
 
 #### `model_info_perplexity`
+
 Get information about available models and their capabilities.
 
 ## 🧠 Intelligent Model Selection
 
 The server automatically selects the optimal model based on query analysis:
 
-| Query Type | Selected Model | Use Case |
-|------------|----------------|----------|
-| Research requests | `sonar-deep-research` | "I need comprehensive research on..." |
-| Real-time queries | `sonar-pro` | "What's the current price of...", "Latest news..." |
+| Query Type        | Selected Model        | Use Case                                                    |
+| ----------------- | --------------------- | ----------------------------------------------------------- |
+| Research requests | `sonar-deep-research` | "I need comprehensive research on..."                       |
+| Real-time queries | `sonar-pro`           | "What's the current price of...", "Latest news..."          |
 | Complex reasoning | `sonar-reasoning-pro` | "Analyze the implications of...", "Compare and contrast..." |
-| Simple questions | `sonar-reasoning` | General questions |
-| Default | `sonar-reasoning-pro` | Fallback for all other queries |
+| Simple questions  | `sonar-reasoning`     | General questions                                           |
+| Default           | `sonar-reasoning-pro` | Fallback for all other queries                              |
 
 ### Model Capabilities
 
@@ -232,14 +251,14 @@ CMD ["node", "dist/index.js", "--config", "config.json"]
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment mode | `development` |
-| `PERPLEXITY_API_KEY` | Your API key | Required |
-| `PROJECT_ROOT` | Project directory | Current directory |
-| `STORAGE_PATH` | Storage subdirectory | `.perplexity` |
-| `DEFAULT_MODEL` | Default model | `sonar-reasoning-pro` |
-| `SESSION_ID` | Session identifier | Auto-generated |
+| Variable             | Description          | Default               |
+| -------------------- | -------------------- | --------------------- |
+| `NODE_ENV`           | Environment mode     | `development`         |
+| `PERPLEXITY_API_KEY` | Your API key         | Required              |
+| `PROJECT_ROOT`       | Project directory    | Current directory     |
+| `STORAGE_PATH`       | Storage subdirectory | `.perplexity`         |
+| `DEFAULT_MODEL`      | Default model        | `sonar-reasoning-pro` |
+| `SESSION_ID`         | Session identifier   | Auto-generated        |
 
 ### Advanced Configuration
 
@@ -325,13 +344,13 @@ npm test -- models.test.ts
 ```javascript
 // Simple question
 const result = await askPerplexity({
-  query: "What is machine learning?"
+  query: 'What is machine learning?',
 });
 
 // With specific model
 const result = await askPerplexity({
-  query: "Current Bitcoin price",
-  model: "sonar-pro"
+  query: 'Current Bitcoin price',
+  model: 'sonar-pro',
 });
 ```
 
@@ -340,14 +359,14 @@ const result = await askPerplexity({
 ```javascript
 // Start new conversation
 const chat = await chatPerplexity({
-  message: "Hello!",
-  title: "General Discussion"
+  message: 'Hello!',
+  title: 'General Discussion',
 });
 
 // Continue conversation
 const response = await chatPerplexity({
   chat_id: chat.id,
-  message: "Tell me about quantum computing"
+  message: 'Tell me about quantum computing',
 });
 ```
 
@@ -356,18 +375,18 @@ const response = await chatPerplexity({
 ```javascript
 // Comprehensive research
 const research = await researchPerplexity({
-  query: "Impact of AI on healthcare industry",
-  save_report: true
+  query: 'Impact of AI on healthcare industry',
+  save_report: true,
 });
 
 // Async research for complex topics
 const job = await asyncPerplexity({
-  query: "Detailed analysis of climate change solutions"
+  query: 'Detailed analysis of climate change solutions',
 });
 
 // Check job status
 const status = await checkAsync({
-  job_id: job.id
+  job_id: job.id,
 });
 ```
 
@@ -435,18 +454,21 @@ Structured JSON logging with configurable levels:
 ### Common Issues
 
 **API Key Errors**
+
 ```bash
 Error: Invalid API key
 Solution: Verify PERPLEXITY_API_KEY is set correctly
 ```
 
 **Storage Permission Errors**
+
 ```bash
 Error: EACCES: permission denied
 Solution: Ensure storage directory is writable
 ```
 
 **Model Selection Issues**
+
 ```bash
 Error: Model not available
 Solution: Check model name spelling and availability

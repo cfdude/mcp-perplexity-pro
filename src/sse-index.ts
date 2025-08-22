@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { createHTTPStreamingServer } from './http-streaming-server.js';
+import { createSSEServer } from './sse-server.js';
 import { configSchema } from './types.js';
 
 // Default port
-let PORT = 8125;
+let PORT = 8124;
 
 // Parse command-line arguments for --port=XXXX
 for (let i = 2; i < process.argv.length; i++) {
@@ -31,14 +31,14 @@ const config = {
 // Validate configuration
 const validatedConfig = configSchema.parse(config);
 
-const app = createHTTPStreamingServer(validatedConfig);
+const app = createSSEServer(validatedConfig);
 
 app.listen(PORT, () => {
-  console.log(`MCP Perplexity HTTP Streaming Server listening on port ${PORT}`);
-  console.log(`Claude Code can connect using: claude mcp add --transport http perplexity-http http://localhost:${PORT}`);
+  console.log(`MCP Perplexity SSE Server listening on port ${PORT}`);
+  console.log(`Claude Code can connect using: claude mcp add --transport sse perplexity-sse http://localhost:${PORT}/sse`);
 });
 
 process.on('SIGINT', () => {
-  console.log('Shutting down HTTP streaming server...');
+  console.log('Shutting down SSE server...');
   process.exit(0);
 });

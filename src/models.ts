@@ -236,11 +236,13 @@ export function getModelInfo(model: PerplexityModel): ModelCapability {
 /**
  * Gets model capabilities in boolean format for compatibility
  */
-export function getModelCapabilities(model: string): { search: boolean; reasoning: boolean; realTime: boolean; research: boolean } | undefined {
+export function getModelCapabilities(
+  model: string
+): { search: boolean; reasoning: boolean; realTime: boolean; research: boolean } | undefined {
   if (!isValidModel(model)) {
     return undefined;
   }
-  
+
   const info = MODEL_REGISTRY[model];
   return info.capabilities;
 }
