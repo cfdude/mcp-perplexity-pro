@@ -41,3 +41,11 @@ test-results/
 # Temporary files
 *.tmp
 *.temp
+
+# MCP data storage
+projects/
+sessions/
+.perplexity/
+
+# Server logs
+server.log
