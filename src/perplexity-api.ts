@@ -2,6 +2,8 @@ import fetch from 'node-fetch';
 import type {
   PerplexityRequest,
   PerplexityResponse,
+  PerplexityStreamChunk,
+  StreamingCallbacks,
   AsyncJob,
   ErrorResponse,
   Config,
@@ -38,6 +40,8 @@ export class PerplexityApiClient {
    */
   private async makeRequest<T>(endpoint: string, body: any, method = 'POST'): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    console.log(`Making request to: ${url}`);
+    console.log(`API key: ${this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'MISSING'}`);
 
     try {
       const response = await fetch(url, {
@@ -129,6 +133,208 @@ export class PerplexityApiClient {
     };
 
     return this.makeRequest<PerplexityResponse>(CHAT_COMPLETIONS_ENDPOINT, requestBody);
+  }
+
+  /**
+   * Sends a streaming chat completion request to Perplexity
+   */
+  async chatCompletionStream(
+    request: PerplexityRequest, 
+    callbacks: StreamingCallbacks
+  ): Promise<PerplexityResponse> {
+    const url = `${this.baseUrl}${CHAT_COMPLETIONS_ENDPOINT}`;
+    
+    // Force streaming mode
+    const requestBody = {
+      model: request.model,
+      messages: request.messages,
+      stream: true, // Force streaming
+      ...(request.max_tokens && { max_tokens: request.max_tokens }),
+      ...(request.temperature !== undefined && { temperature: request.temperature }),
+      ...(request.top_p !== undefined && { top_p: request.top_p }),
+      ...(request.search_domain_filter && { search_domain_filter: request.search_domain_filter }),
+      ...(request.return_images !== undefined && { return_images: request.return_images }),
+      ...(request.return_related_questions !== undefined && {
+        return_related_questions: request.return_related_questions,
+      }),
+      ...(request.search_recency_filter && {
+        search_recency_filter: request.search_recency_filter,
+      }),
+      ...(request.search_after_date_filter && {
+        search_after_date_filter: request.search_after_date_filter,
+      }),
+      ...(request.search_before_date_filter && {
+        search_before_date_filter: request.search_before_date_filter,
+      }),
+      ...(request.last_updated_after_filter && {
+        last_updated_after_filter: request.last_updated_after_filter,
+      }),
+      ...(request.last_updated_before_filter && {
+        last_updated_before_filter: request.last_updated_before_filter,
+      }),
+      ...(request.top_k !== undefined && { top_k: request.top_k }),
+      ...(request.presence_penalty !== undefined && { presence_penalty: request.presence_penalty }),
+      ...(request.frequency_penalty !== undefined && {
+        frequency_penalty: request.frequency_penalty,
+      }),
+      ...(request.response_format && { response_format: request.response_format }),
+      ...(request.disable_search !== undefined && { disable_search: request.disable_search }),
+      ...(request.enable_search_classifier !== undefined && {
+        enable_search_classifier: request.enable_search_classifier,
+      }),
+      ...(request.web_search_options && { web_search_options: request.web_search_options }),
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new PerplexityApiError(
+          `HTTP ${response.status}: ${response.statusText}`,
+          response.status,
+          { error: { message: errorText } }
+        );
+      }
+
+      if (!response.body) {
+        throw new PerplexityApiError('No response body received');
+      }
+
+      return this.processStreamingResponse(response.body, callbacks);
+    } catch (error) {
+      if (callbacks.onError) {
+        callbacks.onError(error instanceof Error ? error : new Error('Unknown streaming error'));
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Processes Server-Sent Events from Perplexity's streaming API
+   */
+  private async processStreamingResponse(
+    body: NodeJS.ReadableStream,
+    callbacks: StreamingCallbacks
+  ): Promise<PerplexityResponse> {
+    return new Promise((resolve, reject) => {
+      let buffer = '';
+      let finalResponse: PerplexityResponse | null = null;
+      let aggregatedContent = '';
+      let responseMetadata: any = {};
+
+      body.on('data', (chunk) => {
+        buffer += chunk.toString();
+        
+        // Process complete lines
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          this.processSSELine(line, {
+            onChunk: (chunk) => {
+              // Aggregate content for final response
+              if (chunk.choices?.[0]?.delta?.content) {
+                aggregatedContent += chunk.choices[0].delta.content;
+              }
+              
+              // Store metadata from first chunk
+              if (!responseMetadata.id) {
+                responseMetadata = {
+                  id: chunk.id,
+                  model: chunk.model,
+                  created: chunk.created,
+                  object: 'chat.completion',
+                };
+              }
+
+              // Forward chunk to callback
+              if (callbacks.onChunk) {
+                callbacks.onChunk(chunk);
+              }
+            },
+            onComplete: (response) => {
+              finalResponse = response;
+            },
+            onError: callbacks.onError || (() => {}),
+          });
+        }
+      });
+
+      body.on('end', () => {
+        // If we have a final response from [DONE], use it
+        if (finalResponse) {
+          if (callbacks.onComplete) {
+            callbacks.onComplete(finalResponse);
+          }
+          resolve(finalResponse);
+        } else {
+          // Otherwise, construct final response from aggregated data
+          const constructedResponse: PerplexityResponse = {
+            ...responseMetadata,
+            choices: [{
+              index: 0,
+              finish_reason: 'stop',
+              message: {
+                role: 'assistant',
+                content: aggregatedContent,
+              },
+            }],
+            usage: {
+              prompt_tokens: 0,
+              completion_tokens: 0,
+              total_tokens: 0,
+            },
+          };
+
+          if (callbacks.onComplete) {
+            callbacks.onComplete(constructedResponse);
+          }
+          resolve(constructedResponse);
+        }
+      });
+
+      body.on('error', (error) => {
+        if (callbacks.onError) {
+          callbacks.onError(error);
+        }
+        reject(error);
+      });
+    });
+  }
+
+  /**
+   * Processes a single Server-Sent Event line
+   */
+  private processSSELine(line: string, callbacks: StreamingCallbacks): void {
+    if (!line.trim()) return;
+
+    // Handle SSE format: "data: {json}"
+    if (line.startsWith('data: ')) {
+      const data = line.slice(6).trim();
+      
+      // Check for completion signal
+      if (data === '[DONE]') {
+        return;
+      }
+
+      try {
+        const chunk: PerplexityStreamChunk = JSON.parse(data);
+        if (callbacks.onChunk) {
+          callbacks.onChunk(chunk);
+        }
+      } catch (error) {
+        console.warn('Failed to parse SSE chunk:', data, error);
+      }
+    }
   }
 
   /**

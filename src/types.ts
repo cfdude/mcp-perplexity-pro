@@ -151,6 +151,37 @@ export interface PerplexityResponse {
   search_results?: SearchResult[];
 }
 
+// Streaming response types
+export interface StreamChoice {
+  index: number;
+  finish_reason?: 'stop' | 'length' | 'content_filter';
+  delta: {
+    role?: 'assistant';
+    content?: string;
+  };
+}
+
+export interface PerplexityStreamChunk {
+  id: string;
+  model: string;
+  created: number;
+  object: 'chat.completion.chunk';
+  choices: StreamChoice[];
+  search_results?: SearchResult[];
+  usage?: Usage;
+}
+
+// Streaming callback types
+export type StreamingCallback = (chunk: PerplexityStreamChunk) => void;
+export type StreamingCompleteCallback = (finalResponse: PerplexityResponse) => void;
+export type StreamingErrorCallback = (error: Error) => void;
+
+export interface StreamingCallbacks {
+  onChunk?: StreamingCallback;
+  onComplete?: StreamingCompleteCallback;
+  onError?: StreamingErrorCallback;
+}
+
 // Async operation types
 export interface AsyncJob {
   id: string;

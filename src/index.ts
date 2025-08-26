@@ -20,13 +20,21 @@ for (let i = 2; i < process.argv.length; i++) {
   }
 }
 
-// Load configuration
+// Load configuration - try multiple sources for API key
+const apiKey = process.env.PERPLEXITY_API_KEY || 
+              process.env.API_KEY || 
+              process.env.PERPLEXITY_API_TOKEN ||
+              '';
+
 const config = {
-  api_key: process.env.PERPLEXITY_API_KEY || '',
+  api_key: apiKey,
   default_model: 'sonar-reasoning-pro',
   project_root: process.cwd(),
   storage_path: '.perplexity',
 };
+
+// Debug API key
+console.log(`API key loaded: ${config.api_key ? 'YES (' + config.api_key.substring(0, 10) + '...)' : 'NO'}`);
 
 // Validate configuration
 const validatedConfig = configSchema.parse(config);

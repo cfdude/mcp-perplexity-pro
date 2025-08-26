@@ -33,23 +33,54 @@ npm install -g mcp-perplexity-pro
 
 ### Configuration
 
-Add to your Claude Desktop `claude_desktop_config.json`:
+#### HTTP-Only Transport (Aligned with Anthropic's Direction)
 
+Following Anthropic's deprecation of stdio transport in favor of HTTP, this server uses HTTP transport exclusively for both Claude Code and Claude Desktop.
+
+**For Claude Code** (`.mcp.json`):
 ```json
 {
   "mcpServers": {
-    "perplexity-pro": {
-      "command": "mcp-perplexity-pro",
-      "config": {
-        "api_key": "your-perplexity-api-key",
-        "default_model": "sonar-reasoning-pro",
-        "project_root": "/path/to/your/project",
-        "storage_path": ".perplexity"
+    "perplexity": {
+      "command": "node",
+      "args": ["dist/launcher.js", "--http-port=8124"],
+      "env": {
+        "PERPLEXITY_API_KEY": "your-api-key-here"
       }
     }
   }
 }
 ```
+
+**For Claude Desktop** (`claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "perplexity": {
+      "command": "node", 
+      "args": ["dist/launcher.js", "--http-port=8125"],
+      "env": {
+        "PERPLEXITY_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+**Default Ports:**
+- Claude Code: 8124 (default when no port specified)
+- Claude Desktop: 8125 (recommended)
+
+**Environment Variables:**
+- `PERPLEXITY_API_KEY` (required): Your Perplexity API key
+- `DEFAULT_MODEL` (optional): Default model (default: sonar-reasoning-pro)
+- `PROJECT_ROOT` (optional): Project root directory for storage
+- `STORAGE_PATH` (optional): Storage subdirectory (default: .perplexity)
+
+The launcher automatically:
+- Detects if a build is needed and rebuilds if necessary
+- Starts HTTP server with streamable transport
+- No manual build or start commands required
 
 ## 📋 Available Tools
 

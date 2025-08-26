@@ -1,8 +1,4 @@
-import express from 'express';
-import cors from 'cors';
-import { randomUUID } from 'crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { configSchema } from './types.js';
@@ -17,23 +13,7 @@ import { handleAsyncPerplexity, handleCheckAsync, handleListAsyncJobs } from './
 import { handleListProjects, handleDeleteProject } from './tools/projects.js';
 import { getModelSummary } from './models.js';
 
-export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) {
-  // Session management
-  const transports: Record<string, StreamableHTTPServerTransport> = {};
-  
-  // Store per-session configs for dynamic API key handling
-  const sessionConfigs: Record<string, z.infer<typeof configSchema>> = {};
-
-  const server = new Server({
-    name: 'mcp-perplexity-pro',
-    version: '1.0.0',
-  }, {
-    capabilities: {
-      tools: {},
-      progress: true,
-    },
-  });
-
+export function setupMCPServer(server: Server, config: z.infer<typeof configSchema>) {
   // List available tools
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
@@ -207,7 +187,7 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
       },
       {
         name: 'storage_stats_perplexity',
-        description: "Get storage statistics for the current project's Perplexity data.",
+        description: 'Get storage statistics for the current project\'s Perplexity data.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -260,265 +240,84 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
     ],
   }));
 
-  // Handle tool calls with streaming support
-  server.setRequestHandler(CallToolRequestSchema, async (request): Promise<any> => {
+  // Handle tool execution
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     try {
       switch (name) {
         case 'ask_perplexity': {
-          // Enable streaming with MCP progress notifications and stdout output
-          let chunkCount = 0;
-          const streamingCallbacks = {
-            onChunk: async (chunk: any) => {
-              const content = chunk.choices?.[0]?.delta?.content;
-              console.log('Streaming chunk received:', content || '[no content]');
-              
-              if (content) {
-                chunkCount++;
-                
-                // Output to stdout for real-time display
-                process.stdout.write(`[CHUNK ${chunkCount}]: ${content}`);
-                
-                // Send MCP progress notification (if supported by Claude Code)
-                try {
-                  await server.notification({
-                    method: 'notifications/progress',
-                    params: {
-                      progressToken: 'streaming',
-                      progress: Math.min(chunkCount * 2, 99), // Approximate progress
-                      total: 100,
-                      message: `Streaming content... (chunk ${chunkCount})`
-                    }
-                  });
-                } catch (progressError) {
-                  console.log('Progress notification failed (expected):', progressError instanceof Error ? progressError.message : String(progressError));
-                }
-              }
-            },
-            onComplete: async (response: any) => {
-              console.log('Streaming complete');
-              process.stdout.write(`\n[STREAMING COMPLETE]\n`);
-              
-              // Send final progress notification
-              try {
-                await server.notification({
-                  method: 'notifications/progress',
-                  params: {
-                    progressToken: 'streaming',
-                    progress: 100,
-                    total: 100,
-                    message: 'Streaming complete!'
-                  }
-                });
-              } catch (progressError) {
-                console.log('Final progress notification failed:', progressError instanceof Error ? progressError.message : String(progressError));
-              }
-            },
-            onError: (error: Error) => {
-              console.error('Streaming error:', error);
-              process.stdout.write(`\n[STREAMING ERROR]: ${error.message}\n`);
-            }
-          };
-          
-          const result = await handleAskPerplexity(args as any, config, streamingCallbacks);
-          return result;
+          const result = await handleAskPerplexity(args as any, config);
+          // handleAskPerplexity returns MCP format, pass through
+          return result as any;
         }
-
+        
         case 'research_perplexity': {
-          console.log('=== RESEARCH_PERPLEXITY CALLED ===');
-          console.log('Args:', JSON.stringify(args, null, 2));
-          console.log('Config API key present:', !!config.api_key);
           const result = await handleResearchPerplexity(args as any, config);
-          console.log('Result type:', typeof result);
-          console.log('Result structure:', result ? Object.keys(result) : 'null');
-          return result;
+          // research_perplexity returns raw data, need to wrap in MCP format
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'chat_perplexity': {
           const result = await handleChatPerplexity(args as any, config);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'async_perplexity': {
           const result = await handleAsyncPerplexity(args as any, config);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'check_async_perplexity': {
           const result = await handleCheckAsync(args as any, config);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'list_async_jobs': {
-          const result = await handleListAsyncJobs(
-            config,
-            (args as any)?.limit,
-            (args as any)?.next_token
-          );
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          const { limit, next_token } = args as any;
+          const result = await handleListAsyncJobs(config, limit, next_token);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'list_chats_perplexity': {
           const result = await handleListChats(config);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'read_chat_perplexity': {
           const result = await handleReadChat(args as any, config);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'storage_stats_perplexity': {
           const result = await handleStorageStats(config);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'list_projects_perplexity': {
           const result = await handleListProjects(args as any, config);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'delete_project_perplexity': {
           const result = await handleDeleteProject(args as any, config);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         case 'model_info_perplexity': {
-          const modelInfo = {
-            available_models: getModelSummary(),
-            default_model: config.default_model,
-            automatic_selection: 'Enabled - models selected based on query complexity and requirements',
-            override_capability: 'All tools accept optional "model" parameter to override automatic selection',
-            selection_factors: [
-              'Query complexity and length',
-              'Keywords indicating specific needs (research, analysis, etc.)',
-              'Task type (facts vs reasoning vs research)',
-              'Performance vs cost trade-offs',
-            ],
-          };
-          return {
-            content: [{ type: 'text', text: JSON.stringify(modelInfo, null, 2) }],
-          };
+          const result = getModelSummary();
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-
+        
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return {
-        content: [
-          {
-            type: 'text',
-            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-          },
-        ],
+        content: [{ type: 'text', text: JSON.stringify({ error: errorMessage }, null, 2) }],
         isError: true,
       };
     }
   });
-
-  const app = express();
-  app.use(express.json());
-
-  // Configure CORS with required headers
-  app.use(cors({
-    origin: '*',
-    exposedHeaders: ['Mcp-Session-Id']
-  }));
-
-  // Add logging middleware
-  app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    next();
-  });
-
-  // No authentication required - this is an authless MCP server
-
-  // MCP endpoint with proper session management
-  app.all('/mcp', async (req, res): Promise<void> => {
-    console.log('MCP request received:', req.method, req.headers);
-    
-    // Check for API key in headers and update config if found
-    let requestConfig = config;
-    const authHeader = req.headers.authorization;
-    const apiKeyHeader = req.headers['x-api-key'] || req.headers['perplexity-api-key'];
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const headerApiKey = authHeader.substring(7);
-      console.log('API key from Authorization header:', headerApiKey.substring(0, 10) + '...');
-      requestConfig = { ...config, api_key: headerApiKey };
-    } else if (apiKeyHeader) {
-      console.log('API key from custom header:', String(apiKeyHeader).substring(0, 10) + '...');
-      requestConfig = { ...config, api_key: String(apiKeyHeader) };
-    }
-    
-    try {
-      const sessionId = req.headers['mcp-session-id'] as string | undefined;
-      let transport: StreamableHTTPServerTransport;
-
-      if (sessionId && transports[sessionId]) {
-        // Reuse existing transport for this session
-        transport = transports[sessionId];
-        console.log('Reusing existing transport for session:', sessionId);
-      } else if (req.method === 'POST') {
-        // Create new transport for new session
-        console.log('Creating new transport for session');
-        transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: () => randomUUID(),
-          onsessioninitialized: (newSessionId) => {
-            console.log('Session initialized:', newSessionId);
-            transports[newSessionId] = transport;
-          }
-        });
-        await server.connect(transport);
-      } else {
-        res.status(400).json({
-          error: 'Session required',
-          message: 'POST request required to initialize session'
-        });
-        return;
-      }
-
-      await transport.handleRequest(req, res, req.body);
-      return;
-    } catch (error) {
-      console.error('Error handling MCP request:', error);
-      res.status(500).json({ 
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : String(error)
-      });
-      return;
-    }
-  });
-
-  // Health check endpoint
-  app.get('/health', (req, res) => {
-    res.json({ 
-      status: 'healthy', 
-      transport: 'http-streaming',
-      server: 'mcp-perplexity-pro',
-      version: '1.0.0'
-    });
-  });
-
-  return app;
 }

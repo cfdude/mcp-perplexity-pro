@@ -5,6 +5,15 @@
   "main": "dist/index.js",
   "module": "./src/index.ts",
   "type": "module",
+  "bin": {
+    "mcp-perplexity-pro": "./bin/mcp-perplexity-pro"
+  },
+  "files": [
+    "dist/**/*",
+    "bin/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cfdude/mcp-perplexity-pro.git"
@@ -39,6 +48,8 @@
     "type-check": "tsc --noEmit",
     "type-check:tests": "tsc --noEmit --project tsconfig.test.json",
     "prepare": "npm run build",
+    "prepublishOnly": "npm run build && npm run lint && npm run test:run",
+    "postinstall": "node -e \"console.log('\\\\n🎉 mcp-perplexity-pro installed successfully!\\\\n📚 Usage: npx mcp-perplexity-pro --help\\\\n')\"",
     "docker:build": "docker build -t mcp-perplexity-pro .",
     "docker:run": "docker-compose up"
   },

@@ -3,6 +3,8 @@ import type {
   ResearchPerplexityParams,
   Config,
   PerplexityResponse,
+  PerplexityStreamChunk,
+  StreamingCallbacks,
   ErrorResponse,
   MCPResponse,
 } from '../types.js';
@@ -11,12 +13,16 @@ import { StorageManager, StorageError } from '../storage.js';
 import { selectOptimalModel } from '../models.js';
 
 /**
- * Handles the ask_perplexity tool - stateless queries
+ * Handles the ask_perplexity tool - stateless queries with optional streaming
  */
 export async function handleAskPerplexity(
   params: AskPerplexityParams,
-  config: Config
+  config: Config,
+  streamingCallbacks?: StreamingCallbacks
 ): Promise<MCPResponse> {
+  console.log('handleAskPerplexity called with:', { query: params.query, model: params.model });
+  console.log('Config API key:', config.api_key ? config.api_key.substring(0, 10) + '...' : 'MISSING');
+  
   try {
     const apiClient = new PerplexityApiClient(config);
 
@@ -54,10 +60,19 @@ export async function handleAskPerplexity(
       }),
     };
 
-    const response = await apiClient.chatCompletion(request);
+    // Use streaming if callbacks are provided, otherwise use regular completion
+    let response: PerplexityResponse;
+    let content: string;
 
-    // Convert to MCP response format
-    const content = response.choices[0]?.message?.content || 'No response generated';
+    if (streamingCallbacks) {
+      // Stream the response with real-time callbacks
+      response = await apiClient.chatCompletionStream(request, streamingCallbacks);
+      content = response.choices[0]?.message?.content || 'No response generated';
+    } else {
+      // Use regular completion
+      response = await apiClient.chatCompletion(request);
+      content = response.choices[0]?.message?.content || 'No response generated';
+    }
     
     // Save report if requested
     let reportSaved = false;

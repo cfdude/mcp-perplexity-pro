@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+
+// Simple launcher that imports the compiled TypeScript launcher
+import('../dist/launcher.js').catch((error) => {
+  console.error('[mcp-perplexity-pro] Failed to load launcher:', error.message);
+  console.error('[mcp-perplexity-pro] Make sure the package is built with: npm run build');
+  process.exit(1);
+});
