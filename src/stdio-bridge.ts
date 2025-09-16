@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = dirname(__dirname);
 
-class StdioHttpBridge {
+export class StdioHttpBridge {
   private httpPort = 8125;
   private httpServerProcess: any = null;
   private server: Server;
