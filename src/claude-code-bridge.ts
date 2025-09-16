@@ -83,8 +83,8 @@ async function main() {
     if (await checkServerHealth(DEFAULT_PORT)) {
       log(`Found existing server on port ${DEFAULT_PORT}`);
       // For Claude Code, we need to act as a stdio bridge to the HTTP server
-      const { StdioBridge } = await import('./stdio-bridge.js');
-      const bridge = new StdioBridge(DEFAULT_PORT);
+      const { StdioHttpBridge } = await import('./stdio-bridge.js');
+      const bridge = new StdioHttpBridge();
       await bridge.start();
       return;
     }
@@ -114,8 +114,8 @@ async function main() {
     }
 
     // Act as stdio bridge
-    const { StdioBridge } = await import('./stdio-bridge.js');
-    const bridge = new StdioBridge(DEFAULT_PORT);
+    const { StdioHttpBridge } = await import('./stdio-bridge.js');
+    const bridge = new StdioHttpBridge();
     await bridge.start();
   } catch (error) {
     log(`Error: ${error instanceof Error ? error.message : String(error)}`);
