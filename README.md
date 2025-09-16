@@ -33,9 +33,9 @@ npm install -g mcp-perplexity-pro
 
 ## 🚀 Deployment Options
 
-### 1. NPX Deployment (stdio-npx)
+### 1. NPX Deployment with Transport Mode
 
-The simplest way to use the MCP server with stdio transport:
+The recommended way to use the MCP server with explicit transport control:
 
 **For Claude Desktop** (`claude_desktop_config.json`):
 
@@ -44,7 +44,7 @@ The simplest way to use the MCP server with stdio transport:
   "mcpServers": {
     "perplexity": {
       "command": "npx",
-      "args": ["mcp-perplexity-pro-stdio"],
+      "args": ["mcp-perplexity-pro", "--transport=stdio"],
       "env": {
         "PERPLEXITY_API_KEY": "your-api-key-here"
       }
@@ -54,6 +54,22 @@ The simplest way to use the MCP server with stdio transport:
 ```
 
 **For Claude Code** (`.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "perplexity": {
+      "command": "npx",
+      "args": ["mcp-perplexity-pro", "--transport=stdio"],
+      "env": {
+        "PERPLEXITY_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+**Alternative: Use the dedicated stdio binary** (legacy):
 
 ```json
 {

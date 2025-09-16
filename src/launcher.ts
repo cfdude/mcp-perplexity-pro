@@ -81,11 +81,17 @@ function runBuild(): void {
   }
 }
 
-function parseArgs(): { httpPort: number; debugMode: boolean; clientMode: 'stdio' | 'http' } {
+function parseArgs(): {
+  httpPort: number;
+  debugMode: boolean;
+  clientMode: 'stdio' | 'http';
+  transportMode: 'stdio' | 'http' | 'auto';
+} {
   const args = process.argv.slice(2);
   let httpPort = 8124; // Default port for Claude Code
   let debugMode = false;
   let clientMode: 'stdio' | 'http' = 'stdio'; // Default to stdio mode
+  let transportMode: 'stdio' | 'http' | 'auto' = 'auto'; // Default to auto-detect
 
   for (const arg of args) {
     if (arg.startsWith('--http-port=')) {
@@ -109,26 +115,81 @@ function parseArgs(): { httpPort: number; debugMode: boolean; clientMode: 'stdio
       debugMode = true;
     } else if (arg === '--http-client') {
       clientMode = 'http';
+    } else if (arg.startsWith('--transport=')) {
+      const transport = arg.split('=')[1];
+      if (transport === 'stdio' || transport === 'http' || transport === 'auto') {
+        transportMode = transport;
+      } else {
+        log(`Invalid transport mode: ${transport}. Valid options: stdio, http, auto`);
+        process.exit(1);
+      }
+    } else if (arg.startsWith('--mode=')) {
+      // Alternative syntax for transport mode
+      const mode = arg.split('=')[1];
+      if (mode === 'stdio' || mode === 'http' || mode === 'auto') {
+        transportMode = mode;
+      } else {
+        log(`Invalid mode: ${mode}. Valid options: stdio, http, auto`);
+        process.exit(1);
+      }
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 mcp-perplexity-pro - Perplexity API MCP Server
 
 Usage:
-  mcp-perplexity-pro                    # Start HTTP server on port 8124 (for Claude Code)
-  mcp-perplexity-pro --http-port=8125   # Start HTTP server on port 8125 (for Claude Desktop)
-  mcp-perplexity-pro --debug-mode       # Enable debug logging to stdout
+  mcp-perplexity-pro                          # Auto-detect transport mode (stdio if available, HTTP otherwise)
+  mcp-perplexity-pro --transport=stdio        # Force stdio transport mode
+  mcp-perplexity-pro --transport=http         # Force HTTP transport mode
+  mcp-perplexity-pro --transport=auto         # Auto-detect transport mode (default)
+  mcp-perplexity-pro --http-port=8125         # Set HTTP port (when using HTTP transport)
+  mcp-perplexity-pro --debug-mode             # Enable debug logging to stdout
+
+Transport Modes:
+  stdio    # Direct stdio communication (recommended for MCP clients)
+  http     # HTTP streaming server (legacy mode)
+  auto     # Auto-detect based on environment (default)
 
 Environment Variables:
   PERPLEXITY_API_KEY    # Required: Your Perplexity API key
   DEFAULT_MODEL         # Optional: Default model (default: sonar-reasoning-pro)
   PROJECT_ROOT          # Optional: Project root directory
   STORAGE_PATH          # Optional: Storage subdirectory (default: .perplexity)
+
+Examples:
+  # For MCP clients (Claude Desktop, Claude Code)
+  npx mcp-perplexity-pro --transport=stdio
+  
+  # For legacy HTTP mode
+  npx mcp-perplexity-pro --transport=http --http-port=8124
 `);
       process.exit(0);
     }
   }
 
-  return { httpPort, debugMode, clientMode };
+  return { httpPort, debugMode, clientMode, transportMode };
+}
+
+function detectStdioAvailability(): boolean {
+  // Check if stdin/stdout are available and not redirected
+  return process.stdin.isTTY === false && process.stdout.isTTY === false;
+}
+
+function startStdioServer(): void {
+  const distPath = join(projectRoot, 'dist');
+  const stdioServerPath = join(distPath, 'stdio-server.js');
+
+  if (!existsSync(stdioServerPath)) {
+    log(`Stdio server file not found: ${stdioServerPath}`);
+    process.exit(1);
+  }
+
+  log('Starting stdio server...');
+
+  // Import and start the stdio server directly
+  import(stdioServerPath).catch(error => {
+    log(`Failed to load stdio server: ${error.message}`);
+    process.exit(1);
+  });
 }
 
 function startServer(httpPort: number): void {
@@ -174,37 +235,11 @@ function startServer(httpPort: number): void {
 }
 
 async function main(): Promise<void> {
-  const { httpPort: preferredPort, debugMode, clientMode } = parseArgs();
+  const { httpPort: preferredPort, debugMode, clientMode, transportMode } = parseArgs();
 
   // Set debug mode environment variable for child processes
   if (debugMode) {
     process.env.MCP_DEBUG_MODE = 'true';
-  }
-
-  // Discover the best port to use (check for existing servers or find available)
-  let discovery: PortDiscoveryResult;
-  try {
-    discovery = await discoverMcpPort(preferredPort);
-
-    if (discovery.isExistingServer) {
-      if (clientMode === 'http') {
-        // For HTTP client mode (Claude Code), output connection URL to stdout and exit
-        console.log(`http://localhost:${discovery.port}`);
-        process.exit(0);
-      } else {
-        // For stdio mode (Claude Desktop), log and exit as before
-        log(`Found existing healthy MCP server on port ${discovery.port}`);
-        log(`Clients can connect to: http://localhost:${discovery.port}`);
-        log(`This instance will exit as the shared server is already running.`);
-        process.exit(0);
-      }
-    } else {
-      log(`No existing MCP server found. Starting new server on port ${discovery.port}`);
-    }
-  } catch (error) {
-    log(`Port discovery failed: ${error}`);
-    log(`Attempting to use preferred port ${preferredPort}`);
-    discovery = { port: preferredPort, isExistingServer: false };
   }
 
   // Check if build is needed (skip if we're already in a build process)
@@ -212,8 +247,53 @@ async function main(): Promise<void> {
     runBuild();
   }
 
-  // Start the HTTP server on the discovered port
-  startServer(discovery.port);
+  // Determine actual transport mode based on argument and environment
+  let actualTransportMode: 'stdio' | 'http';
+
+  if (transportMode === 'stdio') {
+    actualTransportMode = 'stdio';
+  } else if (transportMode === 'http') {
+    actualTransportMode = 'http';
+  } else {
+    // Auto-detect mode
+    const stdioAvailable = detectStdioAvailability();
+    actualTransportMode = stdioAvailable ? 'stdio' : 'http';
+    log(`Auto-detected transport mode: ${actualTransportMode}`);
+  }
+
+  // Start server based on transport mode
+  if (actualTransportMode === 'stdio') {
+    startStdioServer();
+  } else {
+    // HTTP mode - discover port and handle existing servers
+    let discovery: PortDiscoveryResult;
+    try {
+      discovery = await discoverMcpPort(preferredPort);
+
+      if (discovery.isExistingServer) {
+        if (clientMode === 'http') {
+          // For HTTP client mode (Claude Code), output connection URL to stdout and exit
+          console.log(`http://localhost:${discovery.port}`);
+          process.exit(0);
+        } else {
+          // For stdio mode (Claude Desktop), log and exit as before
+          log(`Found existing healthy MCP server on port ${discovery.port}`);
+          log(`Clients can connect to: http://localhost:${discovery.port}`);
+          log(`This instance will exit as the shared server is already running.`);
+          process.exit(0);
+        }
+      } else {
+        log(`No existing MCP server found. Starting new server on port ${discovery.port}`);
+      }
+    } catch (error) {
+      log(`Port discovery failed: ${error}`);
+      log(`Attempting to use preferred port ${preferredPort}`);
+      discovery = { port: preferredPort, isExistingServer: false };
+    }
+
+    // Start the HTTP server on the discovered port
+    startServer(discovery.port);
+  }
 }
 
 // Handle unhandled errors
