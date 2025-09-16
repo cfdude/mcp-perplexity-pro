@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { Readable } from 'stream';
 import type {
   PerplexityRequest,
   PerplexityResponse,
@@ -40,8 +41,8 @@ export class PerplexityApiClient {
    */
   private async makeRequest<T>(endpoint: string, body: any, method = 'POST'): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    console.log(`Making request to: ${url}`);
-    console.log(`API key: ${this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'MISSING'}`);
+    console.error(`Making request to: ${url}`);
+    console.error(`API key: ${this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'MISSING'}`);
 
     try {
       const response = await fetch(url, {
@@ -56,7 +57,7 @@ export class PerplexityApiClient {
       // Check if response is JSON before parsing
       const contentType = response.headers.get('content-type');
       let data: any;
-      
+
       if (contentType?.includes('application/json')) {
         data = await response.json();
       } else {
@@ -139,11 +140,11 @@ export class PerplexityApiClient {
    * Sends a streaming chat completion request to Perplexity
    */
   async chatCompletionStream(
-    request: PerplexityRequest, 
+    request: PerplexityRequest,
     callbacks: StreamingCallbacks
   ): Promise<PerplexityResponse> {
     const url = `${this.baseUrl}${CHAT_COMPLETIONS_ENDPOINT}`;
-    
+
     // Force streaming mode
     const requestBody = {
       model: request.model,
@@ -209,7 +210,11 @@ export class PerplexityApiClient {
         throw new PerplexityApiError('No response body received');
       }
 
-      return this.processStreamingResponse(response.body, callbacks);
+      // In node-fetch v3, response.body is already a Node.js Readable stream
+      // Cast it to the correct type for TypeScript
+      const bodyStream = response.body as unknown as Readable;
+
+      return this.processStreamingResponse(bodyStream, callbacks);
     } catch (error) {
       if (callbacks.onError) {
         callbacks.onError(error instanceof Error ? error : new Error('Unknown streaming error'));
@@ -222,7 +227,7 @@ export class PerplexityApiClient {
    * Processes Server-Sent Events from Perplexity's streaming API
    */
   private async processStreamingResponse(
-    body: NodeJS.ReadableStream,
+    body: Readable,
     callbacks: StreamingCallbacks
   ): Promise<PerplexityResponse> {
     return new Promise((resolve, reject) => {
@@ -231,21 +236,21 @@ export class PerplexityApiClient {
       let aggregatedContent = '';
       let responseMetadata: any = {};
 
-      body.on('data', (chunk) => {
+      body.on('data', chunk => {
         buffer += chunk.toString();
-        
+
         // Process complete lines
         const lines = buffer.split('\n');
         buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
         for (const line of lines) {
           this.processSSELine(line, {
-            onChunk: (chunk) => {
+            onChunk: chunk => {
               // Aggregate content for final response
               if (chunk.choices?.[0]?.delta?.content) {
                 aggregatedContent += chunk.choices[0].delta.content;
               }
-              
+
               // Store metadata from first chunk
               if (!responseMetadata.id) {
                 responseMetadata = {
@@ -261,7 +266,7 @@ export class PerplexityApiClient {
                 callbacks.onChunk(chunk);
               }
             },
-            onComplete: (response) => {
+            onComplete: response => {
               finalResponse = response;
             },
             onError: callbacks.onError || (() => {}),
@@ -280,14 +285,16 @@ export class PerplexityApiClient {
           // Otherwise, construct final response from aggregated data
           const constructedResponse: PerplexityResponse = {
             ...responseMetadata,
-            choices: [{
-              index: 0,
-              finish_reason: 'stop',
-              message: {
-                role: 'assistant',
-                content: aggregatedContent,
+            choices: [
+              {
+                index: 0,
+                finish_reason: 'stop',
+                message: {
+                  role: 'assistant',
+                  content: aggregatedContent,
+                },
               },
-            }],
+            ],
             usage: {
               prompt_tokens: 0,
               completion_tokens: 0,
@@ -302,7 +309,7 @@ export class PerplexityApiClient {
         }
       });
 
-      body.on('error', (error) => {
+      body.on('error', error => {
         if (callbacks.onError) {
           callbacks.onError(error);
         }
@@ -320,7 +327,7 @@ export class PerplexityApiClient {
     // Handle SSE format: "data: {json}"
     if (line.startsWith('data: ')) {
       const data = line.slice(6).trim();
-      
+
       // Check for completion signal
       if (data === '[DONE]') {
         return;

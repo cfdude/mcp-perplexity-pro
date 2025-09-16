@@ -71,8 +71,6 @@ export class StorageManager {
    * Executes a function with file locking for thread safety
    */
   private async withLock<T>(filePath: string, operation: () => Promise<T>): Promise<T> {
-    const lockPath = `${filePath}.lock`;
-
     try {
       // Ensure directory exists for both the file and lock
       const fileDir = path.dirname(filePath);

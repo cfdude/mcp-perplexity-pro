@@ -5,25 +5,20 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { z } from 'zod';
 import { configSchema } from './types.js';
 import { handleAskPerplexity, handleResearchPerplexity } from './tools/query.js';
-import {
-  handleChatPerplexity,
-  handleListChats,
-  handleReadChat,
-  handleStorageStats,
-} from './tools/chat.js';
-import { handleAsyncPerplexity, handleCheckAsync, handleListAsyncJobs } from './tools/async.js';
-import { handleListProjects, handleDeleteProject } from './tools/projects.js';
 import { getModelSummary } from './models.js';
 
 export function createSSEServer(config: z.infer<typeof configSchema>) {
-  const server = new Server({
-    name: 'mcp-perplexity-pro',
-    version: '1.0.0',
-  }, {
-    capabilities: {
-      tools: {},
+  const server = new Server(
+    {
+      name: 'mcp-perplexity-pro',
+      version: '1.0.0',
     },
-  });
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
 
   // List available tools
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -37,11 +32,18 @@ export function createSSEServer(config: z.infer<typeof configSchema>) {
             query: { type: 'string', description: 'Your question or prompt' },
             project_name: {
               type: 'string',
-              description: 'Project name for organizing conversations (auto-detected if not provided)',
+              description:
+                'Project name for organizing conversations (auto-detected if not provided)',
             },
             model: {
               type: 'string',
-              enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+              enum: [
+                'sonar',
+                'sonar-pro',
+                'sonar-reasoning',
+                'sonar-reasoning-pro',
+                'sonar-deep-research',
+              ],
               description: 'Override default model',
             },
             temperature: {
@@ -61,7 +63,10 @@ export function createSSEServer(config: z.infer<typeof configSchema>) {
               type: 'boolean',
               description: 'Include related questions',
             },
-            save_report: { type: 'boolean', description: 'Save response as a report to project directory' },
+            save_report: {
+              type: 'boolean',
+              description: 'Save response as a report to project directory',
+            },
           },
           required: ['query'],
         },
@@ -75,12 +80,19 @@ export function createSSEServer(config: z.infer<typeof configSchema>) {
             topic: { type: 'string', description: 'Research topic or question' },
             project_name: {
               type: 'string',
-              description: 'Project name for organizing research reports (auto-detected if not provided)',
+              description:
+                'Project name for organizing research reports (auto-detected if not provided)',
             },
             save_report: { type: 'boolean', description: 'Save report to project directory' },
             model: {
               type: 'string',
-              enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+              enum: [
+                'sonar',
+                'sonar-pro',
+                'sonar-reasoning',
+                'sonar-reasoning-pro',
+                'sonar-deep-research',
+              ],
               description: 'Override default model (defaults to sonar-deep-research)',
             },
             max_tokens: { type: 'number', minimum: 1, description: 'Maximum response length' },
@@ -121,8 +133,10 @@ export function createSSEServer(config: z.infer<typeof configSchema>) {
           const modelInfo = {
             available_models: getModelSummary(),
             default_model: config.default_model,
-            automatic_selection: 'Enabled - models selected based on query complexity and requirements',
-            override_capability: 'All tools accept optional "model" parameter to override automatic selection',
+            automatic_selection:
+              'Enabled - models selected based on query complexity and requirements',
+            override_capability:
+              'All tools accept optional "model" parameter to override automatic selection',
             selection_factors: [
               'Query complexity and length',
               'Keywords indicating specific needs (research, analysis, etc.)',

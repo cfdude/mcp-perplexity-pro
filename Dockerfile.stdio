@@ -1,0 +1,60 @@
+# Dockerfile for stdio transport deployment
+# Multi-stage Docker build for MCP Perplexity Pro (stdio version)
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Build stage
+FROM base AS builder
+WORKDIR /app
+
+# Copy package files and install all dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Production image for stdio transport
+FROM base AS runner
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 mcpserver
+
+# Copy built application
+COPY --from=deps --chown=mcpserver:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=mcpserver:nodejs /app/dist ./dist
+COPY --from=builder --chown=mcpserver:nodejs /app/package.json ./
+COPY --from=builder --chown=mcpserver:nodejs /app/docker-stdio-entrypoint.sh ./
+
+# Create data directory with proper permissions for persistent storage
+RUN mkdir -p /app/data && chown mcpserver:nodejs /app/data
+
+# Create volume mount point for persistent data
+VOLUME ["/app/data"]
+
+# Switch to non-root user
+USER mcpserver
+
+# Health check for stdio server (checks if process is running)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD pgrep -f "stdio-server.js" > /dev/null || exit 1
+
+# Environment variable defaults
+ENV PROJECT_ROOT=/app/data
+ENV STORAGE_PATH=.perplexity
+ENV DEFAULT_MODEL=sonar-reasoning-pro
+
+# Use the stdio entrypoint script
+ENTRYPOINT ["./docker-stdio-entrypoint.sh"]

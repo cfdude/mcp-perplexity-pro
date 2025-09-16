@@ -35,7 +35,9 @@ const app = createSSEServer(validatedConfig);
 
 app.listen(PORT, () => {
   console.log(`MCP Perplexity SSE Server listening on port ${PORT}`);
-  console.log(`Claude Code can connect using: claude mcp add --transport sse perplexity-sse http://localhost:${PORT}/sse`);
+  console.log(
+    `Claude Code can connect using: claude mcp add --transport sse perplexity-sse http://localhost:${PORT}/sse`
+  );
 });
 
 process.on('SIGINT', () => {

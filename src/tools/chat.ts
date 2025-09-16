@@ -28,18 +28,18 @@ export async function handleChatPerplexity(
 > {
   try {
     const apiClient = new PerplexityApiClient(config);
-    
+
     // Detect project and create project-aware config
     const { detectProjectWithSuggestions } = await import('./projects.js');
     const projectName = await detectProjectWithSuggestions(params.project_name, config);
-    
+
     // Create project-specific storage config with chat subdirectory
     const projectConfig = {
       ...config,
       project_root: config.project_root,
-      storage_path: `projects/${projectName}/chat`
+      storage_path: `projects/${projectName}/chat`,
     };
-    
+
     const storageManager = new StorageManager(projectConfig);
 
     let conversation: Conversation;
@@ -110,37 +110,39 @@ export async function handleChatPerplexity(
     // Save conversation report if requested
     let reportSaved = false;
     let reportPath: string | undefined;
-    
+
     if (params.save_report && response.choices[0]?.message?.content) {
       try {
-        // Create a formatted conversation export
-        const conversationExport = {
-          chat_id: chatId,
-          title: updatedConversation.metadata.title,
-          model: selectedModel,
-          created_at: updatedConversation.metadata.created_at,
-          updated_at: updatedConversation.metadata.updated_at,
-          message_count: updatedConversation.messages.length,
-          conversation: updatedConversation.messages.map((msg, index) => ({
-            message_number: index + 1,
-            role: msg.role,
-            content: msg.content,
-            timestamp: 'N/A' // Messages don't have individual timestamps
-          }))
-        };
-        
-        const reportContent = `# Chat Export: ${updatedConversation.metadata.title}\n\n` +
+        // Create a formatted conversation export for potential saving
+        // Note: conversationData would be used if save_report was implemented
+        // const conversationData = {
+        //   chat_id: chatId,
+        //   title: updatedConversation.metadata.title,
+        //   model: selectedModel,
+        //   created_at: updatedConversation.metadata.created_at,
+        //   updated_at: updatedConversation.metadata.updated_at,
+        //   message_count: updatedConversation.messages.length,
+        //   conversation: updatedConversation.messages.map((msg, index) => ({
+        //     message_number: index + 1,
+        //     role: msg.role,
+        //     content: msg.content,
+        //     timestamp: 'N/A' // Messages don't have individual timestamps
+        //   }))
+        // };
+
+        const reportContent =
+          `# Chat Export: ${updatedConversation.metadata.title}\n\n` +
           `**Chat ID:** ${chatId}\n` +
           `**Model:** ${selectedModel}\n` +
           `**Created:** ${new Date(updatedConversation.metadata.created_at).toLocaleString()}\n` +
           `**Messages:** ${updatedConversation.messages.length}\n\n` +
           '## Conversation\n\n' +
-          updatedConversation.messages.map((msg, index) => 
-            `### Message ${index + 1} (${msg.role})\n\n${msg.content}\n`
-          ).join('\n');
-        
+          updatedConversation.messages
+            .map((msg, index) => `### Message ${index + 1} (${msg.role})\n\n${msg.content}\n`)
+            .join('\n');
+
         const reportId = await storageManager.saveReport(
-          reportContent, 
+          reportContent,
           `Chat: ${updatedConversation.metadata.title}`
         );
         reportSaved = true;
@@ -190,12 +192,12 @@ export async function handleListChats(config: Config): Promise<ChatMetadata[] | 
     // Use default project for listing chats
     const { detectProjectWithSuggestions } = await import('./projects.js');
     const projectName = await detectProjectWithSuggestions(undefined, config);
-    
+
     const projectConfig = {
       ...config,
-      storage_path: `projects/${projectName}/chat`
+      storage_path: `projects/${projectName}/chat`,
     };
-    
+
     const storageManager = new StorageManager(projectConfig);
     return await storageManager.listConversations();
   } catch (error) {
@@ -225,12 +227,12 @@ export async function handleReadChat(
     // Use default project for reading chats
     const { detectProjectWithSuggestions } = await import('./projects.js');
     const projectName = await detectProjectWithSuggestions(undefined, config);
-    
+
     const projectConfig = {
       ...config,
-      storage_path: `projects/${projectName}/chat`
+      storage_path: `projects/${projectName}/chat`,
     };
-    
+
     const storageManager = new StorageManager(projectConfig);
     return await storageManager.getConversation(params.chat_id);
   } catch (error) {
@@ -266,12 +268,12 @@ export async function handleStorageStats(config: Config): Promise<
     // Use default project for storage stats
     const { detectProjectWithSuggestions } = await import('./projects.js');
     const projectName = await detectProjectWithSuggestions(undefined, config);
-    
+
     const projectConfig = {
       ...config,
-      storage_path: `projects/${projectName}/chat`
+      storage_path: `projects/${projectName}/chat`,
     };
-    
+
     const storageManager = new StorageManager(projectConfig);
     const stats = await storageManager.getStorageStats();
 

@@ -3,7 +3,6 @@ import type {
   ResearchPerplexityParams,
   Config,
   PerplexityResponse,
-  PerplexityStreamChunk,
   StreamingCallbacks,
   ErrorResponse,
   MCPResponse,
@@ -20,9 +19,12 @@ export async function handleAskPerplexity(
   config: Config,
   streamingCallbacks?: StreamingCallbacks
 ): Promise<MCPResponse> {
-  console.log('handleAskPerplexity called with:', { query: params.query, model: params.model });
-  console.log('Config API key:', config.api_key ? config.api_key.substring(0, 10) + '...' : 'MISSING');
-  
+  console.error('handleAskPerplexity called with:', { query: params.query, model: params.model });
+  console.error(
+    'Config API key:',
+    config.api_key ? config.api_key.substring(0, 10) + '...' : 'MISSING'
+  );
+
   try {
     const apiClient = new PerplexityApiClient(config);
 
@@ -30,17 +32,17 @@ export async function handleAskPerplexity(
     let storageManager: StorageManager | undefined;
     let projectName: string | undefined;
     let projectConfig: Config | undefined;
-    
+
     if (params.save_report) {
       const { detectProjectWithSuggestions } = await import('./projects.js');
       projectName = await detectProjectWithSuggestions(params.project_name, config);
-      
+
       // Create project-specific storage config with ask subdirectory
       projectConfig = {
         ...config,
-        storage_path: `projects/${projectName}/ask`
+        storage_path: `projects/${projectName}/ask`,
       };
-      
+
       storageManager = new StorageManager(projectConfig);
     }
 
@@ -73,11 +75,11 @@ export async function handleAskPerplexity(
       response = await apiClient.chatCompletion(request);
       content = response.choices[0]?.message?.content || 'No response generated';
     }
-    
+
     // Save report if requested
     let reportSaved = false;
     let reportPath: string | undefined;
-    
+
     if (params.save_report && storageManager && projectName && content) {
       try {
         const reportId = await storageManager.saveReport(content, params.query);
@@ -88,7 +90,7 @@ export async function handleAskPerplexity(
         console.warn('Failed to save ask report:', storageError);
       }
     }
-    
+
     // Construct response text with save information if applicable
     let responseText = content;
     if (params.save_report) {
@@ -98,7 +100,7 @@ export async function handleAskPerplexity(
         responseText += '\n\n---\n**Note:** Report save was requested but failed.';
       }
     }
-    
+
     return {
       content: [
         {
@@ -134,26 +136,30 @@ export async function handleResearchPerplexity(
   (PerplexityResponse & { report_saved?: boolean; report_path?: string }) | ErrorResponse
 > {
   try {
+    // Debug logging to see what params we're receiving
+    console.error('handleResearchPerplexity params:', JSON.stringify(params, null, 2));
     const apiClient = new PerplexityApiClient(config);
-    
+
     // Detect project and create project-aware config
     const { detectProjectWithSuggestions } = await import('./projects.js');
     const projectName = await detectProjectWithSuggestions(params.project_name, config);
-    
+
     // Create project-specific storage config with research subdirectory
     const projectConfig = {
       ...config,
-      storage_path: `projects/${projectName}/research`
+      storage_path: `projects/${projectName}/research`,
     };
-    
+
     const storageManager = new StorageManager(projectConfig);
 
     // Use sonar-deep-research by default, but allow override
     const selectedModel = params.model || 'sonar-deep-research';
-    
+
     // For sonar-deep-research, automatically use async processing to avoid timeouts
     if (selectedModel === 'sonar-deep-research') {
-      console.warn('Using sonar-deep-research model - consider using async_perplexity for long queries to avoid timeouts');
+      console.warn(
+        'Using sonar-deep-research model - consider using async_perplexity for long queries to avoid timeouts'
+      );
       // Continue with synchronous processing but with warning
     }
 
@@ -166,7 +172,10 @@ export async function handleResearchPerplexity(
           content:
             'You are a research expert. Provide comprehensive, well-structured research with clear citations and analysis. Include multiple perspectives and sources when available.',
         },
-        { role: 'user' as const, content: params.topic },
+        {
+          role: 'user' as const,
+          content: params.topic || (params as any).query || 'No research topic provided',
+        },
       ],
       temperature: 0.1, // Lower temperature for more consistent research
       max_tokens: params.max_tokens || 4000, // Longer responses for research
@@ -186,7 +195,7 @@ export async function handleResearchPerplexity(
       try {
         const reportId = await storageManager.saveReport(
           response.choices[0].message.content,
-          params.topic
+          params.topic || (params as any).query || 'Research Report'
         );
         reportSaved = true;
         reportPath = `projects/${projectName}/research/reports/${reportId}`;

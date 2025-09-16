@@ -35,7 +35,9 @@ const app = createHTTPStreamingServer(validatedConfig);
 
 app.listen(PORT, () => {
   console.log(`MCP Perplexity HTTP Streaming Server listening on port ${PORT}`);
-  console.log(`Claude Code can connect using: claude mcp add --transport http perplexity-http http://localhost:${PORT}`);
+  console.log(
+    `Claude Code can connect using: claude mcp add --transport http perplexity-http http://localhost:${PORT}`
+  );
 });
 
 process.on('SIGINT', () => {

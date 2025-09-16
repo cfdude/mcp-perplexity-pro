@@ -49,11 +49,14 @@ describe('PerplexityAPI', () => {
         },
       };
 
+      const mockHeaders = new Headers();
+      mockHeaders.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
         statusText: 'OK',
-        headers: new Headers(),
+        headers: mockHeaders,
         json: async () => mockResponse,
         text: async () => JSON.stringify(mockResponse),
         blob: async () => new Blob(),
@@ -97,10 +100,15 @@ describe('PerplexityAPI', () => {
         },
       };
 
+      const errorHeaders = new Headers();
+      errorHeaders.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
+        headers: errorHeaders,
         json: async () => errorResponse,
+        text: async () => JSON.stringify(errorResponse),
       } as Response);
 
       const request: PerplexityRequest = {
@@ -163,10 +171,15 @@ describe('PerplexityAPI', () => {
         created_at: new Date().toISOString(),
       };
 
+      const asyncHeaders = new Headers();
+      asyncHeaders.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
+        headers: asyncHeaders,
         json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse),
       } as Response);
 
       const request: PerplexityRequest = {
@@ -215,10 +228,15 @@ describe('PerplexityAPI', () => {
         },
       };
 
+      const asyncJobHeaders = new Headers();
+      asyncJobHeaders.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
+        headers: asyncJobHeaders,
         json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse),
       } as Response);
 
       const result = await api.getAsyncJob('async-job-123');
@@ -244,10 +262,15 @@ describe('PerplexityAPI', () => {
         },
       };
 
+      const notFoundHeaders = new Headers();
+      notFoundHeaders.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
+        headers: notFoundHeaders,
         json: async () => errorResponse,
+        text: async () => JSON.stringify(errorResponse),
       } as Response);
 
       await expect(api.getAsyncJob('non-existent-job')).rejects.toThrow('Async job not found');
@@ -256,10 +279,15 @@ describe('PerplexityAPI', () => {
 
   describe('Request Validation', () => {
     it('should include proper headers', async () => {
+      const validationHeaders1 = new Headers();
+      validationHeaders1.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
+        headers: validationHeaders1,
         json: async () => ({ choices: [] }),
+        text: async () => JSON.stringify({ choices: [] }),
       } as Response);
 
       await api.chatCompletion({
@@ -279,10 +307,15 @@ describe('PerplexityAPI', () => {
     });
 
     it('should properly serialize request body', async () => {
+      const validationHeaders2 = new Headers();
+      validationHeaders2.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
+        headers: validationHeaders2,
         json: async () => ({ choices: [] }),
+        text: async () => JSON.stringify({ choices: [] }),
       } as Response);
 
       const request: PerplexityRequest = {
@@ -313,10 +346,15 @@ describe('PerplexityAPI', () => {
         },
       };
 
+      const rateLimitHeaders = new Headers();
+      rateLimitHeaders.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 429,
+        headers: rateLimitHeaders,
         json: async () => errorResponse,
+        text: async () => JSON.stringify(errorResponse),
       } as Response);
 
       try {
@@ -331,10 +369,15 @@ describe('PerplexityAPI', () => {
     });
 
     it('should handle unexpected error formats', async () => {
+      const unexpectedHeaders = new Headers();
+      unexpectedHeaders.set('content-type', 'application/json');
+
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
+        headers: unexpectedHeaders,
         json: async () => ({ unexpected: 'format' }),
+        text: async () => JSON.stringify({ unexpected: 'format' }),
       } as Response);
 
       try {

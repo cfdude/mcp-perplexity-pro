@@ -1,12 +1,13 @@
 {
   "name": "mcp-perplexity-pro",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server for Perplexity API with intelligent model selection",
   "main": "dist/index.js",
   "module": "./src/index.ts",
   "type": "module",
   "bin": {
-    "mcp-perplexity-pro": "./bin/mcp-perplexity-pro"
+    "mcp-perplexity-pro": "./bin/mcp-perplexity-pro",
+    "mcp-perplexity-pro-stdio": "./bin/mcp-perplexity-pro-stdio"
   },
   "files": [
     "dist/**/*",
@@ -35,7 +36,7 @@
   "scripts": {
     "build": "tsc && smithery build",
     "dev": "smithery dev",
-    "start": "node dist/index.js",
+    "start": "node dist/launcher.js",
     "test": "vitest",
     "test:watch": "vitest watch",
     "test:ui": "vitest --ui",
@@ -51,7 +52,9 @@
     "prepublishOnly": "npm run build && npm run lint && npm run test:run",
     "postinstall": "node -e \"console.log('\\\\n🎉 mcp-perplexity-pro installed successfully!\\\\n📚 Usage: npx mcp-perplexity-pro --help\\\\n')\"",
     "docker:build": "docker build -t mcp-perplexity-pro .",
-    "docker:run": "docker-compose up"
+    "docker:build:stdio": "docker build -f Dockerfile.stdio -t mcp-perplexity-pro:stdio .",
+    "docker:run": "docker-compose up",
+    "docker:run:stdio": "docker-compose --profile stdio up -d mcp-perplexity-pro-stdio"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.3",

@@ -21,10 +21,8 @@ for (let i = 2; i < process.argv.length; i++) {
 }
 
 // Load configuration - try multiple sources for API key
-const apiKey = process.env.PERPLEXITY_API_KEY || 
-              process.env.API_KEY || 
-              process.env.PERPLEXITY_API_TOKEN ||
-              '';
+const apiKey =
+  process.env.PERPLEXITY_API_KEY || process.env.API_KEY || process.env.PERPLEXITY_API_TOKEN || '';
 
 const config = {
   api_key: apiKey,
@@ -33,8 +31,12 @@ const config = {
   storage_path: '.perplexity',
 };
 
-// Debug API key
-console.log(`API key loaded: ${config.api_key ? 'YES (' + config.api_key.substring(0, 10) + '...)' : 'NO'}`);
+// Debug API key - only log to stdout in debug mode, otherwise stderr
+const debugMode = process.env.MCP_DEBUG_MODE === 'true';
+const debugLog = debugMode ? console.log : console.error;
+debugLog(
+  `API key loaded: ${config.api_key ? 'YES (' + config.api_key.substring(0, 10) + '...)' : 'NO'}`
+);
 
 // Validate configuration
 const validatedConfig = configSchema.parse(config);
@@ -42,11 +44,13 @@ const validatedConfig = configSchema.parse(config);
 const app = createHTTPStreamingServer(validatedConfig);
 
 app.listen(PORT, () => {
-  console.log(`MCP Perplexity HTTP Streaming Server listening on port ${PORT}`);
-  console.log(`Claude Code can connect using: claude mcp add --transport http perplexity-http http://localhost:${PORT}`);
+  debugLog(`MCP Perplexity HTTP Streaming Server listening on port ${PORT}`);
+  debugLog(
+    `Claude Code can connect using: claude mcp add --transport http perplexity-http http://localhost:${PORT}`
+  );
 });
 
 process.on('SIGINT', () => {
-  console.log('Shutting down HTTP streaming server...');
+  debugLog('Shutting down HTTP streaming server...');
   process.exit(0);
 });

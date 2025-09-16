@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+
+// Stdio-only launcher for MCP Perplexity Pro
+// This bypasses HTTP transport and connects directly via stdio
+import('../dist/stdio-server.js').catch((error) => {
+  console.error('[mcp-perplexity-pro-stdio] Failed to load stdio server:', error.message);
+  console.error('[mcp-perplexity-pro-stdio] Make sure the package is built with: npm run build');
+  process.exit(1);
+});

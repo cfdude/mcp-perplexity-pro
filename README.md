@@ -31,13 +31,87 @@ A comprehensive Model Context Protocol (MCP) server for the Perplexity API, feat
 npm install -g mcp-perplexity-pro
 ```
 
-### Configuration
+## 🚀 Deployment Options
 
-#### HTTP-Only Transport (Aligned with Anthropic's Direction)
+### 1. NPX Deployment (stdio-npx)
 
-Following Anthropic's deprecation of stdio transport in favor of HTTP, this server uses HTTP transport exclusively for both Claude Code and Claude Desktop.
+The simplest way to use the MCP server with stdio transport:
+
+**For Claude Desktop** (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "perplexity": {
+      "command": "npx",
+      "args": ["mcp-perplexity-pro-stdio"],
+      "env": {
+        "PERPLEXITY_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
 
 **For Claude Code** (`.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "perplexity": {
+      "command": "npx",
+      "args": ["mcp-perplexity-pro-stdio"],
+      "env": {
+        "PERPLEXITY_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+### 2. Docker Deployment (stdio-docker)
+
+Run the MCP server in a Docker container with stdio transport:
+
+**Using Docker Compose:**
+
+```bash
+# Set your API key
+export PERPLEXITY_API_KEY="your-api-key-here"
+
+# Start the stdio service
+docker-compose --profile stdio up -d mcp-perplexity-pro-stdio
+```
+
+**For Claude Desktop** (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "perplexity": {
+      "command": "docker",
+      "args": ["exec", "-i", "mcp-perplexity-pro-stdio", "node", "/app/dist/stdio-server.js"],
+      "env": {
+        "PERPLEXITY_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+**Direct Docker Run:**
+
+```bash
+docker run -it --rm \
+  -e PERPLEXITY_API_KEY="your-api-key-here" \
+  -v "$(pwd)/data:/app/data" \
+  mcp-perplexity-pro:stdio
+```
+
+### 3. HTTP Transport (Legacy)
+
+**For Claude Code** (`.mcp.json`):
+
 ```json
 {
   "mcpServers": {
@@ -53,11 +127,12 @@ Following Anthropic's deprecation of stdio transport in favor of HTTP, this serv
 ```
 
 **For Claude Desktop** (`claude_desktop_config.json`):
+
 ```json
 {
   "mcpServers": {
     "perplexity": {
-      "command": "node", 
+      "command": "node",
       "args": ["dist/launcher.js", "--http-port=8125"],
       "env": {
         "PERPLEXITY_API_KEY": "your-api-key-here"
@@ -68,16 +143,19 @@ Following Anthropic's deprecation of stdio transport in favor of HTTP, this serv
 ```
 
 **Default Ports:**
+
 - Claude Code: 8124 (default when no port specified)
 - Claude Desktop: 8125 (recommended)
 
 **Environment Variables:**
+
 - `PERPLEXITY_API_KEY` (required): Your Perplexity API key
 - `DEFAULT_MODEL` (optional): Default model (default: sonar-reasoning-pro)
 - `PROJECT_ROOT` (optional): Project root directory for storage
 - `STORAGE_PATH` (optional): Storage subdirectory (default: .perplexity)
 
 The launcher automatically:
+
 - Detects if a build is needed and rebuilds if necessary
 - Starts HTTP server with streamable transport
 - No manual build or start commands required

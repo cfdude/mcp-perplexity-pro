@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import express, { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
@@ -8,21 +8,13 @@ import {
   JSONRPCNotification,
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  InitializeRequestSchema
+  InitializeRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { randomUUID } from 'crypto';
 import { configSchema } from './types.js';
 import { z } from 'zod';
 import { handleAskPerplexity, handleResearchPerplexity } from './tools/query.js';
-import {
-  handleChatPerplexity,
-  handleListChats,
-  handleReadChat,
-  handleStorageStats,
-} from './tools/chat.js';
-import { handleAsyncPerplexity, handleCheckAsync, handleListAsyncJobs } from './tools/async.js';
-import { handleListProjects, handleDeleteProject } from './tools/projects.js';
-import { getModelSummary } from './models.js';
+import { handleChatPerplexity } from './tools/chat.js';
 
 const SESSION_ID_HEADER_NAME = 'mcp-session-id';
 const JSON_RPC = '2.0';
@@ -30,7 +22,7 @@ const JSON_RPC = '2.0';
 export class PerplexityHTTPServer {
   server: Server;
   transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
-  
+
   constructor(private config: z.infer<typeof configSchema>) {
     this.server = new Server(
       {
@@ -44,23 +36,21 @@ export class PerplexityHTTPServer {
         },
       }
     );
-    
+
     this.setupHandlers();
   }
 
   async handleGetRequest(req: Request, res: Response) {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     if (!sessionId || !this.transports[sessionId]) {
-      res
-        .status(400)
-        .json(this.createErrorResponse('Bad Request: invalid session ID or method.'));
+      res.status(400).json(this.createErrorResponse('Bad Request: invalid session ID or method.'));
       return;
     }
 
     console.log(`Establishing SSE stream for session ${sessionId}`);
     const transport = this.transports[sessionId];
     await transport.handleRequest(req, res);
-    
+
     return;
   }
 
@@ -94,9 +84,7 @@ export class PerplexityHTTPServer {
         return;
       }
 
-      res
-        .status(400)
-        .json(this.createErrorResponse('Bad Request: invalid session ID or method.'));
+      res.status(400).json(this.createErrorResponse('Bad Request: invalid session ID or method.'));
       return;
     } catch (error) {
       console.error('Error handling MCP request:', error);
@@ -126,7 +114,13 @@ export class PerplexityHTTPServer {
               model: {
                 type: 'string',
                 description: 'Override default model selection',
-                enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+                enum: [
+                  'sonar',
+                  'sonar-pro',
+                  'sonar-reasoning',
+                  'sonar-reasoning-pro',
+                  'sonar-deep-research',
+                ],
               },
               max_tokens: {
                 type: 'number',
@@ -158,7 +152,8 @@ export class PerplexityHTTPServer {
               },
               project_name: {
                 type: 'string',
-                description: 'Project name for organizing conversations (auto-detected if not provided)',
+                description:
+                  'Project name for organizing conversations (auto-detected if not provided)',
               },
             },
             required: ['query'],
@@ -177,7 +172,13 @@ export class PerplexityHTTPServer {
               model: {
                 type: 'string',
                 description: 'Override default model (defaults to sonar-deep-research)',
-                enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+                enum: [
+                  'sonar',
+                  'sonar-pro',
+                  'sonar-reasoning',
+                  'sonar-reasoning-pro',
+                  'sonar-deep-research',
+                ],
               },
               max_tokens: {
                 type: 'number',
@@ -190,7 +191,8 @@ export class PerplexityHTTPServer {
               },
               project_name: {
                 type: 'string',
-                description: 'Project name for organizing research reports (auto-detected if not provided)',
+                description:
+                  'Project name for organizing research reports (auto-detected if not provided)',
               },
             },
             required: ['topic'],
@@ -217,7 +219,13 @@ export class PerplexityHTTPServer {
               model: {
                 type: 'string',
                 description: 'Override default model',
-                enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+                enum: [
+                  'sonar',
+                  'sonar-pro',
+                  'sonar-reasoning',
+                  'sonar-reasoning-pro',
+                  'sonar-deep-research',
+                ],
               },
               max_tokens: {
                 type: 'number',
@@ -236,7 +244,8 @@ export class PerplexityHTTPServer {
               },
               project_name: {
                 type: 'string',
-                description: 'Project name for organizing conversations (auto-detected if not provided)',
+                description:
+                  'Project name for organizing conversations (auto-detected if not provided)',
               },
             },
             required: ['message'],
@@ -250,7 +259,7 @@ export class PerplexityHTTPServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       const args = request.params.arguments;
       const toolName = request.params.name;
-      
+
       if (!args || !toolName) {
         throw new Error('Invalid tool call');
       }
@@ -264,40 +273,57 @@ export class PerplexityHTTPServer {
           case 'ask_perplexity': {
             if (transport) {
               // Stream the response in real-time
-              return await this.handleStreamingTool(transport, 'ask_perplexity', args, handleAskPerplexity);
+              return await this.handleStreamingTool(
+                transport,
+                'ask_perplexity',
+                args,
+                handleAskPerplexity
+              );
             } else {
               // Fallback to regular response
               return await handleAskPerplexity(args as any, this.config);
             }
           }
-          
+
           case 'research_perplexity': {
             if (transport) {
-              return await this.handleStreamingTool(transport, 'research_perplexity', args, handleResearchPerplexity);
+              return await this.handleStreamingTool(
+                transport,
+                'research_perplexity',
+                args,
+                handleResearchPerplexity
+              );
             } else {
               return await handleResearchPerplexity(args as any, this.config);
             }
           }
-          
+
           case 'chat_perplexity': {
             if (transport) {
-              return await this.handleStreamingTool(transport, 'chat_perplexity', args, handleChatPerplexity);
+              return await this.handleStreamingTool(
+                transport,
+                'chat_perplexity',
+                args,
+                handleChatPerplexity
+              );
             } else {
               const result = await handleChatPerplexity(args as any, this.config);
               return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
             }
           }
-          
+
           // Add other tool handlers here...
           default:
             throw new Error(`Unknown tool: ${toolName}`);
         }
       } catch (error) {
         return {
-          content: [{
-            type: 'text',
-            text: `Error: ${error instanceof Error ? error.message : String(error)}`
-          }],
+          content: [
+            {
+              type: 'text',
+              text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
           isError: true,
         };
       }
@@ -316,10 +342,10 @@ export class PerplexityHTTPServer {
     try {
       // Send initial streaming message
       await this.sendStreamingMessage(transport, `🚀 Starting ${toolName}...`);
-      
+
       // Execute the tool handler
       const result = await handler(args, this.config);
-      
+
       // Stream the result content
       if (result && typeof result === 'object' && result.content) {
         for (const contentItem of result.content) {
@@ -334,14 +360,16 @@ export class PerplexityHTTPServer {
           }
         }
       }
-      
+
       // Send completion message
       await this.sendStreamingMessage(transport, '✅ Complete!');
-      
+
       return result;
-      
     } catch (error) {
-      await this.sendStreamingMessage(transport, `❌ Error: ${error instanceof Error ? error.message : String(error)}`);
+      await this.sendStreamingMessage(
+        transport,
+        `❌ Error: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -349,17 +377,20 @@ export class PerplexityHTTPServer {
   /**
    * Send a streaming message notification
    */
-  private async sendStreamingMessage(transport: StreamableHTTPServerTransport, data: string): Promise<void> {
+  private async sendStreamingMessage(
+    transport: StreamableHTTPServerTransport,
+    data: string
+  ): Promise<void> {
     const message: LoggingMessageNotification = {
       method: 'notifications/message',
       params: { level: 'info', data: data },
     };
-    
+
     const rpcNotification: JSONRPCNotification = {
       ...message,
       jsonrpc: JSON_RPC,
     };
-    
+
     await transport.send(rpcNotification);
   }
 
@@ -391,7 +422,7 @@ export class PerplexityHTTPServer {
       return result.success;
     };
     if (Array.isArray(body)) {
-      return body.some((request) => isInitial(request));
+      return body.some(request => isInitial(request));
     }
     return isInitial(body);
   }

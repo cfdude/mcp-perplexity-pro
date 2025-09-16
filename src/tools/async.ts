@@ -25,15 +25,9 @@ export async function handleAsyncPerplexity(
   try {
     const apiClient = new PerplexityApiClient(config);
 
-    // Detect project and create project-aware config
-    const { detectProjectWithSuggestions } = await import('./projects.js');
-    const projectName = await detectProjectWithSuggestions(undefined, config);
-    
-    // Create project-specific storage config with async subdirectory
-    const projectConfig = {
-      ...config,
-      storage_path: `projects/${projectName}/async`
-    };
+    // Detect project for potential report saving (not currently used)
+    // const { detectProjectWithSuggestions } = await import('./projects.js');
+    // const projectName = await detectProjectWithSuggestions(undefined, config);
 
     // Select optimal model based on query or use explicit model
     const selectedModel = selectOptimalModel(params.query, params.model, config.default_model);
@@ -85,7 +79,7 @@ export async function handleCheckAsync(
 > {
   try {
     const apiClient = new PerplexityApiClient(config);
-    
+
     // Note: async job checking doesn't need project-aware config since
     // job IDs are global and not project-specific
     const response = await apiClient.getAsyncJob(params.job_id);
@@ -143,13 +137,13 @@ export async function handleListAsyncJobs(
 > {
   try {
     const apiClient = new PerplexityApiClient(config);
-    
+
     // Note: listing async jobs doesn't need project-aware config since
     // jobs are listed globally, not per project
     const response = await apiClient.listAsyncJobs(limit, nextToken);
 
     // Add helpful metadata to each job
-    const enrichedJobs = response.jobs.map(job => {
+    const enrichedJobs = (response.jobs || []).map(job => {
       const timeSinceCreated = formatTimeDuration(Date.now() - job.created_at * 1000);
       let estimatedTimeRemaining: string | undefined;
 
@@ -171,7 +165,7 @@ export async function handleListAsyncJobs(
     return {
       jobs: enrichedJobs,
       ...(response.next_token && { next_token: response.next_token }),
-      total_jobs: response.jobs.length,
+      total_jobs: (response.jobs || []).length,
     };
   } catch (error) {
     return PerplexityApiClient.handleError(error, {

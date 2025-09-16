@@ -20,19 +20,22 @@ import { getModelSummary } from './models.js';
 export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) {
   // Session management
   const transports: Record<string, StreamableHTTPServerTransport> = {};
-  
-  // Store per-session configs for dynamic API key handling
-  const sessionConfigs: Record<string, z.infer<typeof configSchema>> = {};
 
-  const server = new Server({
-    name: 'mcp-perplexity-pro',
-    version: '1.0.0',
-  }, {
-    capabilities: {
-      tools: {},
-      progress: true,
+  // Store per-session configs for dynamic API key handling (for future use)
+  // const sessionConfigs: Record<string, z.infer<typeof configSchema>> = {};
+
+  const server = new Server(
+    {
+      name: 'mcp-perplexity-pro',
+      version: '1.0.0',
     },
-  });
+    {
+      capabilities: {
+        tools: {},
+        progress: true,
+      },
+    }
+  );
 
   // List available tools
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -46,11 +49,18 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             query: { type: 'string', description: 'Your question or prompt' },
             project_name: {
               type: 'string',
-              description: 'Project name for organizing conversations (auto-detected if not provided)',
+              description:
+                'Project name for organizing conversations (auto-detected if not provided)',
             },
             model: {
               type: 'string',
-              enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+              enum: [
+                'sonar',
+                'sonar-pro',
+                'sonar-reasoning',
+                'sonar-reasoning-pro',
+                'sonar-deep-research',
+              ],
               description: 'Override default model',
             },
             temperature: {
@@ -70,7 +80,10 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
               type: 'boolean',
               description: 'Include related questions',
             },
-            save_report: { type: 'boolean', description: 'Save response as a report to project directory' },
+            save_report: {
+              type: 'boolean',
+              description: 'Save response as a report to project directory',
+            },
           },
           required: ['query'],
         },
@@ -84,12 +97,19 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             topic: { type: 'string', description: 'Research topic or question' },
             project_name: {
               type: 'string',
-              description: 'Project name for organizing research reports (auto-detected if not provided)',
+              description:
+                'Project name for organizing research reports (auto-detected if not provided)',
             },
             save_report: { type: 'boolean', description: 'Save report to project directory' },
             model: {
               type: 'string',
-              enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+              enum: [
+                'sonar',
+                'sonar-pro',
+                'sonar-reasoning',
+                'sonar-reasoning-pro',
+                'sonar-deep-research',
+              ],
               description: 'Override default model (defaults to sonar-deep-research)',
             },
             max_tokens: { type: 'number', minimum: 1, description: 'Maximum response length' },
@@ -106,13 +126,20 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             message: { type: 'string', description: 'Your message' },
             project_name: {
               type: 'string',
-              description: 'Project name for organizing conversations (auto-detected if not provided)',
+              description:
+                'Project name for organizing conversations (auto-detected if not provided)',
             },
             chat_id: { type: 'string', description: 'Continue existing conversation' },
             title: { type: 'string', description: 'Required for new chat - conversation title' },
             model: {
               type: 'string',
-              enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+              enum: [
+                'sonar',
+                'sonar-pro',
+                'sonar-reasoning',
+                'sonar-reasoning-pro',
+                'sonar-deep-research',
+              ],
               description: 'Override default model',
             },
             temperature: {
@@ -136,7 +163,13 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             query: { type: 'string', description: 'Your question or prompt' },
             model: {
               type: 'string',
-              enum: ['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'],
+              enum: [
+                'sonar',
+                'sonar-pro',
+                'sonar-reasoning',
+                'sonar-reasoning-pro',
+                'sonar-deep-research',
+              ],
               description: 'Override default model',
             },
             temperature: {
@@ -273,13 +306,13 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             onChunk: async (chunk: any) => {
               const content = chunk.choices?.[0]?.delta?.content;
               console.log('Streaming chunk received:', content || '[no content]');
-              
+
               if (content) {
                 chunkCount++;
-                
+
                 // Output to stdout for real-time display
                 process.stdout.write(`[CHUNK ${chunkCount}]: ${content}`);
-                
+
                 // Send MCP progress notification (if supported by Claude Code)
                 try {
                   await server.notification({
@@ -288,18 +321,21 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
                       progressToken: 'streaming',
                       progress: Math.min(chunkCount * 2, 99), // Approximate progress
                       total: 100,
-                      message: `Streaming content... (chunk ${chunkCount})`
-                    }
+                      message: `Streaming content... (chunk ${chunkCount})`,
+                    },
                   });
                 } catch (progressError) {
-                  console.log('Progress notification failed (expected):', progressError instanceof Error ? progressError.message : String(progressError));
+                  console.log(
+                    'Progress notification failed (expected):',
+                    progressError instanceof Error ? progressError.message : String(progressError)
+                  );
                 }
               }
             },
-            onComplete: async (response: any) => {
+            onComplete: async () => {
               console.log('Streaming complete');
               process.stdout.write(`\n[STREAMING COMPLETE]\n`);
-              
+
               // Send final progress notification
               try {
                 await server.notification({
@@ -308,19 +344,22 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
                     progressToken: 'streaming',
                     progress: 100,
                     total: 100,
-                    message: 'Streaming complete!'
-                  }
+                    message: 'Streaming complete!',
+                  },
                 });
               } catch (progressError) {
-                console.log('Final progress notification failed:', progressError instanceof Error ? progressError.message : String(progressError));
+                console.log(
+                  'Final progress notification failed:',
+                  progressError instanceof Error ? progressError.message : String(progressError)
+                );
               }
             },
             onError: (error: Error) => {
               console.error('Streaming error:', error);
               process.stdout.write(`\n[STREAMING ERROR]: ${error.message}\n`);
-            }
+            },
           };
-          
+
           const result = await handleAskPerplexity(args as any, config, streamingCallbacks);
           return result;
         }
@@ -406,8 +445,10 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
           const modelInfo = {
             available_models: getModelSummary(),
             default_model: config.default_model,
-            automatic_selection: 'Enabled - models selected based on query complexity and requirements',
-            override_capability: 'All tools accept optional "model" parameter to override automatic selection',
+            automatic_selection:
+              'Enabled - models selected based on query complexity and requirements',
+            override_capability:
+              'All tools accept optional "model" parameter to override automatic selection',
             selection_factors: [
               'Query complexity and length',
               'Keywords indicating specific needs (research, analysis, etc.)',
@@ -440,10 +481,12 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
   app.use(express.json());
 
   // Configure CORS with required headers
-  app.use(cors({
-    origin: '*',
-    exposedHeaders: ['Mcp-Session-Id']
-  }));
+  app.use(
+    cors({
+      origin: '*',
+      exposedHeaders: ['Mcp-Session-Id'],
+    })
+  );
 
   // Add logging middleware
   app.use((req, res, next) => {
@@ -456,21 +499,22 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
   // MCP endpoint with proper session management
   app.all('/mcp', async (req, res): Promise<void> => {
     console.log('MCP request received:', req.method, req.headers);
-    
+
     // Check for API key in headers and update config if found
-    let requestConfig = config;
-    const authHeader = req.headers.authorization;
-    const apiKeyHeader = req.headers['x-api-key'] || req.headers['perplexity-api-key'];
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const headerApiKey = authHeader.substring(7);
-      console.log('API key from Authorization header:', headerApiKey.substring(0, 10) + '...');
-      requestConfig = { ...config, api_key: headerApiKey };
-    } else if (apiKeyHeader) {
-      console.log('API key from custom header:', String(apiKeyHeader).substring(0, 10) + '...');
-      requestConfig = { ...config, api_key: String(apiKeyHeader) };
-    }
-    
+    // Note: requestConfig would be used for dynamic API key handling (future feature)
+    // let requestConfig = config;
+    // const authHeader = req.headers.authorization;
+    // const apiKeyHeader = req.headers['x-api-key'] || req.headers['perplexity-api-key'];
+    //
+    // if (authHeader && authHeader.startsWith('Bearer ')) {
+    //   const headerApiKey = authHeader.substring(7);
+    //   console.log('API key from Authorization header:', headerApiKey.substring(0, 10) + '...');
+    //   requestConfig = { ...config, api_key: headerApiKey };
+    // } else if (apiKeyHeader) {
+    //   console.log('API key from custom header:', String(apiKeyHeader).substring(0, 10) + '...');
+    //   requestConfig = { ...config, api_key: String(apiKeyHeader) };
+    // }
+
     try {
       const sessionId = req.headers['mcp-session-id'] as string | undefined;
       let transport: StreamableHTTPServerTransport;
@@ -484,16 +528,16 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
         console.log('Creating new transport for session');
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
-          onsessioninitialized: (newSessionId) => {
+          onsessioninitialized: newSessionId => {
             console.log('Session initialized:', newSessionId);
             transports[newSessionId] = transport;
-          }
+          },
         });
         await server.connect(transport);
       } else {
         res.status(400).json({
           error: 'Session required',
-          message: 'POST request required to initialize session'
+          message: 'POST request required to initialize session',
         });
         return;
       }
@@ -502,9 +546,9 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
       return;
     } catch (error) {
       console.error('Error handling MCP request:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       });
       return;
     }
@@ -512,11 +556,11 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
 
   // Health check endpoint
   app.get('/health', (req, res) => {
-    res.json({ 
-      status: 'healthy', 
+    res.json({
+      status: 'healthy',
       transport: 'http-streaming',
       server: 'mcp-perplexity-pro',
-      version: '1.0.0'
+      version: '1.0.0',
     });
   });
 

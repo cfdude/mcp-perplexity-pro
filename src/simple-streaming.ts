@@ -1,5 +1,8 @@
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { LoggingMessageNotification, JSONRPCNotification } from '@modelcontextprotocol/sdk/types.js';
+import {
+  LoggingMessageNotification,
+  JSONRPCNotification,
+} from '@modelcontextprotocol/sdk/types.js';
 
 /**
  * Simple streaming helper that sends LoggingMessageNotifications via STDIO
@@ -36,9 +39,13 @@ export class SimpleStreaming {
   /**
    * Stream content in chunks with delays for a typewriter effect
    */
-  async streamContent(content: string, chunkSize: number = 100, delayMs: number = 50): Promise<void> {
+  async streamContent(
+    content: string,
+    chunkSize: number = 100,
+    delayMs: number = 50
+  ): Promise<void> {
     const chunks = this.chunkText(content, chunkSize);
-    
+
     for (const chunk of chunks) {
       await this.sendMessage(chunk);
       if (delayMs > 0) {
@@ -58,13 +65,13 @@ export class SimpleStreaming {
     try {
       // Send start message
       await this.sendMessage(startMessage || `🚀 Starting ${toolName}...`);
-      
+
       // Execute the handler
       const result = await handler();
-      
+
       // Send completion message
       await this.sendMessage('✅ Complete!');
-      
+
       return result;
     } catch (error) {
       // Send error message

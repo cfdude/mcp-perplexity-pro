@@ -4,6 +4,7 @@ import { spawn, execSync } from 'child_process';
 import { existsSync, statSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { discoverMcpPort, type PortDiscoveryResult } from './port-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,7 +17,7 @@ function log(message: string) {
 function checkBuildNeeded(): boolean {
   const distPath = join(projectRoot, 'dist');
   const srcPath = join(projectRoot, 'src');
-  
+
   // If dist doesn't exist, build is needed
   if (!existsSync(distPath)) {
     log('dist/ directory not found, build required');
@@ -27,13 +28,13 @@ function checkBuildNeeded(): boolean {
   try {
     const srcFiles = readdirSync(srcPath).filter(f => f.endsWith('.ts'));
     const distFiles = readdirSync(distPath).filter(f => f.endsWith('.js'));
-    
+
     // If different number of files, build needed
     if (srcFiles.length === 0) {
       log('No TypeScript files found in src/');
       return true;
     }
-    
+
     if (distFiles.length === 0) {
       log('No compiled JavaScript files found in dist/');
       return true;
@@ -68,10 +69,10 @@ function checkBuildNeeded(): boolean {
 function runBuild(): void {
   log('Building MCP server...');
   try {
-    execSync('npm run build', { 
-      cwd: projectRoot, 
+    execSync('npm run build', {
+      cwd: projectRoot,
       stdio: 'inherit',
-      timeout: 120000 // 2 minute timeout
+      timeout: 120000, // 2 minute timeout
     });
     log('Build completed successfully');
   } catch (error) {
@@ -80,10 +81,12 @@ function runBuild(): void {
   }
 }
 
-function parseArgs(): { httpPort: number } {
+function parseArgs(): { httpPort: number; debugMode: boolean; clientMode: 'stdio' | 'http' } {
   const args = process.argv.slice(2);
   let httpPort = 8124; // Default port for Claude Code
-  
+  let debugMode = false;
+  let clientMode: 'stdio' | 'http' = 'stdio'; // Default to stdio mode
+
   for (const arg of args) {
     if (arg.startsWith('--http-port=')) {
       const portStr = arg.split('=')[1];
@@ -102,6 +105,10 @@ function parseArgs(): { httpPort: number } {
         process.exit(1);
       }
       httpPort = port;
+    } else if (arg === '--debug-mode') {
+      debugMode = true;
+    } else if (arg === '--http-client') {
+      clientMode = 'http';
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 mcp-perplexity-pro - Perplexity API MCP Server
@@ -109,6 +116,7 @@ mcp-perplexity-pro - Perplexity API MCP Server
 Usage:
   mcp-perplexity-pro                    # Start HTTP server on port 8124 (for Claude Code)
   mcp-perplexity-pro --http-port=8125   # Start HTTP server on port 8125 (for Claude Desktop)
+  mcp-perplexity-pro --debug-mode       # Enable debug logging to stdout
 
 Environment Variables:
   PERPLEXITY_API_KEY    # Required: Your Perplexity API key
@@ -119,46 +127,46 @@ Environment Variables:
       process.exit(0);
     }
   }
-  
-  return { httpPort };
+
+  return { httpPort, debugMode, clientMode };
 }
 
 function startServer(httpPort: number): void {
   const distPath = join(projectRoot, 'dist');
-  
+
   // Always use HTTP mode - start the HTTP server
   log(`Starting HTTP server on port ${httpPort}...`);
   const serverPath = join(distPath, 'index.js');
-  
+
   if (!existsSync(serverPath)) {
     log(`Server file not found: ${serverPath}`);
     process.exit(1);
   }
-  
+
   const serverProcess = spawn('node', [serverPath, `--port=${httpPort}`], {
     stdio: 'inherit',
     env: { ...process.env },
-    cwd: projectRoot
+    cwd: projectRoot,
   });
-  
-  serverProcess.on('error', (error) => {
+
+  serverProcess.on('error', error => {
     log(`Failed to start HTTP server: ${error}`);
     process.exit(1);
   });
-  
-  serverProcess.on('exit', (code) => {
+
+  serverProcess.on('exit', code => {
     if (code !== 0) {
       log(`HTTP server exited with code ${code}`);
       process.exit(code || 1);
     }
   });
-  
+
   // Handle graceful shutdown
   process.on('SIGINT', () => {
     log('Shutting down HTTP server...');
     serverProcess.kill('SIGINT');
   });
-  
+
   process.on('SIGTERM', () => {
     log('Shutting down HTTP server...');
     serverProcess.kill('SIGTERM');
@@ -166,29 +174,60 @@ function startServer(httpPort: number): void {
 }
 
 async function main(): Promise<void> {
-  const { httpPort } = parseArgs();
-  
+  const { httpPort: preferredPort, debugMode, clientMode } = parseArgs();
+
+  // Set debug mode environment variable for child processes
+  if (debugMode) {
+    process.env.MCP_DEBUG_MODE = 'true';
+  }
+
+  // Discover the best port to use (check for existing servers or find available)
+  let discovery: PortDiscoveryResult;
+  try {
+    discovery = await discoverMcpPort(preferredPort);
+
+    if (discovery.isExistingServer) {
+      if (clientMode === 'http') {
+        // For HTTP client mode (Claude Code), output connection URL to stdout and exit
+        console.log(`http://localhost:${discovery.port}`);
+        process.exit(0);
+      } else {
+        // For stdio mode (Claude Desktop), log and exit as before
+        log(`Found existing healthy MCP server on port ${discovery.port}`);
+        log(`Clients can connect to: http://localhost:${discovery.port}`);
+        log(`This instance will exit as the shared server is already running.`);
+        process.exit(0);
+      }
+    } else {
+      log(`No existing MCP server found. Starting new server on port ${discovery.port}`);
+    }
+  } catch (error) {
+    log(`Port discovery failed: ${error}`);
+    log(`Attempting to use preferred port ${preferredPort}`);
+    discovery = { port: preferredPort, isExistingServer: false };
+  }
+
   // Check if build is needed (skip if we're already in a build process)
   if (!process.env.npm_lifecycle_event && checkBuildNeeded()) {
     runBuild();
   }
-  
-  // Start the HTTP server
-  startServer(httpPort);
+
+  // Start the HTTP server on the discovered port
+  startServer(discovery.port);
 }
 
 // Handle unhandled errors
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   log(`Uncaught exception: ${error}`);
   process.exit(1);
 });
 
-process.on('unhandledRejection', (error) => {
+process.on('unhandledRejection', error => {
   log(`Unhandled rejection: ${error}`);
   process.exit(1);
 });
 
-main().catch((error) => {
+main().catch(error => {
   log(`Launcher error: ${error}`);
   process.exit(1);
 });

@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # HTTP transport service (default)
   mcp-perplexity-pro:
     build:
       context: .
@@ -9,6 +10,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
     volumes:
       # Mount project storage to persist chat history
       - ./storage:/app/storage
@@ -16,15 +18,38 @@ services:
       - ${PROJECT_ROOT:-/workspace}:/workspace:ro
     networks:
       - mcp-network
-    # MCP servers typically use stdio, not network ports
-    # ports:
-    #   - "3000:3000"
+    ports:
+      - "8125:8125"
     healthcheck:
       test: ["CMD", "node", "-e", "console.log('MCP Server healthy')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 5s
+
+  # Stdio transport service
+  mcp-perplexity-pro-stdio:
+    build:
+      context: .
+      dockerfile: Dockerfile.stdio
+    container_name: mcp-perplexity-pro-stdio
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      - PROJECT_ROOT=/app/data
+      - STORAGE_PATH=.perplexity
+      - DEFAULT_MODEL=sonar-reasoning-pro
+    volumes:
+      # Mount data directory for persistent storage
+      - ./data:/app/data
+    networks:
+      - mcp-network
+    # stdio transport doesn't need network ports
+    stdin_open: true
+    tty: true
+    profiles:
+      - stdio
 
   # Development service with hot reload
   mcp-perplexity-pro-dev:
