@@ -130,6 +130,7 @@ export async function handleAskPerplexity(
 
 /**
  * Handles the research_perplexity tool - deep research with optional saving
+ * For sonar-deep-research, uses async API with polling to handle long-running queries
  */
 export async function handleResearchPerplexity(
   params: ResearchPerplexityParams,
@@ -158,14 +159,6 @@ export async function handleResearchPerplexity(
     const toolDefaultModel = config.models?.research || 'sonar-deep-research';
     const selectedModel = params.model || toolDefaultModel;
 
-    // For sonar-deep-research, automatically use async processing to avoid timeouts
-    if (selectedModel === 'sonar-deep-research') {
-      console.warn(
-        'Using sonar-deep-research model - consider using async_perplexity for long queries to avoid timeouts'
-      );
-      // Continue with synchronous processing but with warning
-    }
-
     // Prepare the research request with comprehensive settings
     const request = {
       model: selectedModel,
@@ -188,7 +181,65 @@ export async function handleResearchPerplexity(
       },
     };
 
-    const response = await apiClient.chatCompletion(request);
+    let response: PerplexityResponse;
+
+    // For sonar-deep-research, use async API with polling to avoid timeouts
+    if (selectedModel === 'sonar-deep-research') {
+      console.error('Using async API for sonar-deep-research model');
+
+      // Create async job
+      const asyncJob = await apiClient.createAsyncChatCompletion(request);
+      console.error(`Created async job: ${asyncJob.id}`);
+
+      // Poll for completion (max 10 minutes with 15-second intervals)
+      const maxWaitMs = 10 * 60 * 1000; // 10 minutes
+      const pollIntervalMs = 15 * 1000; // 15 seconds
+      const startTime = Date.now();
+
+      let jobResult = asyncJob;
+      while (jobResult.status !== 'COMPLETED' && jobResult.status !== 'FAILED') {
+        if (Date.now() - startTime > maxWaitMs) {
+          return {
+            error: {
+              type: 'api_error' as const,
+              message: `Deep research timed out after 10 minutes. Job ID: ${asyncJob.id}. Check status with check_async_perplexity.`,
+              details: {
+                suggestion: `Use check_async_perplexity with job_id: ${asyncJob.id} to get results when ready.`,
+              },
+            },
+          };
+        }
+
+        console.error(`Waiting for job ${asyncJob.id}... Status: ${jobResult.status}`);
+        await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+        jobResult = await apiClient.getAsyncJob(asyncJob.id);
+      }
+
+      if (jobResult.status === 'FAILED') {
+        return {
+          error: {
+            type: 'api_error' as const,
+            message: jobResult.error_message || 'Deep research failed',
+            details: {
+              suggestion: 'Try again with a simpler query or use sonar-reasoning-pro instead.',
+            },
+          },
+        };
+      }
+
+      // Extract response from completed job
+      response = {
+        id: jobResult.id,
+        model: selectedModel,
+        created: jobResult.completed_at || Date.now() / 1000,
+        usage: jobResult.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+        object: 'chat.completion' as const,
+        choices: jobResult.choices || [],
+      };
+    } else {
+      // Use synchronous API for other models
+      response = await apiClient.chatCompletion(request);
+    }
 
     // Save report if requested
     let reportSaved = false;
