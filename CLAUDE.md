@@ -1,3 +1,27 @@
+# 🔴 GLOBAL CONFIGURATION - MANDATORY LOADING INSTRUCTIONS
+
+**CRITICAL**: This project uses a global CLAUDE.md configuration file that **MUST** be loaded at specific times.
+
+## When to Load Global Configuration
+
+### 1. On Session Start
+**IMMEDIATELY** when starting any new session in this project, read the global configuration file:
+- **File Path**: `~/.claude/CLAUDE.md`
+- **Action**: Read the entire file to load global operating principles, quality standards, and technical requirements
+
+### 2. After Conversation Compaction
+**EVERY TIME** the conversation is compacted or summarized, **re-read** the global configuration file:
+- **File Path**: `~/.claude/CLAUDE.md`
+- **Action**: Re-read the entire file to restore global context that may have been lost during compaction
+
+## Why This Matters
+
+The global configuration contains core operating principles, quality standards, tool usage policies, and technical requirements that apply to **ALL** projects. Information from this document often gets lost during conversation compaction, requiring explicit re-reading to maintain consistency.
+
+---
+
+# PROJECT-SPECIFIC CONFIGURATION
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
