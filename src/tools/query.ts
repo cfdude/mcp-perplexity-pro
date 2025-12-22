@@ -229,11 +229,12 @@ export async function handleResearchPerplexity(
       response = await apiClient.chatCompletion(request);
     }
 
-    // Save report if requested
+    // Save report by default (save_report defaults to true for research)
+    const shouldSaveReport = params.save_report ?? true;
     let reportSaved = false;
     let reportPath: string | undefined;
 
-    if (params.save_report && response.choices[0]?.message?.content) {
+    if (shouldSaveReport && response.choices[0]?.message?.content) {
       try {
         const reportId = await storageManager.saveReport(
           response.choices[0].message.content,

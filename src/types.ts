@@ -321,6 +321,18 @@ export const asyncPerplexitySchema = z.object({
 
 export const checkAsyncSchema = z.object({
   job_id: z.string().describe('Async job identifier'),
+  include_content: z
+    .boolean()
+    .optional()
+    .describe('Include full response content (default: false to save context)'),
+  save_report: z
+    .boolean()
+    .optional()
+    .describe('Save completed report to project directory (default: true)'),
+  project_name: z
+    .string()
+    .optional()
+    .describe('Project name for saving report (auto-detected if not provided)'),
 });
 
 export const readChatSchema = z.object({
