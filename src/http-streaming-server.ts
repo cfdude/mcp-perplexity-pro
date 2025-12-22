@@ -340,13 +340,10 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
         }
 
         case 'research_perplexity': {
-          console.log('=== RESEARCH_PERPLEXITY CALLED ===');
-          console.log('Args:', JSON.stringify(args, null, 2));
-          console.log('Config API key present:', !!config.api_key);
           const result = await handleResearchPerplexity(args as any, config);
-          console.log('Result type:', typeof result);
-          console.log('Result structure:', result ? Object.keys(result) : 'null');
-          return result;
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          };
         }
 
         case 'chat_perplexity': {
