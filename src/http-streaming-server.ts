@@ -32,7 +32,6 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
     {
       capabilities: {
         tools: {},
-        progress: true,
       },
     }
   );
