@@ -19,12 +19,6 @@ export async function handleAskPerplexity(
   config: Config,
   streamingCallbacks?: StreamingCallbacks
 ): Promise<MCPResponse> {
-  console.error('handleAskPerplexity called with:', { query: params.query, model: params.model });
-  console.error(
-    'Config API key:',
-    config.api_key ? config.api_key.substring(0, 10) + '...' : 'MISSING'
-  );
-
   try {
     const apiClient = new PerplexityApiClient(config);
 
@@ -139,8 +133,6 @@ export async function handleResearchPerplexity(
   (PerplexityResponse & { report_saved?: boolean; report_path?: string }) | ErrorResponse
 > {
   try {
-    // Debug logging to see what params we're receiving
-    console.error('handleResearchPerplexity params:', JSON.stringify(params, null, 2));
     const apiClient = new PerplexityApiClient(config);
 
     // Detect project and create project-aware config
@@ -185,11 +177,8 @@ export async function handleResearchPerplexity(
 
     // For sonar-deep-research, use async API with polling to avoid timeouts
     if (selectedModel === 'sonar-deep-research') {
-      console.error('Using async API for sonar-deep-research model');
-
       // Create async job
       const asyncJob = await apiClient.createAsyncChatCompletion(request);
-      console.error(`Created async job: ${asyncJob.id}`);
 
       // Poll for completion (max 10 minutes with 15-second intervals)
       const maxWaitMs = 10 * 60 * 1000; // 10 minutes
@@ -210,7 +199,6 @@ export async function handleResearchPerplexity(
           };
         }
 
-        console.error(`Waiting for job ${asyncJob.id}... Status: ${jobResult.status}`);
         await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
         jobResult = await apiClient.getAsyncJob(asyncJob.id);
       }
@@ -259,13 +247,14 @@ export async function handleResearchPerplexity(
       }
     }
 
-    return {
+    const result = {
       ...response,
       selected_model: selectedModel,
       model_selection_reason: params.model ? 'user_specified' : 'auto_selected_research',
       report_saved: reportSaved,
       ...(reportPath && { report_path: reportPath }),
-    } as PerplexityResponse & {
+    };
+    return result as PerplexityResponse & {
       selected_model: string;
       model_selection_reason: string;
       report_saved: boolean;
