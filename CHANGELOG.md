@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-12-22
+
+### Added
+
+- `check_async_perplexity`: New `include_content` parameter (default: `false`) to control whether full response content is returned, saving context for large research reports
+- `check_async_perplexity`: New `save_report` parameter (default: `true`) to automatically save completed research reports
+- `check_async_perplexity`: New `project_name` parameter for specifying where to save reports
+- `check_async_perplexity`: Returns `report_path` when job completes, showing where report was saved
+
+### Changed
+
+- `research_perplexity`: `save_report` now defaults to `true` (previously required explicit opt-in)
+- Updated to MCP SDK 1.25.1 for improved compatibility
+- Removed deprecated `sonar-reasoning` model references
+
+### Fixed
+
+- `research_perplexity` now properly returns results through HTTP transport (was returning empty)
+- Deep research with `sonar-deep-research` model now uses async API with polling to handle long-running queries
+- Storage tests no longer have race conditions when running in parallel
+- Resolved all Dependabot security alerts
+
 ## [1.2.0] - 2025-09-16
 
 ### Added
