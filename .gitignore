@@ -34,6 +34,7 @@ Thumbs.db
 coverage/
 .nyc_output/
 test-results/
+test-storage*/
 
 # Smithery
 .smithery/
