@@ -10,7 +10,7 @@ A comprehensive Model Context Protocol (MCP) server for the Perplexity API, feat
 
 - **🧠 Intelligent Model Selection**: Automatically chooses the optimal Perplexity model based on query analysis
 - **💬 Conversation Management**: Stateful chat sessions with full conversation history
-- **🔍 Comprehensive Search**: Access to all Perplexity models (sonar, sonar-pro, sonar-reasoning, sonar-reasoning-pro, sonar-deep-research)
+- **🔍 Comprehensive Search**: Access to all Perplexity models (sonar, sonar-pro, sonar-reasoning-pro, sonar-deep-research)
 - **📊 Async Operations**: Support for long-running research tasks
 - **🗂️ Project-Aware Storage**: Conversations and reports stored in your project directory
 - **🔒 Thread-Safe**: Concurrent access with file locking
@@ -203,9 +203,11 @@ Conduct comprehensive research with detailed reports saved to your project.
 
 **Parameters:**
 
-- `query` (required): Research topic or question
+- `topic` (required): Research topic or question
 - `model` (optional): Defaults to `sonar-deep-research`
-- `save_report` (optional): Save detailed report to project
+- `save_report` (optional): Save report to project directory (default: `true`)
+- `project_name` (optional): Project name for organizing reports (auto-detected if not provided)
+- `max_tokens` (optional): Maximum response length
 
 **Example:**
 
@@ -257,11 +259,16 @@ Create long-running research jobs for complex queries.
 
 #### `check_async_perplexity`
 
-Check status of async research job.
+Check status of async research job. By default, excludes full content to save context and auto-saves completed reports.
 
 **Parameters:**
 
 - `job_id` (required): Job identifier
+- `include_content` (optional): Include full response content (default: `false` to save context)
+- `save_report` (optional): Save completed report to project directory (default: `true`)
+- `project_name` (optional): Project name for saving report (auto-detected if not provided)
+
+**Returns:** Job status, and when complete: `report_path` showing where the report was saved.
 
 #### `list_async_jobs`
 
@@ -286,7 +293,7 @@ The server automatically selects the optimal model based on query analysis:
 | Research requests | `sonar-deep-research` | "I need comprehensive research on..."                       |
 | Real-time queries | `sonar-pro`           | "What's the current price of...", "Latest news..."          |
 | Complex reasoning | `sonar-reasoning-pro` | "Analyze the implications of...", "Compare and contrast..." |
-| Simple questions  | `sonar-reasoning`     | General questions                                           |
+| Simple questions  | `sonar`               | Quick factual questions                                     |
 | Default           | `sonar-reasoning-pro` | Fallback for all other queries                              |
 
 ### Model Capabilities
@@ -298,9 +305,6 @@ The server automatically selects the optimal model based on query analysis:
   },
   "sonar-pro": {
     search: true, reasoning: false, realTime: true, research: false
-  },
-  "sonar-reasoning": {
-    search: true, reasoning: true, realTime: false, research: false
   },
   "sonar-reasoning-pro": {
     search: true, reasoning: true, realTime: true, research: false
