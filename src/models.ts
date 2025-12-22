@@ -42,26 +42,6 @@ export const MODEL_REGISTRY: ModelRegistry = {
       research: false,
     },
   },
-  'sonar-reasoning': {
-    type: 'reasoning',
-    speed: 'fast',
-    cost: 'medium',
-    bestFor: [
-      'problem-solving',
-      'analysis',
-      'step-by-step thinking',
-      'logical deduction',
-      'quick reasoning tasks',
-    ],
-    description:
-      'Fast, real-time reasoning model designed for problem-solving with search capabilities. Excellent for analytical tasks.',
-    capabilities: {
-      search: true,
-      reasoning: true,
-      realTime: true,
-      research: false,
-    },
-  },
   'sonar-reasoning-pro': {
     type: 'reasoning',
     speed: 'medium',
@@ -160,7 +140,7 @@ export function selectOptimalModel(
     return 'sonar-reasoning-pro';
   }
 
-  // Quick reasoning needs
+  // Quick reasoning needs (uses sonar-pro for cost efficiency, sonar-reasoning-pro for complex analysis)
   const quickReasoningKeywords = [
     'why',
     'how does',
@@ -173,7 +153,7 @@ export function selectOptimalModel(
   ];
 
   if (quickReasoningKeywords.some(keyword => queryLower.includes(keyword))) {
-    return 'sonar-reasoning';
+    return 'sonar-pro';
   }
 
   // Enhanced search needs
@@ -262,7 +242,7 @@ export function suggestFallbackModel(
       case 'sonar-deep-research':
         return 'sonar-reasoning-pro';
       case 'sonar-reasoning-pro':
-        return 'sonar-reasoning';
+        return 'sonar-pro';
       case 'sonar-pro':
         return 'sonar';
       default:
@@ -275,7 +255,7 @@ export function suggestFallbackModel(
     case 'research':
       return 'sonar-reasoning-pro';
     case 'reasoning':
-      return originalModel === 'sonar-reasoning-pro' ? 'sonar-reasoning' : 'sonar-reasoning-pro';
+      return 'sonar-pro';
     case 'search':
       return originalModel === 'sonar-pro' ? 'sonar' : 'sonar-pro';
     default:

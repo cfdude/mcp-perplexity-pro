@@ -457,7 +457,7 @@ export class PerplexityApiClient {
             message: `Invalid model: ${context?.model || 'unknown'}`,
             details: {
               suggestion:
-                'Use a supported model: sonar, sonar-pro, sonar-reasoning, sonar-reasoning-pro, sonar-deep-research',
+                'Use a supported model: sonar, sonar-pro, sonar-reasoning-pro, sonar-deep-research',
               fallback_model: 'sonar-reasoning-pro',
             },
           },

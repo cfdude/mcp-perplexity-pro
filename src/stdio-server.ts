@@ -85,13 +85,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model selection',
             },
             temperature: {
@@ -119,13 +113,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Defaults to sonar-deep-research for comprehensive research',
             },
             save_report: { type: 'boolean', description: 'Save research report (default: true)' },
@@ -149,13 +137,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             title: { type: 'string', description: 'Required for new chat - conversation title' },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model',
             },
             temperature: {
@@ -179,13 +161,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             query: { type: 'string', description: 'Your question or prompt' },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model',
             },
             project_name: {
