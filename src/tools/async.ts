@@ -6,6 +6,7 @@ import type {
   ErrorResponse,
 } from '../types.js';
 import { PerplexityApiClient } from '../perplexity-api.js';
+import { StorageManager } from '../storage.js';
 import { selectOptimalModel } from '../models.js';
 
 /**
@@ -68,6 +69,7 @@ export async function handleAsyncPerplexity(
 
 /**
  * Handles the check_async_perplexity tool - checks status of async jobs
+ * By default, excludes full content to save context and saves completed reports
  */
 export async function handleCheckAsync(
   params: CheckAsyncParams,
@@ -76,19 +78,25 @@ export async function handleCheckAsync(
   | (AsyncJob & {
       completion_percentage?: number;
       next_check_recommended?: string;
+      report_path?: string;
+      report_saved?: boolean;
     })
   | ErrorResponse
 > {
   try {
     const apiClient = new PerplexityApiClient(config);
 
-    // Note: async job checking doesn't need project-aware config since
-    // job IDs are global and not project-specific
+    // Default include_content to false (save context), save_report to true
+    const includeContent = params.include_content ?? false;
+    const saveReport = params.save_report ?? true;
+
     const response = await apiClient.getAsyncJob(params.job_id);
 
     // Add helpful metadata for job monitoring
     let completionPercentage: number | undefined;
     let nextCheckRecommended: string | undefined;
+    let reportPath: string | undefined;
+    let reportSaved = false;
 
     switch (response.status) {
       case 'CREATED':
@@ -107,14 +115,51 @@ export async function handleCheckAsync(
         break;
     }
 
-    return {
-      ...response,
-      ...(completionPercentage !== undefined && { completion_percentage: completionPercentage }),
-      ...(nextCheckRecommended && { next_check_recommended: nextCheckRecommended }),
-    } as AsyncJob & {
+    // If job is complete and save_report is true, save the report
+    if (response.status === 'COMPLETED' && saveReport && response.choices?.[0]?.message?.content) {
+      try {
+        const { detectProjectWithSuggestions } = await import('./projects.js');
+        const projectName = await detectProjectWithSuggestions(params.project_name, config);
+
+        const projectConfig = {
+          ...config,
+          storage_path: `projects/${projectName}/research`,
+        };
+
+        const storageManager = new StorageManager(projectConfig);
+        const content = response.choices[0].message.content;
+        const reportId = await storageManager.saveReport(content, `Async Research: ${params.job_id}`);
+        reportSaved = true;
+        reportPath = `projects/${projectName}/research/reports/${reportId}`;
+      } catch (storageError) {
+        // Don't fail the request if saving fails
+        console.warn('Failed to save async research report:', storageError);
+      }
+    }
+
+    // Build result - strip content if include_content is false
+    const result: AsyncJob & {
       completion_percentage?: number;
       next_check_recommended?: string;
+      report_path?: string;
+      report_saved?: boolean;
+    } = {
+      id: response.id,
+      status: response.status,
+      model: response.model,
+      created_at: response.created_at,
+      ...(response.completed_at && { completed_at: response.completed_at }),
+      ...(response.error_message && { error_message: response.error_message }),
+      ...(response.usage && { usage: response.usage }),
+      // Only include choices/content if explicitly requested
+      ...(includeContent && response.choices && { choices: response.choices }),
+      ...(completionPercentage !== undefined && { completion_percentage: completionPercentage }),
+      ...(nextCheckRecommended && { next_check_recommended: nextCheckRecommended }),
+      ...(reportPath && { report_path: reportPath }),
+      ...(response.status === 'COMPLETED' && { report_saved: reportSaved }),
     };
+
+    return result;
   } catch (error) {
     return PerplexityApiClient.handleError(error, {
       query: `Async job check: ${params.job_id}`,
