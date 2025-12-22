@@ -63,7 +63,6 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
-      progress: true,
     },
   }
 );

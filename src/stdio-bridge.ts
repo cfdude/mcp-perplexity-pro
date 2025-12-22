@@ -35,7 +35,6 @@ export class StdioHttpBridge {
       {
         capabilities: {
           tools: {},
-          progress: true,
         },
       }
     );

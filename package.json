@@ -57,7 +57,7 @@
     "docker:run:stdio": "docker-compose --profile stdio up -d mcp-perplexity-pro-stdio"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.3",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "@types/express": "^5.0.3",
     "express": "^5.1.0",
     "node-fetch": "^3.3.2",
