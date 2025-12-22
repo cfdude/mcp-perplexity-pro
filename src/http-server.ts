@@ -114,13 +114,7 @@ export class PerplexityHTTPServer {
               model: {
                 type: 'string',
                 description: 'Override default model selection',
-                enum: [
-                  'sonar',
-                  'sonar-pro',
-                  'sonar-reasoning',
-                  'sonar-reasoning-pro',
-                  'sonar-deep-research',
-                ],
+                enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               },
               max_tokens: {
                 type: 'number',
@@ -172,13 +166,7 @@ export class PerplexityHTTPServer {
               model: {
                 type: 'string',
                 description: 'Override default model (defaults to sonar-deep-research)',
-                enum: [
-                  'sonar',
-                  'sonar-pro',
-                  'sonar-reasoning',
-                  'sonar-reasoning-pro',
-                  'sonar-deep-research',
-                ],
+                enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               },
               max_tokens: {
                 type: 'number',
@@ -219,13 +207,7 @@ export class PerplexityHTTPServer {
               model: {
                 type: 'string',
                 description: 'Override default model',
-                enum: [
-                  'sonar',
-                  'sonar-pro',
-                  'sonar-reasoning',
-                  'sonar-reasoning-pro',
-                  'sonar-deep-research',
-                ],
+                enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               },
               max_tokens: {
                 type: 'number',

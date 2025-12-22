@@ -54,13 +54,7 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model',
             },
             temperature: {
@@ -103,13 +97,7 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             save_report: { type: 'boolean', description: 'Save report to project directory' },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model (defaults to sonar-deep-research)',
             },
             max_tokens: { type: 'number', minimum: 1, description: 'Maximum response length' },
@@ -133,13 +121,7 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             title: { type: 'string', description: 'Required for new chat - conversation title' },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model',
             },
             temperature: {
@@ -163,13 +145,7 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
             query: { type: 'string', description: 'Your question or prompt' },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model',
             },
             temperature: {

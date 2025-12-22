@@ -65,8 +65,9 @@ export async function handleChatPerplexity(
         };
       }
 
-      // Select model for the conversation
-      const selectedModel = selectOptimalModel(params.message, params.model, config.default_model);
+      // Select model for the conversation using per-tool config
+      const toolDefaultModel = config.models?.chat || config.default_model;
+      const selectedModel = selectOptimalModel(params.message, params.model, toolDefaultModel);
 
       // Create new conversation with the user's first message
       const userMessage = { role: 'user' as const, content: params.message };

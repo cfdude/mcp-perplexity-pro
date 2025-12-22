@@ -37,13 +37,7 @@ export function createSSEServer(config: z.infer<typeof configSchema>) {
             },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model',
             },
             temperature: {
@@ -86,13 +80,7 @@ export function createSSEServer(config: z.infer<typeof configSchema>) {
             save_report: { type: 'boolean', description: 'Save report to project directory' },
             model: {
               type: 'string',
-              enum: [
-                'sonar',
-                'sonar-pro',
-                'sonar-reasoning',
-                'sonar-reasoning-pro',
-                'sonar-deep-research',
-              ],
+              enum: ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'],
               description: 'Override default model (defaults to sonar-deep-research)',
             },
             max_tokens: { type: 'number', minimum: 1, description: 'Maximum response length' },

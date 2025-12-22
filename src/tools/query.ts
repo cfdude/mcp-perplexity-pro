@@ -47,7 +47,9 @@ export async function handleAskPerplexity(
     }
 
     // Select optimal model based on query or use explicit model
-    const selectedModel = selectOptimalModel(params.query, params.model, config.default_model);
+    // Use per-tool model config, falling back to default_model
+    const toolDefaultModel = config.models?.ask || config.default_model;
+    const selectedModel = selectOptimalModel(params.query, params.model, toolDefaultModel);
 
     // Prepare the request
     const request = {
@@ -152,8 +154,9 @@ export async function handleResearchPerplexity(
 
     const storageManager = new StorageManager(projectConfig);
 
-    // Use sonar-deep-research by default, but allow override
-    const selectedModel = params.model || 'sonar-deep-research';
+    // Use per-tool model config for research, falling back to sonar-deep-research
+    const toolDefaultModel = config.models?.research || 'sonar-deep-research';
+    const selectedModel = params.model || toolDefaultModel;
 
     // For sonar-deep-research, automatically use async processing to avoid timeouts
     if (selectedModel === 'sonar-deep-research') {

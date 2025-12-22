@@ -51,7 +51,7 @@ describe('Model Selection', () => {
 
       queries.forEach(query => {
         const result = selectOptimalModel(query);
-        expect(['sonar-reasoning', 'sonar-reasoning-pro']).toContain(result);
+        expect(['sonar-pro', 'sonar-reasoning-pro']).toContain(result);
       });
     });
 
@@ -81,7 +81,6 @@ describe('Model Selection', () => {
       const expectedModels = [
         'sonar',
         'sonar-pro',
-        'sonar-reasoning',
         'sonar-reasoning-pro',
         'sonar-deep-research',
       ];

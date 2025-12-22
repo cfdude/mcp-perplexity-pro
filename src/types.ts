@@ -1,20 +1,43 @@
 import { z } from 'zod';
 
 // Perplexity model types
-export type PerplexityModel =
-  | 'sonar'
-  | 'sonar-pro'
-  | 'sonar-reasoning'
-  | 'sonar-reasoning-pro'
-  | 'sonar-deep-research';
+export type PerplexityModel = 'sonar' | 'sonar-pro' | 'sonar-reasoning-pro' | 'sonar-deep-research';
+
+// Per-tool model configuration schema
+const modelsConfigSchema = z.object({
+  ask: z
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .default('sonar-reasoning-pro')
+    .describe('Default model for ask_perplexity queries'),
+  chat: z
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .default('sonar-pro')
+    .describe('Default model for chat_perplexity conversations'),
+  research: z
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .default('sonar-deep-research')
+    .describe('Default model for research_perplexity reports'),
+  async: z
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .default('sonar-reasoning-pro')
+    .describe('Default model for async_perplexity jobs'),
+});
 
 // Configuration schema for MCP server
 export const configSchema = z.object({
   api_key: z.string().describe('Perplexity API key'),
   default_model: z
-    .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
     .default('sonar-reasoning-pro')
-    .describe('Default model for queries'),
+    .describe('Fallback default model for queries (used if per-tool model not specified)'),
+  models: modelsConfigSchema
+    .default({
+      ask: 'sonar-reasoning-pro',
+      chat: 'sonar-pro',
+      research: 'sonar-deep-research',
+      async: 'sonar-reasoning-pro',
+    })
+    .describe('Per-tool model defaults'),
   project_root: z.string().describe('Root directory of the calling project'),
   storage_path: z
     .string()
@@ -244,7 +267,7 @@ export const askPerplexitySchema = z.object({
     .optional()
     .describe('Project name for organizing conversations (auto-detected if not provided)'),
   model: z
-    .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
     .optional()
     .describe('Override default model'),
   temperature: z.number().min(0).max(1).optional().describe('0.0-1.0, default 0.2'),
@@ -264,7 +287,7 @@ export const chatPerplexitySchema = z.object({
   chat_id: z.string().optional().describe('Continue existing conversation'),
   title: z.string().optional().describe('Required for new chat - conversation title'),
   model: z
-    .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
     .optional()
     .describe('Override default model'),
   temperature: z.number().min(0).max(1).optional().describe('0.0-1.0, default 0.2'),
@@ -280,7 +303,7 @@ export const researchPerplexitySchema = z.object({
     .describe('Project name for organizing research reports (auto-detected if not provided)'),
   save_report: z.boolean().optional().describe('Save report to project directory'),
   model: z
-    .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
     .optional()
     .describe('Override default model (defaults to sonar-deep-research)'),
   max_tokens: z.number().positive().optional().describe('Maximum response length'),
@@ -289,7 +312,7 @@ export const researchPerplexitySchema = z.object({
 export const asyncPerplexitySchema = z.object({
   query: z.string().describe('Your question or prompt'),
   model: z
-    .enum(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
+    .enum(['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'])
     .optional()
     .describe('Override default model'),
   temperature: z.number().min(0).max(1).optional().describe('0.0-1.0, default 0.2'),

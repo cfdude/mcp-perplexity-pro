@@ -30,7 +30,9 @@ export async function handleAsyncPerplexity(
     // const projectName = await detectProjectWithSuggestions(undefined, config);
 
     // Select optimal model based on query or use explicit model
-    const selectedModel = selectOptimalModel(params.query, params.model, config.default_model);
+    // Use per-tool model config, falling back to default_model
+    const toolDefaultModel = config.models?.async || config.default_model;
+    const selectedModel = selectOptimalModel(params.query, params.model, toolDefaultModel);
 
     // Prepare the async request
     const request = {
@@ -182,7 +184,6 @@ function getEstimatedCompletionTime(model: string, query: string): number {
   const baseTimes = {
     sonar: 0.5,
     'sonar-pro': 1,
-    'sonar-reasoning': 1.5,
     'sonar-reasoning-pro': 3,
     'sonar-deep-research': 5,
   };
