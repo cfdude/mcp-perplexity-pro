@@ -15,7 +15,9 @@ describe('StorageManager', () => {
   let testStoragePath: string;
 
   beforeEach(() => {
-    testProjectRoot = path.join(__dirname, '../test-storage');
+    // Use unique directory per test to avoid race conditions in parallel execution
+    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    testProjectRoot = path.join(__dirname, `../test-storage-${uniqueSuffix}`);
     testStoragePath = '.perplexity/test';
     const config: Config = {
       api_key: 'test-key',

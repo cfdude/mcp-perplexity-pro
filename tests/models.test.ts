@@ -78,12 +78,7 @@ describe('Model Selection', () => {
 
   describe('MODEL_REGISTRY', () => {
     it('should contain all expected models', () => {
-      const expectedModels = [
-        'sonar',
-        'sonar-pro',
-        'sonar-reasoning-pro',
-        'sonar-deep-research',
-      ];
+      const expectedModels = ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research'];
 
       expectedModels.forEach(model => {
         expect(MODEL_REGISTRY[model as keyof typeof MODEL_REGISTRY]).toBeDefined();
