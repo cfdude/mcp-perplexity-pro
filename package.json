@@ -6,8 +6,8 @@
   "module": "./src/index.ts",
   "type": "module",
   "bin": {
-    "mcp-perplexity-pro": "./bin/mcp-perplexity-pro",
-    "mcp-perplexity-pro-stdio": "./bin/mcp-perplexity-pro-stdio"
+    "mcp-perplexity-pro": "bin/mcp-perplexity-pro",
+    "mcp-perplexity-pro-stdio": "bin/mcp-perplexity-pro-stdio"
   },
   "files": [
     "dist/**/*",
