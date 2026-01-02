@@ -259,10 +259,16 @@ const TOOL_DEFINITIONS = [
   },
 ];
 
-// Session data type - stores both server and transport per session
+// Session configuration
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes of inactivity
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Check every 5 minutes
+
+// Session data type - stores server, transport, and activity tracking
 interface SessionData {
   server: Server;
   transport: StreamableHTTPServerTransport;
+  lastActivity: number; // Unix timestamp in ms
+  createdAt: number; // Unix timestamp in ms
 }
 
 /**
@@ -472,8 +478,63 @@ function createMCPServer(config: z.infer<typeof configSchema>): Server {
 }
 
 export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) {
-  // Session management - stores both server and transport per session
+  // Session management - stores server, transport, and activity tracking per session
   const sessions: Record<string, SessionData> = {};
+
+  /**
+   * Clean up expired sessions to prevent memory leaks.
+   * Removes sessions that haven't been active for SESSION_TIMEOUT_MS.
+   */
+  function cleanupExpiredSessions(): { removed: number; remaining: number } {
+    const now = Date.now();
+    const expiredSessions: string[] = [];
+
+    for (const [sessionId, sessionData] of Object.entries(sessions)) {
+      const inactiveTime = now - sessionData.lastActivity;
+      if (inactiveTime > SESSION_TIMEOUT_MS) {
+        expiredSessions.push(sessionId);
+      }
+    }
+
+    // Remove expired sessions
+    for (const sessionId of expiredSessions) {
+      const sessionData = sessions[sessionId];
+      try {
+        // Close the server connection gracefully
+        sessionData.server.close().catch((err: Error) => {
+          console.log(`Error closing server for session ${sessionId}:`, err.message);
+        });
+      } catch (err) {
+        console.log(`Error during session cleanup for ${sessionId}:`, err);
+      }
+      delete sessions[sessionId];
+      console.log(`Session expired and cleaned up: ${sessionId} (inactive for ${Math.round((now - sessionData.lastActivity) / 1000 / 60)} minutes)`);
+    }
+
+    if (expiredSessions.length > 0) {
+      console.log(`Session cleanup: removed ${expiredSessions.length} expired sessions, ${Object.keys(sessions).length} remaining`);
+    }
+
+    return { removed: expiredSessions.length, remaining: Object.keys(sessions).length };
+  }
+
+  // Start periodic cleanup
+  const cleanupInterval = setInterval(() => {
+    cleanupExpiredSessions();
+  }, CLEANUP_INTERVAL_MS);
+
+  // Log cleanup interval start
+  console.log(`Session cleanup scheduled: checking every ${CLEANUP_INTERVAL_MS / 1000 / 60} minutes, timeout after ${SESSION_TIMEOUT_MS / 1000 / 60} minutes of inactivity`);
+
+  // Clean up interval on process exit
+  process.on('SIGTERM', () => {
+    clearInterval(cleanupInterval);
+    console.log('Cleanup interval cleared on SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    clearInterval(cleanupInterval);
+    console.log('Cleanup interval cleared on SIGINT');
+  });
 
   const app = express();
   app.use(express.json());
@@ -506,6 +567,8 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
       if (sessionId && sessions[sessionId]) {
         // Reuse existing session (server + transport pair)
         sessionData = sessions[sessionId];
+        // Update last activity timestamp
+        sessionData.lastActivity = Date.now();
         console.log('Reusing existing session:', sessionId);
       } else if (sessionId && !sessions[sessionId]) {
         // Session ID provided but doesn't exist (expired/server restarted)
@@ -524,13 +587,19 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
         // Create new session with its own Server instance (no session ID provided)
         console.log('Creating new session with dedicated Server instance');
 
+        const now = Date.now();
         const server = createMCPServer(config);
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: newSessionId => {
             console.log('Session initialized:', newSessionId);
-            // Store the session data after initialization
-            sessions[newSessionId] = { server, transport };
+            // Store the session data after initialization with timestamps
+            sessions[newSessionId] = {
+              server,
+              transport,
+              lastActivity: now,
+              createdAt: now,
+            };
           },
         });
 
@@ -538,7 +607,7 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
         await server.connect(transport);
 
         // Use temporary session data for the initial request
-        sessionData = { server, transport };
+        sessionData = { server, transport, lastActivity: now, createdAt: now };
       } else {
         res.status(400).json({
           error: 'Session required',
@@ -561,13 +630,72 @@ export function createHTTPStreamingServer(config: z.infer<typeof configSchema>) 
 
   // Health check endpoint
   app.get('/health', (req, res) => {
-    const activeSessions = Object.keys(sessions).length;
+    const now = Date.now();
+    const sessionIds = Object.keys(sessions);
+    const activeSessions = sessionIds.length;
+
+    // Calculate session age statistics
+    let oldestSession = 0;
+    let newestSession = 0;
+    let totalIdleTime = 0;
+
+    for (const sessionId of sessionIds) {
+      const session = sessions[sessionId];
+      const age = now - session.createdAt;
+      const idle = now - session.lastActivity;
+
+      if (age > oldestSession) oldestSession = age;
+      if (newestSession === 0 || age < newestSession) newestSession = age;
+      totalIdleTime += idle;
+    }
+
     res.json({
       status: 'healthy',
       transport: 'http-streaming',
       server: 'mcp-perplexity-pro',
       version: '1.3.0',
       active_sessions: activeSessions,
+      session_timeout_minutes: SESSION_TIMEOUT_MS / 1000 / 60,
+      cleanup_interval_minutes: CLEANUP_INTERVAL_MS / 1000 / 60,
+      session_stats: activeSessions > 0 ? {
+        oldest_session_minutes: Math.round(oldestSession / 1000 / 60),
+        newest_session_minutes: Math.round(newestSession / 1000 / 60),
+        avg_idle_minutes: Math.round(totalIdleTime / activeSessions / 1000 / 60),
+      } : null,
+    });
+  });
+
+  // Manual cleanup endpoint (for admin use)
+  app.post('/cleanup', (req, res) => {
+    const result = cleanupExpiredSessions();
+    res.json({
+      message: 'Cleanup completed',
+      ...result,
+    });
+  });
+
+  // Force cleanup all sessions endpoint (for admin use)
+  app.post('/cleanup/all', (req, res) => {
+    const sessionIds = Object.keys(sessions);
+    const count = sessionIds.length;
+
+    for (const sessionId of sessionIds) {
+      const sessionData = sessions[sessionId];
+      try {
+        sessionData.server.close().catch((err: Error) => {
+          console.log(`Error closing server for session ${sessionId}:`, err.message);
+        });
+      } catch (err) {
+        console.log(`Error during forced cleanup for ${sessionId}:`, err);
+      }
+      delete sessions[sessionId];
+    }
+
+    console.log(`Forced cleanup: removed all ${count} sessions`);
+    res.json({
+      message: 'All sessions cleared',
+      removed: count,
+      remaining: 0,
     });
   });
 
