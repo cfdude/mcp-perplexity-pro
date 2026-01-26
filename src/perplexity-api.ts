@@ -416,13 +416,54 @@ export class PerplexityApiClient {
     }
 
     const endpoint = `${ASYNC_CHAT_COMPLETIONS_ENDPOINT}?${params.toString()}`;
-    return this.makeRequest(endpoint, null, 'GET');
+    const response = await this.makeRequest<{ requests?: AsyncJob[]; jobs?: AsyncJob[]; next_token?: string }>(
+      endpoint,
+      null,
+      'GET'
+    );
+
+    // API returns 'requests' key, normalize to 'jobs' for consistency
+    return {
+      jobs: response.requests || response.jobs || [],
+      next_token: response.next_token,
+    };
   }
 
   /**
    * Gets the status and result of an async job
+   *
+   * WORKAROUND: Due to a Perplexity API bug where the GET endpoint returns
+   * stale "IN_PROGRESS" status while LIST shows "COMPLETED", we first check
+   * the LIST endpoint for accurate status, then use GET for full response.
    */
   async getAsyncJob(jobId: string): Promise<AsyncJob> {
+    // First, check LIST endpoint for accurate status (workaround for Perplexity API bug)
+    try {
+      // Note: Using limit=10 due to Perplexity API bug where limit=50 returns fewer jobs
+      const listResponse = await this.listAsyncJobs(10);
+      const jobFromList = listResponse.jobs?.find((j: AsyncJob) => j.id === jobId);
+
+      if (jobFromList) {
+        // If LIST shows COMPLETED or FAILED, fetch full details from GET
+        if (jobFromList.status === 'COMPLETED' || jobFromList.status === 'FAILED') {
+          const endpoint = `${ASYNC_CHAT_COMPLETIONS_ENDPOINT}/${jobId}`;
+          const fullJob = await this.makeRequest<AsyncJob>(endpoint, null, 'GET');
+          // Use status from LIST (accurate) but content from GET (has choices)
+          return {
+            ...fullJob,
+            status: jobFromList.status,
+            completed_at: jobFromList.completed_at ?? fullJob.completed_at,
+          };
+        }
+        // For IN_PROGRESS/CREATED, LIST status is accurate
+        return jobFromList;
+      }
+    } catch (listError) {
+      // If LIST fails, fall back to GET-only behavior
+      console.warn('LIST endpoint failed, falling back to GET:', listError);
+    }
+
+    // Fallback: use GET endpoint directly (original behavior)
     const endpoint = `${ASYNC_CHAT_COMPLETIONS_ENDPOINT}/${jobId}`;
     return this.makeRequest<AsyncJob>(endpoint, null, 'GET');
   }
