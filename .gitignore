@@ -62,4 +62,4 @@ claude.md
 
 # Additional MCP data directories
 .perplexity/
-projects/mcp-perplexity-pro/
+ecosystem.config.cjs
