@@ -204,13 +204,30 @@ describe('PerplexityAPI', () => {
     });
 
     it('should get async job status successfully', async () => {
-      const mockResponse = {
+      const createdAt = new Date().toISOString();
+      const completedAt = new Date().toISOString();
+
+      // Mock LIST response (called first to check status)
+      const mockListResponse = {
+        requests: [
+          {
+            id: 'async-job-123',
+            status: 'COMPLETED',
+            model: 'sonar-deep-research',
+            created_at: createdAt,
+            completed_at: completedAt,
+          },
+        ],
+      };
+
+      // Mock GET response (called second for full details)
+      const mockGetResponse = {
         id: 'async-job-123',
         object: 'async_chat',
-        status: 'completed',
+        status: 'IN_PROGRESS', // Note: GET returns stale status (Perplexity API bug)
         model: 'sonar-deep-research',
-        created_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
+        created_at: createdAt,
+        completed_at: completedAt,
         choices: [
           {
             message: {
@@ -231,30 +248,57 @@ describe('PerplexityAPI', () => {
       const asyncJobHeaders = new Headers();
       asyncJobHeaders.set('content-type', 'application/json');
 
+      // First call: LIST endpoint
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
         headers: asyncJobHeaders,
-        json: async () => mockResponse,
-        text: async () => JSON.stringify(mockResponse),
+        json: async () => mockListResponse,
+        text: async () => JSON.stringify(mockListResponse),
+      } as Response);
+
+      // Second call: GET endpoint (for full details since LIST showed COMPLETED)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: asyncJobHeaders,
+        json: async () => mockGetResponse,
+        text: async () => JSON.stringify(mockGetResponse),
       } as Response);
 
       const result = await api.getAsyncJob('async-job-123');
 
-      expect(result).toEqual(mockResponse);
-      expect(mockFetch).toHaveBeenCalledWith(
+      // Result should use COMPLETED status from LIST, but content from GET
+      expect(result.id).toBe('async-job-123');
+      expect(result.status).toBe('COMPLETED'); // From LIST, not the stale GET status
+      expect(result.choices).toBeDefined();
+      expect(result.choices![0].message.content).toBe('Research result');
+
+      // Verify LIST was called first
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        'https://api.perplexity.ai/async/chat/completions?limit=10',
+        expect.objectContaining({
+          method: 'GET',
+        })
+      );
+
+      // Verify GET was called second for full details
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
         'https://api.perplexity.ai/async/chat/completions/async-job-123',
         expect.objectContaining({
           method: 'GET',
-          headers: {
-            Authorization: `Bearer ${mockConfig.api_key}`,
-            'Content-Type': 'application/json',
-          },
         })
       );
     });
 
     it('should handle async job not found error', async () => {
+      // Mock LIST response (job not in list)
+      const mockListResponse = {
+        requests: [], // Empty - job not found in list
+      };
+
       const errorResponse = {
         error: {
           type: 'not_found_error',
@@ -262,13 +306,23 @@ describe('PerplexityAPI', () => {
         },
       };
 
-      const notFoundHeaders = new Headers();
-      notFoundHeaders.set('content-type', 'application/json');
+      const headers = new Headers();
+      headers.set('content-type', 'application/json');
 
+      // First call: LIST endpoint (returns empty)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: headers,
+        json: async () => mockListResponse,
+        text: async () => JSON.stringify(mockListResponse),
+      } as Response);
+
+      // Second call: GET endpoint (fallback since job not in LIST)
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
-        headers: notFoundHeaders,
+        headers: headers,
         json: async () => errorResponse,
         text: async () => JSON.stringify(errorResponse),
       } as Response);
