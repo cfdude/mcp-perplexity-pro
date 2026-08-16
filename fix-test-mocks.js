@@ -2,7 +2,7 @@ const fs = require('fs');
 
 // Read the test file
 let content = fs.readFileSync(
-  '/Users/robsherman/Servers/mcp-perplexity-pro/tests/perplexity-api.test.ts',
+  '/Users/rsherman/Servers/mcp-perplexity-pro/tests/perplexity-api.test.ts',
   'utf8'
 );
 
@@ -38,7 +38,7 @@ content = content.replace(simpleMockPattern, (match, ok, status, jsonReturn) => 
 
 // Write the fixed content back
 fs.writeFileSync(
-  '/Users/robsherman/Servers/mcp-perplexity-pro/tests/perplexity-api.test.ts',
+  '/Users/rsherman/Servers/mcp-perplexity-pro/tests/perplexity-api.test.ts',
   content
 );
 console.log('Fixed test mocks');
