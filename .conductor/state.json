@@ -1,0 +1,280 @@
+{
+  "version": 1,
+  "active": "py-foundation",
+  "epics": [
+    {
+      "id": "python-rewrite-2-0",
+      "title": "Python rewrite 2.0: FastMCP + Agent/Search/Embeddings APIs",
+      "priority": "P0",
+      "status": "queued",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [],
+      "reconcileNeeded": false,
+      "description": "Parent release epic. Full rewrite in Python (uv, src/ layout, FastMCP, pydantic, SQLAlchemy+Alembic, pytest, ruff pre-commit). Moves off deprecated Sonar (support ended 2026-09-27) to the Agent API; adds Search, Embeddings, Decisions. Clean slate, no data import.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:33.185Z"
+    },
+    {
+      "id": "model-routing",
+      "title": "Model routing: pick cheapest adequate model per request",
+      "priority": "P2",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [],
+      "reconcileNeeded": false,
+      "description": "Parent epic for routing. Own decision matrix chooses preset/model per prompt; escalates on complexity; optionally uses Perplexity Decisions API as classifier. Not in 2.0 (2.0 ships explicit depth param). Savings target unverified; measured in routing-eval-tuning.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:33.185Z"
+    },
+    {
+      "id": "py-foundation",
+      "title": "Foundation: uv/src layout, ruff+pytest pre-commit, CI, FastMCP app, settings, httpx client, SQLAlchemy+Alembic base, pm2 swap",
+      "priority": "P0",
+      "status": "active",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [],
+      "reconcileNeeded": false,
+      "parent": "python-rewrite-2-0",
+      "description": "uv project, src/ layout, ruff line-length 100, pytest in pyproject, .pre-commit-config.yaml (ruff-check --fix, ruff-format, local pytest hook), CI running the same, pydantic-settings, async httpx client with live-probe-shaped models (extra=allow), SQLAlchemy 2.0 + Alembic 0001_ base, health endpoint, pm2 on port 8102 /mcp. Live-probe /v1/agent and old async path first.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:44.195Z",
+      "startedAt": "2026-10-07T00:03:44.194Z"
+    },
+    {
+      "id": "py-agent-api",
+      "title": "Agent API tools: ask, research (background), chat, jobs",
+      "priority": "P0",
+      "status": "planned",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-foundation",
+          "reason": "needs project scaffold, client, DB base"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "python-rewrite-2-0",
+      "description": "Replace Sonar with POST /v1/agent. depth param maps to presets fast/low/medium/high (xhigh opt-in); explicit model allowed. research uses background mode + GET /v1/agent/{id} + cancel. Chat persisted in SQLite. Citations rebuilt from search_results output items.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:40.849Z"
+    },
+    {
+      "id": "py-search-api",
+      "title": "Search API tool with full filter set",
+      "priority": "P1",
+      "status": "planned",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-foundation",
+          "reason": "needs project scaffold, client, DB base"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "python-rewrite-2-0",
+      "description": "POST /search: multi-query, dates (MM/DD/YYYY), language, domain allow/deny, recency, country, max_tokens, search_type web|fast|people. Structured JSON results. Resolve page-snippets endpoint if one is documented.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:41.116Z"
+    },
+    {
+      "id": "py-usage-log",
+      "title": "Per-call cost and usage log",
+      "priority": "P1",
+      "status": "planned",
+      "role": "epic",
+      "lane": "superpowers",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-foundation",
+          "reason": "needs project scaffold, client, DB base"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "python-rewrite-2-0",
+      "description": "Persist usage.cost per call (tokens, tool costs, preset/model, latency) in SQLite; usage tool reports spend. Feedback data that model-routing needs.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:41.374Z"
+    },
+    {
+      "id": "py-embeddings",
+      "title": "Embeddings tool with local vector store and semantic search",
+      "priority": "P2",
+      "status": "planned",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-foundation",
+          "reason": "needs project scaffold, client, DB base"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "python-rewrite-2-0",
+      "description": "pplx-embed models, base64 int8/binary decode, local storage, semantic search over saved chats/reports. Never return raw vectors to the model.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:41.627Z"
+    },
+    {
+      "id": "py-decisions-tool",
+      "title": "Decisions API tool (decide)",
+      "priority": "P2",
+      "status": "planned",
+      "role": "epic",
+      "lane": "superpowers",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-foundation",
+          "reason": "needs project scaffold, client, DB base"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "python-rewrite-2-0",
+      "description": "Thin wrapper over POST /v1/decisions (noul/choice/score questions), question-count cap, no image support in v1.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:41.880Z"
+    },
+    {
+      "id": "routing-rules-v1",
+      "title": "Deterministic complexity matrix selects preset (depth=auto)",
+      "priority": "P2",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-agent-api",
+          "reason": "routes between Agent API presets"
+        },
+        {
+          "type": "depends-on",
+          "epic": "py-usage-log",
+          "reason": "needs cost data to tune"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "model-routing",
+      "description": "Rules-based classifier (prompt length, task type, tool needs) picking fast/low/medium/high; runs only when depth=auto.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:42.394Z"
+    },
+    {
+      "id": "routing-decisions-classifier",
+      "title": "Use Perplexity Decisions API as routing classifier",
+      "priority": "P3",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-decisions-tool",
+          "reason": "uses the decide wrapper"
+        },
+        {
+          "type": "depends-on",
+          "epic": "routing-rules-v1",
+          "reason": "extends the rules matrix"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "model-routing",
+      "description": "Send prompt as state with choice/score questions about complexity; $0.02/1M tokens; adds one network hop and is rate-limited to 10 req/s per org.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:42.912Z"
+    },
+    {
+      "id": "routing-escalation",
+      "title": "Escalate to higher tier on incomplete or low-confidence result",
+      "priority": "P3",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "routing-rules-v1",
+          "reason": "escalates from a routed tier"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "model-routing",
+      "description": "Retry one tier up when status is incomplete or classifier confidence is low; bounded retries; cost-logged.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:43.170Z"
+    },
+    {
+      "id": "routing-eval-tuning",
+      "title": "Measure routing savings and quality against always-high baseline",
+      "priority": "P3",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-usage-log",
+          "reason": "measures from usage log"
+        },
+        {
+          "type": "depends-on",
+          "epic": "routing-rules-v1",
+          "reason": "evaluates the router"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "model-routing",
+      "description": "Labeled prompt set plus usage log. The only place a savings number gets claimed. No headline percentage before this runs.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:43.683Z"
+    },
+    {
+      "id": "routing-router-api-backend",
+      "title": "Perplexity Router API as an open-model backend",
+      "priority": "P3",
+      "status": "later",
+      "role": "epic",
+      "lane": "external",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "routing-rules-v1",
+          "reason": "backend the router selects"
+        }
+      ],
+      "reconcileNeeded": false,
+      "parent": "model-routing",
+      "description": "Private preview, access requested. Routes to open-weight models only. Blocked until access is granted.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-07T00:03:33.184Z",
+      "touchedAt": "2026-10-07T00:03:43.939Z"
+    }
+  ],
+  "detourStack": [],
+  "revision": 19,
+  "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
+  "pmVersion": "0.41.0",
+  "platform": "claude-code"
+}
