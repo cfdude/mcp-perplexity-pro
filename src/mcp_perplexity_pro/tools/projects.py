@@ -37,6 +37,13 @@ class ProjectsResult(BaseModel):
             "deeper rows go by cascade and are not counted (delete only)"
         ),
     ] = None
+    rows_retained: Annotated[
+        int | None,
+        Field(
+            description="Retained records (spend history) detached from the project and kept "
+            "(delete only; null for list)"
+        ),
+    ] = None
 
 
 def render(result: ProjectsResult) -> str:
@@ -93,8 +100,11 @@ def register(server: FastMCP) -> None:
                     "call again with confirm=true.",
                 )
             async with unit_of_work(engine) as session:
-                removed = await delete_project(session, project)
-                if removed is None:
+                outcome = await delete_project(session, project)
+                if outcome is None:
                     raise PerplexityError("not_found", f"No project named {project!r}.")
-            result = ProjectsResult(action="delete", project=project, rows_removed=removed)
+            removed, retained = outcome
+            result = ProjectsResult(
+                action="delete", project=project, rows_removed=removed, rows_retained=retained
+            )
         return ToolResult(content=render(result), structured_content=result.model_dump(mode="json"))

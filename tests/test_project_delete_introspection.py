@@ -59,21 +59,30 @@ async def count(engine, table):
 async def test_all_three_tables_are_found_as_scoped(engine):
     async with engine.connect() as conn:
         found = await conn.run_sync(_scoped_tables)
-    assert {(table, column) for table, column in found} >= {
-        ("t_cascade", "project_id"),
-        ("t_setnull", "project_id"),
-        ("t_noaction", "project_id"),
+    assert {(t.table, t.column, t.retained) for t in found} >= {
+        ("t_cascade", "project_id", False),
+        ("t_setnull", "project_id", True),
+        ("t_noaction", "project_id", False),
     }
-    assert "t_two_hop" not in {table for table, _ in found}  # points at t_cascade, not projects
+    assert "t_two_hop" not in {t.table for t in found}  # points at t_cascade, not projects
 
 
-async def test_foundation_behavior_deletes_and_counts_every_directly_referencing_table(engine):
-    await seed(engine)
+async def test_ordinary_tables_are_cleared_and_counted_and_set_null_tables_are_retained(engine):
+    """Edited in 1.2: the foundation deleted all three; a SET NULL table is now detached."""
+    pid = await seed(engine)
     async with unit_of_work(engine) as session:
-        removed = await delete_project(session, "alpha")
-    assert removed == 2 + 3 + 1  # the two-hop row went by cascade and is not counted
-    for table in (*TABLES, "t_two_hop"):
+        removed, retained = await delete_project(session, "alpha")
+    assert (removed, retained) == (2 + 1, 3)  # the two-hop row went by cascade, not counted
+    for table in ("t_cascade", "t_noaction", "t_two_hop"):
         assert await count(engine, table) == 0
+    assert await count(engine, "t_setnull") == 3
+    assert await count(engine, "t_setnull WHERE project_id IS NULL") == 3
+    assert await count(engine, f"t_setnull WHERE project_id = {pid}") == 0
+
+
+async def test_a_missing_project_is_none(engine):
+    async with unit_of_work(engine) as session:
+        assert await delete_project(session, "ghost") is None
 
 
 async def test_inspector_hides_the_delete_rule_but_pragma_reports_it(engine):
@@ -96,3 +105,84 @@ async def test_inspector_hides_the_delete_rule_but_pragma_reports_it(engine):
         "t_setnull": "SET NULL",
         "t_noaction": "NO ACTION",
     }
+
+
+async def test_key_declared_without_a_column_is_found(storage_engine):
+    """``REFERENCES projects`` (no column) means the primary key; PRAGMA reports ``to`` as None."""
+    async with storage_engine.begin() as conn:
+        await conn.execute(
+            text(
+                "CREATE TABLE t_bare (id INTEGER PRIMARY KEY, "
+                "owner INTEGER REFERENCES projects ON DELETE SET NULL)"
+            )
+        )
+        await conn.execute(
+            text(
+                "CREATE TABLE t_named (id INTEGER PRIMARY KEY, "
+                "owner INTEGER REFERENCES projects(id) ON DELETE SET NULL)"
+            )
+        )
+    async with storage_engine.connect() as conn:
+        found = await conn.run_sync(_scoped_tables)
+    assert {(t.table, t.column, t.retained) for t in found if t.table != "notes"} == {
+        ("t_bare", "owner", True),
+        ("t_named", "owner", True),
+    }
+
+
+async def test_a_table_added_later_with_set_null_is_retained_with_no_code_change(storage_engine):
+    async with storage_engine.begin() as conn:
+        await conn.execute(
+            text(
+                "CREATE TABLE later (id INTEGER PRIMARY KEY, project_name TEXT, "
+                "project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL)"
+            )
+        )
+    async with unit_of_work(storage_engine) as session:
+        project = await get_or_create_project(session, "alpha")
+        await session.execute(
+            text("INSERT INTO later (project_name, project_id) VALUES ('alpha', :p)"),
+            {"p": project.id},
+        )
+    async with unit_of_work(storage_engine) as session:
+        assert await delete_project(session, "alpha") == (0, 1)
+    assert (
+        await count(storage_engine, "later WHERE project_id IS NULL AND project_name='alpha'") == 1
+    )
+
+
+async def test_a_veto_after_the_detach_leaves_everything_as_it_was(engine):
+    pid = await seed(engine)
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(
+                "CREATE TRIGGER veto BEFORE DELETE ON projects "
+                "BEGIN SELECT RAISE(ABORT, 'vetoed'); END"
+            )
+        )
+    with pytest.raises(Exception, match="vetoed"):
+        async with unit_of_work(engine) as session:
+            await delete_project(session, "alpha")
+    assert await count(engine, f"t_setnull WHERE project_id = {pid}") == 3
+    assert await count(engine, "projects") == 1
+    assert await count(engine, "t_cascade") == 2
+
+
+async def test_a_table_name_with_a_double_quote_is_introspected_and_detached(storage_engine):
+    async with storage_engine.begin() as conn:
+        await conn.execute(
+            text(
+                'CREATE TABLE "weird""name" (id INTEGER PRIMARY KEY, '
+                "project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL)"
+            )
+        )
+    async with unit_of_work(storage_engine) as session:
+        project = await get_or_create_project(session, "alpha")
+        await session.execute(
+            text('INSERT INTO "weird""name" (project_id) VALUES (:p)'), {"p": project.id}
+        )
+    async with storage_engine.connect() as conn:
+        found = await conn.run_sync(_scoped_tables)
+    assert [(t.table, t.retained) for t in found if t.table != "notes"] == [('weird"name', True)]
+    async with unit_of_work(storage_engine) as session:
+        assert await delete_project(session, "alpha") == (0, 1)
