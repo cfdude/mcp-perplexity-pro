@@ -48,7 +48,11 @@ class ProjectsResult(BaseModel):
 
 def render(result: ProjectsResult) -> str:
     if result.action == "delete":
-        return f"Deleted project {result.project!r} and {result.rows_removed} row(s) it owned."
+        return (
+            f"Deleted project {result.project!r}: {result.rows_removed} row(s) removed, "
+            f"{result.rows_retained} retained record(s) kept (spend history stays reportable "
+            "by project name)."
+        )
     projects = result.projects or []
     if not projects:
         return "No projects yet."
@@ -71,16 +75,20 @@ def register(server: FastMCP) -> None:
         ctx: Context,
         action: Annotated[
             Literal["list", "delete"],
-            Field(description="list: show all projects; delete: remove one project and its data"),
+            Field(
+                description="list: show all projects; delete: remove one project and its stored "
+                "records (spend history is kept)"
+            ),
         ],
         project: Annotated[str | None, Field(description="Project name (delete only)")] = None,
         confirm: Annotated[
             bool, Field(description="Must be true for delete; deletion cannot be undone")
         ] = False,
     ) -> ToolResult:
-        """List the server's projects, or permanently delete one with everything stored in it.
+        """List the server's projects, or permanently delete one with its stored records.
 
-        Neither action creates a project."""
+        Spend history (usage events) is not deleted: it is kept, detached from the project, and
+        stays reportable by the project's name. Neither action creates a project."""
         engine = ctx.lifespan_context.engine
         if action == "list":
             async with unit_of_work(engine, write=False) as session:
@@ -96,8 +104,8 @@ def register(server: FastMCP) -> None:
             if confirm is not True:
                 raise PerplexityError(
                     "confirmation_required",
-                    f"Deleting project {project!r} removes all its data and cannot be undone; "
-                    "call again with confirm=true.",
+                    f"Deleting project {project!r} removes the project and its stored records and "
+                    "cannot be undone; spend history is kept. Call again with confirm=true.",
                 )
             async with unit_of_work(engine) as session:
                 outcome = await delete_project(session, project)
