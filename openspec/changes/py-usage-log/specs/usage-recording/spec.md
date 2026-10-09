@@ -66,6 +66,10 @@ Each event SHALL carry the UTC time it was recorded, the MCP tool name, the API 
 - **WHEN** a tool that takes no project makes a costed call
 - **THEN** the event has no project reference and no project name
 
+#### Scenario: Refused project name
+- **WHEN** the recorder is given a project name that fails the project-name rule
+- **THEN** the event is stored with no project reference and no project name, a redacted warning is logged, and nothing is raised
+
 ### Requirement: Outcome of an unsuccessful 200 response
 A response that arrives with HTTP success but whose body reports a failed or incomplete run SHALL be recorded with status `unexpected_response`, keeping any usage it reports under the usual cost rules. No fixture shows what such a run bills, so the reported usage is kept rather than discarded or invented.
 

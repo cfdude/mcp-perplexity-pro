@@ -44,7 +44,7 @@
 - [x] 7.3 Attribute every commit of this change to its epic with `update-epic py-usage-log --attribute-commit <sha>` as each lands, in landing order, one conventional commit per task; verify with `jq '.epics[]|select(.id=="py-usage-log").attributedCommits' .conductor/state.json`
 - [x] 7.4 Review this change's three specs (`usage-recording`, `usage-reporting`, `local-storage`) against each other with fresh-context reviewers before group 1 starts (contradiction, double ownership, unmeetable requirements, gaps against the proposal, vocabulary forks, shared chokepoints) and again after any amendment, and record it with `record-cross-spec-review`; verify the recorded verdict is not stale
 - [x] 7.5 Route what the work taught: practices, tooling friction (file with `/pm:feedback`) and process lessons (`docs/lessons/`), each named as one of those three kinds; verify by listing each filed item with its kind, or by recording "none, because <reason>" for a kind with nothing to file
-- [ ] 7.6 Gate 2 implementation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then record it with `record-gate-review py-usage-log --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
+- [x] 7.6 Gate 2 implementation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then record it with `record-gate-review py-usage-log --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
 
 ## 8. Documentation (after Gate 2 is clean)
 
