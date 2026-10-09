@@ -55,7 +55,7 @@
 
 ## 9. Acceptance (manual gate)
 
-- [ ] 9.1 Stop and ask Rob to reconnect the `perplexity` MCP server in Claude Code; after reconnect, call `perplexity_models` (all, filtered by provider, with `refresh`) and `perplexity_projects` (`list`, `delete` without confirm) from the live session; verify each returns the expected result, and if the client fails on stateless HTTP record the protocol era and amend `design.md` D8 before continuing
+- [x] 9.1 Stop and ask Rob to reconnect the `perplexity` MCP server in Claude Code; after reconnect, call `perplexity_models` (all, filtered by provider, with `refresh`) and `perplexity_projects` (`list`, `delete` without confirm) from the live session; verify each returns the expected result, and if the client fails on stateless HTTP record the protocol era and amend `design.md` D8 before continuing
 
 ## 10. Gate procedure (required, per the pm conductor)
 
