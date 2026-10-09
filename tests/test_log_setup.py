@@ -135,3 +135,40 @@ def test_configure_twice_installs_one_handler():
     ours = [h for h in logging.getLogger().handlers if h.get_name() == "mcp_perplexity_pro"]
     assert len(ours) == 1
     assert logging.getLogger().level == logging.DEBUG
+
+
+def test_a_record_with_many_unclosed_parameter_openers_scrubs_in_linear_time():
+    import time
+
+    f = RedactingFilter()
+    secret = "STORED-ANSWER-TEXT"
+    text = "[parameters: " * 23_000 + secret  # ~300 KB, no opener ever closes
+    record = logging.LogRecord("t", logging.ERROR, __file__, 1, text, None, None)
+    start = time.perf_counter()
+    assert f.filter(record)
+    assert time.perf_counter() - start < 1.0
+    assert secret not in record.msg  # an unclosed block is redacted to the end of the record
+    assert "parameters: omitted" in record.msg
+
+
+def test_a_record_without_a_parameter_block_passes_through_unchanged():
+    f = RedactingFilter()
+    text = "plain error with [brackets] and (parens)\nsecond line " * 3
+    record = logging.LogRecord("t", logging.ERROR, __file__, 1, text, None, None)
+    assert f.filter(record)
+    assert record.msg == text
+
+
+def test_a_closed_parameter_block_is_stripped_and_the_background_line_kept():
+    f = RedactingFilter()
+    text = (
+        "(sqlite3.OperationalError) no such table: nope\n"
+        "[SQL: INSERT INTO nope VALUES (?)]\n"
+        "[parameters: ('SECRET-VALUE [x] with ] brackets',)]\n"
+        "(Background on this error at: https://sqlalche.me/e/20/e3q8)"
+    )
+    record = logging.LogRecord("t", logging.ERROR, __file__, 1, text, None, None)
+    assert f.filter(record)
+    assert "SECRET-VALUE" not in record.msg
+    assert "[parameters: omitted]\n(Background on this error" in record.msg
+    assert "no such table: nope" in record.msg

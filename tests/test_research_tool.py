@@ -59,6 +59,21 @@ async def test_the_default_depth_request_is_the_recorded_one_plus_store_true(res
     assert w.bodies() == [{**sidecar, "store": True}]
 
 
+async def test_the_accepted_run_trail_is_logged_at_info_before_the_row_is_stored(
+    research_world, caplog
+):
+    w = await research_world()
+    with caplog.at_level(logging.INFO):
+        await w.call(TOOL, query=QUERY)
+    trail = [
+        r
+        for r in caplog.records
+        if r.levelno == logging.INFO and "accepted by the provider" in r.getMessage()
+    ]
+    assert len(trail) == 1 and RUN_ID in trail[0].getMessage()
+    assert KEY not in caplog.text
+
+
 async def test_a_high_submit_request_has_no_sidecar_and_is_asserted_inline(research_world):
     w = await research_world()
     await w.call(TOOL, query=QUERY, depth="high")
