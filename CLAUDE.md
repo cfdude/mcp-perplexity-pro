@@ -2,188 +2,198 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+MCP server for the Perplexity API, written in Python (FastMCP, SQLAlchemy 2.0 async, SQLite,
+Alembic). Version 2.0.0 replaced the TypeScript 1.x server, which is deleted (git history keeps
+it): Perplexity retired the Sonar endpoints (`403 chat_completions_not_available`), so there was
+nothing to port. Only two tools exist, `perplexity_models` and `perplexity_projects`; the Agent,
+Search, Embeddings and Decisions tools come in later OpenSpec changes. Read `README.md` for the
+user-facing behavior and `openspec/changes/py-foundation/` (`design.md` especially) for why things
+are the way they are.
+
 ## Development Commands
 
-### Core Development
+Python 3.12+, uv. Never use `pip`, bare `python` or a hand-made venv.
 
 ```bash
-# Install dependencies
-npm install
-
-# Development mode with hot reload
-npm run dev
-
-# Build TypeScript and create distributable
-npm run build
-
-# Start the built server
-npm start
-
-# Type checking without emitting files
-npm run type-check
+uv sync                              # install from uv.lock (runtime + dev)
+uv run mcp-perplexity-pro --transport stdio    # or: --transport http (127.0.0.1:8102/mcp)
+uv run pytest                        # offline suite, about 25 s
+uv run pytest tests/test_catalog.py -k stale   # one file / one test
+uv run ruff check .                  # lint
+uv run ruff format --check .         # formatting (use `uv run ruff format .` to fix)
+uv run pre-commit run --all-files    # what the commit hook runs
+PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never committed
 ```
 
-### Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode for development
-npm run test:watch
-
-# Generate coverage report
-npm run test:coverage
-
-# Run specific test file
-npm test -- models.test.ts
-```
-
-### Code Quality
-
-```bash
-# Run ESLint
-npm run lint
-
-# Fix auto-fixable ESLint issues
-npm run lint:fix
-
-# Format code with Prettier
-npm run format
-
-# Check if code is properly formatted
-npm run format:check
-```
-
-### Docker Development
-
-```bash
-# Build Docker image
-npm run docker:build
-
-# Start with Docker Compose
-npm run docker:run
-
-# Development environment
-docker-compose --profile dev up -d
-```
+- **Ruff is the only linter and formatter** (line length 100, rules E F I UP B). No wrapper scripts.
+- **The commit hook** (`.pre-commit-config.yaml`) runs `ruff check --fix`, `ruff format` and
+  `uv run --locked pytest`. Never `git commit --no-verify`.
+- **`--locked`, not `--frozen`,** wherever the lockfile is a gate (CI, the hook): `--frozen` trusts
+  `uv.lock` without comparing it to `pyproject.toml` (`docs/lessons/uv-frozen-does-not-check-the-lock.md`).
+  The pm2 start command uses `--frozen` on purpose: it must start, not re-resolve.
+- CI (`.github/workflows/ci.yml`): `uv sync --locked`, ruff check, ruff format --check, pytest, on
+  Python 3.12 and 3.14.
+- Add dependencies with `uv add <pkg>` (updates `pyproject.toml` and `uv.lock` together).
 
 ## Architecture Overview
 
-### MCP Server Architecture
+`src/mcp_perplexity_pro/`:
 
-This is a Model Context Protocol (MCP) server that provides intelligent access to the Perplexity API. The architecture follows MCP specifications with TypeScript SDK integration.
+| Module | Role |
+|---|---|
+| `__main__.py` | Entry point (`main`, `bootstrap`, `run`). Startup order: settings, then data dir and migrations, then upstream client, then listen. Own `uvicorn.Server` subclass for HTTP, own signal handling for stdio |
+| `cli.py` | `--transport stdio\|http`, `--version`; parsed before settings so `--help` needs no key |
+| `settings.py` | `Settings` (pydantic-settings, prefix `PERPLEXITY_`), `load_settings()` raising `SettingsError` that names each bad variable |
+| `server.py` | `build_server(settings, http, engine)`, `AppContext`, `/health`, the two middlewares, `error_result()` |
+| `client.py` | `PerplexityClient`: the one httpx2 client, retry loop, typed errors, redacted logging |
+| `errors.py` | `PerplexityError` (a FastMCP `ToolError`), `CATEGORIES`, `ALL_CATEGORIES`, status-to-category mapping |
+| `catalog.py` | Model list TTL cache, stale-on-failure rule, the dated `PRESETS` table |
+| `models/` | Tolerant pydantic payload models (`extra="allow"`, optional fields) |
+| `tools/` | One module per tool, each `register(server)`; `tools/__init__.py:register_tools` calls them |
+| `storage/` | `engine.py` (data dir, engine, PRAGMAs), `session.py` (`unit_of_work`), `migrate.py` (runner), `models.py` (ORM), `projects.py` (name rules, get-or-create, delete) |
+| `migrations/` | Alembic env and `versions/NNNN_slug.py`; inside the package so the wheel ships them |
+| `log_setup.py`, `redaction.py` | stderr-only logging; secrets and `pplx-` tokens removed from every record |
 
-**Core Components:**
+### build_server / lifespan / AppContext
 
-- **Main Server (`src/index.ts`)**: MCP server implementation using `McpServer` from `@modelcontextprotocol/sdk`
-- **Model Registry (`src/models.ts`)**: Intelligent model selection system that analyzes queries and selects optimal Perplexity models
-- **API Client (`src/perplexity-api.ts`)**: Wrapper around Perplexity API with error handling and rate limiting
-- **Storage System (`src/storage.ts`)**: Thread-safe file-based storage with project-aware organization
-- **Project Manager (`src/project-manager.ts`)**: Manages multiple project contexts and storage isolation
+`build_server(settings, http, engine)` takes its dependencies as arguments (design D2). It builds a
+`PerplexityClient` and `Catalog`, packs `settings`, `http`, `client`, `engine`, `catalog` into the
+frozen `AppContext` dataclass, and exposes it to tools through the FastMCP lifespan, so inside a
+tool it is `ctx.lifespan_context`. The server also carries `server.app` (the `AppContext`) and
+`server.in_flight` (the draining counter). Ownership rule: **the caller owns `http` and `engine`
+and closes them** (`__main__.run` does). The lifespan only exposes them, because FastMCP's
+lifespan teardown does not run on a signal in stdio mode. Production wires real ones; tests pass
+an `httpx2.AsyncClient` on a `MockTransport` and a temp-file engine. No module-level globals.
 
-### Tool Categories
+HTTP mode is stateless (`stateless_http=True`, `json_response=True`, `host_origin_protection=True`),
+so nothing may depend on `ctx.session_id`. Version has one source, `importlib.metadata`, read by
+`/health` and the MCP `initialize` result.
 
-The server exposes 5 categories of MCP tools:
+### How to add a tool
 
-1. **Query Tools** (`src/tools/query.ts`):
-   - `ask_perplexity`: Stateless queries with intelligent model selection
-   - `research_perplexity`: Deep research with report saving
+1. Create `tools/<name>.py` with `register(server)`; register it in `tools/__init__.py`.
+2. Name it `perplexity_<name>`. Type every parameter as `Annotated[..., Field(description=...)]`
+   and declare an output model: pass `output_schema=Model.model_json_schema()` and return a
+   `ToolResult(content=<readable text>, structured_content=model.model_dump(mode="json"))`.
+3. Reach dependencies through `ctx.lifespan_context` (`.client`, `.catalog`, `.engine`,
+   `.settings`). Never build a client or engine inside a tool.
+4. Open the database only with `async with unit_of_work(engine) as session:` (see session
+   convention below). A tool that stores records resolves its project with
+   `get_or_create_project(session, project)` inside that block.
+5. Raise `PerplexityError(category, message)` for every anticipated failure. Anything else is
+   masked to `internal_error`.
+6. **Do not use `from __future__ import annotations` in a tool module**: FastMCP reads annotations
+   at registration time and `Context` must be a real class there.
+7. Test it offline through `build_server` with a `MockTransport` client (see `tests/test_tool_errors.py`,
+   `tests/test_projects_tool.py`); every tool schema costs context in every session, so keep the
+   total near the design target of about nine tools.
 
-2. **Chat Tools** (`src/tools/chat.ts`):
-   - `chat_perplexity`: Conversational interface with persistent storage
-   - `list_chats_perplexity`: List stored conversations
-   - `read_chat_perplexity`: Retrieve conversation history
-   - `storage_stats_perplexity`: Storage usage statistics
+### Error contract
 
-3. **Async Tools** (`src/tools/async.ts`):
-   - `async_perplexity`: Long-running research jobs
-   - `check_async_perplexity`: Job status checking
-   - `list_async_jobs`: List all async operations
+Every tool failure is returned as an MCP tool error by `ErrorContractMiddleware`: text
+`[category] message`, `structuredContent = {category, message}`, `_meta = {category}`. The
+vocabulary is closed (`errors.ALL_CATEGORIES`, eleven values): `invalid_request`, `authentication`,
+`forbidden`, `not_found`, `rate_limited`, `upstream_failure`, `network_timeout`,
+`unexpected_response`, `confirmation_required`, `storage_busy`, `internal_error`. Mapping: a
+`PerplexityError` keeps its category; a SQLite busy error is `storage_busy`; FastMCP argument
+validation is `invalid_request`; an unknown tool is `not_found`; everything else, including a
+plain `ToolError`, is `internal_error` with a fixed generic message while the real exception is
+logged at ERROR (redacted). HTTP status maps by `errors.category_for_status`, never by the
+API's error `type`. Upstream text is redacted on construction because it can echo a submitted key.
+Adding a category means updating the spec, `errors.py`, the README table and the tests together.
 
-4. **Project Tools** (`src/tools/projects.ts`):
-   - `list_projects_perplexity`: List all projects
-   - `delete_project_perplexity`: Safe project deletion
+### Storage and migrations
 
-5. **Utility Tools**:
-   - `model_info_perplexity`: Model capabilities and selection guidance
+- One SQLite file, `perplexity.db`, in `PERPLEXITY_DATA_DIR` (default `~/.perplexity-pro/`, mode
+  0700; the file 0600). WAL mode, `busy_timeout` and `foreign_keys=ON` are set on connect. The
+  server never writes into the calling project's directory.
+- Migrations are `migrations/versions/NNNN_slug.py` (four-digit sequence, no gaps, chained). Each
+  **must** have a working `downgrade()`; a test enforces naming and reversibility.
+- The runner (`storage/migrate.py`) uses a synchronous engine before the async one starts, under
+  an exclusive `migrate.lock` file (60 s bounded wait), copies a database that has a recorded
+  revision to `backup-<revision>.db` with SQLite's online backup API, then runs the upgrade inside
+  one `BEGIN IMMEDIATE` transaction (transactional DDL: a failed migration rolls back). It refuses
+  a database newer than the code. Restoring a backup is a manual procedure (README), not code.
+- Project-scoped tables: give the table a column with a foreign key to `projects.id` declared
+  `ON DELETE CASCADE`. `delete_project` finds such tables by introspection, so it needs no edit.
+- Every stored record belongs to a project; `get_or_create_project` is the only resolver.
 
-### Intelligent Model Selection
+### SQLAlchemy session convention (design D10)
 
-The system analyzes queries using keyword patterns and complexity heuristics to automatically select from:
+The house convention proposed in `design.md` D10 and implemented in `storage/session.py`:
 
-- **sonar**: Fast, cost-effective for simple queries
-- **sonar-pro**: Advanced search with real-time capabilities
-- **sonar-reasoning**: Reasoning with search capabilities
-- **sonar-reasoning-pro**: Complex analysis and multi-step reasoning (default)
-- **sonar-deep-research**: Comprehensive research and literature reviews
+- **One `AsyncSession` per tool call**, obtained from `unit_of_work(engine, write=True)`. It is an
+  `@asynccontextmanager` function (FastMCP would hand a bare async generator to the tool as an
+  object). Never open a session any other way, and never share one across calls.
+- **Commit when the block returns; roll back on any exception**, including `BaseException`, so a
+  call that fails after writing leaves nothing behind (the "all-or-nothing" requirement).
+- **Write units of work start `BEGIN IMMEDIATE`** so the write lock is taken up front and
+  `busy_timeout` applies (a read-then-write transaction in WAL mode fails instantly with BUSY and
+  ignores the timeout). Pass `write=False` for a read-only call.
+- A lock held past the timeout surfaces as `PerplexityError("storage_busy", ...)`.
+- **Get-or-create is an upsert** (`INSERT ... ON CONFLICT DO NOTHING`, then select), so concurrent
+  first creates cannot violate a unique constraint.
+- `expire_on_commit=False`, so returned ORM objects stay readable after the block.
 
-### Project-Aware Storage
+## Testing
 
-Storage is organized per project with thread-safe file locking:
+- **Offline by default.** `tests/conftest.py` installs a socket guard that fails any connection to
+  a non-loopback address. Opt out only with `@pytest.mark.allow_network` (live tests, and the one
+  test that connects to the host's own address to prove a refusal).
+- **Fake the API with `httpx2.MockTransport`** injected into an `httpx2.AsyncClient` passed to
+  `build_server`/`PerplexityClient`. `respx` and `pytest-httpx` do not intercept `httpx2`.
+- **Fixtures** in `tests/fixtures/` are real, scrubbed API responses, each with a `.meta.json`
+  (endpoint, capture date). Never hand-write one; build synthetic edge cases inline in the test.
+  `tests/test_fixtures.py` scans them for key-shaped strings. Probe the real API before modeling it
+  (`docs/lessons/docs-lie-probe-the-api-first.md`); re-record with
+  `PERPLEXITY_API_KEY=... uv run pytest -m live tests/test_live_capture.py`.
+- **`live` marker**: calls the real API, deselected by default (`addopts = -m 'not live'`), run
+  with `-m live`. Never required for a commit.
+- Tests inject a dummy key through `make_settings`; the suite must pass with no
+  `PERPLEXITY_API_KEY` in the environment. FastMCP deprecation warnings are errors.
+- **Mutation-check rule** (`docs/lessons/cleanup-tests-must-fail-when-cleanup-is-removed.md`):
+  after writing a test for shutdown, close, rollback or lock behavior, delete the code it protects
+  once and confirm the test goes red. Assert on a side effect (a file written after the close, an
+  intact backup), not on a log line that claims the work happened.
+- Server tests start the real HTTP runner on an ephemeral port (`tests/server_support.py`:
+  `free_port`, `serving`, `rpc`) or a subprocess (`tests/fixture_server.py`).
 
-```
-{project_root}/.perplexity/
-├── chats/           # Conversation storage
-├── reports/         # Research reports
-└── async-jobs/      # Background job tracking
-```
+## Configuration and operations
 
-## TypeScript Configuration
+- Environment variables, prefix `PERPLEXITY_` (table in `README.md`; defined once in
+  `settings.py`): `API_KEY` (required), `HOST` (127.0.0.1), `PORT` (8102), `BASE_URL`, `DATA_DIR`,
+  `LOG_LEVEL`, `CONNECT_TIMEOUT`, `READ_TIMEOUT`, `MAX_ATTEMPTS`, `MAX_RETRY_WAIT`, `CATALOG_TTL`,
+  `CATALOG_MAX_STALE`, `DB_BUSY_TIMEOUT`. No `.env` file is read. Never use the `FASTMCP_` prefix
+  for our own settings (FastMCP reads it).
+- **Never print, log, commit or paste the API key.** It is a `SecretStr`; logs go through the
+  redacting handler to stderr only (stdout is the protocol in stdio mode).
+- **Live server: pm2, app `mcp-perplexity-pro`, port 8102** (registered in `~/SERVER_PORTS.md`),
+  health `GET http://127.0.0.1:8102/health`. Do not stop or restart it to test; start your own
+  instance on an ephemeral port with a dummy key and a temp `PERPLEXITY_DATA_DIR`.
+  `ecosystem.config.cjs` holds the real key and is gitignored; `ecosystem.example.cjs` is the
+  key-free template (`kill_timeout: 15000`, which must exceed the server's 10 s shutdown bound;
+  `tests/test_ecosystem_example.py` guards it). Never edit the real one in a commit.
+- Graceful shutdown: SIGTERM/SIGINT (or stdin EOF in stdio) stops new calls, waits up to 10 s for
+  running ones, closes the HTTP client and engine, exits 0.
+- Non-loopback `PERPLEXITY_HOST` logs a warning: the endpoints are unauthenticated.
 
-The project uses strict TypeScript with:
+## Non-goals and retired code
 
-- `exactOptionalPropertyTypes`: true (requires careful handling of optional properties)
-- ES2022 target with ESNext modules
-- Comprehensive strict mode settings
-- Declaration files generation for library use
+- **No data import from 1.x.** The old `.perplexity/` project folders are not read.
+- **The TypeScript sources and their packaging and container files are deleted** on the `python-rewrite` branch. Do not
+  propose converting anything back or reviving the 1.x tool names. The Sonar models and
+  `/chat/completions` endpoints are retired by Perplexity and must not be called.
+- Not in this change: Agent/Search/Embeddings/Decisions tools, usage logging, routing, PyPI
+  publishing (the package only has to build and run via `uvx --from .`).
 
-## Important Development Notes
+## Workflow: where things live
 
-### MCP SDK Integration
-
-- Uses `@modelcontextprotocol/sdk` version 0.6.0 (note: version in package.json may be outdated)
-- Imports from `/dist/esm/server/` paths for proper ESM support
-- Tool schemas must be defined as plain objects (not Zod .shape)
-
-### Error Handling Patterns
-
-- All async operations include comprehensive error handling
-- API errors are categorized by type (rate_limit, invalid_model, etc.)
-- Storage operations use file locking for thread safety
-
-### Testing Strategy
-
-- Unit tests for individual components
-- Integration tests for MCP tool functionality
-- Mock implementations for external API calls
-- Coverage requirements for new features
-
-### Key Dependencies
-
-- `@modelcontextprotocol/sdk`: MCP server implementation
-- `zod`: Runtime type validation and schema definitions
-- `proper-lockfile`: Thread-safe file operations
-- `node-fetch`: HTTP client for Perplexity API
-- `uuid`: Unique identifier generation
-
-## Configuration
-
-Environment variables and config schema defined in `src/types.ts`:
-
-- `api_key`: Perplexity API key (required)
-- `default_model`: Default model selection (sonar-reasoning-pro)
-- `project_root`: Base directory for storage
-- `storage_path`: Subdirectory for MCP data (.perplexity)
-- `session_id`: Optional session identifier
-
-## Smithery Integration
-
-Uses Smithery for MCP development tooling:
-
-- `smithery dev`: Development server with hot reload
-- `smithery build`: Production build optimization
-- Configuration in `smithery.config.js`
+- `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
+  generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
+  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). The current change is
+  `py-foundation`. `docs/lessons/` holds process lessons with their enforcement points.
+- Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
+  task's `tasks.md` checkbox ticked in the same commit.
 
 <!-- BEGIN pm-conductor rules (managed by pm — safe to delete this block) -->
 ## PM Conductor — operating rules

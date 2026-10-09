@@ -69,7 +69,7 @@
 ## 11. Documentation (after Gate 2 is clean)
 
 - [x] 11.1 Document both tools (purpose, arguments, categories, example output), the settings table, the start commands for stdio and HTTP and the pm2 command, and the manual backup-restore procedure (stop the server, delete `perplexity.db-wal` and `perplexity.db-shm`, copy `backup-<rev>.db` over `perplexity.db`) in `README.md`; verify every command and example in the document runs as written against a locally started server
-- [ ] 11.2 Rewrite `CLAUDE.md` for the Python server (commands, layout, conventions, the SQLAlchemy session convention proposed in `design.md`) keeping the pm-managed block intact, and add a key-free `ecosystem.example.cjs` that sets `kill_timeout` to at least 15000, with a test that reads it and asserts that; verify `rg -n "npm|vitest|Smithery|sonar-" CLAUDE.md` finds nothing stale
+- [x] 11.2 Rewrite `CLAUDE.md` for the Python server (commands, layout, conventions, the SQLAlchemy session convention proposed in `design.md`) keeping the pm-managed block intact, and add a key-free `ecosystem.example.cjs` that sets `kill_timeout` to at least 15000, with a test that reads it and asserts that; verify `rg -n "npm|vitest|Smithery|sonar-" CLAUDE.md` finds nothing stale
 
 - [ ] 11.3 Commits in this group are attributed to the epic like any other, so record Gate 2 again over the docs range with `record-gate-review py-foundation --gate 2 --verdict pass --base-sha <a> --head-sha <b>` after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 
