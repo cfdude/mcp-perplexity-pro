@@ -33,7 +33,7 @@ packages = ["src/mcp_perplexity_pro"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["node_modules", "dist", "fix-test-mocks.js", ".venv", ".perplexity"]
+extend-exclude = ["node_modules", "dist", ".venv", ".perplexity"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
