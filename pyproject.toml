@@ -20,6 +20,7 @@ dev = [
     "pytest-asyncio",
     "ruff",
     "pre-commit",
+    "jsonschema>=4.26.0",
 ]
 
 [build-system]
