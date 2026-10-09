@@ -156,11 +156,15 @@ A send whose response is `incomplete` SHALL return its result with a warning and
 - **THEN** 2 chats are returned, the total is 3 and the list is marked truncated
 
 ### Requirement: Reading a chat
-`read` SHALL return a chat's messages from local storage in chronological order, the last `limit` of them (default 50, 1 to 200), with the total count, and SHALL make no upstream call. The result's top-level `chat_id` is that chat's id.
+`read` SHALL return a chat's messages from local storage in chronological order, the last `limit` of them (default 50, 1 to 200), with the total count, and SHALL make no upstream call. The result's top-level `chat_id` is that chat's id. A `chat_id` of `read`, `delete` or `send` that is not a positive integer below 2**63 SHALL fail with `invalid_request`, also in an absent project, while an unknown positive id SHALL fail with `not_found`.
 
 #### Scenario: Read from local history
 - **WHEN** a client reads a chat with 4 messages
 - **THEN** the 4 messages are returned in order with their roles and texts, no request reaches the API and no usage event is created
+
+#### Scenario: An id the database cannot hold
+- **WHEN** a client reads chat 0, chat -1, and chat 9223372036854775808 (2**63), the last naming the absent project `ghost`
+- **THEN** each call fails with `invalid_request` naming `chat_id`, no request reaches the API and `ghost` still does not exist, while chat 999 of an existing project fails with `not_found`
 
 ### Requirement: Deleting a chat
 `delete` SHALL require `confirm` true (else `confirmation_required`), remove the chat and its messages, and return how many messages were removed. It SHALL make no upstream call; copies the provider keeps are not touched.

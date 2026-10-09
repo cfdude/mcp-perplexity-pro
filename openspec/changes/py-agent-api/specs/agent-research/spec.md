@@ -118,7 +118,7 @@ The `perplexity_jobs` result SHALL carry a top-level `job_id` (the job the actio
 - **THEN** the result's `status` is `cancelling` while the `job` record's stored `status` is still `in_progress`
 
 ### Requirement: Jobs actions never create a project
-Every `perplexity_jobs` action SHALL look the project up and never create it. In an absent project `list` SHALL return no jobs with total 0, and `status`, `result` and `cancel` SHALL fail with `not_found`.
+Every `perplexity_jobs` action SHALL look the project up and never create it. In an absent project `list` SHALL return no jobs with total 0, and `status`, `result` and `cancel` SHALL fail with `not_found`. A `job_id` that is not a positive integer below 2**63 SHALL fail with `invalid_request`, also in an absent project, while an unknown positive id SHALL fail with `not_found`.
 
 #### Scenario: List in an absent project
 - **WHEN** a client lists jobs of project `ghost`, which does not exist
@@ -127,6 +127,10 @@ Every `perplexity_jobs` action SHALL look the project up and never create it. In
 #### Scenario: Status in an absent project
 - **WHEN** a client asks for the status of job 1 in project `ghost`
 - **THEN** the call fails with `not_found`, no request reaches the API and `ghost` still does not exist
+
+#### Scenario: An id the database cannot hold
+- **WHEN** a client asks for the status of job 0, of job -1, and of job 9223372036854775808 (2**63), the last naming the absent project `ghost`
+- **THEN** each call fails with `invalid_request` naming `job_id`, no request reaches the API and `ghost` still does not exist, while job 999 of an existing project fails with `not_found`
 
 ### Requirement: Status polls once
 `status` on a job that is not terminal SHALL fetch the run once, update the job's status, and return the job with its progress: how many search and fetch steps the run has shown so far. A job already terminal SHALL be returned from local storage without an upstream call. Any status the API reports that is not terminal, including one this server has never seen, SHALL be returned verbatim (redacted, cut to 64 characters) and treated as still running.

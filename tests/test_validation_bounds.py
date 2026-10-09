@@ -111,6 +111,17 @@ async def test_the_largest_valid_id_is_looked_up_and_not_found(research_world):
     assert category(result) == "not_found"
 
 
+async def test_an_out_of_range_id_in_an_absent_project_is_invalid_request_and_creates_nothing(
+    research_world,
+):
+    w = await research_world()
+    jobs = await w.call("perplexity_jobs", action="status", job_id=BIG, project="ghost")
+    chats = await w.call("perplexity_chat", action="read", chat_id=BIG, project="ghost")
+    assert category(jobs) == "invalid_request" and "job_id" in message(jobs)
+    assert category(chats) == "invalid_request" and "chat_id" in message(chats)
+    assert await w.count("projects") == 0 and w.requests == []
+
+
 # --- 10. caller caps --------------------------------------------------------------------------
 
 

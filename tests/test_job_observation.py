@@ -208,7 +208,7 @@ async def test_a_row_update_that_fails_after_the_event_does_not_record_a_second_
     assert await w.count("usage_events") == 1  # the event outlives the failed row update
     assert (await job(w))["status"] == "in_progress"  # and the row update rolled back
     await allow_updates(w)
-    await observe(w)  # observed again: the partial unique index drops the duplicate
+    await observe(w)  # observed again: the event-exists check finds it, only the row is written
     assert await w.count("usage_events") == 1
     assert (await job(w))["status"] == "completed"
 
