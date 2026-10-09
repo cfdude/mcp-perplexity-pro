@@ -54,7 +54,7 @@
 
 ## 9. Archive
 
-- [ ] 9.1 Archive the change and record the disposition (`update-epic py-usage-log --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->
+- [x] 9.1 Archive the change and record the disposition (`update-epic py-usage-log --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->
 
 ## Workflow follow-up
 

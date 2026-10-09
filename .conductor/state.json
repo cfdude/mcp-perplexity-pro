@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "py-usage-log",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -190,7 +190,7 @@
       "id": "py-usage-log",
       "title": "Per-call cost and usage log",
       "priority": "P1",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -206,10 +206,41 @@
       "attributedCommits": [
         "fbfb5d4",
         "e0b2796",
-        "52b72b5"
+        "52b72b5",
+        "24e2e81",
+        "3035d8b",
+        "82c666c",
+        "f4f2195",
+        "d87d9fd",
+        "3fa611d",
+        "ea934c5",
+        "fd2ef85",
+        "43c12fb",
+        "de09bc1",
+        "e36bbcf",
+        "93fd08f",
+        "4bf6a48",
+        "b44af08",
+        "c78ef78",
+        "a351f7a",
+        "2718a56",
+        "d2eb6cf",
+        "0b1bdab",
+        "51433a3",
+        "344b587",
+        "3bd2123",
+        "0d32291",
+        "6ab0309",
+        "e53b984",
+        "1f67e30",
+        "8b35ce8",
+        "8b35ce8",
+        "5a7383c",
+        "1616705",
+        "dfbfc97"
       ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T18:30:38.878Z",
+      "touchedAt": "2026-10-09T19:39:06.703Z",
       "notes": [
         {
           "at": "2026-10-09T18:06:33.972Z",
@@ -232,8 +263,33 @@
             "openspec/changes/py-usage-log/specs/local-storage/spec.md"
           ],
           "reviewer": "fresh-context general-purpose subagents: Gate 1 review, verification review, final narrow check (2026-10-09)"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T19:39:00.583Z",
+          "baseSha": "8b35ce8",
+          "headSha": "dfbfc97",
+          "reviewer": "fresh-context general-purpose subagent: documentation diff 8b35ce8..1616705 (one IMPORTANT and two MINOR, all fixed in dfbfc97)",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-09T19:31:43.547Z",
+            "baseSha": "24e2e81",
+            "headSha": "8b35ce8",
+            "reviewer": "fresh-context general-purpose subagents: Gate 2 review (24e2e81..344b587) PASS, call-site audit findings fixed, narrow Gate 2 re-review of 344b587..e53b984 PASS; follow-ups 1f67e30 (lessons) and 8b35ce8 (spec scenario)"
+          }
         }
-      }
+      },
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-09T19:39:06.702Z",
+        "reason": "Usage log delivered: usage_events (migration 0002), best-effort recorder with pricing constants, perplexity_usage tool, retained-table convention for project delete; Gate 2, audit and docs review recorded; live-verified on the running server"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-09T19:39:06.702Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-09T19:39:06.702Z"
     },
     {
       "id": "py-embeddings",
@@ -408,7 +464,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 88,
+  "revision": 122,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
