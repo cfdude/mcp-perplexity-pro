@@ -35,6 +35,7 @@ from typing import Literal
 
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from mcp_perplexity_pro.errors import ALL_CATEGORIES
@@ -447,6 +448,20 @@ def _marker(reason: str, size: int | None) -> str:
     return json.dumps({"_truncated": True, "_reason": reason, "_original_bytes": size})
 
 
+def _redact_strings(value: object, secrets: Iterable[str]) -> object:
+    """A copy of a JSON-like value with every string key and value redacted."""
+    if isinstance(value, str):
+        return redact_text(value, secrets)
+    if isinstance(value, dict):
+        return {
+            (redact_text(k, secrets) if isinstance(k, str) else k): _redact_strings(v, secrets)
+            for k, v in value.items()
+        }
+    if isinstance(value, list | tuple):
+        return [_redact_strings(v, secrets) for v in value]
+    return value
+
+
 def _usage_json(raw: object, secrets: Iterable[str]) -> str | None:
     """The usage object as strict, redacted JSON of at most ``MAX_USAGE_JSON`` bytes, else a
     marker object naming why it was not kept (design D6)."""
@@ -459,10 +474,13 @@ def _usage_json(raw: object, secrets: Iterable[str]) -> str | None:
     size = len(serialized.encode())
     if size > MAX_USAGE_JSON:
         return _marker("oversize", size)
-    redacted = redact_text(serialized, secrets)
     try:
+        # Redact the strings BEFORE serializing: json.dumps escapes non-ASCII, quotes and
+        # backslashes, so a secret holding any of them no longer matches in the finished text.
+        redacted = json.dumps(_redact_strings(raw, secrets), allow_nan=False, separators=(",", ":"))
+        redacted = redact_text(redacted, secrets)  # keys and values the walk could not see
         json.loads(redacted)  # a secret holding a quote can break the text
-    except (ValueError, RecursionError):
+    except (ValueError, TypeError, RecursionError, OverflowError):
         return _marker("unserializable", None)
     return redacted
 
@@ -503,6 +521,9 @@ def _event_values(parsed: Usage, secrets: Iterable[str]) -> dict[str, object]:
     """The cost and detail columns of ``parsed``, revalidated (a caller may build a ``Usage``)."""
     cost = _cost_int(parsed.cost_nano_usd)
     source = parsed.cost_source if parsed.cost_source in ("reported", "computed") else "none"
+    # Never add a non-USD amount as USD; a computed cost must name the price table it used.
+    if parsed.currency != "USD" or (source == "computed" and parsed.price_table is None):
+        cost, source = 0, "none"
     if cost is None or source == "none":
         cost, source = 0, "none"
     values: dict[str, object] = {
@@ -559,6 +580,17 @@ def _build_event(
     }
 
 
+def _store_failure(exc: BaseException, secrets: Iterable[str]) -> str:
+    """Why a write failed, without the usage payload (design D6). A SQLAlchemy error renders its
+    ``[SQL: ...]`` and ``[parameters: ...]`` (every bound value), so only the exception type and
+    the database driver's own message are logged for one."""
+    if isinstance(exc, SQLAlchemyError):
+        cause = getattr(exc, "orig", None)
+        detail = f"{type(cause).__name__}: {cause}" if cause is not None else "no driver detail"
+        return redact_text(f"{type(exc).__name__} ({detail})", secrets)[:500]
+    return _failure_text(exc, secrets)
+
+
 async def _store(engine: AsyncEngine, values: dict[str, object], secrets: tuple[str, ...]) -> bool:
     """Insert one event in its own unit of work. Never raises (``Exception``)."""
     try:
@@ -578,7 +610,7 @@ async def _store(engine: AsyncEngine, values: dict[str, object], secrets: tuple[
             logger.debug("usage event for %s %s already recorded", values["api"], "response")
         return stored
     except Exception as exc:
-        logger.warning("usage event not recorded: %s", _failure_text(exc, secrets))
+        logger.warning("usage event not recorded: %s", _store_failure(exc, secrets))
         return False
 
 

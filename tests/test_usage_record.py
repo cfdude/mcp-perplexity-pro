@@ -230,9 +230,19 @@ async def test_a_non_finite_number_stores_the_marker(storage_engine, fast, bad):
     assert row["input_tokens"] == 3426 and row["cost_nano_usd"] == 1_250_000
 
 
-async def test_a_secret_that_breaks_the_json_stores_the_marker(storage_engine, fast):
+async def test_a_secret_holding_a_quote_is_redacted_in_the_value_and_the_json_stays_valid(
+    storage_engine, fast
+):
     fast["usage"]["note"] = 'say "hi'
     assert await record(storage_engine, usage=fast["usage"], secrets=['"hi']) is True
+    (row,) = await rows(storage_engine)
+    assert json.loads(row["usage_json"])["note"] == "say [redacted]"
+
+
+async def test_a_secret_that_breaks_the_json_stores_the_marker(storage_engine, fast):
+    fast["usage"]["note"] = "say hi"
+    # the secret matches the JSON structure itself, so the finished text no longer parses
+    assert await record(storage_engine, usage=fast["usage"], secrets=['":']) is True
     (row,) = await rows(storage_engine)
     assert marker(row)["_reason"] == "unserializable"
     assert row["input_tokens"] == 3426
