@@ -33,7 +33,7 @@ The client SHALL convert every failure into exactly one category, carrying the H
 - **THEN** the client raises a `network_timeout` error that states which timeout elapsed
 
 ### Requirement: Network failures
-`network_timeout` SHALL be raised for every failure to complete an exchange without an HTTP response: connect failure, DNS failure, connection reset and any timeout. A connect timeout counts as a connect failure for retry purposes. A 200 response whose body is not valid JSON is `unexpected_response`.
+`network_timeout` SHALL be raised for every failure to complete an exchange without an HTTP response: connect failure, DNS failure, connection reset and any timeout. A connect timeout counts as a connect failure for retry purposes; a write timeout uses the read timeout and a pool timeout the connect timeout. A 200 response whose body is not valid JSON is `unexpected_response`.
 
 #### Scenario: Connection failure
 - **WHEN** every attempt fails to connect to the API

@@ -65,7 +65,7 @@ Tests SHALL live under `tests/` and SHALL make no network call by default; the o
 - **THEN** the live tests execute against the real API
 
 ### Requirement: Recorded API fixtures
-API response fixtures SHALL be saved under `tests/fixtures/` with the capture date and endpoint recorded, SHALL have credentials and account identifiers removed, and SHALL come from real calls, not hand-written approximations.
+API response fixtures SHALL be saved under `tests/fixtures/` with the capture date and endpoint recorded, SHALL have credentials and account identifiers removed, and SHALL come from real calls, not hand-written approximations. Synthetic entries for edge cases are built inline in tests and never stored under `tests/fixtures/`.
 
 #### Scenario: Fixture hygiene
 - **WHEN** the fixture directory is scanned

@@ -39,6 +39,10 @@ The tool SHALL accept an optional `provider` argument and, when given, return on
 ### Requirement: Documented presets are labeled as documented
 The result SHALL list the Agent API preset names `fast`, `low`, `medium`, `high` and `xhigh` in a separate section labeled as taken from documentation, with the date they were recorded. Presets SHALL NOT be presented as live data.
 
+#### Scenario: Presets with a provider filter
+- **WHEN** a client calls `perplexity_models` with a `provider` filter
+- **THEN** the preset section is still included
+
 #### Scenario: Preset section
 - **WHEN** a client calls `perplexity_models`
 - **THEN** the result includes the five preset names under a section whose `source` is `documentation` and whose `as_of` is a date

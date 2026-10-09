@@ -37,7 +37,7 @@ The database schema SHALL be managed by ordered migrations named with a four-dig
 
 #### Scenario: Failing migration
 - **WHEN** a pending migration raises an error
-- **THEN** startup fails with a message naming the migration, the database keeps its previous schema and rows, and, if the database was non-empty, the pre-migration backup exists
+- **THEN** startup fails with a message naming the migration, the database keeps its previous schema and rows, and, if the database had a recorded schema revision, the pre-migration backup exists
 
 #### Scenario: Two processes start together
 - **WHEN** two server processes start at the same moment against one data directory

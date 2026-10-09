@@ -25,6 +25,17 @@ The server SHALL serve MCP over stdio and over Streamable HTTP. The HTTP endpoin
 - **WHEN** the server is started in stdio mode
 - **THEN** it completes an MCP `initialize` exchange over stdin and stdout and opens no network listener
 
+### Requirement: Non-loopback host warning
+The server SHALL log a warning at startup when the configured host is not a loopback address, because its endpoints are unauthenticated. Use beyond loopback is unsupported until authentication exists.
+
+#### Scenario: Host set to all interfaces
+- **WHEN** the server starts in HTTP mode with the host set to `0.0.0.0`
+- **THEN** a warning stating that the endpoints are unauthenticated is logged to stderr
+
+#### Scenario: Loopback host
+- **WHEN** the server starts with host `127.0.0.1`, `::1` or `localhost`
+- **THEN** no such warning is logged
+
 ### Requirement: Startup order and failure
 At startup the server SHALL validate settings first, then create the data directory and apply database migrations, then build the upstream client, and only then accept connections. A failure at any step SHALL abort startup before any listener opens. A settings failure SHALL NOT create or modify anything on disk. A database failure aborts the whole server, including `/health` and tools that do not use the database.
 
@@ -46,6 +57,10 @@ Every tool failure SHALL be returned as an MCP tool error whose structured conte
 #### Scenario: Unexpected exception
 - **WHEN** a tool raises an exception the server did not anticipate
 - **THEN** the client receives category `internal_error` with a generic message without the exception text, and the full detail is logged to stderr with secrets redacted
+
+#### Scenario: Invalid arguments
+- **WHEN** a client calls a tool with a missing or mistyped argument
+- **THEN** the tool error has category `invalid_request` and names the argument
 
 ### Requirement: Error category vocabulary
 The `category` of a tool error SHALL be one of: `invalid_request`, `authentication`, `forbidden`, `not_found`, `rate_limited`, `upstream_failure`, `network_timeout`, `unexpected_response`, `confirmation_required`, `storage_busy` or `internal_error`.
@@ -110,7 +125,7 @@ On SIGINT or SIGTERM, or on stdin reaching end of file in stdio mode, the server
 
 #### Scenario: New call while draining
 - **WHEN** a stdio-mode server is draining after a signal and a new tool call arrives
-- **THEN** the call fails with category `internal_error` and the message `shutting down`
+- **THEN** the call fails with category `internal_error` and a message containing `shutting down`
 
 #### Scenario: stdin closed in stdio mode
 - **WHEN** the client closes stdin of a stdio-mode server
