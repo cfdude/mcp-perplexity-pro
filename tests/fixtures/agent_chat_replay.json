@@ -1,0 +1,180 @@
+{
+  "background": false,
+  "completed_at": 1791579674,
+  "created_at": 1791579674,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_2b678975-c535-4144-8944-b2c9a09a91d8",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": [
+        "user favorite color codeword PELICAN-42 teal"
+      ],
+      "results": [
+        {
+          "date": "2026-09-25",
+          "id": 1,
+          "last_updated": "2026-10-07",
+          "snippet": "# Working with Teal: Pairings, Contrast Tips, and Shade Ideas\nThe standard teal hex code is #008080, a balanced mix of green and blue with no red.",
+          "source": "web",
+          "title": "Teal in Branding & Ui: Meaning, Best Pairings, Accessibility",
+          "url": "https://www.media.io/colors/teal-color.html"
+        },
+        {
+          "date": "2004-07-30",
+          "id": 2,
+          "last_updated": "2026-09-02",
+          "snippet": "**Teal** is a greenish-blue color.\n...\nIn the RGB model used to create colors on computer screens and televisions, teal is created by reducing the brightness of cyan to about one half.",
+          "source": "web",
+          "title": "Teal - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Teal_(color)"
+        },
+        {
+          "date": "2004-07-30",
+          "id": 3,
+          "last_updated": "2026-10-07",
+          "snippet": "# Teal\n## Page version status\n**Teal** is a dark cyan color.\n...\nIn the RGB model used to create colors on computer screens and televisions, teal is created by reducing the brightness of cyan to about one half.",
+          "source": "web",
+          "title": "Teal",
+          "url": "https://en.wikipedia.org/wiki/Teal"
+        },
+        {
+          "id": 4,
+          "last_updated": "2026-10-09",
+          "snippet": "# Search The Official Register of Color Names\nEnter the Color Name or Color code/HEX code of the color you're looking for.",
+          "source": "web",
+          "title": "Search Color Names by Name or HEX | Register of Color Names",
+          "url": "https://color-register.org/color/"
+        },
+        {
+          "date": "2010-05-03",
+          "id": 5,
+          "last_updated": "2026-10-08",
+          "snippet": "# Color Survey Results\nOver five million colors were named across 222,500 user sessions.",
+          "source": "web",
+          "title": "Color Survey Results \u2013 xkcd",
+          "url": "https://blog.xkcd.com/2010/05/03/color-survey-results/comment-page-10/"
+        },
+        {
+          "id": 6,
+          "last_updated": "2026-09-27",
+          "snippet": "Primary\nHex Code: `#00284d`\n...\nAccent\nHex Code: `#008282`",
+          "source": "web",
+          "title": "Brand Colors | Pelican, Louisiana's Design System",
+          "url": "https://pelican.ots.la.gov/v1/foundation/brand-colors/"
+        },
+        {
+          "id": 7,
+          "last_updated": "2025-03-16",
+          "snippet": "PELICAN\u2122 AIR CASE\nCOLORS AVAILABLE\n...\nOD GREEN\nYELLOW",
+          "source": "web",
+          "title": "pelican-cases-catalog-2025.pdf",
+          "url": "https://media.pelican.com/docs/catalogs/pelican-cases-catalog-2025.pdf"
+        },
+        {
+          "id": 8,
+          "last_updated": "2025-11-03",
+          "snippet": "BLACK\nSILVER\n...\nOXBLOOD\n...\nTAN\n...\n1030 MICRO CASE",
+          "source": "web",
+          "title": "2 0 2 1  P E L I C A N \u2122  C A S E  C A T A L O G",
+          "url": "https://media.pelican.com/docs/catalogs/pelican-cases-catalog-2021.pdf"
+        },
+        {
+          "date": "2024-01-02",
+          "id": 9,
+          "last_updated": "2026-10-09",
+          "snippet": "Teal is a deep shade of blue-green.\n...\n**Teal**\nHex #008080",
+          "source": "web",
+          "title": "The Color Teal: Definition, Hex Code, History, Meaning, and ...",
+          "url": "https://www.color-meanings.com/teal-color/"
+        },
+        {
+          "date": "2025-02-19",
+          "id": 10,
+          "last_updated": "2026-10-02",
+          "snippet": "### Hex\nCopy Hex:#069494\n...\nTeal is a calming and sophisticated color, perfectly situated between blue and green on the color wheel.\n...\nTeal is defined by the following color codes and values to ensure consistency across various digital platforms and devices.\n**- HEX code:** #069494\n**- RGB value:** 2.4% red, 58% green and 58% blue\n...\nThe hexadecimal color #069494, known as teal, has RGB values of R:6, G:148, B:148 and CMYK values of C:0.96, M:0, Y:0, K:0.42.",
+          "source": "web",
+          "title": "Teal Color: Hex Code, Palettes & Meaning - Figma",
+          "url": "https://www.figma.com/colors/teal/"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "Your favourite colour is teal, and your codeword is PELICAN-42.",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_d6d1155c-7907-48f5-896f-7d3638dedb05",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00013,
+      "cache_read_cost": 4e-05,
+      "currency": "USD",
+      "input_cost": 1e-05,
+      "output_cost": 3e-05,
+      "tool_calls_cost": 0.001,
+      "tool_calls_cost_details": {
+        "search_web": 0.001
+      },
+      "total_cost": 0.00121
+    },
+    "input_tokens": 4714,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 1076,
+      "cache_read_input_tokens": 3560,
+      "cached_tokens": 3560
+    },
+    "output_tokens": 68,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.001,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 4782
+  },
+  "user": null
+}

@@ -1,0 +1,16 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "chat turn 2: depth low chained from a fast turn's store:false response",
+  "request": {
+    "preset": "low",
+    "input": "Also remember: my favourite colour is teal. Just reply OK.",
+    "previous_response_id": "resp_5a5f8aa8-a865-4078-827b-5e2cb1c0f69f",
+    "store": false
+  }
+}

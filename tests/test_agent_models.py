@@ -38,7 +38,11 @@ def test_the_table_covers_every_run_capture():
     names = run_captures()
     assert "agent_background_cancelled" in names
     assert "agent_fast" in names
-    assert len(names) == 17  # 29 agent captures minus the 400s/404s and the two non-runs
+    # the 17 captures of the probe (29 agent captures minus the 400s/404s and the two non-runs)
+    # plus the two the live chat check saved (agent_chat_depth_switch, agent_chat_replay); a floor,
+    # not an exact count, so a later capture does not break it
+    assert len(names) >= 19
+    assert {"agent_chat_depth_switch", "agent_chat_replay"} <= set(names)
 
 
 @pytest.mark.parametrize("name", run_captures())
