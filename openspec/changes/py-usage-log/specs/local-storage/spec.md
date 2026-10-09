@@ -16,7 +16,7 @@ Deleting a project SHALL NOT delete retained records. It SHALL detach them, clea
 
 #### Scenario: Retained records detached
 - **WHEN** a project that owns 3 retained records and 2 ordinary records is deleted with `confirm` true
-- **THEN** the 2 ordinary records are gone, the 3 retained records remain with no project reference and their project name, and the result reports 2 removed and 3 detached
+- **THEN** the 2 ordinary records are gone, the 3 retained records remain with no project reference and their project name, and the result reports `rows_removed` 2 and `rows_retained` 3
 
 #### Scenario: Detach is all-or-nothing
 - **WHEN** deleting a project fails after its retained records were detached
@@ -36,7 +36,7 @@ Every stored record SHALL belong to a named project, except retained records, wh
 - **THEN** the record belongs to the project `default`, which is created if absent
 
 ### Requirement: Project management tool
-The server SHALL provide a tool `perplexity_projects` with actions `list` and `delete`. `delete` takes a `project` name, removes the project and its records other than retained ones in one transaction, and SHALL require `confirm` set to true. A successful `delete` returns the project name, the number of rows removed from tables that reference the project directly and the number of retained records detached; rows in deeper tables go by cascade and are not counted.
+The server SHALL provide a tool `perplexity_projects` with actions `list` and `delete`. `delete` takes a `project` name, removes the project and its non-retained records in one transaction, and SHALL require `confirm` set to true. A successful `delete` returns the project name, the rows removed from tables that reference the project directly (`rows_removed`) and the number of retained records detached (`rows_retained`); rows in deeper tables go by cascade and are not counted.
 
 #### Scenario: Listing
 - **WHEN** a client calls the tool with action `list`
@@ -51,7 +51,7 @@ The server SHALL provide a tool `perplexity_projects` with actions `list` and `d
 - **THEN** the project and all of its records other than retained ones are gone and a following `list` omits it
 
 ### Requirement: All-or-nothing tool calls
-Each tool call SHALL read and write the database as one unit of work, except that usage recording runs afterwards in its own unit of work. If the call fails, none of its own writes SHALL remain; a usage event recorded for the failed call does.
+A tool's own writes SHALL happen in one unit of work. A tool SHALL NOT hold a write unit of work open across an upstream call; project resolution may commit before one and its project then survives a later failure. Usage recording runs in its own unit of work, invoked while the caller holds no write unit on that engine. If the call fails, none of the tool's own writes SHALL remain; a usage event recorded for the failed call does.
 
 #### Scenario: Failure after a write
 - **WHEN** a tool writes a record and then fails before returning
@@ -60,5 +60,9 @@ Each tool call SHALL read and write the database as one unit of work, except tha
 #### Scenario: Usage event outlives the failure
 - **WHEN** a tool makes a costed upstream call, writes a record and then fails before returning
 - **THEN** the record is not present afterwards and the usage event for the upstream call is
+
+#### Scenario: Write lock not held across the call
+- **WHEN** a tool makes an upstream call that takes longer than the busy timeout while another call tries to write
+- **THEN** the other write succeeds, because the tool holds no write unit of work during the call
 
 Scenarios in this capability that need a writing tool are verified with a tool registered only by the test, built through the same server factory as production; no production tool is required to write for them to pass.

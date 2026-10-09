@@ -22,15 +22,15 @@ The server SHALL provide a tool `perplexity_usage` that reports recorded usage. 
 - **THEN** the structured content validates against the advertised output schema
 
 ### Requirement: Report filters
-`perplexity_usage` SHALL accept an optional `project` (default: all projects) and optional `since` and `until` ISO dates read as UTC days: `since` includes the whole of its day and `until` includes the whole of its day. A malformed date, a `since` after `until` or an invalid project name SHALL fail with category `invalid_request`. A project with no events, or one that has been deleted, SHALL report normally.
+`perplexity_usage` SHALL accept an optional `project` (default: all projects) and optional `since` and `until` dates in strict `YYYY-MM-DD` form, read as UTC days that each include their whole day. A malformed or other-format date, an `until` of `9999-12-31` (its end cannot be represented), a `since` after `until` or an invalid project name SHALL fail with category `invalid_request`. A project with no events, or one that has been deleted, SHALL report normally.
 
 #### Scenario: Date bounds inclusive
 - **WHEN** events exist at 2026-10-07 23:59:59 UTC and 2026-10-08 00:00:00 UTC and `since` and `until` are both `2026-10-08`
 - **THEN** only the second event is counted
 
 #### Scenario: Bad dates
-- **WHEN** `since` is `2026-13-01`, or `since` is `2026-10-09` and `until` is `2026-10-01`
-- **THEN** the call fails with category `invalid_request`
+- **WHEN** `since` is `2026-13-01` or `2026-10-09T00:00`, `until` is `9999-12-31`, or `since` is `2026-10-09` and `until` is `2026-10-01`
+- **THEN** the call fails with category `invalid_request`, never `internal_error`
 
 #### Scenario: Deleted project still reportable
 - **WHEN** a project has been deleted and `project` names it
@@ -41,7 +41,7 @@ The server SHALL provide a tool `perplexity_usage` that reports recorded usage. 
 - **THEN** the result has zero calls and no project is created
 
 ### Requirement: Exact totals
-The result SHALL include totals over every matching event, independent of grouping and limit: the number of calls, the number of calls whose status is not `ok`, input, output and total tokens (unknown counts add 0), the cost as an integer in nano-USD and as an exact decimal USD string, the number of calls whose cost is `computed` and the number of successful calls whose cost is `none`.
+The result SHALL include totals over every matching event, independent of grouping and limit: calls, calls whose status is not `ok`, input, output and total tokens (unknown counts add 0), the cost in nano-USD and as an exact decimal USD string, calls whose cost is `computed`, and calls whose cost is unknown (source `none`, errors included). Errors count cost 0 and may have been billed, so the cost is a lower bound; the tool description SHALL say so.
 
 #### Scenario: Exact sum
 - **WHEN** three matching events cost 210000, 20000 and 1000000 nano-USD
@@ -52,11 +52,15 @@ The result SHALL include totals over every matching event, independent of groupi
 - **THEN** the totals report 5 calls and 2 errors
 
 #### Scenario: Unpriced calls disclosed
-- **WHEN** a successful event has cost source `none`
-- **THEN** the totals count it among calls with unknown cost, so the cost total is visibly a lower bound
+- **WHEN** one successful event and one rate-limited event both have cost source `none`
+- **THEN** the totals count both among calls with unknown cost, so the cost total is visibly a lower bound
+
+#### Scenario: Lower bound stated
+- **WHEN** a client lists tools
+- **THEN** the `perplexity_usage` description says error calls count cost 0 and may have been billed
 
 ### Requirement: Grouping
-`perplexity_usage` SHALL accept one `group_by` value from `tool`, `api`, `model`, `project` and `day` (default `tool`). Each group SHALL carry its key and the same measures as the totals. An event with no value for the grouped field SHALL appear under the key `(none)`; the key for `day` is the UTC date as `YYYY-MM-DD`.
+`perplexity_usage` SHALL accept one `group_by` value from `tool`, `api`, `model`, `project` and `day` (default `tool`). Each group SHALL carry its key and the same measures as the totals; the grouping column comes from a fixed whitelist, never from caller text. An event with no value for the grouped field SHALL appear under the key `(none)`; the key for `day` is the UTC date as `YYYY-MM-DD`.
 
 #### Scenario: Group by project
 - **WHEN** events exist for projects `alpha` and `beta` and `group_by` is `project`
@@ -79,11 +83,15 @@ The result SHALL include totals over every matching event, independent of groupi
 - **THEN** the call fails with category `invalid_request`
 
 ### Requirement: Group ordering and limit
-Groups SHALL be ordered by cost descending then key, except `day`, which is ordered by date ascending. `perplexity_usage` SHALL accept a `limit` on the number of groups returned (default 20, at most 200). When groups are cut by the limit, the result SHALL say so and give the number of groups in all.
+Groups SHALL be ordered by cost descending then key, except `day`, which is ordered by date ascending. `perplexity_usage` SHALL accept a `limit` on the number of groups (default 20, at most 200). For `day` the limit keeps the latest days, shown ascending. When groups are cut, the result SHALL say so and give the number of groups in all.
 
 #### Scenario: Limit
 - **WHEN** five groups match and `limit` is 2
 - **THEN** two groups are returned, the result says groups were cut, and the totals still cover all five
+
+#### Scenario: Limit with days
+- **WHEN** events span five UTC days, `group_by` is `day` and `limit` is 2
+- **THEN** the two latest days are returned in ascending order and the result says groups were cut
 
 #### Scenario: Limit out of range
 - **WHEN** `limit` is 0 or 201
