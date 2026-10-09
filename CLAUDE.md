@@ -80,9 +80,11 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
 4. Open the database only with `async with unit_of_work(engine) as session:` (see session
    convention below). A tool that stores records resolves its project with
    `get_or_create_project(session, project)` inside that block.
-5. Raise `PerplexityError(category, message)` for every anticipated failure. Anything else is
+5. Set `annotations=ToolAnnotations(...)` (`readOnlyHint`, `destructiveHint`, `openWorldHint`) so
+   clients can tell a read from a destructive call.
+6. Raise `PerplexityError(category, message)` for every anticipated failure. Anything else is
    masked to `internal_error`.
-6. **Do not use `from __future__ import annotations` in a tool module**: FastMCP reads annotations
+7. **Do not use `from __future__ import annotations` in a tool module**: FastMCP reads annotations
    at registration time and `Context` must be a real class there.
 7. Test it offline through `build_server` with a `MockTransport` client (see `tests/test_tool_errors.py`,
    `tests/test_projects_tool.py`); every tool schema costs context in every session, so keep the
@@ -138,8 +140,9 @@ The house convention proposed in `design.md` D10 and implemented in `storage/ses
 ## Testing
 
 - **Offline by default.** `tests/conftest.py` installs a socket guard that fails any connection to
-  a non-loopback address. Opt out only with `@pytest.mark.allow_network` (live tests, and the one
-  test that connects to the host's own address to prove a refusal).
+  a non-loopback address. Opt out only with `@pytest.mark.allow_network` (live tests, the test that
+  connects to the host's own address to prove a refusal, and the guard's own check in
+  `tests/test_smoke.py`).
 - **Fake the API with `httpx2.MockTransport`** injected into an `httpx2.AsyncClient` passed to
   `build_server`/`PerplexityClient`. `respx` and `pytest-httpx` do not intercept `httpx2`.
 - **Fixtures** in `tests/fixtures/` are real, scrubbed API responses, each with a `.meta.json`

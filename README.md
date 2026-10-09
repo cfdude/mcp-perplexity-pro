@@ -87,7 +87,7 @@ value. No `.env` file is read.
 | `PERPLEXITY_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` (case-insensitive) |
 | `PERPLEXITY_CONNECT_TIMEOUT` | `10` | Seconds to establish a connection to the API |
 | `PERPLEXITY_READ_TIMEOUT` | `60` | Seconds to wait for the API's response |
-| `PERPLEXITY_MAX_ATTEMPTS` | `3` | Attempts per API request (retries apply to HTTP 429, honoring `Retry-After`, and to safe reads) |
+| `PERPLEXITY_MAX_ATTEMPTS` | `3` | Attempts per API request (HTTP 429 is retried honoring `Retry-After`; GET requests are also retried on 5xx, timeouts and connection failures; a create POST is retried only after a connect failure) |
 | `PERPLEXITY_MAX_RETRY_WAIT` | `30` | Longest wait in seconds between attempts; a `Retry-After` longer than this is not waited out |
 | `PERPLEXITY_CATALOG_TTL` | `3600` | Seconds the model list is cached |
 | `PERPLEXITY_CATALOG_MAX_STALE` | `86400` | Oldest cached model list, in seconds, that may be returned when the live request fails |
@@ -212,7 +212,7 @@ never creates one. Project names are case-sensitive, 1 to 64 characters of ASCII
 Output: `action`; for `list`, `projects` (each with `name` and `created_at`, UTC); for `delete`,
 `project` and `rows_removed` (rows removed from tables that reference the project directly; rows
 two levels down go by cascade and are not counted). The project `default` may be deleted; it is
-recreated on next use. Because no 2.0.0 tool stores records yet, a fresh install lists no projects.
+recreated the first time a later tool stores records in it. Because no 2.0.0 tool stores records yet, a fresh install lists no projects.
 
 ```json
 {"name": "perplexity_projects", "arguments": {"action": "list"}}
@@ -254,7 +254,7 @@ client can read the category three ways:
 | `authentication` | The API rejected the key (HTTP 401) |
 | `forbidden` | The key is not allowed to do this (HTTP 403) |
 | `not_found` | Unknown tool, a project that does not exist, or HTTP 404 from the API |
-| `rate_limited` | HTTP 429 after the allowed attempts |
+| `rate_limited` | HTTP 429 after the allowed attempts, or at once when `Retry-After` exceeds `PERPLEXITY_MAX_RETRY_WAIT` |
 | `upstream_failure` | HTTP 5xx from the API |
 | `network_timeout` | The API did not connect or answer within the timeouts |
 | `unexpected_response` | Any other HTTP status, or a response missing a field the server needs |
