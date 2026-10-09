@@ -863,7 +863,7 @@ instance and a stdio instance) may share one data directory.
 
 ```bash
 uv sync                              # install runtime and dev dependencies from uv.lock
-uv run pytest                        # offline test suite (about 40 s)
+uv run pytest                        # offline test suite (about 60 s)
 uv run ruff check .                  # lint (ruff is the only linter)
 uv run ruff format --check .         # formatting (ruff is the only formatter)
 uv run pre-commit install            # once per clone: runs ruff and pytest on every commit

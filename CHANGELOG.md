@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **BREAKING** Rewrote the server in Python (FastMCP, SQLAlchemy 2.0 async with SQLite and Alembic, httpx2, pytest, ruff). Perplexity retired its Sonar endpoints (they return `403 chat_completions_not_available`), so the 1.x tools could no longer answer any query. The TypeScript source, npm packaging, Smithery and Docker files are removed.
-- Only three tools are available in this release: `perplexity_models` (live model list with prices), `perplexity_projects` (list and confirmed delete) and `perplexity_usage` (spend report). The Agent, Search, Embeddings and Decisions tools follow in later releases.
+- Seven tools are available in this release: the four Agent API tools below, plus `perplexity_models` (live model list with prices), `perplexity_projects` (list and confirmed delete) and `perplexity_usage` (spend report). The Search, Embeddings and Decisions tools follow in later releases.
 - Data is kept in one SQLite file under `~/.perplexity-pro/`. Nothing is imported from the old `.perplexity/` folders.
 - Tool failures carry a stable `category` (eleven values) in structured content.
 - The HTTP endpoint is still `http://localhost:8102/mcp`; it listens on 127.0.0.1 only and is stateless.
@@ -19,8 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - A `usage_events` table (migration `0002`) that keeps one row per costed upstream call: tool, API, model, preset, status, latency, token counts, cost in integer nano-USD, where the cost came from (`reported`, `computed` or `none`) and the project name as written. Downgrading `0002` drops the table and its history.
-- A best-effort usage recorder (`record_usage`) for the Agent, Search, Embeddings and Decisions tools to call after each upstream call. It never raises an error (a cancellation is re-raised after the write lands), stores one row per successful response, removes secrets before storing, and survives a rollback of the tool's own writes. `pricing.py` holds Perplexity's documented prices (dated 2026-10-09) for calls whose response carries no cost. No tool records usage yet; recording arrives with each later tool.
+- A best-effort usage recorder (`record_usage`) for the Agent, Search, Embeddings and Decisions tools to call after each upstream call. It never raises an error (a cancellation is re-raised after the write lands), stores one row per successful response, removes secrets before storing, and survives a rollback of the tool's own writes. `pricing.py` holds Perplexity's documented prices (dated 2026-10-09) for calls whose response carries no cost. The four Agent tools record their usage; the Search, Embeddings and Decisions tools will record theirs when they arrive.
+- `perplexity_ask`: one synchronous, web-grounded question with its sources, a usage summary with an exact USD cost string and the measured latency. Depth `fast` (default), `low` or `medium`, or an explicit model; search filters (domains, recency, dates, country, result count), instructions, an output-token cap and structured output. Filters and dates are validated locally because the API accepts some invalid input silently.
+- `perplexity_chat`: `send`, `list`, `read` and `delete` over a local chat history. A turn continues from the previous response id; `replay` resends the stored history when the provider cannot continue.
+- `perplexity_research`: starts a background research run (`medium`, `high` or `xhigh`) and returns a job id at once. `high` and `xhigh` exist only here because they can cost dollars and take minutes. There is no spending cap.
+- `perplexity_jobs`: `list` (with `refresh` to settle running jobs), `status`, `result` and `cancel` over the local job rows. A background run is recorded as spend when a call first sees it finish, once; a run nobody observes is never recorded.
+- Three tables, project-scoped with `ON DELETE CASCADE`: `chats` and `chat_messages` (migration `0003`) and `research_jobs` (migration `0004`). Both migrations are reversible, and a downgrade drops the rows (the pre-migration backup, `backup-<rev>.db`, holds them). `perplexity_projects` `delete` reports `running_jobs`: deleting a project with unfinished research runs discards their rows, so their spend is never recorded while the provider keeps running them.
+- Setting `PERPLEXITY_AGENT_READ_TIMEOUT` (default 120 seconds): how long a synchronous Agent run (`perplexity_ask`, `perplexity_chat` send) may take.
 - `perplexity_usage`: a read-only spend report with exact totals over every matching call plus one grouping (`tool`, `api`, `model`, `project` or `day`), filtered by project and UTC date range. Costs are exact decimal USD strings and a lower bound: `calls_cost_unknown` counts calls whose cost is not known.
+
+### Fixed
+
+- A unit of work that is cancelled mid-block (a client dropping a request) now returns its database connection: the rollback and close run as their own shielded task, because FastMCP and anyio cancel with a level-triggered scope that cut the bare cleanup short and left the connection checked out until garbage collection.
 
 ## [1.3.1] - 2026-01-26
 

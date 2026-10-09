@@ -160,7 +160,8 @@ def register(server: FastMCP) -> None:
         The cost is a lower bound: error calls count cost 0 and may have been billed.
         calls_cost_unknown says how many calls have no known cost. Unknown token counts add 0.
         Projects are matched by the name recorded with each call, so a deleted project still
-        reports. Nothing is recorded until a tool that makes costed calls exists."""
+        reports. The Agent tools (ask, chat, research) record their calls; nothing is recorded
+        by a tool that does not make costed calls."""
         if project is not None:
             validate_project_name(project)
         first, last = _day("since", since), _day("until", until)

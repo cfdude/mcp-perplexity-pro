@@ -66,8 +66,9 @@ class PresetSection(BaseModel):
 
 
 # Sources: https://docs.perplexity.ai/docs/agent-api/presets.md ("current preset values"), read
-# 2026-10-06 and re-read 2026-10-09. Only ``fast`` was also observed live (2026-10-09, resolved to
-# openai/gpt-6-luna); the other four are documentation-only (design.md, "Preset sources").
+# 2026-10-06 and re-read 2026-10-09. ``fast``, ``low`` and ``medium`` were also observed live
+# (2026-10-09: each resolved to openai/gpt-6-luna); ``high`` and ``xhigh`` are documentation-only,
+# never run (design.md, "Preset sources").
 PRESETS = PresetSection(
     as_of="2026-10-06",
     presets=[
