@@ -61,8 +61,8 @@ async def world(make_settings):
     """``build(responder)`` -> (server, engine, upstream, settings); everything is cleaned up."""
     made = []
 
-    async def build(responder):
-        settings = make_settings(api_key=KEY, db_busy_timeout=BUSY)
+    async def build(responder, busy=BUSY):
+        settings = make_settings(api_key=KEY, db_busy_timeout=busy)
         migrate(settings)
         engine = create_engine_for(settings)
         async with engine.begin() as conn:
@@ -208,21 +208,31 @@ async def test_a_queued_submit_records_nothing_and_the_completed_poll_is_stored_
 # --- cancellation -----------------------------------------------------------------------------
 
 
-async def test_cancelling_during_the_write_still_stores_the_event(world):
-    server, engine, upstream, settings = await world(serve("agent_fast.json"))
+async def test_cancelling_during_the_write_still_stores_the_event(world, monkeypatch):
+    server, engine, upstream, settings = await world(serve("agent_fast.json"), busy=10.0)
     app = server.app
+    # Signal from inside the recorder, not a sleep: the event is set the moment the recorder
+    # opens its unit of work, and the held lock guarantees the write cannot finish before the
+    # cancel is delivered. The busy timeout is wide (10 s) so a slow loop cannot run it out.
+    recorder_started = asyncio.Event()
+    real_unit_of_work = usage_module.unit_of_work
+
+    def signalling(*args, **kwargs):
+        recorder_started.set()
+        return real_unit_of_work(*args, **kwargs)
+
+    monkeypatch.setattr(usage_module, "unit_of_work", signalling)
     lock = DbLock(database_path(settings.data_dir))
     inner = upstream.responder
     upstream.responder = lambda request, n: (lock.acquire(), inner(request, n))[1]
     task = asyncio.create_task(costed_call(app.engine, app.client, (KEY,), project="alpha"))
     try:
-        await asyncio.wait_for(upstream.started.wait(), 5)
-        await asyncio.sleep(0.15)  # the recorder is now waiting for the write lock
+        await asyncio.wait_for(recorder_started.wait(), 5)
         task.cancel()
-        await asyncio.sleep(0.1)  # still inside the busy timeout (BUSY = 0.4 s)
+        await asyncio.sleep(0)  # deliver the cancel while the lock is still held
         lock.release()
         with pytest.raises(asyncio.CancelledError):
-            await task
+            await asyncio.wait_for(task, 10)
     finally:
         lock.close()
     assert await event_count(engine) == 1

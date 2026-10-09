@@ -197,6 +197,14 @@ Contract rules for callers: record exactly once per costed call that returns or 
 - Whether Search, Decisions and Embeddings responses report a cost (answered per epic by the live probe; does not change this change's schema or specs).
 - The upstream-tool keys other than `search_web` in `usage.tool_calls_details` (py-agent-api to confirm).
 
+## Gate 2 decisions
+
+Findings from the Gate 2 review that were declined, with the reason.
+
+- No index on `usage_events.project_id`: the only reader that filters on it is project deletion, its cost is linear in ledger size (milliseconds at the design size), and migration 0002 is already applied on the dev data dir; revisit with a retention epic.
+- No database CHECK constraints on `cost_source`, `status` or `api`: the recorder is the only writer and validates all three before inserting; deliberate.
+- Pre-existing key-shaped project names cannot be deleted or reported: none exist, and the key-shape rule on project names is new.
+
 ## Observed shapes (the evidence for D1, D2, D8)
 
 From `tests/fixtures/agent_fast.json` (captured 2026-10-09, preset `fast`, resolved model `openai/gpt-6-luna`): `usage` is 501 bytes compact; 3426 input tokens of which 1643 `cache_creation_input_tokens` and 1780 `cache_read_input_tokens` (equal to `cached_tokens`), 30 output, 3456 total, 0 reasoning; `cost` has `input_cost 0`, `output_cost 0.00002`, `cache_read_cost 0.00002`, `cache_creation_cost 0.00021`, `tool_calls_cost 0.001`, `total_cost 0.00125`, `currency "USD"`; `tool_calls_details.search_web = {cost_usd: 0.001, invocation: 1}`. `agent_background_poll.json` (same preset, completed): no `cache_creation_cost`, 3423 cache-read tokens, `total_cost 0.00105`. The submit and pending poll responses have `usage: null`, status `queued`, `model: "fast"` (the preset name) and the same id as the completed poll, which carries the resolved model. Costs are floats; token counts are integers; `input_cost` is 0 although the call had 3426 input tokens, apparently because all but a few input tokens were cache reads or writes billed in their own fields (an inference from the fixture, not documented), so a total cannot be recomputed from `input_tokens`.

@@ -21,6 +21,8 @@ from mcp_perplexity_pro.usage import (
         (0.00125, 1_250_000),
         (0.0000000005, 1),  # half-up boundary: 0.5 nano rounds to 1
         (0.0000000004, 0),
+        (1.5e-9, 2),  # 1.5 nano: exact only through the JSON text (the binary float is below)
+        (3.5e-9, 4),
         (0.1 + 0.2, 300_000_000),  # repr noise (0.30000000000000004) is absorbed
         (0, 0),
         (0.0, 0),
@@ -53,6 +55,7 @@ def test_ten_small_costs_sum_exactly():
         1e30,
         9.3e9,  # 9.3e18 nano: over the signed 64-bit range
         1000.000001,  # just above the cap
+        1000.0000000005,  # rounds to cap + 1 nano: only the final cap check refuses it
     ],
 )
 def test_unusable_values_are_none_and_never_raise(value):
