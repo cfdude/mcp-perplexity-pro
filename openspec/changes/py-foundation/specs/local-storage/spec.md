@@ -37,7 +37,7 @@ The database schema SHALL be managed by ordered migrations named with a four-dig
 
 #### Scenario: Failing migration
 - **WHEN** a pending migration raises an error
-- **THEN** startup fails with a message naming the migration, the database keeps its previous schema and rows, and the pre-migration backup exists
+- **THEN** startup fails with a message naming the migration, the database keeps its previous schema and rows, and, if the database was non-empty, the pre-migration backup exists
 
 #### Scenario: Two processes start together
 - **WHEN** two server processes start at the same moment against one data directory
@@ -52,7 +52,7 @@ The database schema SHALL be managed by ordered migrations named with a four-dig
 - **THEN** the schema returns to the previous version with earlier data intact
 
 ### Requirement: Backup before migrating
-Before applying pending migrations to a database that already holds data, the server SHALL copy the database file to a backup in the data directory named with the schema revision it came from.
+Before applying pending migrations to a database that has a recorded schema revision, the server SHALL copy the database file to a backup in the data directory named with the schema revision it came from.
 
 #### Scenario: Backup exists after upgrade
 - **WHEN** a non-empty database at revision `0001` is upgraded
@@ -70,10 +70,14 @@ Every stored record SHALL belong to a named project. One shared get-or-create op
 - **THEN** the record belongs to the project `default`, which is created if absent
 
 ### Requirement: Project names
-Project names are case-sensitive and unique, limited to ASCII letters, digits, `-`, `_` and `.`, up to 64 characters, and SHALL NOT be `.`, `..` or begin with `.`.
+Project names are case-sensitive and unique, limited to ASCII letters, digits, `-`, `_` and `.`, up to 64 characters, and SHALL NOT be `.`, `..`, begin with `.` or be shaped like an API key (`pplx-` followed by 20 or more key characters).
 
 #### Scenario: Invalid name
 - **WHEN** a tool is called with project name `../etc`
+- **THEN** the call fails with category `invalid_request` and no project is created
+
+#### Scenario: Key-shaped name rejected
+- **WHEN** a tool is called with a project name of the form `pplx-` followed by 24 letters
 - **THEN** the call fails with category `invalid_request` and no project is created
 
 #### Scenario: Dot names rejected
@@ -81,7 +85,7 @@ Project names are case-sensitive and unique, limited to ASCII letters, digits, `
 - **THEN** the call fails with category `invalid_request`
 
 ### Requirement: Project management tool
-The server SHALL provide a tool `perplexity_projects` with actions `list` and `delete`. `delete` takes a `project` name, removes the project and all its records in one transaction, and SHALL require `confirm` set to true. A successful `delete` returns the project name and the number of rows removed from project-scoped tables.
+The server SHALL provide a tool `perplexity_projects` with actions `list` and `delete`. `delete` takes a `project` name, removes the project and all its records in one transaction, and SHALL require `confirm` set to true. A successful `delete` returns the project name and the number of rows removed from tables that reference the project directly; rows in deeper tables are removed by cascade and are not counted.
 
 #### Scenario: Listing
 - **WHEN** a client calls the tool with action `list`

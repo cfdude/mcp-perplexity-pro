@@ -108,6 +108,10 @@ On SIGINT or SIGTERM, or on stdin reaching end of file in stdio mode, the server
 - **WHEN** the process receives SIGINT with no requests in flight
 - **THEN** it behaves as for SIGTERM
 
+#### Scenario: New call while draining
+- **WHEN** a stdio-mode server is draining after a signal and a new tool call arrives
+- **THEN** the call fails with category `internal_error` and the message `shutting down`
+
 #### Scenario: stdin closed in stdio mode
 - **WHEN** the client closes stdin of a stdio-mode server
 - **THEN** it closes its resources and exits with status 0
@@ -121,7 +125,11 @@ On SIGINT or SIGTERM, or on stdin reaching end of file in stdio mode, the server
 - **THEN** the client receives that call's result before the process exits
 
 ### Requirement: Supervised operation
-The server SHALL run under pm2 using one documented start command and SHALL resume serving on the same port after `pm2 restart`.
+The server SHALL run under pm2 using one documented start command, with a kill timeout of at least 15 seconds, and SHALL resume serving on the same port after `pm2 restart`.
+
+#### Scenario: Configured kill timeout
+- **WHEN** the pm2 configuration for the server is read
+- **THEN** its kill timeout is at least 15 seconds
 
 #### Scenario: Restart under pm2
 - **WHEN** `pm2 restart` is issued for the server

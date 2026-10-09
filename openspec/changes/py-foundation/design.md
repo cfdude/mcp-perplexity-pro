@@ -38,7 +38,7 @@ See `proposal.md` for motivation and `specs/` for requirements. State that shape
 
 **D5. Tolerant payload models.** API payloads are pydantic models with `extra="allow"` and optional fields by default; a field a caller depends on is checked at the call site and raises the unexpected-response error naming endpoint and field. Fixtures from the probes define the models, not the docs.
 
-**D6. Errors.** `client.py` raises a `PerplexityError` hierarchy matching the spec's categories. `PerplexityError` subclasses `ToolError`, so FastMCP does not mask it, and one server-level middleware turns it into an error result carrying `category` in structured content (encoding in Spike results); the server is built with `mask_error_details=True` so any other exception cannot leak SQL, URLs or keys, and reaches the client as `Error calling tool '<name>'` without a category. The API key is a `SecretStr`. Upstream error text is redacted (configured key and key-shaped tokens) before it is stored, logged or returned, because an upstream message could echo a submitted key; a logging filter is defense in depth. Messages are never built from request headers.
+**D6. Errors.** `client.py` raises a `PerplexityError` hierarchy matching the spec's categories. `PerplexityError` subclasses `ToolError`, so FastMCP does not mask it, and one server-level middleware turns it into an error result carrying `category` in structured content (encoding in Spike results); the server is built with `mask_error_details=True` so any other exception cannot leak SQL, URLs or keys, and is mapped by the same middleware to category `internal_error` with a fixed generic message; FastMCP's own masking text is never returned. The API key is a `SecretStr`. Upstream error text is redacted (configured key and key-shaped tokens) before it is stored, logged or returned, because an upstream message could echo a submitted key; a logging filter is defense in depth. Messages are never built from request headers.
 
 **D7. Settings.** One `pydantic-settings` class, `env_prefix="PERPLEXITY_"` (`PERPLEXITY_API_KEY` and `PERPLEXITY_BASE_URL` match the official MCP server's names), `extra="ignore"`, no `.env` file read. Our variables never use the `FASTMCP_` prefix, which FastMCP reads itself (`FASTMCP_PORT` and a `.env` in the working directory both change its behavior, verified).
 
@@ -228,7 +228,7 @@ class CategoryMiddleware(Middleware):
 
 A client reads, on the wire at `2025-06-18` and through the fastmcp `Client` at `2026-07-28`: `isError: true`, `structuredContent: {"category": "not_found", "message": "..."}`, `_meta: {"category": "not_found"}`, and text `[not_found] ...` (the prefix is the fallback for a client that shows only text). The client-side output-schema check is skipped for error results (verified with a tool that has an output schema). Observed limits:
 - An exception that is not a `ToolError` is masked **before** middleware runs, so a category on a plain `Exception` subclass is lost: the middleware only sees `ToolError("Error calling tool '<name>'")`. `PerplexityError` therefore subclasses `ToolError`.
-- With `mask_error_details=True` an unexpected exception reaches the client as `Error calling tool '<name>'`, no category, no exception text (verified with a `RuntimeError` containing a `pplx-` token). The spec's tool-error requirement was amended to say anticipated failures carry the category.
+- With `mask_error_details=True` alone, an unexpected exception reaches the client as `Error calling tool '<name>'`, no category, no exception text (verified with a `RuntimeError` containing a `pplx-` token). Superseded in group 6: the error middleware adds category `internal_error` (see 'Server runtime notes').
 - FastMCP special-cases an escaping `httpx2` 429 response or timeout and returns its own fixed message ("Rate limited by upstream API...", "Upstream request timed out..."); the client converts these to `PerplexityError` first, so this path must never be reached.
 - FastMCP logs the full traceback of an unexpected exception to stderr through its own Rich handler on the `fastmcp` logger, including the source line of the `raise` and the exception text, which can contain a key. The redaction filter (task 3.3) must therefore be attached to FastMCP's handlers too, and must flatten `exc_info` to redacted text so no unredacted traceback is rendered.
 
@@ -236,12 +236,12 @@ A client reads, on the wire at `2025-06-18` and through the fastmcp `Client` at 
 
 **Amendments made because of the spike**
 - D2: caller owns and closes the client and engine; the lifespan only exposes them.
-- D6: `PerplexityError` subclasses `ToolError`; category conveyed by middleware; other exceptions are masked without a category.
+- D6: `PerplexityError` subclasses `ToolError`; category conveyed by middleware; other exceptions are mapped to `internal_error` by the same middleware (group 6).
 - D8: own `uvicorn.Server` subclass instead of `mcp.run()`; `json_response=True`; `host_origin_protection=True` set explicitly (it defaults to off).
 - D9: version passed to the `FastMCP` constructor (verified).
 - D10: session dependency must be an `@asynccontextmanager`.
 - Risks: the signal re-raise, Python 3.14 and fastmcp-home bullets updated with the findings.
-- `server-runtime` spec, requirement "Tool error contract": anticipated failures carry `category` and `message`; an unexpected exception reaches the client as a generic message (previously "every tool failure" carried a category, which masking makes unmeetable without inventing a category).
+- `server-runtime` spec, requirement "Tool error contract": anticipated failures carry `category` and `message`; an unexpected exception reaches the client as a generic message (superseded: it now carries `internal_error`; previously "every tool failure" carried a category, which masking makes unmeetable without inventing a category).
 
 ## Server runtime notes (group 6)
 
@@ -251,3 +251,13 @@ Recorded 2026-10-09 while implementing tasks 6.1-6.4.
 - **Middleware order.** `InFlightMiddleware` (outer) counts running tool calls and, once draining, answers new ones with category `internal_error`; `ErrorContractMiddleware` (inner) maps failures. Mapping: `PerplexityError` keeps its category; a SQLite busy `OperationalError` (direct or as the cause of FastMCP's masking `ToolError`) is `storage_busy`; FastMCP's argument `ValidationError` is `invalid_request`; `NotFoundError` (unknown tool) is `not_found`; everything else, including a hand-written plain `ToolError`, is `internal_error` with a fixed generic message and the exception logged at ERROR through the redacting handler. FastMCP masks an unexpected exception into a `ToolError` whose `__cause__` is the original, which is how the middleware recovers the detail to log.
 - **stdio shutdown.** SIGTERM and SIGINT are handled with `loop.add_signal_handler`; the handler stops new calls, waits up to the bound for running ones, waits a further 0.3 s so a finished call's reply is written to stdout (it is written by another task just after the tool returns), closes both resources and calls `os._exit(0)`. stdin EOF runs the same drain and close and returns normally. HTTP shutdown is uvicorn's own: it stops accepting at the signal, drains for `timeout_graceful_shutdown`, cancels the rest, then `run()` closes the resources.
 - **Test hook.** `run()` takes `graceful_timeout` (default 10, the spec bound) so the two cut-off tests use 0.5 s instead of waiting 10 s; a test pins `GRACEFUL_TIMEOUT == 10` and that the HTTP config carries it.
+
+## Preset sources (checked against the documentation)
+
+The five preset-to-model mappings returned by `perplexity_models` come from Perplexity's presets page, `https://docs.perplexity.ai/docs/agent-api/presets.md` ("current preset values" for each preset), read on 2026-10-06 and re-read on 2026-10-09: `fast`, `low`, `medium` use `openai/gpt-6-luna`; `high` uses `openai/gpt-6-sol`; `xhigh` uses `anthropic/claude-opus-5-5`. `fast` was also observed live on 2026-10-09 (`openai/gpt-6-luna`). The other four are documentation-only. Presets are dynamic and unversioned, so the response labels them `source: "documentation"` and tells callers to check the resolved model in a response.
+
+## Gate 2 decisions
+
+- A non-loopback `PERPLEXITY_HOST` is allowed but logs a warning at startup: the endpoints are unauthenticated. With `host_origin_protection=True` a LAN `Host` header is expected to get 421; this was not exercised, so non-loopback use is unsupported until a later change adds authentication and tests it.
+- Project deletion counts rows in tables that reference the project directly; deeper rows go by cascade and are not counted (spec amended). Revisit when a change adds a table two hops from `projects`.
+- Restoring a backup is a manual, documented procedure rather than code: a failed migration rolls back inside one transaction, so a restore is needed only after a migration that succeeded but was wrong. The README documents stopping the server, removing the `-wal` and `-shm` files, and copying the backup over `perplexity.db`.

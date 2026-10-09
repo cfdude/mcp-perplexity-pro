@@ -18,7 +18,7 @@ Every request to the Perplexity API SHALL carry the configured API key as a bear
 - **THEN** requests go to that host and not to `api.perplexity.ai`
 
 ### Requirement: Typed error taxonomy
-The client SHALL convert every failure into exactly one category, carrying the HTTP status, the API's error type and code when present, and an actionable message. The categories are `invalid_request` (400, 422), `authentication` (401), `forbidden` (403), `not_found` (404), `rate_limited` (429), `upstream_failure` (5xx), `network_timeout` and `unexpected_response`. These names are the stable identifiers used by every tool error.
+The client SHALL convert every failure into exactly one category, carrying the HTTP status, the API's error type and code when present, and an actionable message. The categories are `invalid_request` (400, 422), `authentication` (401), `forbidden` (403), `not_found` (404), `rate_limited` (429), `upstream_failure` (5xx), `network_timeout` and `unexpected_response`. These names are the stable identifiers used by every upstream-derived tool error.
 
 #### Scenario: Retired endpoint
 - **WHEN** the API returns 403 with error `type` `chat_completions_not_available` (its `code` is the integer 403)
@@ -31,6 +31,17 @@ The client SHALL convert every failure into exactly one category, carrying the H
 #### Scenario: Timeout
 - **WHEN** no response arrives within the configured read timeout
 - **THEN** the client raises a `network_timeout` error that states which timeout elapsed
+
+### Requirement: Network failures
+`network_timeout` SHALL be raised for every failure to complete an exchange without an HTTP response: connect failure, DNS failure, connection reset and any timeout. A connect timeout counts as a connect failure for retry purposes. A 200 response whose body is not valid JSON is `unexpected_response`.
+
+#### Scenario: Connection failure
+- **WHEN** every attempt fails to connect to the API
+- **THEN** the client raises `network_timeout` stating that the connection failed
+
+#### Scenario: Invalid JSON body
+- **WHEN** the API returns 200 with a body that is not JSON
+- **THEN** the client raises `unexpected_response`
 
 ### Requirement: Unlisted statuses
 A response status that no category lists, such as 3xx, 402, 405, 409 or 413, SHALL map to `unexpected_response` and carry its status and the API's message.

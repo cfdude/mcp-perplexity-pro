@@ -54,7 +54,7 @@ The built wheel SHALL contain everything needed to start the server, including d
 - **THEN** it creates and migrates the database and answers `GET /health` with 200
 
 ### Requirement: Tests are offline by default
-Tests SHALL live under `tests/` and SHALL make no network call by default. Tests that call the real Perplexity API SHALL be marked `live` and SHALL run only when explicitly selected.
+Tests SHALL live under `tests/` and SHALL make no network call by default; the one exception is a test that connects to the host's own address to prove a refusal. Tests that call the real Perplexity API SHALL be marked `live` and SHALL run only when explicitly selected.
 
 #### Scenario: Default run
 - **WHEN** the test suite runs with no network access and no `PERPLEXITY_API_KEY` in the environment
