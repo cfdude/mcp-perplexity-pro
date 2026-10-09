@@ -1,0 +1,15 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "medium preset, background true: queued",
+  "request": {
+    "preset": "medium",
+    "background": true,
+    "input": "Compare the pricing models of three vector databases: Pinecone, Weaviate Cloud, and Qdrant Cloud. Use current official pricing pages and give a short table with sources."
+  }
+}

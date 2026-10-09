@@ -1,0 +1,15 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "previous_response_id of a store false response still continues (one level)",
+  "request": {
+    "preset": "fast",
+    "previous_response_id": "resp_9f8e9d3b-6203-4369-8f31-bcfb62e62f3d",
+    "input": "What was the codeword?"
+  }
+}

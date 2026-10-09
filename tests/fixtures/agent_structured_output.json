@@ -1,0 +1,181 @@
+{
+  "background": false,
+  "completed_at": 1791572899,
+  "created_at": 1791572899,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_5aa897ec-39aa-43c8-bc89-c842c8866eeb",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": [
+        "Give the capital of France and its approximate population."
+      ],
+      "results": [
+        {
+          "date": "2026-06-10",
+          "id": 1,
+          "last_updated": "2026-06-11",
+          "snippet": "- **Capital:**\nParis\n- **Population:**\n(2026 est.)\n66,590,000\n- **Currency Exchange Rate:**\n...\n- **Head Of State:**\n...\nThe capital and by far the most important city of France is Paris, one of the world’s preeminent cultural and commercial centres.",
+          "source": "web",
+          "title": "France | History, Maps, Flag, Population, Cities, Capital, & ...",
+          "url": "https://www.britannica.com/place/France"
+        },
+        {
+          "date": "2001-11-06",
+          "id": 2,
+          "last_updated": "2026-09-02",
+          "snippet": "**Paris** (French pronunciation: [paʁi] ^ⓘ^) is the capital and largest city of France.\nWith an estimated population of 2,048,472 residents in January 2025 in an area of more than 105 km^2^ (41 sq mi), Paris is the fourth-most populous city in the European Union, the ninth-most populous city in Europe and the 30th most densely populated city in the world in 2022.\n...\nThe City of Paris is the centre of the Île-de-France region, or Paris Region, with an official estimated population of 12,271,794 inhabitants in January 2023, or about 19% of the population of France.\n...\n## Administration\n### National government\nAs the capital of France, Paris is the seat of France's national government.",
+          "source": "web",
+          "title": "Paris - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Paree"
+        },
+        {
+          "id": 3,
+          "last_updated": "2026-10-09",
+          "snippet": "France\nCapital:Paris\nPopulation:68.4M\n...\n- **Population**\n68,374,591\n...\n### Capital City\n- **Capital Name**\nParis\n- **Capital - geographic coordinate**\n48 52 N, 2 20 E\n- **Capital Time Difference**\n...\nThe population of France is approximately 68.4M.\nWhat is the capital of France?\n**Paris** is the capital of France and by far its most populous and influential city.",
+          "source": "web",
+          "title": "France — Country Profile - CountryReports.org",
+          "url": "https://www.countryreports.org/country/France"
+        },
+        {
+          "date": "2004-05-31",
+          "id": 4,
+          "last_updated": "2026-10-08",
+          "snippet": "# Paris\n**Paris** (nicknamed the \"*City of light*\") is the capital city of France, and the largest city in France.\nThe area is 105 square kilometres (41 square miles), and around 2.15 million people live there.\nIf suburbs are counted, the population of the Paris area rises to 10.7 million people.\n...\n|Paris|Paris|\n|--|--|\n|• Metro ^[2]^|12,532,901|",
+          "source": "web",
+          "title": "Paris - Simple English Wikipedia, the free encyclopedia",
+          "url": "https://simple.wikipedia.org/wiki/Paris,_France"
+        },
+        {
+          "date": "2026-01-01",
+          "id": 5,
+          "last_updated": "2026-10-09",
+          "snippet": "France Facts 2026: Population 66.8M, Capital Paris, GDP $3.4T | Geo Factbook1.\n...\nThe capital is Paris.\n...\nWith a population of over 67 million, France is a key player in the global economy, with a Gross Domestic Product (GDP) ranking among the top economies worldwide.\n...\n66,753,078.5 persons\n...\nThe capital of France is Paris.",
+          "source": "web",
+          "title": "France: Population, GDP, Map & Key Facts (2026)",
+          "url": "https://geofactbook.com/countries/france"
+        },
+        {
+          "date": "2001-11-04",
+          "id": 6,
+          "last_updated": "2026-10-09",
+          "snippet": "# France\nIts 18 integral regions—five of which are overseas—span a combined area of 632,702 km^2^ (244,288 sq mi), with a total population estimated at over 69.1 million in 2026.\nIts capital, largest city and main cultural and economic centre is Paris, with a metropolitan population of over 13 million.\n...\n|French Republic *République française* (French)|French Republic *République française* (French)|\n|--|--|\n|Capital and largest city|Paris 48°51′N 2°21′E﻿ / ﻿48.850°N 2.350°E﻿ / 48.850; 2.350|\n...\n## Demographics\nWith an estimated population of 69,081,996 people,^[7]^^[m]^ France is the 20th most populous country in the world, the third-most populous in Europe, and the second most populous in the European Union.",
+          "source": "web",
+          "title": "France - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/France"
+        },
+        {
+          "date": "2026-06-05",
+          "id": 7,
+          "last_updated": "2026-06-11",
+          "snippet": "# Paris\n### Paris is the capital of what country?\nParis is the national capital of France.\n**Paris**, city and capital of France, situated in the north-central part of the country.\n...\nArea city, 41 square miles (105 square km); metropolitan area, 890 square miles (2,300 square km).\nPop.\n(2020 est.) city, 2,145,906; (2020 est.) urban agglomeration, 10,858,874.",
+          "source": "web",
+          "title": "Paris | Definition, Map, Population, Facts, & History - Britannica",
+          "url": "https://www.britannica.com/place/Paris"
+        },
+        {
+          "date": "2026-09-25",
+          "id": 8,
+          "last_updated": "2026-10-02",
+          "snippet": "- **Capital:**\nParis\n- **Continent:**\n...\n- **Largest Cities:**\n...\n66,746,401\n...\nParis has a metropolitan area population of 2,059,821, comprising 3.09%% of France's total population.\n...\n|Rank|City|2026 Pop.↓|% of National Pop.|\n|--|--|--|--|\n|1|Paris|2,059,821|3.09%|\n...\nAs of 2026, France has a total population of **66,746,401**, ranking as the **23rd** most populous nation in the world.",
+          "source": "web",
+          "title": "France Population 2026 - World Population Review",
+          "url": "https://worldpopulationreview.com/countries/france"
+        },
+        {
+          "date": "2025-10-06",
+          "id": 9,
+          "last_updated": "2025-10-07",
+          "snippet": "# Paris: Facts & Related Content\nParis, the capital of France, is located in the north-central portion of the country.\n...\n### Facts\n|Birthplace Of|Simone de Beauvoir • Charles Baudelaire • René Lacoste • Voltaire • Sarah Bernhardt • George du Maurier • Claude Monet • Louis VIII • Alexandre Millerand • Edgar Degas • Claude Chabrol • Jean-Luc Godard • Yo-Yo Ma • Gustave Moreau • Seán MacBride • Giovanni Boccaccio • Paul Gauguin • Nicolas Sarkozy • François Villon • Rudolf Diesel • Gaston Leroux • Camille Saint-Saëns • Isabelle Huppert • Émile Zola • Alexis de Tocqueville • Jean-Paul Sartre • Édouard Manet • André Gide • Stéphane Mallarmé • Napoleon III • Alexandre Decamps • Juilette Binoche • Louis X • Jules Goncourt • Irène Joliot-Curie • Jacques Chirac • Pierre Curie • Christian Louboutin • Pierre Charles L'Enfant • Catherine Deneuve • Charles VII • Paul Delaroche • Henri Becquerel • Frédéric Joliot-Curie • Auguste Rodin • Marion Cotillard|\n|--|--|\n|Population|2,206,488 (city estimate, 2015)|",
+          "source": "web",
+          "title": "Paris Facts",
+          "url": "https://www.britannica.com/facts/Paris"
+        },
+        {
+          "id": 10,
+          "last_updated": "2026-10-03",
+          "snippet": "# Paris\n### 2007 Schools Wikipedia Selection . Related subjects: European Geography\n**Paris** is the capital city of France and a French *département* ( 75).\nSituated on the banks of the river Seine in north-central France, it is also the capital of the Île-de-France * région* (also known as \"Paris Region\"), which encompasses Paris and its suburbs.\nParis had an estimated mid-2004 population of 2,144,700.\nThe Paris urban area, extending well beyond the city boundaries, has today an estimated population of 9.93 million.\n...\n## Administration\n### Paris, Capital of France\nParis is the capital of France, and as such is the seat of France's national government.",
+          "source": "web",
+          "title": "Paris - dlab @ EPFL",
+          "url": "https://dlab.epfl.ch/wikispeedia/wpcd/wp/p/Paris.htm"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "{\"city\":\"Paris\",\"population\":2050000}",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_e5142e06-4c72-467e-a018-d3ec871e060a",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00046,
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 1e-05,
+      "tool_calls_cost": 0.001,
+      "tool_calls_cost_details": {
+        "search_web": 0.001
+      },
+      "total_cost": 0.00147
+    },
+    "input_tokens": 3660,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 3657,
+      "cache_read_input_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 18,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.001,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 3678
+  },
+  "user": null
+}

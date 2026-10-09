@@ -1,0 +1,36 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "response_format json_schema; answer is raw JSON text",
+  "request": {
+    "preset": "fast",
+    "input": "Give the capital of France and its approximate population.",
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "capital",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string"
+            },
+            "population": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "city",
+            "population"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

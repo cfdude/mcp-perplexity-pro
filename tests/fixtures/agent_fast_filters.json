@@ -1,0 +1,195 @@
+{
+  "background": false,
+  "completed_at": 1791572838,
+  "created_at": 1791572838,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_1fbf7849-2f7e-4946-ab3c-7cd0f2e6f3be",
+  "incomplete_details": null,
+  "instructions": "Answer tersely. Cite sources.",
+  "max_output_tokens": 400,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": [
+        "What is new in the latest Python release? Two sentences."
+      ],
+      "results": [
+        {
+          "date": "2026-10-01",
+          "id": 1,
+          "last_updated": "2026-10-07",
+          "snippet": "Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!\n...\n# Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!\nA full sweep of Python releases is here: **Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!** One last lap around the Sun for Python 3.10, and security updates across all five series.\n...\n**Python 3.10.22 is the final release of Python 3.10.** After five years, the series has reached end of life and will receive no further security updates.\n...\nPython 3.11 remains in security-fix-only mode until October 2027, as described in PEP 664.\nSecurity releases are made as needed, with no fixed cadence.\n...\nThese two releases contain security fixes rather than new features.\n...\nPython 3.14.8 is a maintenance release, and both 3.13.16 and 3.14.8 include binary installers.\n...\n## Security content in all five releases\n- gh-158446: Fix crashes or incorrect output when formatting float or complex values with precision close to INT_MAX.\n- CVE-2026-19553 — gh-156793: `ssl.SSLContext.wrap_bio()` now validates its `server_side`, `server_hostname`, and `session` arguments.\n`asyncio` also validates TLS `server_hostname` arguments.\nOn Python 3.10, 3.11, and 3.12, missing hostnames with `check_hostname` enabled emit `DeprecationWarning` for compatibility; they raise `ValueError` on Python 3.13 and later.\n- gh-157953: Update bundled libexpat to version 2.8.5.\n- CVE-2026-15310 — gh-156002: Bound `zipfile` decompression per read for bzip2 and LZMA members, and for Zstandard members on Python 3.14, preventing unbounded allocations from small compressed members.\nThird-party decompressors supplied by monkey-patching `_get_decompressor()` that lack `needs_input` and two-argument `decompress()` remain vulnerable.\n- CVE-2026-19672 — gh-155999: Prevent tarfile extraction filters from creating directories outside the destination for paths that leave it and then return.\n- CVE-2026-19445 — gh-156293: Fix an ssl crash when an SNI callback switches contexts and the original callback context is no longer referenced.\n- CVE-2026-17084 — gh-155292: Restrict stringprep and the IDNA codec to Unicode codepoint attributes defined by RFC 3454.\n- CVE-2026-15806 — gh-155694: Scope urllib.request HTTPPasswordMgr credentials by URL scheme to prevent HTTPS credentials from being used for matching HTTP URLs.\n...\n## Additional security content by version\n### Python 3.10.22, 3.11.17, 3.12.15 and 3.13.16\n- CVE-2026-82049 — gh-157190: Fix a tarfile extraction-filter vulnerability involving hard links to symbolic links that could expose files outside the destination and change their permissions or modification times.\nPython 3.14 and later were already protected because `os.link()` follows symbolic links since Python 3.14.0b1 (gh-81793).\n- CVE-2026-87910 — gh-157265: Apply tarfile extraction filters when a link falls back to extracting an archive member, skipping members rejected by the filter.\n### Python 3.13.16 and 3.14.8\n- gh-158010: Update bundled OpenSSL to 3.5.9.\nIn Python 3.13.16 this applies to Windows, macOS and Android, moving from OpenSSL 3.0.21 to the 3.5 LTS series.\nIn Python 3.14.8 it applies to Windows, macOS, Android and iOS.\n...\n### Python 3.10.22\n- gh-149018: Improve protection against XML hash-flooding attacks in `xml.parsers.expat` and `xml.etree.ElementTree` when compiled with libexpat 2.8.0 or later.",
+          "source": "web",
+          "title": "Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now ...",
+          "url": "https://blog.python.org/2026/10/python-31022-31117/"
+        },
+        {
+          "date": "2026-10-02",
+          "id": 2,
+          "last_updated": "2026-10-02",
+          "snippet": "Python 3.15.0 candidate 3 is here!\n...\n# Python 3.15.0 candidate 3 is here!\nWe got some last-minute lazy-import release blockers, and it makes sense to\ninclude them in 3.15.0 final.\n...\nthem properly, so this week’s planned 3.15.0 final is postponed until next week,\nand here’s an extra 3.15.0rc3.\n...\n**This is a candidate preview of Python 3.15**\nThis release, **3.15.0rc3**, is the final planned release candidate, containing around 156 bugfixes, build improvements and documentation changes from 82 contributors since 3.15.0rc2.\n...\nThe next release of Python 3.15 will be 3.15.0 final, scheduled for 2026-10-09.\nThere will be ***no ABI changes** * from this point forward in the 3.15 series, and the goal is that there will be as few code changes as possible.\n...\n# Call to action\nPlease keep in mind that this is a preview release and while it’s as close to the final release as we can get it, its use is ***not** * recommended for production environments.\n...\n## Major new features of the 3.15 series, compared to 3.14\nSome of the major new features and changes in Python 3.15 are:\n### Interpreter improvements\n- PEP 810: Explicit lazy imports for faster startup times\n- PEP 814: Add `frozendict` built-in type\n- PEP 661: Add `sentinel` built-in type\n- PEP 798: Unpacking in comprehensions\n- PEP 686: Python now uses UTF-8 as the default encoding\n- PEP 829: Package startup configuration files\n- The experimental JIT compiler has been significantly upgraded, with 7-8% geometric mean performance improvement on x86-64 Linux over the standard interpreter, and 11-12% speedup on AArch64 macOS over the tail-calling interpreter\n### Significant improvements in the standard library\n- PEP 799: Tachyon: High frequency statistical sampling profiler\n- PEP 799: A dedicated profiling package for organizing Python profiling tools\n### New typing features\n- PEP 728: `TypedDict` with typed extra items\n- PEP 747: Annotating type forms with `TypeForm`\n- PEP 800: Disjoint bases in the type system\n### C API improvements\n- PEP 803, 820, 793: Stable ABI for free-threaded builds and related C API\n- PEP 782: A new `PyBytesWriter` C API to create a Python bytes object\n- PEP 788: Protection against finalization in the C API\n### Build changes\n- PEP 831: Frame pointers are enabled by default for improved system-level observability\n### Release changes\n- The official Windows 64-bit binaries now use the tail-calling interpreter\n- The official macOS binaries now install free-threading support by default\n...\nFor more details on the changes to Python 3.15, see What’s new in Python 3.15.",
+          "source": "web",
+          "title": "blog.python.org · 2026 · 10Python 3.15.0 candidate 3 is here! | Python Insider",
+          "url": "https://blog.python.org/2026/10/python-3150-rc3/"
+        },
+        {
+          "date": "2026-10-05",
+          "id": 3,
+          "last_updated": "2026-10-06",
+          "snippet": "# Thoughts on Python 3.15.0 RC3\nI’ve been testing the newly released Python 3.15.0 RC3, and I’d like to share some brief thoughts.\nThis is the final planned release candidate for Python 3.15, as mentioned on the official release page:\n> “This release, 3.15.0 rc3, is the final planned release candidate.”\n...\n### Python Release Python 3.15.0rc3\nWe got some last-minute lazy-import release blockers, and it makes sense to include them in 3.15.0 final.\n...\nOne of the features I’m most interested in is the improved free-threading support.\nI tried a simple multi-threaded script with the `--disable-gil` build and observed real parallel execution on multi-core CPUs.\n...\nIt’s exciting to see the GIL-free build getting more stable with each release candidate.\nI also noticed the new built-in `frozendict` type from PEP 814.\nImmutable dictionaries will be really helpful for caching and constant configuration objects.",
+          "source": "web",
+          "title": "Thoughts on Python 3.15.0 RC3",
+          "url": "https://discuss.python.org/t/thoughts-on-python-3-15-0-rc3/109357"
+        },
+        {
+          "date": "2026-10-02",
+          "id": 4,
+          "last_updated": "2026-10-09",
+          "snippet": "# Python 3.15: following tradition, let's have a surprise rc3!\nPython 3.15.0 candidate 3 is here!\n...\nFollowing recent tradition, here’s a surprise third release candidate for Python 3.15.0!\nWe got some last-minute lazy-import release blockers, and it makes sense to include them in 3.15.0 final.\nIt also makes sense to give a bit of time to test them properly, so this week’s planned 3.15.0 final is postponed until next week, and here’s an extra 3.15.0rc3.\nThis is a candidate preview of Python 3.15 This release, 3.15.0rc3, is the final planned release candidate, containing around 156 bugfixes…\nEveryone *please test*, **3.15.0 final** is planned for **2026-10-09**.",
+          "source": "web",
+          "title": "Python 3.15: following tradition, let's have a surprise rc3!",
+          "url": "https://discuss.python.org/t/python-3-15-following-tradition-lets-have-a-surprise-rc3/109313/4"
+        },
+        {
+          "date": "2026-10-01",
+          "id": 5,
+          "last_updated": "2026-10-08",
+          "snippet": "# Python 3.15: following tradition, let's have a surprise rc3!\nFollowing recent tradition, I’m going to add a surprise third release candidate for Python 3.15.0!\nWe got some last-minute lazy-import release blockers, and it makes sense to include them in 3.15.0 final.\nIt also makes sense to give a bit of time to test them properly, so today’s planned 3.15.0 final is postponed, and I’m going to release a 3.15.0rc3 tomorrow, assuming everything is in place.\nAnd then 3.15.0 final will follow about a week later.\nExact date to be announced.\n- Everyone: once the rc3 is out, please test!\n- Library maintainers: join the cool testers’ club !\n- Core team: very little will be merged into the `3.15` branch between now and 3.15.0 final.\nDocs improvements always welcome.\n...\nPython 3.15.0 candidate 3 is here!\n...\nThis is a candidate preview of Python 3.15 This release, 3.15.0rc3, is the final planned release candidate, containing around 156 bugfixes…\nEveryone *please test*, **3.15.0 final** is planned for **2026-10-09**.",
+          "source": "web",
+          "title": "Python 3.15: following tradition, let's have a surprise rc3!",
+          "url": "https://discuss.python.org/t/python-3-15-following-tradition-lets-have-a-surprise-rc3/109313"
+        },
+        {
+          "date": "2026-09-30",
+          "id": 6,
+          "last_updated": "2026-10-02",
+          "snippet": "# Free-Threaded Python Post-Era (Python Language Summit 2026)\n## Behavior-Oriented Concurrency (BOC)\nBehavior-Oriented Concurrency (BOC) is the model the trio is proposing for a high-level concurrency interface for Python.\nPrograms written with the BOC model are task-based.\nTasks are lightweight, can run on any core, and cannot deadlock.\n...\nThe bocpy package provides three features:\n- “Cowns”, or locks with ownership\n- Behaviors (the tasks spawned with `@when` decorators)\n- Scheduler (implemented with subinterpreters, with planned support for free-threading)",
+          "source": "web",
+          "title": "Free-Threaded Python Post-Era (Python Language Summit 2026) | Python Insider",
+          "url": "https://blog.python.org/2026/09/language-summit-2026-free-threading-post-era/"
+        },
+        {
+          "date": "2026-09-22",
+          "id": 7,
+          "last_updated": "2026-10-02",
+          "snippet": "06-Sep-2026\n- **Python-Version:**\n3.16\n...\n## Abstract\nThis PEP proposes preserving a string literal immediately following a\n`type` statement as the resulting type alias object’s `__doc__`\nattribute, exposing that documentation through `ast`, and displaying it through `pydoc` and `help()`.",
+          "source": "web",
+          "title": "PEP 846 – Docstrings for Type Aliases | peps.python.org",
+          "url": "https://peps.python.org/pep-0846/"
+        },
+        {
+          "date": "2026-09-30",
+          "id": 8,
+          "last_updated": "2026-10-02",
+          "snippet": "# Lightning Talks (Python Language Summit 2026)\n## One-time ABI breakage\nSince PEP 683 was accepted in Python 3.12, `ob_refcnt` has effectively been treated as a 32-bit integer, but these\nbits are still inaccessible for other uses to prevent breakages.\n...\n## Safer and Generic Interruptions\nTo do this, Daniele proposes adding uninterruptible scopes,\nwhere a context manager’s `__enter__()` and `__exit__()` methods are\n“shielded” from being interrupted and are guaranteed to execute.",
+          "source": "web",
+          "title": "Lightning Talks (Python Language Summit 2026) | Python Insider",
+          "url": "https://blog.python.org/2026/09/language-summit-2026-lightning-talks/"
+        },
+        {
+          "date": "2026-09-30",
+          "id": 9,
+          "last_updated": "2026-10-02",
+          "snippet": "# Rust for CPython (Python Language Summit 2026)\n## Why Rust?\n“We’ve been making some big technical bets”, he said, referencing the new parser, the JIT, and free-threading.\n...\nThe proposal would be to ask Python distributors to attempt using the optional Rust support in Python 3.16 (October 2027) and report platform-specific issues upstream in time to be resolved around the Python 3.17 timeline (October 2028).\n...\n## The proposed first Rust module: zlib\nUnder this timeline, the first Rust code to ship in Python would be in Python 3.16, where it would be completely optional, with the existing C code kept as a fallback.\nThe earliest that Rust would become required to build CPython is Python 3.18 in 2029, at least three years away.\nThe timeline includes a build system and CI, Rust API proof-of-concept happening\nin the Summer 2026, a PEP defining success criteria in late 2026,\nan optional Rust backend for the zlib module and private Rust API in Python 3.16 (October 2027),\nresolving platform issues and Rust in more places (io, json, xml, memoryview, parser)\nfor Python 3.17 (October 2028).\n...\nThe Rust for CPython team has selected the zlib module as the first module to be given an optional Rust implementation because they “wanted to achieve a significant improvement” with a “small scope”.",
+          "source": "web",
+          "title": "blog.python.org › 2026 › 09Rust for CPython (Python Language Summit 2026)",
+          "url": "https://blog.python.org/2026/09/language-summit-2026-rust-for-cpython/"
+        },
+        {
+          "date": "2026-09-23",
+          "id": 10,
+          "last_updated": "2026-10-07",
+          "snippet": "# Pre-PEP: UTF-8 String Representation\n## Reference implementation\n#### Change Unicode's internal representation to UTF-8 (#134)\nThis pull request introduces significant changes to the internal representation …and C API for Unicode objects in Python, focusing on optimizing storage, clarifying documentation, and improving error handling.\nThe main update is that Unicode objects now primarily store UTF-8 directly and generate the fixed-width representation (FSR) on demand, which can fail with an exception.\n...\n**Unicode object internal representation and storage:** * Unicode objects now store UTF-8 directly after the object header, with ASCII strings sharing this storage; the fixed-width representation (FSR) is generated on demand and retained until object destruction.\n...\n## Specification\n- Ordinary non-ASCII strings retain a UTF-8 representation.\nThe PEP 393 fixed-width representation (FSR) is created and retained only when needed.\n- Lone surrogates are preserved internally using `surrogatepass`, without changing Python-level semantics such as string length and indexing.\n- Strings under construction with `PyUnicode_New()` continue to use a writable FSR.\n- Many paths, including string operations, `UnicodeWriter`, codecs, and JSON, have been changed to process UTF-8 directly or read characters sequentially.\n- `PyUnicode_KIND()` returns the width of the fixed-width representation.\n`PyUnicode_DATA()` and the various `*_DATA()` functions create the FSR lazily, so they may return `NULL` if memory is exhausted.\n- `PyUnicode_READ_CHAR()` and `PyUnicode_ReadChar()` normally create an FSR cache and read from it.\n...\n- Writes are limited to construction buffers created by `PyUnicode_New()`.\nCalling `PyUnicode_WriteChar()`, `PyUnicode_Fill()`, or `PyUnicode_CopyCharacters()` on a string whose primary representation is UTF-8 calls `abort()`.\nA UTF-8 representation is generated for construction-buffer strings when they are read.\n- `PyUnicode_New()` and the write APIs will be deprecated.\nWhen these APIs are removed in the future, we plan to maintain O(1) random access using a more efficient position table, similar to PyPy’s.",
+          "source": "web",
+          "title": "Pre-PEP: UTF-8 String Representation - Ideas - Python Discussions",
+          "url": "https://discuss.python.org/t/pre-pep-utf-8-string-representation/109197"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "As of October 9, 2026, Python 3.15.0 is the latest release; it adds explicit lazy imports, built-in `frozendict` and `sentinel` types, and unpacking in comprehensions. It also makes UTF-8 the default encoding and substantially upgrades the experimental JIT. [Python Insider](https://blog.python.org/2026/10/python-3150-rc3/)",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_ccf96b48-e5c9-4abe-841a-4ba2e36b26e1",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": {
+    "effort": "low",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search",
+      "filters": {
+        "search_domain_filter": [
+          "python.org"
+        ],
+        "search_recency_filter": "month"
+      },
+      "user_location": {
+        "country": "US"
+      }
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00058,
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 5e-05,
+      "tool_calls_cost": 0.001,
+      "tool_calls_cost_details": {
+        "search_web": 0.001
+      },
+      "total_cost": 0.00163
+    },
+    "input_tokens": 4627,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 4624,
+      "cache_read_input_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 93,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.001,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 4720
+  },
+  "user": null
+}

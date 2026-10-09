@@ -1,0 +1,28 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "invalid inner schema: generic invalid request",
+  "request": {
+    "preset": "fast",
+    "input": "hi",
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "x",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "a": {
+              "type": "bogus"
+            }
+          }
+        }
+      }
+    }
+  }
+}

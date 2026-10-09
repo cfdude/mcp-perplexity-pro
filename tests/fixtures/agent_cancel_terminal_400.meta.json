@@ -1,0 +1,10 @@
+{
+  "endpoint": "/v1/agent/{id}/cancel",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "cancel of a terminal run"
+}

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "the run is already terminal and cannot be cancelled",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

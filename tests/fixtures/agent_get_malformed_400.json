@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "invalid response id",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

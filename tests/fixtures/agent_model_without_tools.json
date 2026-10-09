@@ -1,0 +1,68 @@
+{
+  "background": false,
+  "completed_at": 1791572910,
+  "created_at": 1791572910,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_29d3d183-cd5e-4d9c-aa81-eccd56638ff5",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "I can’t reliably confirm the 2026 winner; the most recent FIFA World Cup winner I can verify is Argentina, in 2022.",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_7be90efb-42db-4d61-8a54-65f0c350415b",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 0.00021,
+      "total_cost": 0.00021
+    },
+    "input_tokens": 37,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 429,
+    "output_tokens_details": {
+      "reasoning_tokens": 394
+    },
+    "total_tokens": 466
+  },
+  "user": null
+}

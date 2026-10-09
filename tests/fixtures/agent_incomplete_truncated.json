@@ -1,0 +1,56 @@
+{
+  "background": false,
+  "completed_at": null,
+  "created_at": 1791573045,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_b61c1484-d5f9-4811-91f9-1147259bc9ee",
+  "incomplete_details": {
+    "reason": "max_output_tokens"
+  },
+  "instructions": null,
+  "max_output_tokens": 16,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "incomplete",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 1e-05,
+      "total_cost": 1e-05
+    },
+    "input_tokens": 39,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 16,
+    "output_tokens_details": {
+      "reasoning_tokens": 16
+    },
+    "total_tokens": 55
+  },
+  "user": null
+}

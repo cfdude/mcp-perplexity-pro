@@ -1,0 +1,271 @@
+{
+  "background": false,
+  "completed_at": 1791572889,
+  "created_at": 1791572889,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_8c5155dc-613c-4612-b64d-8965a926fa9c",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": null,
+      "results": [
+        {
+          "date": "2025-05-05",
+          "id": 1,
+          "last_updated": "2026-10-03",
+          "snippet": "# Military Alphabet: NATO Letters, Numbers and Pronunciation\n## Common questions\n### What is the military alphabet from A to Z?\nAlfa, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliett, Kilo, Lima, Mike, November, Oscar, Papa, Quebec, Romeo, Sierra, Tango, Uniform, Victor, Whiskey, X-ray, Yankee and Zulu, one code word for each letter.",
+          "source": "web",
+          "title": "Military Alphabet - NATO Phonetic Alphabet - Communication",
+          "url": "https://militaryalphabet.net/"
+        },
+        {
+          "id": 2,
+          "last_updated": "2025-11-03",
+          "snippet": "# Heron USV Simulation\n## Sensors\n### Sensor Topics:\n|Name|Msg|Publisher|Desc|\n|--|--|--|--|\n|navsat/vel|TwistStamped|navsat_vel_translate.py|Simulated Velocity Data in ENU|",
+          "source": "web",
+          "title": "GitHub - heron/heron_simulator: Simulator package for Heron USV",
+          "url": "https://github.com/heron/heron_simulator"
+        },
+        {
+          "date": "2026-07-29",
+          "id": 3,
+          "last_updated": "2026-10-09",
+          "snippet": "OK\n— -.-\nConfirmation Message\n“OK” is used all over the world, and it is very popular in Morse code too.\n...\n## How Morse Code Words Are Built Step by Step\n### Spacing Rules Explained (1 Unit, 3 Units, 7 Units)\n|Gap Type|Length|What it is for|\n|--|--|--|\n|Short Gap|1 Unit|The space between dots and dashes in the same letter.|",
+          "source": "web",
+          "title": "Essential Morse Code Words: Meanings and Real-Life Uses",
+          "url": "https://morsecodtranslator.com/morse-code-words/"
+        },
+        {
+          "id": 4,
+          "last_updated": "2026-10-07",
+          "snippet": "# Site Search\n## Utilities\nSaved in your browser, optionally end-to-end encrypted and synced across devices, with the same notes available in the drawer on every tool page.",
+          "source": "web",
+          "title": "Site Search",
+          "url": "https://www.cachesleuth.com/search"
+        },
+        {
+          "id": 5,
+          "last_updated": "2026-10-03",
+          "snippet": "# Multi-Turn Conversation Guide\nLLMs have **no memory of their own** — a model doesn't remember what you said a moment ago.\nA \"multi-turn conversation\" really just means **sending the full conversation history with every request**.\n...\n## Core principle: maintain history yourself\nOne sentence covers it: **the model is stateless; you (the client) maintain the history and resend all of it every turn.**\n...\nEach new turn, **append** the previous user message and model reply to the end of the history array, then send the whole thing.\n...\n## OpenAI compatible mode (works across models)\nThe most universal approach, endpoint `/v1/chat/completions`.\nHistory lives in the `messages` array, each entry carrying a `role` (`system` / `user` / `assistant`).\n...\n### Handling history for reasoning models\n**Keep only `content` in the history — do not pass `reasoning_content` back.** The thinking is just an intermediate product of the current turn; passing it back wastes tokens and violates upstream rules (DeepSeek's direct API even returns a 400 for it).\n...\n## OpenAI native format (Responses API)\nEndpoint `/v1/responses`.\nFor multi-turn, **pass the full history as the `input` array** (each entry with `role` / `content`) — the same self-managed approach as compatible mode:\n...\n## Gemini native format\nEndpoint `/v1beta/models/{model}:generateContent`.\nHistory lives in the `contents` array.\nNote the **roles are `user` / `model`** (not `assistant`), and each entry's content goes in `parts`.",
+          "source": "web",
+          "title": "Multi-Turn Conversation Guide - API易文档中心 - APIYI",
+          "url": "https://docs.apiyi.com/en/api-capabilities/multi-turn-conversation"
+        },
+        {
+          "id": 6,
+          "last_updated": "2026-09-16",
+          "snippet": "#### Chapter 7: Mount Everest telegram\nGoogle the codewords.\n...\n#### Chapter 8: A German radio message from the Second World War\n3141592 (the first seven digits of pi), equivalent with DBEBFJC (if A=0, B=1, C=2, …)",
+          "source": "web",
+          "title": "Challenge Solutions – Codebreaking: A Practical Guide",
+          "url": "https://codebreaking-guide.com/challenges/"
+        },
+        {
+          "date": "2024-10-28",
+          "id": 7,
+          "last_updated": "2026-10-08",
+          "snippet": "# Radio Puzzle Code Solution\n## Radio Puzzle All Codes\n### All Radio Code Words and Their Numbers\nUse your **Blacklight** to see the hidden numbers and match the recording Code Words to their numbers to figure out the code.",
+          "source": "web",
+          "title": "Radio Puzzle Code Solution | Call of Duty Black Ops 6 (BO6) - Game8",
+          "url": "https://game8.co/games/Call-of-Duty-Black-Ops-6/archives/481967"
+        },
+        {
+          "id": 8,
+          "last_updated": "2025-08-23",
+          "snippet": "HERN and HERON are lightweight encryption authentication with associated data (AEAD) scheme and hash function respectively.\nHERN and HERON are bit-based constructions and process 1-bit message in each step.",
+          "source": "web",
+          "title": "HERN & HERON",
+          "url": "https://csrc.nist.rip/CSRC/media/Projects/Lightweight-Cryptography/documents/round-1/spec-doc/HERN&HERON-spec.pdf"
+        },
+        {
+          "date": "2024-06-14",
+          "id": 9,
+          "last_updated": "2026-10-07",
+          "snippet": "## Friday, 14 June 2024\n### Growing up in the heart of the Vulcanverse\nThere is a list of codewords at the back of each book.\nSometimes you will be told you have acquired a codeword.\nWhen this happens, put a tick in the box next to that codeword.\nIf you later lose the codeword, erase the tick.",
+          "source": "web",
+          "title": "Growing up in the heart of the Vulcanverse - Fabled Lands",
+          "url": "https://fabledlands.blogspot.com/2024/06/growing-up-in-heart-of-vulcanverse.html"
+        },
+        {
+          "id": 10,
+          "last_updated": "2026-10-08",
+          "snippet": "# Claude Code GitHub Actions\nCopia [examples/claude.yml](https://github.com/anthropics/claude-code-action/blob/main/examples/claude.yml) nella directory `.github/workflows/` del tuo repository.",
+          "source": "web",
+          "title": "Claude Code GitHub Actions",
+          "url": "https://code.claude.com/docs/it/github-actions"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "HERON-7 codeword"
+      ],
+      "results": [
+        {
+          "date": "2026-10-05",
+          "id": 11,
+          "last_updated": "2026-10-06",
+          "snippet": "# Maths\n## Heron’s Formula Calculator\nThe Heron’s Formula Calculator calculates a triangle’s area from three side lengths using Heron’s formula.",
+          "source": "web",
+          "title": "Maths",
+          "url": "https://calculatorcorp.com/maths/"
+        },
+        {
+          "date": "2009-02-19",
+          "id": 12,
+          "last_updated": "2025-09-11",
+          "snippet": "A long-legged, long-necked wading bird of the family Ardeidae",
+          "source": "web",
+          "title": "What is another word for heron?",
+          "url": "https://www.wordhippo.com/what-is/another-word-for/heron.html"
+        },
+        {
+          "id": 13,
+          "last_updated": "2025-11-03",
+          "snippet": "# Heron USV Simulation\n## Sensors\n### Sensor Topics:\n|Name|Msg|Publisher|Desc|\n|--|--|--|--|\n|navsat/vel|TwistStamped|navsat_vel_translate.py|Simulated Velocity Data in ENU|",
+          "source": "web",
+          "title": "GitHub - heron/heron_simulator: Simulator package for Heron USV",
+          "url": "https://github.com/heron/heron_simulator"
+        },
+        {
+          "date": "2023-08-22",
+          "id": 14,
+          "last_updated": "2026-10-07",
+          "snippet": "# print result\n### Pretrained Models\n|model|LLM module|adapter|size|\n|--|--|--|--|\n|heron-chat-git-ja-stablelm-base-7b-v1|Japanese StableLM Base Alpha|GIT|7B|",
+          "source": "web",
+          "title": "GitHub - turingmotors/heron: Heron is a library that ...",
+          "url": "https://github.com/turingmotors/heron"
+        },
+        {
+          "id": 15,
+          "last_updated": "2026-10-08",
+          "snippet": "|The Quest Of Julian Day (1938 - 20 Jan 1939)|[Jan 1939]| | |\n|--|--|--|--|\n|The Sword Of Fate (Sep 1939 - 27 Apr 1941)|[Sep 1941]| | |\n...\n|The Strange Story Of Linda Lee (May 1970 - Feb 1971)|[Aug] 1972| | |\n...\n|Box Set|Aug 1961| |Limited edition *(contains the 1st six volumes – The Forbidden Territory, The Scarlet Impostor, The Launching Of Roger Brook, The Haunting Of Toby Jugg, They Found Atlantis and The Eunuch Of Stamboul)*|\n|--|--|--|--|\n|Codeword – Golden Fleece|[26 Nov] 1962| |Lymington ed.No.37|",
+          "source": "web",
+          "title": "Bibliography - Dennis Wheatley",
+          "url": "http://www.denniswheatley.info/bibliography.htm"
+        },
+        {
+          "date": "2022-10-12",
+          "id": 16,
+          "last_updated": "2025-11-03",
+          "snippet": "## Popular repositories Loading\n### Repositories\nSimulator package for Heron USV\n...\nPackage to simplify world creation for heron_simulator",
+          "source": "web",
+          "title": "Heron",
+          "url": "http://github.com/heron"
+        },
+        {
+          "date": "2016-06-02",
+          "id": 17,
+          "last_updated": "2025-05-17",
+          "snippet": "heron\n/\n**\nheron-user-manual\n...\n# heron_usermanual.tex",
+          "source": "web",
+          "title": "heron-user-manual/heron_usermanual.tex at master · heron/heron-user-manual",
+          "url": "https://github.com/heron/heron-user-manual/blob/master/heron_usermanual.tex"
+        },
+        {
+          "date": "2023-09-07",
+          "id": 18,
+          "last_updated": "2026-10-05",
+          "snippet": "# print result\n### Pretrained Models\n|model|LLM module|adapter|size|\n|--|--|--|--|\n|heron-chat-git-ja-stablelm-base-7b-v0|Japanese StableLM Base Alpha|GIT|7B|",
+          "source": "web",
+          "title": "GitHub - r488it/heron",
+          "url": "https://github.com/r488it/heron"
+        },
+        {
+          "date": "2009-02-19",
+          "id": 19,
+          "last_updated": "2025-04-01",
+          "snippet": "Plural for a long-legged, long-necked wading bird of the family Ardeidae",
+          "source": "web",
+          "title": "What is another word for herons? | Herons Synonyms - WordHippo Thesaurus",
+          "url": "https://www.wordhippo.com/what-is/another-word--for/herons.html"
+        },
+        {
+          "id": 20,
+          "last_updated": "2026-01-19",
+          "snippet": "Crossword / Codeword\n...\nAdjective\n...\nFarsi Translation\nچاشنی",
+          "source": "web",
+          "title": "How to say heron in Farsi",
+          "url": "https://www.wordhippo.com/what-is/the/farsi-word-for-58c71771b13fabdff3145343c3a58f9b0de78791.html"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "The codeword was **HERON-7**.",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_e8cfad07-272d-4516-b34b-d62eb2d5ada5",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00048,
+      "cache_read_cost": 4e-05,
+      "currency": "USD",
+      "input_cost": 1e-05,
+      "output_cost": 3e-05,
+      "tool_calls_cost": 0.001,
+      "tool_calls_cost_details": {
+        "search_web": 0.001
+      },
+      "total_cost": 0.00156
+    },
+    "input_tokens": 7430,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 3846,
+      "cache_read_input_tokens": 3506,
+      "cached_tokens": 3506
+    },
+    "output_tokens": 60,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.001,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 7490
+  },
+  "user": null
+}

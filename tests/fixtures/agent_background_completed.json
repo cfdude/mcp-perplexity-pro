@@ -1,0 +1,434 @@
+{
+  "background": true,
+  "completed_at": 1791572975,
+  "created_at": 1791572975,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_d60f3e03-57e0-4048-994f-69b29a6d2ce7",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": [
+        "Pinecone pricing official"
+      ],
+      "results": [
+        {
+          "id": 11,
+          "snippet": "# Start free, scale effortlessly\n## ALSO AVAILABLE ON YOUR CLOUD MARKETPLACE\n|## Starter For trying out and for small applications.\nStart for Free Free Pinecone Database On-Demand Pinecone Inference Pinecone Assistant Dense, Sparse, and Full-Text Indexes Console Metrics Community Support via Discord|## Builder NEW For solo developers and small teams.\nGet Started $20/month flat Everything in Starter Increased usage limits Choose your cloud and region Multiple projects and users Prometheus and Datadog monitoring Includes Free support Response SLAs available via Developer or Pro support add-on|## Standard POPULAR For production applications at any scale.\nStart Free Trial $50/month min.\nusageYou'll be charged a minimum of $50/month.\n...\nGet StartedRequest Trial $500/month min.\nusageYou'll be charged a minimum of $500/month.\nOnce your usage exceeds this amount, you'll pay as you go.\n...\n## Explore products\n### Usage-based pricing\n$50 monthly minimum that's applied to your usage.\nAnything over $50 is billed pay-as-you-go.",
+          "source": "web",
+          "title": "Pricing",
+          "url": "https://www.pinecone.io/pricing/"
+        },
+        {
+          "id": 12,
+          "last_updated": "2026-10-02",
+          "snippet": "# Understanding Pinecone cost\nFor the latest pricing details, see [Pricing](https://www.pinecone.io/pricing/).\nPinecone serverless is usage-based, so you pay only for the data you store and the operations you run.\nIdle indexes cost nothing.\nMost early and small workloads fit within the free [Starter plan](https://www.pinecone.io/pricing/), and you can lower costs further as you scale.\n...\n## Minimum usage\nThe Builder, Standard, and Enterprise [pricing plans](https://www.pinecone.io/pricing/) include a monthly minimum usage commitment:\n| Plan | Minimum usage |\n| - | - |\n| Starter | \\$0/month |\n| Builder | \\$20/month (flat) |\n| Standard | \\$50/month |\n| Enterprise | \\$500/month |\nOn the Builder plan, the monthly minimum is a flat fee that covers included usage; additional usage beyond [Builder limits](/reference/api/database-limits/rate-limits#monthly-usage-limits) is blocked rather than billed.\nOn the Standard and Enterprise plans, customers are charged for what they use each month beyond the monthly minimum.\n...\n## Serverless indexes\nWith serverless indexes, you pay for the amount of data stored and operations performed, based on four usage metrics: [read units](#read-units), [write units](#write-units), [storage](#storage), and [egress](#egress).\n...\n### Storage\nStorage costs are based on the size of an index on a per-gigabyte (GB) monthly rate.",
+          "source": "web",
+          "title": "Understanding Pinecone cost",
+          "url": "https://docs.pinecone.io/guides/manage-cost/understanding-cost"
+        },
+        {
+          "id": 13,
+          "last_updated": "2026-10-03",
+          "snippet": "# Estimate your costs\nIdeal for most small-to-medium workloads and medium-to-large workloads with bursty or unpredictable traffic.Dedicated Read Nodes (DRN): Provisioned read nodes with fixed hourly pricing.\nPredictable cost and performance for large indexes and workloads with sustained high QPS.",
+          "source": "web",
+          "title": "Pricing",
+          "url": "https://www.pinecone.io/pricing/estimate/"
+        },
+        {
+          "id": 14,
+          "last_updated": "2026-10-02",
+          "snippet": "# Pods Pricing\nThese prices are for pod-based indexes, which are legacy and not available to customers who signed up on or after August 18, 2025.\nFor current pricing, see Pricing.\n## SELECT A CLOUD MARKETPLACE\nAWS\nGCP\nAWS\nGCP\nMicrosoft\nStandard\nEnterprise\n|s1-storage-optimized|s1-storage-optimized|s1-storage-optimized|s1-storage-optimized|\n|--|--|--|--|\n|Pod Size|Approximate Capacity|Standard ($/hour)|Enterprise ($/hour)|\n|1x|5 million vectors|$0.1110|$0.1665|\n|2x|10 million vectors|$0.2220|$0.3330|\n|4x|20 million vectors|$0.4440|$0.6660|\n|8x|40 million vectors|$0.8880|$1.3320|\n|p1 - performance optimized|p1 - performance optimized|p1 - performance optimized|p1 - performance optimized|\n|Pod Size|Approximate Capacity|Standard ($/hour)|Enterprise ($/hour)|\n|1x|1 million vectors|$0.1110|$0.1665|\n|2x|2 million vectors|$0.2220|$0.3330|\n|4x|4 million vectors|$0.4440|$0.6660|\n|8x|8 million vectors|$0.8880|$1.3320|\n|p2 - 2nd gen performance|p2 - 2nd gen performance|p2 - 2nd gen performance|p2 - 2nd gen performance|\n|Pod Size|Approximate Capacity|Standard ($/hour)|Enterprise ($/hour)|\n|1x|1 million vectors|$0.1666|$0.2497|\n|2x|2 million vectors|$0.3333|$0.4995|\n|4x|4 million vectors|$0.6666|$0.9990|\n|8x|8 million vectors|$1.3332|$1.9980|\n...\n## Collections Pricing\nVector data can be saved in Collections at a rate of $0.000035/GB/month",
+          "source": "web",
+          "title": "Pods Pricing",
+          "url": "https://www.pinecone.io/pricing/pods/"
+        },
+        {
+          "id": 15,
+          "last_updated": "2026-09-29",
+          "snippet": "Pricing and limits vary based on [subscription plan](https://www.pinecone.io/pricing/).\n...\n## Pricing\nPinecone Assistant usage is billed monthly.\nCosts can include:\n* [Minimum usage](#minimum-usage) (Builder, Standard, and Enterprise plans)\n* [Ingestion](#ingestion) (file uploads)\n* [Tokens](#tokens) (chat, context retrieval, and evaluation)\n* [Storage](#storage)\n...\nThe Builder, Standard, and Enterprise [pricing plans](https://www.pinecone.io/pricing/) include a monthly minimum usage commitment:\n| Plan | Minimum usage |\n| - | - |\n| Starter | \\$0/month |\n| Builder | \\$20/month (flat) |\n| Standard | \\$50/month |\n| Enterprise | \\$500/month |\n...\nOn the Standard and Enterprise plans, customers are charged for what they use each month beyond the monthly minimum.\n...\n| Processing path | Rate (per ingestion unit) |\n...\n| Standard file ingestion | \\$0.0005 |\n...\n| Plan | File uploads (ingestion units) |\n| - | - |\n| Starter | **1,000 / month** included |",
+          "source": "web",
+          "title": "Pinecone Assistant pricing and limits",
+          "url": "https://docs.pinecone.io/guides/assistant/pricing-and-limits"
+        },
+        {
+          "id": 16,
+          "last_updated": "2026-10-08",
+          "snippet": "New Standard and Enterprise subscriptions no longer receive the one-time \\$250 bulk import credit (1 TB).\n[Imports from object storage](/guides/index-data/import-data) are billed at the standard \\$0.25/GB rate.\nCredits already granted stay usable until they expire, 60 days after they were granted.\nThe last balances expire by November 1, 2026.\n...\nThe [Builder plan](https://www.pinecone.io/pricing/) is now available at **\\$20/month** (flat).",
+          "source": "web",
+          "title": "Events and analytics - Pinecone Docs",
+          "url": "https://docs.pinecone.io/release-notes/2026.md"
+        },
+        {
+          "date": "2021-10-04",
+          "id": 17,
+          "last_updated": "2026-10-04",
+          "snippet": "The new pricing is based on hardware usage (number and types of pods) and better aligns with your actual consumption patterns.\n...\nWe are introducing three new pricing plans: Free, Standard, and Dedicated.\n...\nOur new Free plan lets you use the fully managed Pinecone service for small workloads without any cost.\nIt comes with a single P1 pod, which is enough to search through roughly a million vectors in around 100ms, or through 100K vectors in around 20ms.\n...\nPricing in this plan is based on the number of pods used per hour, with P1 pods priced at 0.070/hourandS1podsat0.070/ℎ�������1������0.075/hour.",
+          "source": "web",
+          "title": "Pinecone 2.0 is Available and Free",
+          "url": "https://www.pinecone.io/blog/v2-pricing/"
+        },
+        {
+          "date": "2026-08-17",
+          "id": 18,
+          "last_updated": "2026-10-08",
+          "snippet": "As of September 24, 2026, Pinecone's pricing: The free Starter tier lets a developer test without a card, but the jump from Standard ($50/month) to Enterprise ($500/month) is steep, and usage costs for storage ($0.33/GB/month), reranking ($2/1k requests), and assistant tokens ($15/million output tokens) can compound quickly on a real workload.\n...\n$500/mo\nStandard\n$50/mo",
+          "source": "web",
+          "title": "Pinecone pricing: Self-serve, free tier | Bixel",
+          "url": "https://bixel.com/pinecone.io/pricing/"
+        },
+        {
+          "id": 19,
+          "last_updated": "2026-10-09",
+          "snippet": "Organizations on the Starter plan can now upgrade to a Standard plan trial at any time.\nThe Standard trial provides 21 days and \\$300 in credits to test Pinecone at scale, with access to Standard plan features such as higher limits.\n...\nIn the Pinecone console, customers on Standard and Enterprise pay-as-you-go plans can now commit to an annual contract and receive a discount on usage.",
+          "source": "web",
+          "title": "Pinecone 2025 changelog",
+          "url": "https://docs.pinecone.io/release-notes/2025"
+        },
+        {
+          "date": "2023-10-19",
+          "id": 20,
+          "last_updated": "2026-10-08",
+          "snippet": "Just to clarify, Pinecone *does not* have a $70 per month plan.\nOur standard plan *starts* at about $70 per month, but this depends on a lot of factors.\n1. Your choice of region.\nGCP environments cost less than AWS or Azure.\n2. Your choice of pod type.\np1 and s1 pods cost less than p2 pods.\n3. Your size of pod.\nx2 through x8 pods cost 2 to 8 times as much as an x1 pod.\nPinecone charges for each pod you use in your index(es) on an hourly basis (technically less, but the price is calculated based on hours or the nearest fraction of 1/4 hour).\nWe use “starts at $70 per month” as shorthand for using a p1.x1 or s1.x1 pod in a GCP region for an entire month.\nAt 9.6¢ per hour and an average of 730 hours per month, that works out to $70.08 for an entire month.\nBut strictly speaking, there’s no such thing as a $70 per month plan with Pinecone.\nHow much you’re charged will depend on the combination of factors above.\nYou can keep an eye on how much you’re spending in the console, under *Settings->Usage*.",
+          "source": "web",
+          "title": "Standard plan 70$ but in the index it say 105 - Pinecone Community",
+          "url": "https://community.pinecone.io/t/standard-plan-70-but-in-the-index-it-say-105/3459"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "Weaviate Cloud pricing official"
+      ],
+      "results": [
+        {
+          "id": 21,
+          "last_updated": "2026-10-03",
+          "snippet": "Forever$0 /mo\nNo credit card required\n...\nStarts at$45 /mo\nPay-as-you-go\n...\n- **Free to try** — 1,000 requests / month\n- **$30** / organization · monthly plan\n...\n|Plan|Free|Flex|Premium|Premium|\n|--|--|--|--|--|\n|Vector dimensions|Free|from $0.00465 / 1M|from $0.003875 / 1M|from $0.002718 / 1M|\n|Storage|Free|from $0.12 / GiB|from $0.10 / GiB|from $0.33 / GiB|\n|Backup|Free|from $0.03036/ GiB|from $0.021 / GiB|from $0.014 / GiB|\n...\nThe minimum covers the baseline cluster cost and includes charges for Vector Dimensions and Storage: $45/month on Flex and from $400/month on Premium.\nBackups are charged on top, based on data volume and retention.\n...\nTo usage from 1 September 2026.\n...\nList prices are on weaviate.io/pricing.\nThe console shows your cluster's current running cost.",
+          "source": "web",
+          "title": "Vector Database Pricing - Weaviate",
+          "url": "https://weaviate.io/pricing"
+        },
+        {
+          "id": 22,
+          "last_updated": "2026-10-02",
+          "snippet": "## Support Plans ​\n### Availability guarantees ​\n|Plan|Availability per Quarter|Deployment options|\n|--|--|--|\n|Flex|99.5%|Shared Cloud|\n|Plus|99.9%|Shared Cloud or Dedicated Cloud|\n|Premium|99.95%|Dedicated Cloud|\n...\n### Flex ​\nThe most versatile pay-as-you-go plan for prototypes, pilots, and small production use cases.\n...\n### Pricing ​\nWeaviate Cloud uses transparent, metric-based pricing based on three dimensions:\n- **Vector dimensions**: Number of objects × vector dimensionality × replication factor (varies by index type and compression)\n- **Storage**: Total disk space for indexes, metadata, and database state\n- **Backups**: Volume of snapshots and retention period\nPricing varies by cloud provider, region, and deployment type.\nAll paid plans include highly available clusters as standard.\n### Payment options ​\n- **Flex**: Pay-as-you-go, monthly billing\n- **Plus**: Annual contracts with predictable spend\n- **Premium**: Annual contracts with predictable spend\nTo estimate costs for your specific use case, visit the pricing page.\n- Available plans",
+          "source": "web",
+          "title": "Support plans",
+          "url": "https://weaviate.io/support-plans"
+        },
+        {
+          "date": "2025-10-28",
+          "id": 23,
+          "last_updated": "2026-10-09",
+          "snippet": "We’re introducing a new pricing model for Weaviate Cloud, built to be easier to understand, more flexible, and better aligned with how you use our platform.\n...\n- **Expanded pricing dimensions**: Beyond vector dimensions, pricing dimensions will now include storage and backups and reflect regional pricing variations\n- **Pricing model consistency across deployments**: Same pricing dimensions apply to both Shared and Dedicated Cloud\n- **Flexible payments**: Pay-as-you-go or annual commitments on Shared Cloud\n...\nThe new pricing takes effect on **October 27, 2025** for new customers.\nExisting annual and multi-year contracts will adopt the model at renewal.\nExisting pay-as-you-go customers will receive details via email about their transition timeline.\n...\n- Those on highly available clusters will benefit from the same guaranteed uptime at a lower monthly minimum.\n- Those on clusters that were not highly available will see prices increase as all clusters move to HA by default, gaining better uptime and performance.\n- Configuration choices now play a bigger role in costs: compression methods and regional deployment options are reflected directly in pricing, with new savings available where enabled.\n...\nWe have three pricing dimensions that track directly to your workloads:\n1. **Vector dimensions** are calculated by multiplying the number of objects by the vector dimensionality of each index.\nThis value is further multiplied by the replication factor to account for data replicas.\nPricing for vector dimensions varies by the index type (HNSW vs Flat) and compression (vector quantization) method.\n2. **Storage** refers to the total disk space used by your clusters to store vector indexes, metadata, object properties, and other database states.\n3. **Backups** capture the volume of stored snapshots and backups retained over time.\nThis usage is determined by the total size of your backed-up collections and the retention period you configure.\nList prices for all pricing dimensions vary by Cloud provider and region.\n...\nDedicated Cloud also now uses the same metric-based billing as Shared Cloud, making it easier to compare deployments and switch between them without pricing model changes.\n...\nWeaviate Cloud now offers three plans that fit different stages of your application lifecycle.\n...\n**Flex**\nOur most versatile pay-as-you-go plan.\nIncludes all core database features, built-in RBAC, AI-native services like Embeddings and Agents, automated upgrades, and 99.5% uptime on Shared Cloud.\nStarts at $45/month.\n**Plus**\nEverything in Flex, plus annual commitment options, enhanced security, stronger SLAs, and the choice of Shared or Dedicated deployments with 99.9% uptime.\nStarts at $280/month.\n**Premium**\nFor teams with the highest requirements around security, compliance, and performance.\nDedicated infrastructure with business-critical SLAs and priority response with 99.95% uptime.\nMonthly minimums vary by configuration.\n...\nPricing has also shifted: non-HA clusters started at $25/month and HA clusters at $25/monthandHAclustersat75/month; now every Shared cluster benefits from high availability at a lower entry price of $45/month.\n...\nVisit Weaviate Pricing for more details or contact us at product@weaviate.io if you have further questions.",
+          "source": "web",
+          "title": "A Simpler, More Transparent Pricing Model for Weaviate Cloud",
+          "url": "https://weaviate.io/blog/weaviate-cloud-pricing-update"
+        },
+        {
+          "id": 24,
+          "last_updated": "2026-10-08",
+          "snippet": "## Weaviate Enterprise Cloud Pricing Guide\n### Fill out the form below for instant access\nWith Weaviate Enterprise Cloud, you can control costs while tuning resource consumption to your specific needs.\nDownload the guide today for a detailed breakdown of our credit-based Enterprise Cloud Pricing.",
+          "source": "web",
+          "title": "Weaviate Enterprise Cloud Pricing Guide",
+          "url": "https://events.weaviate.io/pricing-download"
+        },
+        {
+          "id": 25,
+          "last_updated": "2026-10-08",
+          "snippet": "Weaviate sells two separately priced products.\n**Weaviate Database** (managed AI database, priced by infrastructure):\n| Plan | Price | Contract |\n...\n| Free | $0 / month | Always free, no credit card |\n| Flex | from $45 / month | Monthly, pay-as-you-go, no commitment |\n| Premium | Contact sales | Prepaid commitment |\n...\n| :--- | :--- | :--- | :--- |\n| Free | $0 / month | 1,000 | None, throttles at cap |\n| Starter | $45 / month | 10,000 | $0.0045 / run |\n| Team | $360 / month | 90,000 | $0.0035 / run |\n| Enterprise | Custom, contact sales | Committed | Negotiated |\n...\n- Every price below is taken from the data behind [weaviate.io/pricing](https://weaviate.io/pricing).\n- Promotions, regional rates, and plan visibility change over time.\nConfirm final\ncommercial terms on the live pricing page or in the Weaviate Cloud console.\n...\n- **$0 / month, always free.** No credit card required.\n...\n- **From $45 / month.** Pay-as-you-go, monthly, no commitment.",
+          "source": "web",
+          "title": "weaviate.io",
+          "url": "https://weaviate.io/pricing.md"
+        },
+        {
+          "id": 26,
+          "last_updated": "2026-10-03",
+          "snippet": "Weaviate Cloud offers two types of cloud hosting:\nEvaluationDevelopmentProduction\nShared Cloud\n- Fully-managed SaaS on shared infrastructure\n- Automatic scalability based on vector memory\n- Simple one-click cluster management\n- Consumption-based pricing (vector dimensions, storage, backups)\n- Available across five cloud regions\n- 99.5% - 99.9% uptime SLA\n...\nDedicated Cloud\n- Dedicated instance with isolated infrastructure\n- Enhanced security and compliance (SOC II, HIPAA)\n- Predictable performance with dedicated resources\n- 99.9% - 99.95% uptime SLA\n- Dedicated Success Manager included\n- 24/7 professional support\n...\nCheck out the available pricing plans for Weaviate Cloud.",
+          "source": "web",
+          "title": "Weaviate Cloud",
+          "url": "https://docs.weaviate.io/cloud"
+        },
+        {
+          "id": 27,
+          "last_updated": "2026-10-05",
+          "snippet": "Using Weaviate Cloud gives you access to a free cluster that is free forever and ideal for testing and small projects.\nYou also get access to advanced features like Weaviate Embeddings and the Query Agent, which are not available in self-hosted deployment methods.\nFor the current free tier limits, see the pricing page.\n...\nEach user can have one (1) free cluster, and by default each organization can have up to **six (6)** Shared Cloud clusters.",
+          "source": "web",
+          "title": "FAQs | Weaviate Documentation",
+          "url": "https://docs.weaviate.io/cloud/faq"
+        },
+        {
+          "id": 28,
+          "last_updated": "2026-10-04",
+          "snippet": "Free clusters are free forever.\nYou do not need a billing account to create a free cluster.\nShared Cloud clusters are charged for resource usage.\nThe monthly charge is determined by your usage and your support plan.\nYou have to have a billing account to create a Shared Cloud cluster.\nTo estimate costs for different usage plans, see the pricing page.\n...\nWeaviate offers multiple support plans at multiple levels with specific support options.\n...\nCharges are calculated and invoiced for active clusters on the 1st day of each month.",
+          "source": "web",
+          "title": "Billing",
+          "url": "https://docs.weaviate.io/cloud/platform/billing"
+        },
+        {
+          "date": "2022-09-01",
+          "id": 29,
+          "last_updated": "2026-10-09",
+          "snippet": "Beginning today, users have the option of paying a usage-based rate for search on a per-dimension basis.\nPricing begins at $0.05 per million dimensions.\n(No, that's not a typo; the rate is five cents per million.)\n...\nCustomers interested in the Weaviate Cloud can purchase service for $0.05 per million dimensions.\nOr, just one dollar for 20 million dimensions.",
+          "source": "web",
+          "title": "Weaviate introduces an all-new business model for vector ...",
+          "url": "https://weaviate.io/blog/weaviate-cloud-services"
+        },
+        {
+          "date": "2026-06-17",
+          "id": 30,
+          "last_updated": "2026-10-02",
+          "snippet": "So that's what we're announcing today.\nWeaviate Cloud is now free to start across the entire product suite.\nThe Database, Query Agent, and Engram are all available as free tiers.\nThe Weaviate Cloud managed database is now genuinely free, without a credit card or time expiration.\nIt’s the same Weaviate you know and love, with enough room to build a serious prototype, and stays on as long as you’re using it.\n...\n## When you're ready for more ​\nWhen that happens, you can easily upgrade your free cluster to a pay-as-you-go cluster that can scale up.",
+          "source": "web",
+          "title": "Weaviate Cloud is now free to start",
+          "url": "https://weaviate.io/blog/weaviate-free-tier"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "Qdrant Cloud pricing official"
+      ],
+      "results": [
+        {
+          "id": 1,
+          "last_updated": "2026-10-03",
+          "snippet": "# Qdrant Cloud Pricing\nStart free.\nScale to production with fully managed vector search.\nMeet all enterprise security and compliance requirements.\n### Free Tier\nFree forever\nFor testing, and prototypes\n- Single Node Cluster\n- 0.5 vCPU / 1GB RAM/ 4 GB Disk.\n- Free Cloud Inference With Selected Models\n### Standard Tier\nUsage-based pricing\nFor production workloads and scaling applications\n- Dedicated Resources\n- Flexible Vertical and Horizontal Scaling\n- Highly Available Setups\n- Backup & Disaster Recovery\n- Free Tokens for Paid Inference Models\n- 99.5% Uptime SLA\nSubscribe on Marketplace.\n### Premium Tier\nMinimum spend required\nFor enterprises with additional security and compliance needs\n- SSO\n- Private VPC Links\n- 99.9% Uptime SLA\n- Extra Support\n### Hybrid Cloud\nRuns on\nRun managed Qdrant clusters on your own infrastructure using your compute, network and storage.\n...\n### Private Cloud\nRuns on\nDedicated, isolated deployment for strict security or compliance needs.\nBest for:\n- Large Enterprises\n- Sensitive Workloads\n- Air-Gapped Setups\nBenefits:\n- Custom SLAs\n- Full Isolation\n...\n## Features by Tier\nAWS, Azure, GCP\n...\n## FAQs\n###### What Happens if I Exceed Free Tier Limits?\nIf your data size growth exceeds the Free Tier limits (1GB RAM and 4GB disk), you can easily upgrade to a Standard Tier and scale up your cluster.\n...\n###### How Does Qdrant Cloud Pricing Work\nQdrant Cloud pricing is based on resource usage, if you have a bigger cluster, you pay for more.\nThe free tier includes 1GB RAM and 4GB disk storage, upgrading will get you a dedicated cluster.\n...\n###### How Do I Choose Between Free Tier and Standard Tier?\nThe Free Tier is ideal for testing, and prototypes being limited to 1GB RAM and 4GB disk without high availability.\nChoose the Standard Tier for workloads that require dedicated clusters, higher availability, and advanced features.\n...\n###### What's the Difference Between Managed, Hybrid, and Private Cloud?\nManaged Cloud is fully managed by Qdrant.\nHybrid Cloud lets you bring your own infrastructure while using Qdrant's management plane.\nPrivate Cloud gives you complete control with on-premise deployment.\n...\n###### How Is Billing Calculated Month-to-Month?\nBilling is calculated based on actual resource usage during the billing period.\nYou're charged for compute (vCPU), memory (GB), storage (GB) consumed by your clusters, storage (GB) consumed by backups, and used inference tokens of paid models.\nUsage is billed hourly, and you can monitor it through the Qdrant Cloud dashboard.",
+          "source": "web",
+          "title": "Pricing for Cloud and Vector Database Solutions Qdrant",
+          "url": "https://qdrant.tech/pricing/"
+        },
+        {
+          "id": 2,
+          "last_updated": "2026-10-03",
+          "snippet": "# Qdrant Cloud Billing & Payments\nQdrant database clusters in Qdrant Cloud are priced based on CPU, memory, and disk storage usage.\nTo get a clearer idea for the pricing structure, based on the amounts of vectors you want to store, please use our Pricing Calculator.\n...\n## Billing\nYou can pay for your Qdrant Cloud database clusters either with a credit card or through an AWS, GCP, or Azure Marketplace subscription.\nYour payment method is charged at the beginning of each month for the previous month’s usage.\nThere is no difference in pricing between the different payment methods.\nIf you choose to pay through a marketplace, the Qdrant Cloud usage costs are added as \\$0.01 Resource Usage Units to your existing billing for your cloud provider services.\nE.g. if you create a Qdrant Cluster that costs \\$85 in a month, 8,500 Resource Usage Units for Qdrant Cloud will be added to your cloud provider bill.\nA detailed breakdown of your usage is available in the Qdrant Cloud Console.\n...\n### Credit Card\nCredit card payments are processed through Stripe.",
+          "source": "web",
+          "title": "Billing & Payments",
+          "url": "https://qdrant.tech/documentation/cloud-pricing-payments/"
+        },
+        {
+          "id": 3,
+          "last_updated": "2026-10-02",
+          "snippet": "## Pricing Based on Cluster Resources\nQdrant Cloud is priced on the resources your cluster uses: vCPU, RAM, disk, and inference tokens for paid models.\n...\nSpin up a permanently free cluster in under 90 seconds.\nNo credit card, no minimum spend, around one million 768-dimension vectors.\n...\n###### Is there a free tier?\nYes.\nThe free tier is a single-node cluster with 0.5 vCPU, 1GB RAM, and 4GB disk.\nThat fits roughly one million 768-dimension vectors.\nNo credit card.\nFree clusters suspend after 1 week of inactivity and delete after 4 weeks if you don't reactivate them.\n...\nAWS, GCP, and Azure across multiple regions.\n...\nPaid clusters get up to 5 million free tokens per model per month, with no token cap on BM25.\n###### How is pricing calculated?\nResource-based: vCPU, RAM, and storage, billed hourly.\nCloud Inference adds usage charges only when you call paid embedding models.\nThe pricing page has a sizing calculator.\n...\nNo. Cluster sizes are explicit and any change needs your authorization.\nCapacity alerts fire at 80% so you can upgrade on your own terms before anything breaks.",
+          "source": "web",
+          "title": "Scalable Managed Cloud Services",
+          "url": "https://qdrant.tech/cloud/"
+        },
+        {
+          "id": 4,
+          "last_updated": "2026-10-04",
+          "snippet": "No pricing minimums\n...\n## Looking for somewhere to start for your projects?\nQdrant Cloud starts at $0, with no credit card details needed, for your personal 1 GB RAM free cluster.\nYour free tier includes access to any region we support for AWS, GCP and Azure.\nQuickly prototype then scale with your needs.\n...\n## 5M free tokens monthly for Qdrant Cloud Inferencing\n...\n## Start building with your 1 GB free cluster",
+          "source": "web",
+          "title": "No pricing minimums - try.qdrant.tech",
+          "url": "https://try.qdrant.tech/no-pricing-minimums"
+        },
+        {
+          "id": 5,
+          "last_updated": "2026-10-03",
+          "snippet": "## Additional Resources\n###### Enterprise Solutions\nFor maximal control for production-ready applications Qdrant is available as a Hybrid Cloud and Private Cloud (Full On Premise) solution.\n...\n###### Pricing\nVisit our pricing page for more details on Qdrant’s free tier, managed cloud, and enterprise plans.",
+          "source": "web",
+          "title": "Qdrant High-Performance Vector Search Engine",
+          "url": "https://qdrant.tech/qdrant-vector-database/"
+        },
+        {
+          "id": 6,
+          "last_updated": "2026-10-03",
+          "snippet": "# Quick Start with Qdrant Cloud\nThis is one of the free embedding models available on Qdrant Cloud.\nFor a list of the available free and paid models, refer to the Inference tab of the Cluster Detail page in the Qdrant Cloud Console.",
+          "source": "web",
+          "title": "Qdrant Cloud",
+          "url": "https://qdrant.tech/documentation/cloud-quickstart/"
+        },
+        {
+          "date": "2026-06-10",
+          "id": 7,
+          "last_updated": "2026-10-07",
+          "snippet": "# qdrant.md\n|tool|Qdrant|\n|--|--|\n|pricing_model|Open-source (Apache 2.0) + Qdrant Cloud (free tier + pay-as-you-go)|\n...\n# Qdrant\n## Pricing model\n**Open-source Apache 2.0** (self-host free, unlimited).\n**Qdrant Cloud**:\n- **Free tier for life**, no credit card: 1 GB RAM / 0.5 vCPU / 4 GB disk (~1M vectors at 768 dim).\nSuspended after 1 week of inactivity.\n- **Standard**: pay-as-you-go, **billed hourly** (vCPU + memory + storage), 99.5% SLA.\n**Premium**: minimum spend (not published), SSO, VPC, 24/7 support.\n- ⚠️ **Unit prices ($/vCPU/h) not published** at the source — only via the calculator.\nHybrid/Private Cloud by quote.\n...\n## LLM cost\nTwo optional helpers: **FastEmbed** (official lib, **local** embedding generation via ONNX, no GPU or external cost); **Qdrant Cloud Inference** (Cloud only, generates embeddings in the cluster, **billed per token**, free quota, also acts as a proxy to OpenAI/Cohere/Jina billed by them).\n...\n## Source\n*(verified on 2026-06-16; Cloud unit prices not published)*",
+          "source": "web",
+          "title": "AI-Knowledge/wiki/tools/qdrant.md at master",
+          "url": "https://github.com/frederictriquet/AI-Knowledge/blob/master/wiki/tools/qdrant.md"
+        },
+        {
+          "date": "2025-08-16",
+          "id": 8,
+          "last_updated": "2026-08-09",
+          "snippet": "## Deploy and Host Managed Qdrant Service with one click on Railway\n### Qdrant Pricing\n- **Self Hosting Qdrant Docker**: Free (only Railway costs apply).\n- **Railway Costs**: $5–$10/month base instance + storage.\n- **Qdrant Cloud (Official)**: Paid managed service, pricing depends on scale (latest rates on qdrant.tech).",
+          "source": "web",
+          "title": "Deploy - Qdrant (Open-Source Vector Database for AI & ...",
+          "url": "https://railway.com/deploy/qdrant"
+        },
+        {
+          "id": 9,
+          "last_updated": "2026-10-02",
+          "snippet": "# Installation requirements\n## CPU and memory\nOur Cloud Pricing Calculator can help you estimate required resources without payload or index data.\n...\n## Production\n### Qdrant Cloud\nYou can set up production with the Qdrant Cloud, which provides fully managed Qdrant databases.\nIt provides horizontal and vertical scaling, one click installation and upgrades, monitoring, logging, as well as backup and disaster recovery.",
+          "source": "web",
+          "title": "Installation - Qdrant",
+          "url": "https://qdrant.tech/documentation/installation/"
+        },
+        {
+          "date": "2020-05-30",
+          "id": 10,
+          "last_updated": "2026-10-07",
+          "snippet": "## Repository files navigation\nQdrant is also available as a fully managed **Qdrant Cloud** ⛅ including a **free tier**.",
+          "source": "web",
+          "title": "github.com › qdrant › qdrantGitHub - qdrant/qdrant: Qdrant - High-performance, massive ...",
+          "url": "https://github.com/qdrant/qdrant"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "contents": [
+        {
+          "snippet": "## Current plans and monthly minimums\n\n| Plan | Positioning | CTA | Monthly price / minimum | Included features and usage |\n|---|---|---|---|---|\n| Starter | For trying out and for small applications. | Start for Free | Free | Free Pinecone Database On-Demand; Pinecone Inference; Pinecone Assistant; Dense, Sparse, and Full-Text Indexes; Console Metrics; Community Support via Discord |\n| Builder | NEW. For solo developers and small teams. | Get Started | $20/month flat | Everything in Starter; Increased usage limits; Choose your cloud and region; Multiple projects and users; Prometheus and Datadog monitoring; Includes Free support; Response SLAs available via Developer or Pro support add-on |\n| Standard | POPULAR. For production applications at any scale. | Start Free Trial | $50/month min. usage. You'll be charged a minimum of $50/month. Once your usage exceeds this amount, you'll pay as you go. 3 week trial includes $300 credits. | Everything in Builder; Pay-as-you-go for Database On-Demand, Inference, and Assistant Usage; Choose your cloud and region; Dedicated Read Nodes (DRN); Import from object storage; Backup and Restore; RBAC; SSO (SAML 2.0); HIPAA add-on; Includes Free support; Response SLAs available via Developer or Pro support add-on |\n| Enterprise | For mission-critical production applications. | Get Started; Request Trial | $500/month min. usage. You'll be charged a minimum of $500/month. Once your usage exceeds this amount, you'll pay as you go. | Everything in Standard; 99.95% Uptime SLA; Bring Your Own Cloud (BYOC); Private Endpoints; Customer Managed Encryption Keys; Audit Logs; Service Accounts; SAML roles; SCIM; HIPAA Compliance; Pro support included |\n\nAWS is listed under “Also available on your cloud marketplace.”\n\n### What is billed usage-based\n\n- “$50 monthly minimum that's applied to your usage. Anything over $50 is billed pay-as-you-go.”\n- Standard: Pay-as-you-go for Database On-Demand, Inference, and Assistant Usage.\n- Enterprise: Once usage exceeds the $500/month minimum, usage is billed as you go.\n- The page also lists usage-based pricing for storage, write units, read units, egress, ingestion, Assistant tokens, embedding tokens, reranking requests, and other pricing dimensions below.\n\n## Pricing metrics, tier inclusions, and minimum commitments\n\n| Plan | Starter | Builder | Standard | Enterprise |\n|---|---|---|---|---|\n| Database Features | Database Features | Database Features | Database Features |  |\n| Cloud Availability | AWS | AWS, Azure, GCP | AWS, Azure, GCP | AWS, Azure, GCP |\n| Region Availability | us-east-1 | All available regions | All available regions | All available regions |\n| Dedicated Read Nodes |  |  |  |  |\n| Index Types | Dense, Sparse, and Full-Text | Dense, Sparse, and Full-Text | Dense, Sparse, and Full-Text | Dense, Sparse, and Full-Text |\n| Indexes | Up to 5 | 10 per project | 20 per project | 200 per project |\n| Namespaces per Index | 100 | 1,000 | 100,000 | 1,000,000 |\n| Embedding Models | All available models | All available models | All available models | All available models |\n| Reranking Models | bge-reranker-v2-m3 only | bge-reranker-v2-m3 only | All available models | All available models |\n| Console Index Metrics |  |  |  |  |\n| Prometheus and Datadog Monitoring |  |  |  |  |\n| Uptime SLA | 99.95% |  |  |  |\n\n### Database pricing dimensions\n\n| Pricing dimension | Starter | Builder | Standard | Enterprise |\n|---|---|---|---|---|\n| Pricing Dimensions | Pricing Dimensions | Pricing Dimensions | Pricing Dimensions |  |\n| Database | Database | Database | Database |  |\n| Storage | Up to 2 GB | Up to 10 GB | Unlimited $0.33/GB/mo | Unlimited $0.33/GB/mo |\n| Write Units | Up to 2M/mo | Up to 5M/mo | Unlimited $4-$4.50 per million (varies by cloud and region) | Unlimited $6-$6.75 per million (varies by cloud and region) |\n| Read Units | Up to 1M/mo | Up to 2M/mo | Unlimited $16-$18 per million (varies by cloud and region) | Unlimited $24-$27 per million (varies by cloud and region) |\n| Egress | Up to 1GB/mo | Up to 10GB/mo | Unlimited $0.10/GB 100GB/mo included | Unlimited $0.10/GB 100GB/mo included |\n| Import from object storage | $0.25 per GB | $0.25 per GB |  |  |\n| Backups | $0.10/GB/mo | $0.10/GB/mo |  |  |\n| Restore from backup | $0.15 per GB | $0.15 per GB |  |  |\n| Cross-region restore | Cross-region transfer pricing applies | Cross-region transfer pricing applies |  |  |\n\n### Assistant pricing dimensions\n\n| Pricing dimension | Starter | Builder | Standard | Enterprise |\n|---|---|---|---|---|\n| Assistant | Assistant | Assistant | Assistant | Assistant |\n| Document Limit | Unlimited | Unlimited | Unlimited | Unlimited |\n| Storage | 1GB Storage included | 3GB Storage included | Unlimited $3/GB/mo | Unlimited $3/GB/mo |\n| Input Tokens | 500k/mo included | 2M/mo included | Unlimited $8 per million | Unlimited $8 per million |\n| Output Tokens | 300k/mo included | 1M/mo included | Unlimited $15 per million | Unlimited $15 per million |\n| Context Processed Tokens | 500k/mo included | 2M/mo included | Unlimited $5 per million | Unlimited $5 per million |\n| Evaluation Processed Tokens | Unlimited $8 per million | Unlimited $8 per million |  |  |\n| Evaluation Output Tokens | Unlimited $15 per million | Unlimited $15 per million |  |  |\n| Ingestion Units | 1,000/mo included | 10k/mo included | $0.0005/ingestion unit $0.001/ingestion unit for multi-modal 400 tokens/~300 words per ingestion unit | $0.0005/ingestion unit $0.001/ingestion unit for multi-modal 400 tokens/~300 words per ingestion unit |\n| Region | USA | Any | Any | Any |\n\n### Inference — embedding\n\n| Model | Starter | Builder | Standard | Enterprise |\n|---|---|---|---|---|\n| Inference - Embedding | Inference - Embedding | Inference - Embedding | Inference - Embedding | Inference - Embedding |\n| llama-text-embed-v2 | 5M tokens/mo included | 10M tokens/mo included | Unlimited $0.16/M tokens | Unlimited $0.16/M tokens |\n| multilingual-e5-large | 5M tokens/mo included | 10M tokens/mo included | Unlimited $0.08/M tokens | Unlimited $0.08/M tokens |\n| pinecone-sparse-english-v0 | 5M tokens/mo included | 10M tokens/mo included | Unlimited $0.08/M tokens | Unlimited $0.08/M tokens |\n\n### Inference — reranking\n\n| Model | Starter | Builder | Standard | Enterprise |\n|---|---|---|---|---|\n| Inference - Reranking | Inference - Reranking | Inference - Reranking | Inference - Reranking |  |\n| bge-reranker-v2-m3 | 500 requests/mo included | 1,000 requests/mo included | Unlimited $2/1k requests | Unlimited $2/1k requests |\n| pinecone-rerank-v0 | Unlimited $2/1k requests | Unlimited $2/1k requests |  |  |\n| cohere-rerank-4-fast | Unlimited $2/1k rerank units | Unlimited $2/1k rerank units |  |  |\n\n### Organization management\n\n| Feature | Starter | Builder | Standard | Enterprise |\n|---|---|---|---|---|\n| Org Management | Org Management | Org Management | Org Management |  |\n| Projects | 1 | 5 | 20 | 100 |\n| Users | Up to 2 | Up to 5 | Unlimited | Unlimited |\n| Admin API |  |  |  |  |\n| SSO (SAML 2.0) |  |  |  |  |\n| SAML roles |  |  |  |  |\n| SCIM |  |  |  |  |\n| Service Accounts |  |  |  |  |\n| Support | Free support included View Details | Free support included View Details | Pro support included View Details |  |\n\n### Security and compliance\n\n| Feature | Starter | Builder | Standard | Enterprise |\n|---|---|---|---|---|\n| Security and Compliance | Security and Compliance | Security and Compliance | Security and Compliance |  |\n| Encryption at rest and in transit |  |  |  |  |\n| RBAC |  |  |  |  |\n| Audit Logs |  |  |  |  |\n| Private Endpoints |  |  |  |  |\n| Customer Managed Encryption Keys |  |  |  |  |\n| SOC 2 |  |  |  |  |\n| GDPR |  |  |  |  |\n| ISO 27001 |  |  |  |  |\n| HIPAA | $190/mo |  |  |  |\n\n### Other pricing information\n\n- Usage-based pricing: “$50 monthly minimum that's applied to your usage. Anything over $50 is billed pay-as-you-go.”\n- Committed Use Contracts: “The larger your usage commitments, the greater your benefits—unlock bigger discounts and support.”\n- Standard includes a “3 week trial” with “$300 credits.”\n- Enterprise has a “$500/month min. usage.”\n- Standard has a “$50/month min. usage.”\n- A pricing calculator is available: “Estimate your costs with our pricing calculator.”\n- Bring Your Own Cloud: “Get Started” / “Contact Us for Pricing.” Pro support included. Pinecone runs in the customer’s cloud account and VPC; BYOC has zero-access operations, outbound-only operations with an auditable trail, and supports public endpoints or private-only connectivity via AWS PrivateLink, GCP Private Service Connect, or Azure Private Link.",
+          "title": "Pricing",
+          "url": "https://www.pinecone.io/pricing/"
+        }
+      ],
+      "type": "fetch_url_results"
+    },
+    {
+      "contents": [
+        {
+          "snippet": "## Current Weaviate Cloud plans\n\n| Plan | Starting price | Billing model | Description |\n|---|---:|---|---|\n| Free | $0 /mo | Forever | A fully managed AI Database to explore Weaviate features. |\n| Flex | Starts at $45 /mo | Pay-as-you-go, monthly, no commitment | Zero-commitment entry point to experiment and ship quickly. |\n| Premium — Shared or Dedicated | Contact sales for more information | Prepaid contract | For teams scaling AI in production who need predictable pricing and enhanced reliability. |\n\n### Plan details\n\n| Plan | Details |\n|---|---|\n| Free | Always free — 1 cluster per user, upgrade to paid anytime. |\n| Free | 100,000 objects · 1 GB memory · 10 GB disk. |\n| Free | 1 collection, up to 3 tenants. |\n| Free | Embeddings (2,000 req/day) + Query Agent (1,000 req/mo). |\n| Free | Basic Support |\n| Flex | Pay-as-you-go, monthly, no commitment. |\n| Flex | Shared cloud cluster with full core DB toolkit + replication. |\n| Flex | Baseline security with RBAC. |\n| Flex | Highly available clusters — 99.5% uptime. |\n| Flex | Query Agent free tier + usage-based; Embeddings usage-based. |\n| Flex | Standard support — next-business-day Sev 1 |\n| Premium | Prepaid contract with predictable spend. |\n| Premium | Choice of shared or dedicated deployment. |\n| Premium | Trusted reliability — up to 99.95% uptime. |\n| Premium | Global coverage on AWS, GCP & Azure. |\n| Premium | Query Agent free tier + usage-based; Embeddings usage-based. |\n| Premium | Enterprise support — as fast as 1-hour Sev 1 + dedicated Technical Account Team |\n\n## Pricing dimensions and billing model\n\n| Plan | Contract / billing model | Minimum monthly cost | Vector dimensions |\n|---|---|---:|---:|\n| Free | Always free | Free | Free |\n| Flex | Monthly (Pay-as-you-go) | $45 / month | from $0.00465 / 1M |\n| Premium — Shared | Prepaid Commitment | Contact sales for more information | from $0.003875 / 1M |\n| Premium — Dedicated | Prepaid Commitment | Contact sales for more information | from $0.002718 / 1M |\n\nVector dimension pricing varies by index type, compression method, and region. For rates specific to your data, see the Running Costs module in Weaviate Cloud Console or contact support@weaviate.io.\n\n## Pricing comparison\n\n|Plan|Free|Flex|Premium|Premium|\n|--|--|--|--|--|\n|Plan|Free|Flex|Shared|Dedicated|\n|Contract|Contract|Contract|Contract|Contract|\n|Contract|Always free|Monthly (Pay-as-you-go)|Prepaid Commitment|Prepaid Commitment|\n|Core Database|Core Database|Core Database|Core Database|Core Database|\n|Deployment type|Shared|Shared|Shared|Dedicated|\n|Object limit|100,000|Unlimited|Unlimited|Unlimited|\n|Collection limit|1|1000|1000|1000|\n|Hybrid search|✓|✓|✓|✓|\n|Backup retention|×|7 days|30 days|45 days|\n|Flexible index types|×|✓|✓|✓|\n|Vector compression|✓|✓|✓|✓|\n|HA / replication|×|✓|✓|✓|\n|Multi-tenancy|✓|✓|✓|✓|\n|Security|Security|Security|Security|Security|\n|RBAC|✓|✓|✓|✓|\n|SSO / SAML|×|×|✓|✓|\n|Bring your own IdP|×|×|×|Coming soon|\n|HIPAA compliant|×|×|×|✓|\n|PrivateLink (AWS)|×|×|×|✓|\n|Encrypted volumes (customer keys)|×|×|×|✓|\n|Observability|Observability|Observability|Observability|Observability|\n|Metrics endpoint|×|×|✓|✓|\n|Console metrics|✓|✓|✓|✓|\n|AI Services|AI Services|AI Services|AI Services|AI Services|\n|Query Agent|Free tier|Free tier + usage-based|Free tier + usage-based|Free tier + usage-based|\n|Query Agent rate limits|1,000 req/mo|30,000 req/mo|Unlimited|Unlimited|\n|Embeddings|2,000 req/day|Usage-based|Usage-based|Coming soon|\n|Support / Onboarding|Support / Onboarding|Support / Onboarding|Support / Onboarding|Support / Onboarding|\n|Email support|✓|✓|✓|✓|\n|Phone support|×|×|✓|✓|\n|Slack support|×|×|✓|✓|\n|Technical Account Team|×|×|Add-on|Add-on|\n|Instructor-led jumpstart training|×|×|Available|Available|\n|SLAs|SLAs|SLAs|SLAs|SLAs|\n|Availability|Best effort|99.5%|99.9%|99.95%|\n|Severity 1 response time|×|1 business day|4-hours|1-hour|\n|Upgrades|Upgrades|Upgrades|Upgrades|Upgrades|\n|Cluster upgrades|Weaviate-managed|Weaviate-managed|Weaviate-managed|Customer-directed|\n|Cloud Availability|Cloud Availability|Cloud Availability|Cloud Availability|Cloud Availability|\n|Cloud Service Provider|AWS|GCP, AWS|GCP, AWS|GCP, AWS, Azure|\n|Regions|Limited (2)|Limited (7)|Limited (7)|All (~40)|\n|Pricing dimensions|Pricing dimensions|Pricing dimensions|Pricing dimensions|Pricing dimensions|\n|Minimum|Free|$45 / month|Contact sales for more information|Contact sales for more information|\n|Vector dimensions|Free|from $0.00465 / 1M|from $0.003875 / 1M|from $0.002718 / 1M|\n|Storage|Free|from $0.12 / GiB|from $0.10 / GiB|from $0.33 / GiB|\n|Backup|Free|from $0.03036/ GiB|from $0.021 / GiB|from $0.014 / GiB|\n|Data transfer|Free|Free for promotional period|Free for promotional period|Free for promotional period|\n\n## Flex and Premium minimum monthly costs\n\n- **Flex:** minimum **$45/month**. The minimum covers the baseline cluster cost and includes charges for Vector Dimensions and Storage. Backups are charged on top, based on data volume and retention.\n- **Premium:** **from $400/month**. The Premium plan page lists the minimum as **“Contact sales for more information”** for both Shared and Dedicated Premium; the FAQ states that the minimum is **from $400/month**. Backups are charged on top, based on data volume and retention.\n\n## Additional pricing rates\n\n| Pricing item | Flex | Premium — Shared | Premium — Dedicated |\n|---|---:|---:|---:|\n| Vector dimensions | from $0.00465 / 1M | from $0.003875 / 1M | from $0.002718 / 1M |\n| Storage | from $0.12 / GiB | from $0.10 / GiB | from $0.33 / GiB |\n| Backup | from $0.03036/ GiB | from $0.021 / GiB | from $0.014 / GiB |\n| Data transfer | Free for promotional period | Free for promotional period | Free for promotional period |\n\nData transfers currently incur no additional cost for a limited promotional period; Weaviate may introduce charges in future with advance notice.\n\n## Database AI Services\n\nNative services that run inside Weaviate Cloud — included on every plan, billed by usage.\n\n### Weaviate Embeddings\n\n| Model | Rate |\n|---|---:|\n| SNOWFLAKE ARCTIC-EMBED-M-V1.5 | $0.025 / 1M tokens |\n| SNOWFLAKE ARCTIC-EMBED-M-V2.0 | $0.040 / 1M tokens |\n| MODERNVBERT COLMODERNVBERT | $0.065 / 1M tokens |\n\n### Weaviate Query Agent\n\n- Free to try — 1,000 requests / month\n- $30 / organization · monthly plan\n- 4,000 requests included\n- Unlimited additional requests, usage-based\n\n## Pricing FAQ details\n\n- The total count of vector dimensions indicates the resources required. Customers are also billed for persistent and backup storage of objects and their embeddings.\n- The minimum covers the baseline cluster cost and includes charges for Vector Dimensions and Storage: **$45/month on Flex and from $400/month on Premium**.\n- Compression does not change the number of vector dimensions stored, but it reduces the memory and compute required for search. More aggressive compression yields greater efficiency, reflected in discounted list prices for vector dimensions.\n- List prices for all vector-dimension rates vary by cloud provider and region.",
+          "title": "Vector Database Pricing - Weaviate",
+          "url": "https://weaviate.io/pricing"
+        }
+      ],
+      "type": "fetch_url_results"
+    },
+    {
+      "contents": [
+        {
+          "snippet": "# Qdrant Cloud Pricing\n\n| Tier | Pricing | Description |\n|---|---|---|\n| Free Tier | Free forever | For testing, and prototypes |\n| Standard Tier | Usage-based pricing | For production workloads and scaling applications |\n| Premium Tier | Minimum spend required | For enterprises with additional security and compliance needs |\n\n## Free Tier\n\n- Single Node Cluster\n- 0.5 vCPU / 1GB RAM/ 4 GB Disk.\n- Free Cloud Inference With Selected Models\n\n## Standard Tier\n\n- Dedicated Resources\n- Flexible Vertical and Horizontal Scaling\n- Highly Available Setups\n- Backup & Disaster Recovery\n- Free Tokens for Paid Inference Models\n- 99.5% Uptime SLA\n\nSubscribe on Marketplace.\n\n## Premium Tier\n\n- SSO\n- Private VPC Links\n- 99.9% Uptime SLA\n- Extra Support\n\n## Hybrid Cloud\n\nRuns on managed Qdrant clusters on your own infrastructure using your compute, network and storage.\n\nBest for:\n\n- Local Data Residency\n- Regulated Workloads\n- Easy Operations in Your Own Cloud\n\nBenefits:\n\n- Data Stays in Your Network\n- Fully Managed Through Qdrant Cloud\n- Production-Grade Uptime\n\n## Private Cloud\n\nRuns on dedicated, isolated deployment for strict security or compliance needs.\n\nBest for:\n\n- Large Enterprises\n- Sensitive Workloads\n- Air-Gapped Setups\n\nBenefits:\n\n- Custom SLAs\n- Full Isolation\n\n## Features by Tier\n\n| Features | OSS | Free Tier | Standard Tier | Premium Tier |\n|---|---|---|---|---|\n| Cloud Inference |  | Only free and external models |  |  |\n| Cloud Providers |  | Depends on chosen infrastructure | AWS, Azure, GCP | AWS, Azure, GCP |\n| Uptime SLA |  | 99.5 | Single AZ: 99.9, Multi AZ: 99.95 |  |\n| Automation |  | API, Terraform, Pulumi, CLI | API, Terraform, Pulumi, CLI | API, Terraform, Pulumi, CLI |\n| Vertical Up & Downscaling |  | No resource usage safe guards |  |  |\n| Horizontal Up & Downscaling |  | No automated shard rebalancing |  |  |\n| Topology Aware Multi AZ Setup |  |  |  |  |\n| Backup & Disaster Recovery |  | Custom automation |  |  |\n| Shard Splitting |  |  |  |  |\n| GPU Indexing |  |  |  |  |\n| Support Level | Community | Community | Standard | Premium |\n| Support Response Times | Best effort | 10x5 | 24x7 |  |\n| Encryption at Rest and in Transit |  | Depends on chosen infrastructure |  |  |\n| Disk Encryption with Custom Key |  | Depends on chosen infrastructure | (AWS and GCP only) |  |\n| Private VPC Links |  | N/A |  |  |\n| Enterprise SSO Authentication |  |  |  |  |\n\n## Support & Reliability\n\n|  | Community | Standard | Premium | Enterprise |\n|---|---|---|---|---|\n| Pricing | Free | Included with Paid Tier | On Request | On Request |\n| Availability & Uptime |  |  |  |  |\n| Helpdesk Hours | Discord Only | 10h/day (Business Hours) | 24/7, 365 | 24/7, 365 |\n| Uptime SLA | 99.5% | 99.9% (99.95% Multi-AZ) | Custom |  |\n| Response SLA | Severity 1 (Full service outage) | 4h (Business Hours) | 1h (24/7) | Custom |\n| Support Channels | Email / Ticket Portal | Private Slack / Discord / Teams |  |  |\n| Advisory Services |  |  |  |  |\n| Migration Support |  |  |  |  |\n| Architecture Reviews |  |  |  |  |\n| Performance Consulting |  |  |  |  |\n\n## Add-Ons\n\n|  | Community | Standard | Premium | Enterprise |\n|---|---|---|---|---|\n| Forward Deployed Engineer |  | Optional | Optional |  |\n| Infrastructure/Security |  |  |  |  |\n| SSO |  |  |  |  |\n| VPC Private Links |  |  |  |  |\n| Multi-AZ Deployment |  |  |  |  |\n| Encryption with Shared Keys |  |  |  |  |\n\n## Billing and Usage\n\n- Qdrant Cloud pricing is based on resource usage; if you have a bigger cluster, you pay for more.\n- The Free Tier includes 1GB RAM and 4GB disk storage.\n- Upgrading gets you a dedicated cluster.\n- Billing is calculated based on actual resource usage during the billing period.\n- Usage is billed hourly.\n- Monthly billing is based on usage during the billing period.\n- Costs include:\n  - Compute (vCPU)\n  - Memory (GB)\n  - Storage (GB) consumed by your clusters\n  - Storage (GB) consumed by backups\n  - Used inference tokens of paid models\n- Usage can be monitored through the Qdrant Cloud dashboard.\n\n## Free Tier Limit and Upgrade\n\nIf data size growth exceeds the Free Tier limits—1GB RAM and 4GB disk—you can upgrade to a Standard Tier and scale up your cluster.\n\nThe Free Tier is limited to 1GB RAM and 4GB disk without high availability. The Standard Tier is for workloads requiring dedicated clusters, higher availability, and advanced features.",
+          "title": "Pricing for Cloud and Vector Database Solutions Qdrant",
+          "url": "https://qdrant.tech/pricing/"
+        }
+      ],
+      "type": "fetch_url_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "| Vector database | Entry option | Paid pricing model |\n|---|---|---|\n| **Pinecone** | Free Starter; Builder is **$20/month flat**. | Standard has a **$50/month minimum applied to usage**; Enterprise has a **$500/month minimum**. Above those minimums, charges are usage-based for database services such as storage, reads, writes, and egress. [web:11] |\n| **Weaviate Cloud** | Free tier; Flex starts at **$45/month**. | Flex is monthly, pay-as-you-go, with a minimum that covers baseline cluster cost and includes vector dimensions and storage. Billing also reflects vector dimensions, storage, and backups. Premium uses a prepaid commitment; its minimum is **from $400/month** or contact sales, depending on configuration. [web:21] |\n| **Qdrant Cloud** | Free tier: single node with **0.5 vCPU, 1 GB RAM, and 4 GB disk**. | Standard is usage-based, billed hourly for compute, memory, cluster and backup storage, and paid-model inference tokens. Premium requires a minimum spend; the pricing page does not state the amount. [web:1] |\n\n*Prices and models are from the vendors’ official pricing pages, checked October 9, 2026.*",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_58bf53a5-6a77-451a-8e58-9aeef13020dc",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    },
+    {
+      "type": "fetch_url"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00183,
+      "cache_read_cost": 0.0001,
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 0.00054,
+      "tool_calls_cost": 0.01352,
+      "tool_calls_cost_details": {
+        "fetch_url": 0.01052,
+        "search_web": 0.003
+      },
+      "total_cost": 0.01599
+    },
+    "input_tokens": 24463,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 14656,
+      "cache_read_input_tokens": 9798,
+      "cached_tokens": 9798
+    },
+    "output_tokens": 1085,
+    "output_tokens_details": {
+      "reasoning_tokens": 487
+    },
+    "tool_calls_details": {
+      "fetch_url": {
+        "cost_usd": 0.01052,
+        "invocation": 3,
+        "token_usage": [
+          {
+            "input_tokens": 2797,
+            "input_tokens_details": {
+              "cache_creation_input_tokens": 2794,
+              "cached_tokens": 0
+            },
+            "model": "openai/gpt-5.6-luna",
+            "output_tokens": 2567,
+            "output_tokens_details": {
+              "reasoning_tokens": 273
+            }
+          },
+          {
+            "input_tokens": 2614,
+            "input_tokens_details": {
+              "cache_creation_input_tokens": 2611,
+              "cached_tokens": 0
+            },
+            "model": "openai/gpt-5.6-luna",
+            "output_tokens": 2180,
+            "output_tokens_details": {
+              "reasoning_tokens": 227
+            }
+          },
+          {
+            "input_tokens": 1468,
+            "input_tokens_details": {
+              "cache_creation_input_tokens": 1465,
+              "cached_tokens": 0
+            },
+            "model": "openai/gpt-5.6-luna",
+            "output_tokens": 1336,
+            "output_tokens_details": {
+              "reasoning_tokens": 146
+            }
+          }
+        ]
+      },
+      "search_web": {
+        "cost_usd": 0.003,
+        "invocation": 3
+      }
+    },
+    "total_tokens": 25548
+  },
+  "user": null
+}
