@@ -69,3 +69,9 @@ ecosystem.config.cjs
 .conductor/commit-watch.json
 .conductor/session-claim.json
 .conductor/activity/
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
