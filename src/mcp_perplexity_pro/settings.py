@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     log_level: LogLevel = "INFO"
     connect_timeout: Annotated[float, Field(gt=0)] = 10
     read_timeout: Annotated[float, Field(gt=0)] = 60
+    agent_read_timeout: Annotated[float, Field(gt=0)] = 120
     max_attempts: Annotated[int, Field(ge=1)] = 3
     max_retry_wait: Annotated[float, Field(ge=0)] = 30
     catalog_ttl: Annotated[float, Field(ge=0)] = 3600

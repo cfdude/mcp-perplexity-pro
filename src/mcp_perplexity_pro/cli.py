@@ -15,6 +15,7 @@ environment variables (prefix PERPLEXITY_):
   PERPLEXITY_LOG_LEVEL          DEBUG, INFO, WARNING, ERROR or CRITICAL (default INFO)
   PERPLEXITY_CONNECT_TIMEOUT    seconds (default 10)
   PERPLEXITY_READ_TIMEOUT       seconds (default 60)
+  PERPLEXITY_AGENT_READ_TIMEOUT seconds for a synchronous agent run (default 120)
   PERPLEXITY_MAX_ATTEMPTS       attempts per request (default 3)
   PERPLEXITY_MAX_RETRY_WAIT     longest retry wait in seconds (default 30)
   PERPLEXITY_CATALOG_TTL        model list cache lifetime in seconds (default 3600)
