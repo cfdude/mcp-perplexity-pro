@@ -85,7 +85,7 @@ When the model id begins with `anthropic/` and no `max_output_tokens` was given,
 - **THEN** the call fails with `invalid_request` naming `domains`
 
 ### Requirement: Other search options are validated locally
-`recency` SHALL be one of `hour`, `day`, `week`, `month`, `year`; `after` and `before` strict `YYYY-MM-DD` dates with `after` not later than `before`; `country` two ASCII letters; `max_results` 1 to 50. Any search option with `search` false SHALL fail. Each failure is `invalid_request` naming the option, before any upstream call.
+`recency` SHALL be one of `hour`, `day`, `week`, `month`, `year`; `after` and `before` strict `YYYY-MM-DD` dates with `after` not later than `before`; `country` two ASCII letters; `max_results` 1 to 50. Any search option (`domains`, `recency`, `after`, `before`, `country` or `max_results`) with `search` false SHALL fail. Each failure is `invalid_request` naming the option, before any upstream call.
 
 #### Scenario: Malformed date
 - **WHEN** a client passes `after` `09/15/2026` or `2026-13-40`
@@ -100,8 +100,8 @@ When the model id begins with `anthropic/` and no `max_output_tokens` was given,
 - **THEN** each call fails with `invalid_request` naming the option
 
 #### Scenario: Filters without search
-- **WHEN** a client passes `recency` `week` with a model and `search` false
-- **THEN** the call fails with `invalid_request`
+- **WHEN** a client passes `recency` `week`, or `domains` `["python.org"]`, with a model and `search` false
+- **THEN** each call fails with `invalid_request` naming the option
 
 ### Requirement: Search filters are sent as the web search tool's options
 When any filter is given the request SHALL carry one web search tool: domains, recency and dates inside its `filters` (dates converted to `MM/DD/YYYY`), `country` as its `user_location`, and `max_results` beside them. With no filter and a preset the request SHALL carry no tools, so the preset's own search applies. An explicit tool list replaces the preset's own tools, so a filtered run uses web search alone.
@@ -208,7 +208,7 @@ A response with HTTP 200 whose status is neither `completed` nor `incomplete`, o
 - **THEN** the call fails with `unexpected_response` naming `in_progress` and no event exists
 
 ### Requirement: Upstream text is redacted and capped
-Every string from the API that is returned or stored (a status shown verbatim, an incomplete reason, an error text, a warning built from one) SHALL have the configured key and key-shaped tokens removed, then be cut to 64 characters for a status, 200 for a reason and 2000 for an error text. The caller's query, instructions, messages and titles, the model's answer and the sources' titles and URLs are content, stored and returned as they are.
+Every string from the API that is returned or stored (a status shown verbatim, an incomplete reason, an error text, a warning built from one) SHALL have the configured key and key-shaped tokens removed, then be cut to 64 characters for a status, 200 for a reason and 2000 for an error text. Caller and model content (query, instructions, messages, titles, answers, source titles and URLs) is stored and returned as given, except that the configured key itself is replaced by `[redacted]`.
 
 #### Scenario: Key-shaped status
 - **WHEN** the API answers with a status containing a `pplx-` key-shaped token
@@ -217,6 +217,10 @@ Every string from the API that is returned or stored (a status shown verbatim, a
 #### Scenario: Answer left alone
 - **WHEN** a model's answer text contains a `pplx-` shaped example
 - **THEN** the answer is returned as received
+
+#### Scenario: Configured key in answer
+- **WHEN** a model's answer contains the configured key, beside a `pplx-` shaped example that is not the key
+- **THEN** the returned answer holds `[redacted]` in place of the key and the example as given
 
 ### Requirement: Usage in the result
 The result SHALL summarize the call's usage: input, output and total tokens when reported, `cost_usd` as an exact decimal string and `cost_source` `reported`, `computed` or `none`, all derived by the same parser the usage record uses. `perplexity_chat` sends and `perplexity_jobs` results carry this same summary.

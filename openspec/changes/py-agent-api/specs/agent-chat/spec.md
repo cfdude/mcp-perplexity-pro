@@ -40,7 +40,7 @@ Chats SHALL be stored in two local tables, `chats` (project, title, creation and
 - **THEN** the new chat has a different id and the send fails with `not_found` instead of appending to the new chat
 
 ### Requirement: Actions that store nothing never create a project
-`list`, `read`, `delete` and a `send` that names a `chat_id` SHALL look the project up and never create it. In an absent project `list` SHALL return no chats with total 0, and `read`, `delete` and `send` SHALL fail with `not_found`. A `send` with `chat_id` SHALL resolve the project only after it has found the chat. Only a `send` that starts a chat creates its project.
+`list`, `read`, `delete` and a `send` that names a `chat_id` SHALL look the project up and never create it. In an absent project `list` SHALL return no chats with total 0, and `read`, `delete` and `send` SHALL fail with `not_found`. A `chat_id` of `read`, `delete` or `send` that is not a positive integer below 2**63 SHALL fail with `invalid_request`, also in an absent project, while an unknown positive id SHALL fail with `not_found`. Only a `send` that starts a chat creates its project.
 
 #### Scenario: List in an absent project
 - **WHEN** a client lists chats of project `ghost`, which does not exist
@@ -50,8 +50,12 @@ Chats SHALL be stored in two local tables, `chats` (project, title, creation and
 - **WHEN** a client reads chat 1, or sends to chat 1, naming the absent project `ghost`
 - **THEN** each call fails with `not_found`, no request reaches the API and project `ghost` still does not exist
 
+#### Scenario: An id the database cannot hold
+- **WHEN** a client reads chat 0, chat -1, and chat 9223372036854775808 (2**63), the last naming the absent project `ghost`
+- **THEN** each call fails with `invalid_request` naming `chat_id`, no request reaches the API and `ghost` still does not exist, while chat 999 of an existing project fails with `not_found`
+
 ### Requirement: Send starts a chat
-A `send` without `chat_id` SHALL require `title` (1 to 120 characters after trimming) and a `message` that is not blank and has at most 20000 characters, and SHALL create the chat only after the upstream call has succeeded, storing the chat and both messages in one unit of work, so a failed first send leaves no chat. The result's top-level `chat_id` is the new chat's id.
+A `send` without `chat_id` SHALL require `title` (1 to 120 characters after trimming) and a `message` that is not blank and has at most 20000 characters, and SHALL create the chat only after the upstream call has succeeded, storing the chat and both messages in one unit of work, so a failed first send leaves no chat. The result's top-level `chat_id` is the new chat's id and its `continuation` is `new`; a chained send reports `chained` and a replay `replay`.
 
 #### Scenario: First turn
 - **WHEN** a client sends `message` with `title` `Teal notes` and the API returns the recorded first-turn response
@@ -91,6 +95,17 @@ A `send` with `chat_id` SHALL send only the new message and the response id of t
 #### Scenario: Chat in another project
 - **WHEN** a client sends to a chat of project `a` while naming project `b`
 - **THEN** the call fails with `not_found`
+
+### Requirement: A chat may have no id to continue from
+A response id that is not `resp_`-shaped SHALL be stored as none. A chained `send` to a chat whose last assistant message has no id SHALL fail with `invalid_request` naming `chat_id` and telling the caller to send with `replay` true; it never chains from an older turn.
+
+#### Scenario: Last turn has no usable response id
+- **WHEN** a chat's last assistant message holds no usable response id and a client sends without `replay`
+- **THEN** the call fails with `invalid_request` naming `chat_id` and mentioning `replay`, no request reaches the API and nothing is stored
+
+#### Scenario: Replay recovers
+- **WHEN** the same send is repeated with `replay` true
+- **THEN** it goes ahead with the stored history as input
 
 ### Requirement: Send takes the ask options
 `send` SHALL accept the ask tool's `depth` (`fast`, `low` or `medium`), `model`, `search`, search filters, `instructions` and `max_output_tokens` and apply the ask tool's rules and limits for them, except that it takes no `json_schema`. Each send may choose them anew.
@@ -144,6 +159,13 @@ A send whose response is `incomplete` SHALL return its result with a warning and
 - **WHEN** a send returns a 200 whose status is `failed`
 - **THEN** the call fails with `unexpected_response`, one event exists and nothing is stored
 
+### Requirement: Chat text is redacted and capped
+Upstream-originated text (a status, reason, error text, warning) SHALL be redacted and capped as the ask tool's rule "Upstream text is redacted and capped" says, and the configured key SHALL be replaced by `[redacted]` in every stored message and title.
+
+#### Scenario: Key in a message
+- **WHEN** a client sends a message or title containing the configured key
+- **THEN** the stored message or title holds `[redacted]` in its place
+
 ### Requirement: Listing chats
 `list` SHALL return the project's chats newest-updated first with `id`, `title`, message count and times, honoring `limit` (default 20, 1 to 100) and reporting the total and whether the list was cut. The result's top-level `chat_id` is null.
 
@@ -156,22 +178,22 @@ A send whose response is `incomplete` SHALL return its result with a warning and
 - **THEN** 2 chats are returned, the total is 3 and the list is marked truncated
 
 ### Requirement: Reading a chat
-`read` SHALL return a chat's messages from local storage in chronological order, the last `limit` of them (default 50, 1 to 200), with the total count, and SHALL make no upstream call. The result's top-level `chat_id` is that chat's id. A `chat_id` of `read`, `delete` or `send` that is not a positive integer below 2**63 SHALL fail with `invalid_request`, also in an absent project, while an unknown positive id SHALL fail with `not_found`.
+`read` SHALL require a `chat_id`, return that chat's messages from local storage in chronological order, the last `limit` of them (default 50, 1 to 200), with the total count, and make no upstream call. The result's top-level `chat_id` is that chat's id.
 
 #### Scenario: Read from local history
 - **WHEN** a client reads a chat with 4 messages
 - **THEN** the 4 messages are returned in order with their roles and texts, no request reaches the API and no usage event is created
 
-#### Scenario: An id the database cannot hold
-- **WHEN** a client reads chat 0, chat -1, and chat 9223372036854775808 (2**63), the last naming the absent project `ghost`
-- **THEN** each call fails with `invalid_request` naming `chat_id`, no request reaches the API and `ghost` still does not exist, while chat 999 of an existing project fails with `not_found`
+#### Scenario: Missing id or bad limit
+- **WHEN** a client reads or deletes without `chat_id`, or lists or reads with `limit` 0, 101 (list) or 201 (read)
+- **THEN** each call fails with `invalid_request` naming `chat_id` or `limit` and no request reaches the API
 
 ### Requirement: Deleting a chat
-`delete` SHALL require `confirm` true (else `confirmation_required`), remove the chat and its messages, and return how many messages were removed. It SHALL make no upstream call; copies the provider keeps are not touched.
+`delete` SHALL require a `chat_id` and `confirm` true (else `confirmation_required`), remove the chat and its messages, and return how many as `messages_removed`. It SHALL make no upstream call; copies the provider keeps are not touched.
 
 #### Scenario: Confirmed delete
 - **WHEN** a client deletes a chat with 4 messages with `confirm` true
-- **THEN** the chat and its messages are gone and the result reports 4 messages removed
+- **THEN** the chat and its messages are gone and the result has `messages_removed` 4
 
 #### Scenario: Not confirmed
 - **WHEN** a client deletes without `confirm`

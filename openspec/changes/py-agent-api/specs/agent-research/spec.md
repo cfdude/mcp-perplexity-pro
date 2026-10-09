@@ -91,6 +91,13 @@ The response id the API returns SHALL match `resp_` followed by 1 to 100 letters
 - **WHEN** the API returns a submit response whose id is `x/../y`
 - **THEN** the call fails with `unexpected_response` and no job row exists
 
+### Requirement: Upstream text in jobs is redacted and capped
+Every string from the API that a job stores or a result returns (a status, an error text, a reason, a warning built from one) SHALL be redacted and capped as the ask tool's rule "Upstream text is redacted and capped" says. A stored query has the configured key replaced by `[redacted]`.
+
+#### Scenario: Key-shaped status
+- **WHEN** a fetch reports a status containing a `pplx-` shaped token
+- **THEN** the stored and returned status has the token removed and is cut to 64 characters
+
 ### Requirement: Jobs tool
 The server SHALL provide `perplexity_jobs` with actions `list`, `status`, `result` and `cancel`, scoped to a `project` (default `default`); the last three take a `job_id`. It SHALL advertise an output schema, `readOnlyHint` false, `destructiveHint` true (a cancel is final) and `openWorldHint` true. An unknown job or one in another project SHALL fail with `not_found` before any upstream call. It SHALL never wait for a run to progress.
 
@@ -181,18 +188,22 @@ The observation of one job SHALL be serialized by an in-process lock per job, an
 - **THEN** exactly one usage event exists for that response id and the second call returns the stored result without a second fetch
 
 ### Requirement: Unsuccessful terminal runs are recorded
-A terminal run that is not `completed` SHALL be recorded once with status `unexpected_response` and whatever usage it reports. A cancelled run reports no usage, so its event has cost 0, source `none` and no model, which the usage report counts as unknown cost.
+A terminal run that is not `completed` (`failed`, `incomplete`, `cancelled` or one with an error) SHALL be recorded once with status `unexpected_response` and whatever usage it reports. A cancelled run reports no usage, so its event has cost 0, source `none` and no model, which `perplexity_usage` counts as an error and as unknown cost (`calls_cost_unknown`).
 
 #### Scenario: Cancelled run
 - **WHEN** a job's fetch returns the recorded cancelled snapshot
 - **THEN** the job's stored status is `cancelled`, no answer is stored, and one event exists with status `unexpected_response`, no model, cost 0 and source `none`
+
+#### Scenario: Failed or incomplete run
+- **WHEN** a job's fetch returns a `failed` or an `incomplete` snapshot
+- **THEN** one event exists with status `unexpected_response` and the usage the snapshot reported
 
 #### Scenario: Pending run never recorded
 - **WHEN** a job's fetch returns a queued or in-progress snapshot
 - **THEN** no usage event exists for it
 
 ### Requirement: Observations commit per job
-An observation of a job SHALL be its usage event (the recorder's own unit, with no write unit open) and then its row update (its own unit); no two jobs share a unit. A call observing several jobs (`refresh`, a cancel) SHALL commit each in turn; a later failure rolls back only the failing observation's row update. In `refresh` a failed observation SHALL be a warning naming the job id and category, the list SHALL still be returned and the job SHALL count in `not_refreshed`.
+An observation of a job SHALL be its usage event (the recorder's own unit) and then its row update (its own unit); no two jobs share a unit. A call observing runs (`refresh`, or a cancel's fetch and refetch) SHALL commit each observation in its own unit and a cancel's `cancel_requested_at` write in another; a failure rolls back only its own unit. In `refresh` a failed observation SHALL be a warning naming the job id and category, the list is still returned and the job counts in `not_refreshed`.
 
 #### Scenario: Refresh with one failing fetch
 - **WHEN** `refresh` observes three running jobs and the second job's fetch fails with `upstream_failure`
@@ -269,9 +280,24 @@ A `not_found` fetch of a non-terminal job SHALL record the time (`missing_since`
 - **WHEN** 12 running jobs exist, two of them never checked, and `refresh` is true
 - **THEN** 10 fetches are made, starting with the two never checked, and the result says 2 were not refreshed
 
+### Requirement: Deleting a project reports its running jobs
+`perplexity_projects` `delete` SHALL count the project's non-terminal jobs and report them as `running_jobs`, with a warning that their spend will never be recorded and the provider keeps billing them until they end, and that `perplexity_jobs` `cancel` should come first. Without `confirm` the `confirmation_required` error SHALL carry the same warning.
+
+#### Scenario: Delete with running jobs
+- **WHEN** a project with one running and one finished job is deleted with `confirm` true
+- **THEN** the result has `running_jobs` 1 and a warning naming it, and both jobs are gone
+
+#### Scenario: Unconfirmed delete
+- **WHEN** the same project is deleted without `confirm`
+- **THEN** the call fails with `confirmation_required` and its message carries the running-jobs warning
+
 ### Requirement: Recording follows the recorder contract
-A usage event for a job SHALL be recorded while no write unit is open, before the job row's own update, with the job's project name, preset equal to its depth, and latency measured from the job's start to the observation. If the update fails after the event was recorded, a later call SHALL NOT record a second event for an `ok` run.
+A usage event for a job SHALL be recorded while no write unit is open, before the job row's own update, with the job's project name, preset equal to its depth, and latency measured from the job's start to the observation. If the update fails after the event was recorded, a later call SHALL NOT record a second event for a run of any terminal status: it finds the event and writes only the row.
 
 #### Scenario: Update fails after recording
 - **WHEN** the job row's update fails after the event for a completed run was recorded, and the job is observed again
 - **THEN** one event exists for that response id
+
+#### Scenario: Cancelled run whose update failed
+- **WHEN** the row update of a cancelled run fails once after its event was recorded, and the job is observed again
+- **THEN** still one event exists for that response id and the second observation writes the row as `cancelled`

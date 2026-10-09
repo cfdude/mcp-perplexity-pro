@@ -24,11 +24,11 @@ The Agent API was probed live on 2026-10-09 (about $0.04 spent; 28 captures reco
 - `agent-client`: typed access to the Agent API in the client: create, fetch and cancel a run, tolerant response models, the synchronous-run read timeout, retry rules and error mapping for the Agent endpoints.
 - `agent-ask`: the `perplexity_ask` tool: depth, explicit model, search filters, structured output, the answer-and-sources result, incomplete answers, and recording of its usage.
 - `agent-chat`: the `perplexity_chat` tool and its local chat storage, continuation and replay.
-- `agent-research`: the `perplexity_research` and `perplexity_jobs` tools, the local job storage, terminal-state usage recording and cancellation.
+- `agent-research`: the `perplexity_research` and `perplexity_jobs` tools, the local job storage, terminal-state usage recording and cancellation, and the `running_jobs` count and warning that `perplexity_projects` `delete` reports for a project with unfinished runs.
 
 ### Modified Capabilities
 
-- `server-runtime`: the configuration requirement gains `AGENT_READ_TIMEOUT` and its documented default; "Secrets are never emitted" is narrowed to server-originated text, so a caller's query or the model's answer may quote a key-shaped example.
+- `server-runtime`: the configuration requirement gains `AGENT_READ_TIMEOUT` and its documented default; "Secrets are never emitted" is narrowed to server-originated text, so a caller's query or the model's answer may quote a key-shaped example, and gains the scrub of the configured key itself (replaced by `[redacted]`) inside any stored or returned content.
 - `local-storage`: "All-or-nothing tool calls" allows a call that observes several background runs to commit each observation separately (a later failure removes only the failing observation's writes); "Project resolution" names by-id actions (chat send with `chat_id`, chat read, delete and list, every jobs action) as look-up-only, failing `not_found` rather than creating the project.
 
 ## Impact

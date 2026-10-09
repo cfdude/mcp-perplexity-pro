@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Project resolution
-Every stored record SHALL belong to a named project, except retained records. One shared get-or-create SHALL resolve the project for every tool call that stores records: it creates the project when first named and uses `default` when none is given. `perplexity_projects`, tools without a project argument and by-id actions (chat send with `chat_id`, chat read, delete, list, every `perplexity_jobs` action) look it up instead and fail `not_found` if absent (a list returns nothing).
+Every stored record SHALL belong to a named project, except retained records, which may belong to none. One shared get-or-create SHALL resolve the project for every storing tool call, creating it when first named and using `default` when none is given. `perplexity_projects` and tools without a project argument never call it. By-id actions (chat send with `chat_id`, read, delete, list; every `perplexity_jobs` action) look it up and fail `not_found` if absent (a list returns nothing). Tools added by later changes inherit these rules.
 
 #### Scenario: Implicit creation
 - **WHEN** a tool is called with a project name that does not yet exist
@@ -13,16 +13,12 @@ Every stored record SHALL belong to a named project, except retained records. On
 - **WHEN** a tool is called without a project name
 - **THEN** the record belongs to the project `default`, which is created if absent
 
-#### Scenario: Delete with an invalid name
-- **WHEN** a client calls `delete` with project `../etc` and `confirm` true
-- **THEN** the call fails with category `invalid_request`
-
 #### Scenario: By-id action in an absent project
 - **WHEN** a chat is read, or a job's status is requested, naming a project that does not exist
 - **THEN** the call fails with `not_found` and the project still does not exist
 
 ### Requirement: All-or-nothing tool calls
-A tool's own writes SHALL be one unit of work; a call observing several background runs commits each observation in its own unit. No write unit SHALL stay open across an upstream call; project resolution may commit first and survives a later failure. Usage recording runs in its own unit while the caller holds no write unit. A failed call leaves none of its own writes except committed observations (a later failure removes only the failing observation's writes) and its usage event.
+A tool's own writes SHALL be one unit of work; a call observing background runs (`refresh`, or a cancel's fetch and refetch) commits each observation in its own unit, and a cancel's request marker in another. No write unit SHALL stay open across an upstream call; project resolution may commit first and survives a later failure. Usage recording runs in its own unit while no write unit is open. A failed call leaves none of its own writes except committed observations and its usage event.
 
 #### Scenario: Failure after a write
 - **WHEN** a tool writes a record and then fails before returning
