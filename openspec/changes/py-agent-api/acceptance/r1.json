@@ -1,0 +1,18 @@
+{
+  "content": [
+    {
+      "text": "Research job 1 (medium, queued) in project 'acceptance'. The run is going in the background. Check it with perplexity_jobs status, or list with refresh true; it is recorded as spend when a call sees it finished.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "job_id": 1,
+    "response_id": "resp_f607dfc5-a69a-44cd-9e45-43cb0587af76",
+    "status": "queued",
+    "depth": "medium",
+    "project": "acceptance",
+    "started_at": "2026-10-09T21:51:17.475891Z",
+    "message": "The run is going in the background. Check it with perplexity_jobs status, or list with refresh true; it is recorded as spend when a call sees it finished."
+  }
+}

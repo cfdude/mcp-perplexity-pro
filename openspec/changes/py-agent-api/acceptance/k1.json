@@ -1,0 +1,40 @@
+{
+  "content": [
+    {
+      "text": "Job 2: cancelling.\nThe cancel was accepted. The run turns cancelled after a few more polls: call status to see it and to record its spend.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "cancel",
+    "project": "acceptance",
+    "job_id": 2,
+    "status": "cancelling",
+    "job": {
+      "job_id": 2,
+      "response_id": "resp_76ef65be-0662-4ad7-8c3c-dfd4bac61317",
+      "depth": "medium",
+      "status": "in_progress",
+      "query_excerpt": "Summarize the history of the Python programming language in five bullet points with sources.",
+      "model": null,
+      "started_at": "2026-10-09T21:52:04.115117Z",
+      "finished_at": null,
+      "cancel_requested_at": "2026-10-09T21:52:07.375264Z",
+      "usage_recorded": false
+    },
+    "jobs": null,
+    "jobs_total": null,
+    "truncated": null,
+    "answer": null,
+    "sources": [],
+    "usage": null,
+    "progress": {
+      "searches": 1,
+      "fetches": 0
+    },
+    "warnings": [],
+    "message": "The cancel was accepted. The run turns cancelled after a few more polls: call status to see it and to record its spend.",
+    "not_refreshed": null
+  }
+}

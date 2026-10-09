@@ -1,0 +1,120 @@
+{
+  "content": [
+    {
+      "text": "FastMCP is a Python framework for building Model Context Protocol (MCP) servers, clients, and interactive applications that connect AI models to tools and data. [web:1]\n\nSources:\n1. FastMCP: The Framework for MCP - FastMCP - https://gofastmcp.com/getting-started/welcome\n2. GitHub - fastmcp-me/fastmcp-python: The fast, Pythonic way ... - https://github.com/fastmcp-me/fastmcp-python\n3. fastmcp - https://pypi.org/project/fastmcp/4.0.10/\n4. GitHub - MaTriXy/fastmcp-Python: The fast, Pythonic way to ... - https://github.com/MaTriXy/fastmcp-Python\n5. FastMCP - GitHub - https://github.com/fastmcp-me\n6. gofastmcp.com · v2Welcome to FastMCP 2.0! - FastMCP - https://gofastmcp.com/v2/getting-started/welcome\n7. llms.txt - FastMCP - https://gofastmcp.com/llms.txt\n8. Welcome to FastMCP - https://gofastmcp.com/v3/getting-started/welcome\n9. fastmcp 0.3.0 - https://pypi.org/project/fastmcp/0.3.0/\n10. gofastmcp.com · serversThe FastMCP Server - FastMCP - https://gofastmcp.com/servers/server\n11. FastMCP — independent third-party profile of a public API ... - https://github.com/api-evangelist/fastmcp\n12. FAQ - FastMCP - https://gofastmcp.com/more/faq\n13. fastmcp - https://www.npmjs.com/package/fastmcp\n14. fastmcp 2.11.0 - fastmcp · PyPI - https://pypi.org/project/fastmcp/2.11.0/\n15. fastmcp 2.8.1 - PyPI - https://pypi.org/project/fastmcp/2.8.1/\n\nUsage: openai/gpt-6-luna, cost 0.00156 USD (reported), 5559 tokens, 3156 ms, project acceptance.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "answer": "FastMCP is a Python framework for building Model Context Protocol (MCP) servers, clients, and interactive applications that connect AI models to tools and data. [web:1]",
+    "answer_json": null,
+    "sources": [
+      {
+        "url": "https://gofastmcp.com/getting-started/welcome",
+        "title": "FastMCP: The Framework for MCP - FastMCP",
+        "date": null,
+        "id": 1
+      },
+      {
+        "url": "https://github.com/fastmcp-me/fastmcp-python",
+        "title": "GitHub - fastmcp-me/fastmcp-python: The fast, Pythonic way ...",
+        "date": "2025-06-30",
+        "id": 2
+      },
+      {
+        "url": "https://pypi.org/project/fastmcp/4.0.10/",
+        "title": "fastmcp",
+        "date": "2026-09-25",
+        "id": 3
+      },
+      {
+        "url": "https://github.com/MaTriXy/fastmcp-Python",
+        "title": "GitHub - MaTriXy/fastmcp-Python: The fast, Pythonic way to ...",
+        "date": "2025-03-30",
+        "id": 4
+      },
+      {
+        "url": "https://github.com/fastmcp-me",
+        "title": "FastMCP - GitHub",
+        "date": "2026-02-20",
+        "id": 5
+      },
+      {
+        "url": "https://gofastmcp.com/v2/getting-started/welcome",
+        "title": "gofastmcp.com · v2Welcome to FastMCP 2.0! - FastMCP",
+        "date": null,
+        "id": 6
+      },
+      {
+        "url": "https://gofastmcp.com/llms.txt",
+        "title": "llms.txt - FastMCP",
+        "date": null,
+        "id": 7
+      },
+      {
+        "url": "https://gofastmcp.com/v3/getting-started/welcome",
+        "title": "Welcome to FastMCP",
+        "date": null,
+        "id": 8
+      },
+      {
+        "url": "https://pypi.org/project/fastmcp/0.3.0/",
+        "title": "fastmcp 0.3.0",
+        "date": "2024-12-01",
+        "id": 9
+      },
+      {
+        "url": "https://gofastmcp.com/servers/server",
+        "title": "gofastmcp.com · serversThe FastMCP Server - FastMCP",
+        "date": null,
+        "id": 10
+      },
+      {
+        "url": "https://github.com/api-evangelist/fastmcp",
+        "title": "FastMCP — independent third-party profile of a public API ...",
+        "date": "2026-05-25",
+        "id": 11
+      },
+      {
+        "url": "https://gofastmcp.com/more/faq",
+        "title": "FAQ - FastMCP",
+        "date": null,
+        "id": 12
+      },
+      {
+        "url": "https://www.npmjs.com/package/fastmcp",
+        "title": "fastmcp",
+        "date": "2025-07-31",
+        "id": 13
+      },
+      {
+        "url": "https://pypi.org/project/fastmcp/2.11.0/",
+        "title": "fastmcp 2.11.0 - fastmcp · PyPI",
+        "date": "2025-08-01",
+        "id": 14
+      },
+      {
+        "url": "https://pypi.org/project/fastmcp/2.8.1/",
+        "title": "fastmcp 2.8.1 - PyPI",
+        "date": "2025-06-15",
+        "id": 15
+      }
+    ],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": "low",
+    "response_id": "resp_4d56e6f2-3362-4536-b8e4-ea9f5857d583",
+    "usage": {
+      "input_tokens": 5464,
+      "output_tokens": 95,
+      "total_tokens": 5559,
+      "cost_usd": "0.00156",
+      "cost_source": "reported"
+    },
+    "latency_ms": 3156,
+    "project": "acceptance"
+  }
+}

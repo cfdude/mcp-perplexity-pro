@@ -8,7 +8,7 @@ See `proposal.md` for motivation and `specs/` for requirements. State that shape
 - The Agent API was probed live on 2026-10-09 (spend about $0.04). The captures are committed as `tests/fixtures/agent_*.json` with sidecars (commit `82c747a`, 28 new files; five older agent fixtures from the foundation stay). Every spec scenario that names "the recorded ..." response uses one of them through `httpx2.MockTransport`. Lesson `docs-lie-probe-the-api-first`: the documentation was wrong or silent on six points (see "Observed shapes").
 - `delete_project` deletes from every table with a foreign key to `projects.id` (introspection, no registry) and counts only those rows; rows two hops away go by cascade because `PRAGMA foreign_keys=ON` is set per connection. New tables here are ordinary (CASCADE), not retained.
 - Tool modules must not use `from __future__ import annotations`; every tool is `register(server)`, typed with `Annotated[..., Field(description=...)]`, returns `ToolResult(content=..., structured_content=...)` and raises `PerplexityError` for anticipated failures.
-- The live server runs under pm2 on port 8102 and must not be touched by development or tests; the live acceptance (group 7) is the one place a human restarts it.
+- The live server runs under pm2 on port 8102 and must not be touched by development or tests; the live acceptance (group 6) is the one place a human restarts it.
 
 ## Goals / Non-Goals
 
@@ -122,8 +122,18 @@ The gap that stays: a run that nobody observes terminal is never recorded (`perp
 ## Open Questions
 
 - Whether `jobs refresh` should poll all running jobs rather than 10 (answerable after real usage shows how many accumulate; does not change the specs' shape).
-- Starvation: `last_checked_at` moves only on a successful fetch, so 10 or more jobs whose fetches keep failing stay at the head of the order and are retried every refresh while healthy jobs behind them are never reached. Moving `last_checked_at` on failed attempts too would fix it at the price of one more write per failure; left open until a real backlog shows it.
+- Starvation: `last_checked_at` moves on a successful fetch and, since the Gate 2 fix-ups, on a `not_found` fetch too (so persistently missing jobs no longer pin the head of the refresh order). A fetch that fails any other way (a 5xx, a timeout) still leaves it unchanged, so 10 or more jobs failing like that would still starve the ones behind them; left open until a real backlog shows it.
 - Whether a later epic wants `perplexity_research` to take search filters (not needed to ship the job flow).
+
+## Gate 2 decisions
+
+Gate 2 (2026-10-09) raised the items below that were fixed in the follow-up commits (idempotent and cancellation-safe observation, bounded ids and caller caps, a validated chat anchor, stored failure reasons returned, stored content kept out of logs, a running-jobs count on project delete). These were DECLINED, each on purpose:
+
+- **`tools/list` size growth (about 39 KB for seven tools):** kept. Most of it is output-schema field descriptions, which help a client read results; revisit with the routing epic, which is where the tool surface is next reshaped.
+- **No pagination past 100 jobs or chats and 200 messages:** noted, not built. `jobs_total`, `chats_total`, `messages_total` and `truncated` say when a list was cut; a single-user store is not expected to reach those sizes.
+- **Concurrent sends to one chat are not serialised:** two sends racing on the same `chat_id` may both chain from the same anchor and interleave their turns. Single-user server; documented, not locked.
+- **No `jobs delete`:** job rows leave only with their project (`perplexity_projects delete`, which now names the running jobs it drops); a per-job delete would add a destructive action nothing needs yet.
+- **`lost` is terminal:** a job the provider no longer knows is never re-fetched, even if the provider later finds it again; the second `not_found` at least 10 minutes after submit is the evidence, and a revival would need a way to record spend after the fact that this change does not have.
 
 ## Observed shapes (the evidence for the decisions above)
 

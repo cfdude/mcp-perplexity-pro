@@ -1,0 +1,40 @@
+{
+  "content": [
+    {
+      "text": "Job 2: cancelled.\nProgress so far: 2 searches, 0 fetches.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "status",
+    "project": "acceptance",
+    "job_id": 2,
+    "status": "cancelled",
+    "job": {
+      "job_id": 2,
+      "response_id": "resp_76ef65be-0662-4ad7-8c3c-dfd4bac61317",
+      "depth": "medium",
+      "status": "cancelled",
+      "query_excerpt": "Summarize the history of the Python programming language in five bullet points with sources.",
+      "model": null,
+      "started_at": "2026-10-09T21:52:04.115117Z",
+      "finished_at": "2026-10-09T21:52:11.813305Z",
+      "cancel_requested_at": "2026-10-09T21:52:07.375264Z",
+      "usage_recorded": true
+    },
+    "jobs": null,
+    "jobs_total": null,
+    "truncated": null,
+    "answer": null,
+    "sources": [],
+    "usage": null,
+    "progress": {
+      "searches": 2,
+      "fetches": 0
+    },
+    "warnings": [],
+    "message": null,
+    "not_refreshed": null
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "content": [
+    {
+      "text": "Deleted project 'acceptance': 3 row(s) removed, 6 retained record(s) kept (spend history stays reportable by project name).",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "delete",
+    "projects": null,
+    "project": "acceptance",
+    "rows_removed": 3,
+    "rows_retained": 6
+  }
+}
