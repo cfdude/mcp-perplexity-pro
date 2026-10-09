@@ -255,6 +255,87 @@ async def _result(app: Any, *, project: str | None, job_id: int | None) -> tuple
     return result, "\n".join(lines)
 
 
+def _already_terminal(exc: PerplexityError) -> bool:
+    """The API's 400 for a cancel of a finished run (and, misleadingly, of an unknown one: the
+    caller has fetched first, so the run is known to exist, design D9)."""
+    return (
+        exc.category == "invalid_request"
+        and exc.status == 400
+        and "terminal" in (exc.api_message or "").lower()
+    )
+
+
+def _not_saved(category: str) -> str:
+    return (
+        "not_saved: the provider accepted the cancel but the local record of it could not be "
+        f"saved ({category}); the run is being cancelled whatever the row says."
+    )
+
+
+async def _cancel(app: Any, *, project: str | None, job_id: int | None) -> tuple[JobsResult, str]:
+    """Read first, then cancel at most once (design D9). A run is cancelled only when a fetch
+    shows it running and no cancel is already pending; everything else is reported as found."""
+    job_id = _need_job_id(job_id, "cancel")
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    pid, _ = await _find(app, name, job_id)
+    # The fetch comes first, always: the API answers a cancel of an unknown run with the same
+    # 400 as a cancel of a finished one, and a repeated cancel's fetch is where a cancel that
+    # has since completed is observed (and recorded).
+    obs = await observe_job(app, project_id=pid, project=name, job_id=job_id)
+    job, state, warnings = obs.job, obs.state, list(obs.warnings)
+    message: str | None = None
+    if job_store.is_final(job) or obs.run is None:
+        pass  # finished (now or before), lost, or unknown to the provider: report it, no request
+    elif job.cancel_requested_at is not None:
+        state = "cancelling"  # still running with a cancel pending: no second request
+    else:
+        try:
+            await app.client.cancel_run(job.response_id)
+        except PerplexityError as exc:
+            if not _already_terminal(exc):
+                raise
+            again = await observe_job(app, project_id=pid, project=name, job_id=job_id)
+            job, state = again.job, again.state
+            warnings.extend(again.warnings)
+            if not job_store.is_final(job):
+                warnings.append(
+                    "The provider refused the cancel as already terminal, but the run still "
+                    f"shows status {state}; check it again with status."
+                )
+        else:
+            state = "cancelling"
+            try:
+                async with unit_of_work(app.engine) as session:
+                    job = await job_store.update_job(
+                        session, pid, job_id, {"cancel_requested_at": app.now()}
+                    )
+            except Exception as exc:  # the run IS being cancelled; do not hide that
+                logger.warning(
+                    "cancel: job %s cancel_requested_at not saved", job_id, exc_info=True
+                )
+                warnings.append(_not_saved(error_category(exc)))
+    if state == "cancelling":
+        message = (
+            "The cancel was accepted. The run turns cancelled after a few more polls: call "
+            "status to see it and to record its spend."
+        )
+    result = JobsResult(
+        action="cancel",
+        project=name,
+        job_id=job_id,
+        status=state,
+        job=job_info(job),
+        progress=_progress(obs),
+        warnings=warnings,
+        message=message,
+    )
+    lines = [f"Job {job_id}: {state}."]
+    if message:
+        lines.append(message)
+    lines.extend(f"Warning: {w}" for w in warnings)
+    return result, "\n".join(lines)
+
+
 async def _refresh(app: Any, pid: int, name: str) -> tuple[list[str], int]:
     """Observe the project's non-final jobs, oldest-checked first, at most ``REFRESH_LIMIT``,
     each its own observation. A failed one is a warning naming the job and the category; it
@@ -366,5 +447,5 @@ def register(server: FastMCP) -> None:
         elif action == "result":
             result, text = await _result(app, project=project, job_id=job_id)
         else:
-            raise _bad("action", "cancel is not available yet.")
+            result, text = await _cancel(app, project=project, job_id=job_id)
         return ToolResult(content=text, structured_content=result.model_dump(mode="json"))
