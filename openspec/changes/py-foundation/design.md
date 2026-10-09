@@ -85,3 +85,36 @@ See `proposal.md` for motivation and `specs/` for requirements. State that shape
 
 - Whether `mcp-perplexity-pro` is free on PyPI (affects the follow-up publish epic only).
 - Whether to add a Docker image later (no current consumer).
+
+## Observed API shapes
+
+Recorded 2026-10-09 into `tests/fixtures/` (live capture, `tests/test_live_capture.py`; the 2026-10-06 probe outputs named in D15 were re-captured). Nothing account-specific appeared in any payload: `user` and `safety_identifier` are `null`, so the scrub step removed nothing. Response ids (`resp_<uuid>`, `msg_<uuid>`) are kept.
+
+**`GET /v1/models`** (`models.json`, 200; 52 models, 5 providers: anthropic 14, openai 17, google 8, xai 7, perplexity 6)
+- Envelope `{"object": "list", "data": [...]}`; each entry has exactly `id`, `object` (`"model"`), `created` (always `0`), `owned_by`, `pricing`.
+- Provider is `owned_by` (a lowercase string) and equals the prefix of `id`; every id is `provider/name` (including `perplexity/sonar`), none unprefixed.
+- `pricing` is present on all 52 models, so no fixture model lacks pricing; the "model without pricing" spec scenario needs a synthetic entry in tests. Fields: `input`, `output`, `cache_read` (all 52) and `cache_write` (22 of 52: anthropic 14, openai 7, xai 1; absent for google, perplexity and the rest), plus `unit`, always `"usd_per_1m_tokens"`. Values are JSON numbers. Partial pricing therefore means a missing `cache_write` key (30 models), never `null`.
+- No preset names (`fast`, `low`, ...) appear in the list, so presets stay a separate documented section.
+- Unauthenticated (`models_unauthenticated.json`): 401, body `error.type = "invalid_api_key"`.
+
+**Error body shape** (all four error fixtures): `{"error": {"message": str, "type": str, "code": int}}`.
+- `type` is a string name; `code` is the integer HTTP status, not a name. The retired-endpoint name `chat_completions_not_available` is in `type`, and `code` is `403`. The spec said "type or code"; it was amended to `type`.
+- Observed types: 401 `invalid_api_key`; 403 `chat_completions_not_available` (both `/chat/completions` POST and `/async/chat/completions` GET, identical bodies; the message says to use `/v1/responses` and links the migration docs); 400 `invalid_request` (the Anthropic case: "max_output_tokens is required when using Anthropic models"). The 400 type string equals our own category name by coincidence; map by status, not by type.
+- The client must therefore tolerate `code` being an int and `type` a str, either possibly absent.
+
+**`POST /v1/agent`** (`agent_fast.json`, 200, preset `fast`)
+- Returns an OpenAI-Responses-style object: `object: "response"`, `id` `resp_<uuid>`, `status` `"completed"`, `model` is the resolved model (`openai/gpt-6-luna`), not the preset name, `background`, `store: true`, `error: null`, `incomplete_details: null`, `user: null`, `safety_identifier: null`, `tools: []`, plus many echoed request parameters (`temperature`, `top_p`, penalties, `max_output_tokens: null`, ...). Timestamps `created_at` and `completed_at` are integer epoch seconds.
+- `output[]` item types seen: `search_results` (keys `queries`, `results`, `type`; no `id`; each result has `date`, `id` (int), `last_updated`, `snippet`, `source`, `title`, `url`) and `message` (`id`, `role`, `status`, `type`, `content[]` of `output_text` parts with `text` and `annotations`). Item types must be treated as an open set.
+- `usage`: `input_tokens`, `output_tokens`, `total_tokens`, `input_tokens_details` (`cache_creation_input_tokens`, `cache_read_input_tokens`, `cached_tokens`), `output_tokens_details.reasoning_tokens`, `tool_calls_details.<tool>.{cost_usd, invocation}`, and `cost`.
+- `usage.cost` fields: `currency` (`"USD"`), `input_cost`, `output_cost`, `cache_read_cost`, `tool_calls_cost`, `tool_calls_cost_details.<tool>` (e.g. `search_web`), `total_cost`. `cache_creation_cost` appears only when cache was written (present in `agent_fast`, absent in the background poll). Costs are floats in USD; the fast run cost about $0.00125.
+
+**Background run** (`agent_background_submit.json`, `agent_background_poll_pending.json`, `agent_background_poll.json`)
+- Submit with `background: true` returns 200 immediately with the same object shape, `status: "queued"`, `output: []`, `usage: null`, `completed_at: null`, `model` still the preset name (`fast`).
+- Poll is `GET /v1/agent/{id}` (200 on the first try; the helper would have recorded 404s on an alternative path, and none occurred). Statuses observed: `queued`, `queued`, `completed` (about 4 s). Only `queued` and `completed` were observed; `in_progress`, `failed`, `cancelled` and `incomplete` were not, so the status set is open.
+- The completed poll carries the same shape as a synchronous run, with `model` now resolved and `usage` populated.
+
+**Surprises and refinements**
+- Docs say `/v1/models` is unauthenticated and price-free; live it needs auth and always has pricing (as D-context already noted, now fixture-backed).
+- `created` is `0` for every model, so it cannot order or date models.
+- Pricing keys vary per model; a model's `cache_write` absence is the common case (58%), so output models must treat it as optional.
+- Capture used no `max_output_tokens` for the Anthropic case and got the 400 above; non-Anthropic `fast` runs need none.

@@ -21,8 +21,8 @@ Every request to the Perplexity API SHALL carry the configured API key as a bear
 The client SHALL convert every failure into exactly one category, carrying the HTTP status, the API's error type and code when present, and an actionable message. The categories are `invalid_request` (400, 422), `authentication` (401), `forbidden` (403), `not_found` (404), `rate_limited` (429), `upstream_failure` (5xx), `network_timeout` and `unexpected_response`. These names are the stable identifiers used by every tool error.
 
 #### Scenario: Retired endpoint
-- **WHEN** the API returns 403 with error type or code `chat_completions_not_available`
-- **THEN** the client raises a `forbidden` error that includes that type or code and the API's message
+- **WHEN** the API returns 403 with error `type` `chat_completions_not_available` (its `code` is the integer 403)
+- **THEN** the client raises a `forbidden` error that includes that `type` and the API's message
 
 #### Scenario: Validation failure
 - **WHEN** the API returns 400 with an error message
