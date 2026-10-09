@@ -152,6 +152,9 @@ The house convention proposed in `design.md` D10 and implemented in `storage/ses
   `PERPLEXITY_API_KEY=... uv run pytest -m live tests/test_live_capture.py`.
 - **`live` marker**: calls the real API, deselected by default (`addopts = -m 'not live'`), run
   with `-m live`. Never required for a commit.
+- **`build` marker**: runs `uv build` (the hatchling build backend may need the network), deselected
+  by default (`addopts = -m 'not live and not build'`), run with `-m build`; CI runs it as its own
+  step after the main suite.
 - Tests inject a dummy key through `make_settings`; the suite must pass with no
   `PERPLEXITY_API_KEY` in the environment. FastMCP deprecation warnings are errors.
 - **Mutation-check rule** (`docs/lessons/cleanup-tests-must-fail-when-cleanup-is-removed.md`):

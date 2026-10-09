@@ -41,10 +41,11 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "-m 'not live'"
+addopts = "-m 'not live and not build'"
 markers = [
     "live: calls the real Perplexity API; run only with -m live",
     "allow_network: opt out of the offline socket guard",
+    "build: runs `uv build`, which may need the network for the build backend; run with -m build",
 ]
 filterwarnings = [
     "error::fastmcp.exceptions.FastMCPDeprecationWarning",

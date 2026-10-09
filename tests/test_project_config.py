@@ -32,9 +32,10 @@ def test_pytest_settings(config):
     opts = config["tool"]["pytest"]["ini_options"]
     assert opts["testpaths"] == ["tests"]
     assert opts["asyncio_mode"] == "auto"
-    assert opts["addopts"] == "-m 'not live'"
+    assert opts["addopts"] == "-m 'not live and not build'"
     assert any(m.startswith("live:") for m in opts["markers"])
     assert any(m.startswith("allow_network:") for m in opts["markers"])
+    assert any(m.startswith("build:") for m in opts["markers"])
 
 
 def test_fastmcp_deprecations_are_errors(config):

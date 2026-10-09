@@ -12,7 +12,7 @@ def test_package_imports():
 
 
 def test_live_marker_is_deselected_by_default(request):
-    assert request.config.getini("addopts") == ["-m", "not live"]
+    assert request.config.getini("addopts") == ["-m", "not live and not build"]
 
 
 def test_dummy_api_key_fixture(dummy_api_key):

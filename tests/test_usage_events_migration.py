@@ -224,6 +224,7 @@ async def test_deleting_a_project_detaches_its_events_by_name(make_settings):
         await engine.dispose()
 
 
+@pytest.mark.build
 def test_the_built_wheel_contains_the_migration(tmp_path):
     out = tmp_path / "wheel"
     proc = subprocess.run(
