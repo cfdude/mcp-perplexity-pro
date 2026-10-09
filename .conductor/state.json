@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": null,
+  "active": "py-agent-api",
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -146,7 +146,7 @@
       "id": "py-agent-api",
       "title": "Agent API tools: ask, research (background), chat, jobs",
       "priority": "P0",
-      "status": "planned",
+      "status": "active",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -159,10 +159,35 @@
       "reconcileNeeded": false,
       "parent": "python-rewrite-2-0",
       "description": "Replace Sonar with POST /v1/agent. depth param maps to presets fast/low/medium/high (xhigh opt-in); explicit model allowed. research uses background mode + GET /v1/agent/{id} + cancel. Chat persisted in SQLite. Citations rebuilt from search_results output items.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "82c747a",
+        "36cc792",
+        "5ae0e96",
+        "745a1a0",
+        "522be27"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T18:30:33.347Z",
-      "release": "release-2-0-0"
+      "touchedAt": "2026-10-09T20:26:13.686Z",
+      "release": "release-2-0-0",
+      "startedAt": "2026-10-09T19:42:45.359Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T20:26:13.685Z",
+          "artifacts": [
+            "openspec/changes/py-agent-api/proposal.md",
+            "openspec/changes/py-agent-api/design.md",
+            "openspec/changes/py-agent-api/tasks.md",
+            "openspec/changes/py-agent-api/specs/agent-client/spec.md",
+            "openspec/changes/py-agent-api/specs/agent-ask/spec.md",
+            "openspec/changes/py-agent-api/specs/agent-chat/spec.md",
+            "openspec/changes/py-agent-api/specs/agent-research/spec.md",
+            "openspec/changes/py-agent-api/specs/server-runtime/spec.md",
+            "openspec/changes/py-agent-api/specs/local-storage/spec.md"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review, verification reviews, final narrow check (2026-10-09); last 3 task-text blocks fixed by the parent in 522be27"
+        }
+      }
     },
     {
       "id": "py-search-api",
@@ -464,7 +489,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 122,
+  "revision": 130,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
@@ -476,8 +501,32 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-09T18:30:38.726Z",
+        "reviewedAt": "2026-10-09T20:26:13.523Z",
         "specs": [
+          {
+            "key": "py-agent-api/specs/agent-ask/spec.md",
+            "sha256": "84afcab103d708282e13632382211a99c61fd8f3b4ab928a43cb467c64255bc3"
+          },
+          {
+            "key": "py-agent-api/specs/agent-chat/spec.md",
+            "sha256": "ded24ff2b0607d80cdc4f1a5f59fd11c1297a257b51ddc4f3d10df2b14028dfe"
+          },
+          {
+            "key": "py-agent-api/specs/agent-client/spec.md",
+            "sha256": "4393912d937748a3a78bce422f8462a1c0da0a6db81b06045cc964e9a126a8e2"
+          },
+          {
+            "key": "py-agent-api/specs/agent-research/spec.md",
+            "sha256": "a79b46a85c17e86095fa4e34b5dd745c99035594942761f381924f5038c70e88"
+          },
+          {
+            "key": "py-agent-api/specs/local-storage/spec.md",
+            "sha256": "7fd6b6da5e22ff07f09162b2a4d6718e2791f746b417d3384193c71ab6a4caef"
+          },
+          {
+            "key": "py-agent-api/specs/server-runtime/spec.md",
+            "sha256": "6d37e406315b86884d448abcbc5d8e4f75441f1517bb1919e8311e32ebd38bbc"
+          },
           {
             "key": "py-foundation/specs/local-storage/spec.md",
             "sha256": "d95a0b7498af954a6d58cba43272fa1b259158018a990f47977def50ae38b6a4"
@@ -504,17 +553,17 @@
           },
           {
             "key": "py-usage-log/specs/usage-recording/spec.md",
-            "sha256": "ed2fb148b7842420d0d2d0031228246086c38b09c03351a8515741a4eefc732d"
+            "sha256": "325d2b178c5b1359c4e178bff6605a66c4e68ac599ab910ed22255d76079c232"
           },
           {
             "key": "py-usage-log/specs/usage-reporting/spec.md",
             "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagents: cross-spec review, verification review, final narrow check for py-usage-log (2026-10-09)",
+        "reviewer": "fresh-context general-purpose subagents: cross-spec review, verification reviews, final narrow checks for py-agent-api (2026-10-09); last 3 task-text blocks fixed by the parent in 522be27",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-09T17:34:02.470Z",
+          "reviewedAt": "2026-10-09T18:30:38.726Z",
           "specs": [
             {
               "key": "py-foundation/specs/local-storage/spec.md",
@@ -535,9 +584,21 @@
             {
               "key": "py-foundation/specs/server-runtime/spec.md",
               "sha256": "330fe948829a15cf26f7f3f8b1e50431ba2bbda7e9ab97b5a037d3ed6803a658"
+            },
+            {
+              "key": "py-usage-log/specs/local-storage/spec.md",
+              "sha256": "a9f771b918223f5d4e65f381cb20f3d7718f43cfc449f50b92ff556b632c7c5a"
+            },
+            {
+              "key": "py-usage-log/specs/usage-recording/spec.md",
+              "sha256": "ed2fb148b7842420d0d2d0031228246086c38b09c03351a8515741a4eefc732d"
+            },
+            {
+              "key": "py-usage-log/specs/usage-reporting/spec.md",
+              "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagents: cross-spec review of amended specs (2026-10-09), polish applied"
+          "reviewer": "fresh-context general-purpose subagents: cross-spec review, verification review, final narrow check for py-usage-log (2026-10-09)"
         }
       }
     }
