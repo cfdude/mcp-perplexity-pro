@@ -7,7 +7,12 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 PACKAGE = "src/mcp_perplexity_pro"
-MIGRATION_FILES = ("env.py", "script.py.mako", "versions/0001_initial.py")
+MIGRATION_FILES = (
+    "env.py",
+    "script.py.mako",
+    "versions/0001_initial.py",
+    "versions/0002_usage_events.py",
+)
 
 
 @pytest.fixture(scope="module")

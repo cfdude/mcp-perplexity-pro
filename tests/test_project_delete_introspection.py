@@ -17,6 +17,9 @@ from mcp_perplexity_pro.storage.projects import (
 )
 from mcp_perplexity_pro.storage.session import unit_of_work
 
+# tables that exist for other reasons (the conftest fixture, the real migrations)
+KNOWN = {"notes", "usage_events"}
+
 TABLES = {
     "t_cascade": "project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE",
     "t_setnull": "project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL",
@@ -124,7 +127,7 @@ async def test_key_declared_without_a_column_is_found(storage_engine):
         )
     async with storage_engine.connect() as conn:
         found = await conn.run_sync(_scoped_tables)
-    assert {(t.table, t.column, t.retained) for t in found if t.table != "notes"} == {
+    assert {(t.table, t.column, t.retained) for t in found if t.table not in KNOWN} == {
         ("t_bare", "owner", True),
         ("t_named", "owner", True),
     }
@@ -183,6 +186,6 @@ async def test_a_table_name_with_a_double_quote_is_introspected_and_detached(sto
         )
     async with storage_engine.connect() as conn:
         found = await conn.run_sync(_scoped_tables)
-    assert [(t.table, t.retained) for t in found if t.table != "notes"] == [('weird"name', True)]
+    assert [(t.table, t.retained) for t in found if t.table not in KNOWN] == [('weird"name', True)]
     async with unit_of_work(storage_engine) as session:
         assert await delete_project(session, "alpha") == (0, 1)
