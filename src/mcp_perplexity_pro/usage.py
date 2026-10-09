@@ -3,6 +3,9 @@
 Money is an integer count of nano-USD (10^-9 USD) so sums are exact (design D2). A reported
 float is converted through the text of its JSON value (``Decimal(repr(value))``), never by
 multiplying a binary float, and rounds half up.
+
+Deciding whether an Agent response is recorded (and as what) is ``agent_response_status``'s job
+alone: every later epic calls it and never re-derives the rule.
 """
 
 from __future__ import annotations
@@ -332,3 +335,29 @@ def usage_from_agent_response(usage: object) -> Usage:
     except Exception:  # total by contract
         logger.warning("agent usage: could not be parsed", exc_info=True)
         return Usage()
+
+
+def agent_response_status(response: object) -> str | None:
+    """What a caller does with a decoded Agent API response body. Never raises.
+
+    ``"ok"``: status ``completed`` (or absent) with a null ``error``, so record it.
+    ``None``: status ``queued`` or ``in_progress`` (a background submit or a pending poll,
+    which carry no usage), so do NOT record it: recording it as ``ok`` would occupy the dedupe key
+    of the real terminal response (design D8).
+    ``"unexpected_response"``: any other status, a non-null ``error`` or a non-mapping, so record
+    it with that status and whatever usage it reports.
+
+    Every caller uses this function instead of re-deriving the rule. Only ``completed`` and
+    ``queued`` have been observed; ``in_progress`` and the failure statuses are from the docs.
+    """
+    try:
+        if not isinstance(response, Mapping) or response.get("error") is not None:
+            return "unexpected_response"
+        status = response.get("status")
+        if status is None or status == "completed":
+            return "ok"
+        if status in ("queued", "in_progress"):
+            return None
+        return "unexpected_response"
+    except Exception:  # total by contract
+        return "unexpected_response"
