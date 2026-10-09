@@ -6,6 +6,11 @@ escaping ``httpx2`` error with its own fixed message and the category would be l
 
 from __future__ import annotations
 
+import asyncio
+import random
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from typing import Any, TypeVar
 
 import httpx2
@@ -40,7 +45,13 @@ class PerplexityClient:
         *,
         http: httpx2.AsyncClient | None = None,
         transport: httpx2.AsyncBaseTransport | None = None,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        jitter: Callable[[], float] = random.random,
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
+        self._sleep = sleep
+        self._jitter = jitter
+        self._clock = clock
         self._settings = settings
         self._owns_http = http is None
         self._http = http or httpx2.AsyncClient(transport=transport)
@@ -69,39 +80,91 @@ class PerplexityClient:
         )
 
     async def _send(self, method: str, path: str, json: Any) -> httpx2.Response:
+        return await self._http.request(
+            method,
+            self._settings.base_url + path,
+            json=json,
+            headers={
+                "Authorization": f"Bearer {self._settings.api_key.get_secret_value()}",
+                "Accept": "application/json",
+            },
+            timeout=self._timeout,
+        )
+
+    def _backoff(self, attempt: int) -> float:
+        """Exponential backoff (1s, 2s, 4s ...) scaled by jitter in [0.5, 1.5), capped."""
+        delay = 2.0 ** (attempt - 1) * (0.5 + self._jitter())
+        return min(delay, self._settings.max_retry_wait)
+
+    def _retry_after(self, value: str | None) -> float | None:
+        """Seconds from a ``Retry-After`` header (delta-seconds or HTTP date), else None."""
+        if value is None:
+            return None
+        value = value.strip()
         try:
-            return await self._http.request(
-                method,
-                self._settings.base_url + path,
-                json=json,
-                headers={
-                    "Authorization": f"Bearer {self._settings.api_key.get_secret_value()}",
-                    "Accept": "application/json",
-                },
-                timeout=self._timeout,
-            )
-        except httpx2.TimeoutException as exc:
-            raise self._timeout_error(exc) from None
-        except httpx2.HTTPError as exc:
-            raise PerplexityError(
-                "upstream_failure",
-                f"Could not reach the Perplexity API ({type(exc).__name__}).",
-                secrets=self._secrets(),
-            ) from None
+            seconds = float(value)
+        except ValueError:
+            try:
+                when = parsedate_to_datetime(value)
+            except (TypeError, ValueError):
+                return None
+            if when.tzinfo is None:
+                when = when.replace(tzinfo=UTC)
+            seconds = (when - self._clock()).total_seconds()
+        if seconds != seconds or seconds == float("inf"):  # NaN or infinite
+            return None
+        return max(seconds, 0.0)
 
     async def request_json(self, method: str, path: str, json: Any = None) -> Any:
-        """Send one request and return the parsed JSON body of a 2xx response."""
-        response = await self._send(method, path, json)
-        if response.status_code >= 300:
-            raise error_from_response(response.status_code, response.text, secrets=self._secrets())
-        try:
-            return response.json()
-        except ValueError:
-            raise PerplexityError(
-                "unexpected_response",
-                f"{path} returned a body that is not JSON.",
-                status=response.status_code,
-            ) from None
+        """Send a request, applying the retry rules, and return the parsed 2xx JSON body.
+
+        A POST creates work and is replayed only after a 429 (never billed) or a connect
+        failure (provably not sent). A GET is also retried on 5xx, timeouts and any
+        connection failure. Every other failure is raised as ``PerplexityError`` at once.
+        """
+        is_read = method.upper() == "GET"
+        attempts = self._settings.max_attempts
+        for attempt in range(1, attempts + 1):
+            wait: float | None = None  # set when this attempt may be retried
+            try:
+                response = await self._send(method, path, json)
+            except httpx2.TimeoutException as exc:
+                error = self._timeout_error(exc)
+                not_sent = isinstance(exc, httpx2.ConnectTimeout)
+                retryable = is_read or not_sent
+            except httpx2.HTTPError as exc:
+                error = PerplexityError(
+                    "upstream_failure",
+                    f"Could not reach the Perplexity API ({type(exc).__name__}).",
+                    secrets=self._secrets(),
+                )
+                retryable = is_read or isinstance(exc, httpx2.ConnectError)
+            else:
+                if response.status_code < 300:
+                    try:
+                        return response.json()
+                    except ValueError:
+                        raise PerplexityError(
+                            "unexpected_response",
+                            f"{path} returned a body that is not JSON.",
+                            status=response.status_code,
+                        ) from None
+                error = error_from_response(
+                    response.status_code, response.text, secrets=self._secrets()
+                )
+                if response.status_code == 429:
+                    asked = self._retry_after(response.headers.get("retry-after"))
+                    if asked is not None and asked > self._settings.max_retry_wait:
+                        raise error  # waiting this out is worse than failing now
+                    wait = asked
+                    retryable = True
+                else:
+                    retryable = is_read and response.status_code >= 500
+
+            if not retryable or attempt == attempts:
+                raise error
+            await self._sleep(wait if wait is not None else self._backoff(attempt))
+        raise AssertionError("unreachable")  # pragma: no cover
 
     def _parse(self, model: type[M], data: Any, path: str) -> M:
         try:
