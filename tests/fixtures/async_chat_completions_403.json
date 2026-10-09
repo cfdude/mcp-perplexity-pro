@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Sonar is now the Agent API. Use /v1/responses instead of /v1/sonar. Migrate here: https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview",
+    "type": "chat_completions_not_available",
+    "code": 403
+  }
+}
