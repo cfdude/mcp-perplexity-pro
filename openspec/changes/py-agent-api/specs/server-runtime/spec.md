@@ -31,3 +31,7 @@ The configured API key SHALL NOT appear in logs, error messages, tool results, `
 #### Scenario: Key-shaped example in content
 - **WHEN** a query, or the model's answer, contains a `pplx-` shaped example that is not the configured key
 - **THEN** the example is stored and returned as given, and no log record, error message or `/health` response contains it
+
+#### Scenario: Configured key in content
+- **WHEN** a query, message, title, answer or source contains the configured key itself
+- **THEN** the key is replaced by `[redacted]` before it is stored or returned, any key-shaped example beside it is left as given, and no result, log record or stored row contains the key

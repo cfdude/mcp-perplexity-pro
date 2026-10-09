@@ -27,6 +27,7 @@ from mcp_perplexity_pro.agent import (
 )
 from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.redaction import scrub_secrets
 from mcp_perplexity_pro.storage.jobs import insert_job
 from mcp_perplexity_pro.storage.models import ResearchJob
 from mcp_perplexity_pro.storage.projects import find_project
@@ -161,7 +162,7 @@ def register(server: FastMCP) -> None:
         # A terminal submit is stored terminal and already recorded by run_costed (usage_recorded
         # is set by job_columns); any other status is stored verbatim as a running job.
         values = {
-            "query": query,
+            "query": scrub_secrets(query, secrets),  # the stored copy never holds the key
             "depth": depth,
             "response_id": response_id,
             "started_at": started,

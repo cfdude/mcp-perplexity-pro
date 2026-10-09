@@ -26,6 +26,7 @@ from mcp_perplexity_pro.agent import (
     run_costed,
 )
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.redaction import scrub_secrets
 from mcp_perplexity_pro.storage.chats import (
     AssistantTurn,
     ChatSummary,
@@ -261,9 +262,17 @@ async def _send(
                     found = await find_project(session, name)
                     if found is None:
                         raise _not_found_project(name)
-                    saved = await create_chat(session, found.id, clean_title, message, turn)
+                    saved = await create_chat(
+                        session,
+                        found.id,
+                        scrub_secrets(clean_title, secrets),
+                        scrub_secrets(message, secrets),
+                        turn,
+                    )
                 else:
-                    saved = await append_turn(session, project_id, chat_id, message, turn)
+                    saved = await append_turn(
+                        session, project_id, chat_id, scrub_secrets(message, secrets), turn
+                    )
     except PerplexityError as exc:
         if exc.category == "not_found":
             raise

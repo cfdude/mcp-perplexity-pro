@@ -28,7 +28,7 @@ from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import AgentRun
-from mcp_perplexity_pro.redaction import redact_text
+from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
 from mcp_perplexity_pro.storage import jobs as job_store
 from mcp_perplexity_pro.storage.models import ResearchJob
 from mcp_perplexity_pro.storage.projects import (
@@ -366,7 +366,7 @@ def _answer_text(output: object) -> str:
     return ""
 
 
-def _sources(output: object) -> list[Source]:
+def _sources(output: object, secrets: Iterable[str] = ()) -> list[Source]:
     """Search results and fetched pages in output order, de-duplicated by exact URL."""
     if not isinstance(output, list):
         return []
@@ -386,8 +386,8 @@ def _sources(output: object) -> list[Source]:
                 continue
             title, when, ident = row.get("title"), row.get("date"), row.get("id")
             found[url] = Source(
-                url=url,
-                title=title if isinstance(title, str) else None,
+                url=scrub_secrets(url, secrets),
+                title=scrub_secrets(title, secrets) if isinstance(title, str) else None,
                 date=when if isinstance(when, str) else None,
                 id=ident if isinstance(ident, int) and not isinstance(ident, bool) else None,
             )
@@ -422,7 +422,7 @@ def digest(
         details = body.get("incomplete_details")
         reason = details.get("reason") if isinstance(details, Mapping) else None
         reason_text = clean_reason(reason, secrets) if isinstance(reason, str) and reason else None
-        answer = _answer_text(body.get("output"))
+        answer = scrub_secrets(_answer_text(body.get("output")), secrets)
         warnings: list[str] = []
         if status == "incomplete":
             why = f" (reason: {reason_text})" if reason_text else ""
@@ -437,7 +437,7 @@ def digest(
         return Digest(
             answer=answer,
             answer_json=answer_json,
-            sources=_sources(body.get("output")),
+            sources=_sources(body.get("output"), secrets),
             status=status,
             incomplete_reason=reason_text,
             warnings=warnings,
