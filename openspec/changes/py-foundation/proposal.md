@@ -8,7 +8,7 @@ Every Sonar endpoint this server calls now returns `403 chat_completions_not_ava
 
 - **BREAKING** Replace the TypeScript implementation with a Python 3.12+ package under `src/`, released as 2.0.0. The TypeScript source, npm packaging, Smithery config and Docker files are deleted on the `python-rewrite` branch (git history preserves them). The `.mcp.json` URL does not change: port 8102, path `/mcp`.
 - Add a FastMCP server with stdio and Streamable HTTP transports, a `/health` endpoint, and `pydantic-settings` configuration.
-- Add one async Perplexity HTTP client (`httpx`) with typed errors, `Retry-After`-aware retry on 429, and response models that tolerate unknown fields.
+- Add one async Perplexity HTTP client (`httpx2`) with typed errors, `Retry-After`-aware retry on 429, and response models that tolerate unknown fields.
 - Add the model catalog, backed by live `GET /v1/models` (authenticated, returns per-model pricing), exposed as the first tool, `perplexity_models`. This is the thin vertical slice proving transport, config, client and tool schema end to end.
 - Add SQLAlchemy 2.0 + SQLite persistence with Alembic (`0001_` naming), a per-call session lifecycle, and a `projects` table. Domain tables (chats, jobs, usage) arrive with the epics that own them.
 - Add quality gates: ruff (`line-length = 100`) and pytest as a pre-commit hook, the same checks in CI, a `live` pytest marker excluded by default, and recorded API fixtures captured from the 2026-10-06 probe.
@@ -33,7 +33,7 @@ None. `openspec/specs/` is empty, so every capability above is new.
 
 ## Impact
 
-- **Code:** all of `src/` (TypeScript) is removed; new `src/mcp_perplexity_pro/` package, `tests/`, `pyproject.toml`, `uv.lock`, `alembic/`, `.pre-commit-config.yaml`, `.github/workflows/`.
+- **Code:** all of `src/` (TypeScript) is removed; new `src/mcp_perplexity_pro/` package (migrations inside it), `tests/`, `pyproject.toml`, `uv.lock`, `.pre-commit-config.yaml`, `.github/workflows/`.
 - **Dependencies:** `fastmcp` 4.x (brings `pydantic>=2.12`, `pydantic-settings`, `httpx2`, `uvicorn`; `httpx2` is used directly for the client), `sqlalchemy[asyncio]`, `alembic`, `aiosqlite`; dev: `pytest`, `pytest-asyncio`, `ruff`, `pre-commit`. No `respx` or `pytest-httpx`: neither intercepts `httpx2` (verified), so tests inject `httpx2.MockTransport`.
 - **Distribution:** PyPI and `uvx` replace npm and Smithery. Any `npx` consumer breaks.
 - **Systems:** pm2 config (local, gitignored), `~/SERVER_PORTS.md`, `.mcp.json` unchanged.

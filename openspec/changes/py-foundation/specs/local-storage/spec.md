@@ -24,6 +24,10 @@ The data directory SHALL be created readable and writable by its owner only, and
 - **WHEN** the data directory is created
 - **THEN** its permission bits allow no access to group or others
 
+#### Scenario: Existing loose directory
+- **WHEN** the server starts and the data directory already exists with group or other access
+- **THEN** the permissions are tightened to owner-only, or startup fails naming the directory
+
 ### Requirement: Versioned migrations
 The database schema SHALL be managed by ordered migrations named with a four-digit sequence prefix. The server SHALL apply pending migrations to the latest version at startup and SHALL refuse to start, with a clear message, if a migration fails or the database is newer than the code. Every migration SHALL be reversible.
 
@@ -54,12 +58,19 @@ Before applying pending migrations to a database that already holds data, the se
 - **WHEN** a non-empty database at revision `0001` is upgraded
 - **THEN** a backup file for revision `0001` exists in the data directory and opens with the old schema
 
-### Requirement: Project scoping
-Every stored record SHALL belong to a named project. A single shared get-or-create operation SHALL resolve the project for every tool call: it creates the project the first time it is named and uses the project `default` when none is given. Project names are case-sensitive and unique, limited to letters, digits, `-`, `_` and `.`, up to 64 characters, and SHALL NOT be `.`, `..` or begin with `.`. Tools added by later changes inherit these rules.
+### Requirement: Project resolution
+Every stored record SHALL belong to a named project. One shared get-or-create operation SHALL resolve the project for every tool call that stores records: it creates the project the first time it is named and uses the project `default` when none is given. `perplexity_projects` and tools that take no project argument do not call it; `list` and `delete` look projects up and never create them. Tools added by later changes inherit these rules.
 
 #### Scenario: Implicit creation
 - **WHEN** a tool is called with a project name that does not yet exist
 - **THEN** the project is created and the call proceeds
+
+#### Scenario: Default project
+- **WHEN** a tool is called without a project name
+- **THEN** the record belongs to the project `default`, which is created if absent
+
+### Requirement: Project names
+Project names are case-sensitive and unique, limited to ASCII letters, digits, `-`, `_` and `.`, up to 64 characters, and SHALL NOT be `.`, `..` or begin with `.`.
 
 #### Scenario: Invalid name
 - **WHEN** a tool is called with project name `../etc`
@@ -69,12 +80,8 @@ Every stored record SHALL belong to a named project. A single shared get-or-crea
 - **WHEN** a tool is called with project name `..` or `.hidden`
 - **THEN** the call fails with category `invalid_request`
 
-#### Scenario: Default project
-- **WHEN** a tool is called without a project name
-- **THEN** the record belongs to the project `default`, which is created if absent
-
 ### Requirement: Project management tool
-The server SHALL provide a tool `perplexity_projects` with actions `list` and `delete`. `delete` takes a `project` name, validates it by the project-name rule, removes the project and all its records in one transaction, and SHALL require `confirm` set to true. Deleting the project `default` is allowed; it is recreated on next use. Deleting a project that does not exist SHALL fail with category `not_found`. A successful `delete` returns the project name and the number of records removed.
+The server SHALL provide a tool `perplexity_projects` with actions `list` and `delete`. `delete` takes a `project` name, removes the project and all its records in one transaction, and SHALL require `confirm` set to true. A successful `delete` returns the project name and the number of rows removed from project-scoped tables.
 
 #### Scenario: Listing
 - **WHEN** a client calls the tool with action `list`
@@ -84,6 +91,13 @@ The server SHALL provide a tool `perplexity_projects` with actions `list` and `d
 - **WHEN** a client calls `delete` without `confirm` true
 - **THEN** the call fails with category `confirmation_required` and nothing is removed
 
+#### Scenario: Confirmed delete
+- **WHEN** a client calls `delete` with `confirm` true for an existing project
+- **THEN** the project and all of its records are gone and a following `list` omits it
+
+### Requirement: Project deletion outcomes
+`delete` SHALL validate the project name by the project-name rule and SHALL fail with category `invalid_request` for a bad name and `not_found` for a project that does not exist. Deleting the project `default` is allowed; it is recreated on next use.
+
 #### Scenario: Delete a missing project
 - **WHEN** a client calls `delete` with `confirm` true for a project that does not exist
 - **THEN** the call fails with category `not_found`
@@ -91,10 +105,6 @@ The server SHALL provide a tool `perplexity_projects` with actions `list` and `d
 #### Scenario: Delete with an invalid name
 - **WHEN** a client calls `delete` with project `../etc` and `confirm` true
 - **THEN** the call fails with category `invalid_request`
-
-#### Scenario: Confirmed delete
-- **WHEN** a client calls `delete` with `confirm` true for an existing project
-- **THEN** the project and all of its records are gone and a following `list` omits it
 
 ### Requirement: All-or-nothing tool calls
 Each tool call SHALL read and write the database as one unit of work. If the call fails, none of its writes SHALL remain.
@@ -107,6 +117,10 @@ Scenarios in this capability that need a writing tool are verified with a tool r
 
 ### Requirement: Concurrent calls
 Concurrent tool calls SHALL NOT corrupt the database or fail with lock errors under normal load. A write that must wait for another SHALL wait up to the configured busy timeout and then fail with category `storage_busy`.
+
+#### Scenario: Writer holds the lock too long
+- **WHEN** one connection holds the write lock beyond the busy timeout and another call tries to write
+- **THEN** the waiting call fails with category `storage_busy`
 
 #### Scenario: Parallel writes
 - **WHEN** 20 tool calls that write to the database run at the same time

@@ -15,7 +15,7 @@ The server SHALL serve MCP over stdio and over Streamable HTTP. The HTTP endpoin
 
 #### Scenario: Default host
 - **WHEN** the server is started in HTTP mode with no host configured
-- **THEN** it accepts connections on the loopback interface and refuses connections addressed to the machine's LAN address
+- **THEN** it accepts connections on the loopback interface and refuses connections addressed to the machine's LAN address (verification is skipped on a host with no non-loopback address)
 
 #### Scenario: Port override
 - **WHEN** the port is set to 8199 by configuration
@@ -71,6 +71,10 @@ The version reported in `/health`, in the MCP `initialize` result, and in packag
 ### Requirement: Configuration from environment
 The server SHALL read configuration from environment variables with the prefix `PERPLEXITY_` and validate it at startup. `PERPLEXITY_API_KEY` is required. These are optional with documented defaults: `HOST`, `PORT`, `BASE_URL`, `DATA_DIR`, `LOG_LEVEL`, `CONNECT_TIMEOUT`, `READ_TIMEOUT`, `MAX_ATTEMPTS`, `MAX_RETRY_WAIT`, `CATALOG_TTL`, `CATALOG_MAX_STALE` and `DB_BUSY_TIMEOUT`. Invalid values SHALL abort startup with a message naming the variable.
 
+#### Scenario: Documented defaults
+- **WHEN** only `PERPLEXITY_API_KEY` is set
+- **THEN** the settings are host `127.0.0.1`, port 8102, base URL `https://api.perplexity.ai`, data directory `~/.perplexity-pro/`, log level INFO, connect timeout 10 s, read timeout 60 s, 3 attempts, 30 s maximum retry wait, catalog TTL 3600 s, maximum stale age 86400 s and database busy timeout 5 s
+
 #### Scenario: Missing API key
 - **WHEN** the server starts without `PERPLEXITY_API_KEY`
 - **THEN** startup fails with a message naming `PERPLEXITY_API_KEY` and the process exits non-zero before accepting any connection
@@ -87,7 +91,7 @@ The API key SHALL NOT appear in logs, error messages, tool results, `/health`, o
 - **THEN** neither the log nor the returned error contains any part of the key
 
 ### Requirement: Graceful shutdown
-On SIGINT or SIGTERM the server SHALL stop accepting new requests, let in-flight requests finish for at most 10 seconds, close its upstream HTTP client and database connections, and exit 0. The supervisor's kill timeout SHALL be longer than that bound.
+On SIGINT or SIGTERM, or on stdin reaching end of file in stdio mode, the server SHALL stop accepting new requests, let in-flight requests finish for at most 10 seconds, close its upstream HTTP client and database connections, and exit 0. The supervisor's kill timeout SHALL be longer than that bound.
 
 #### Scenario: SIGTERM during idle
 - **WHEN** the process receives SIGTERM with no requests in flight
@@ -96,6 +100,14 @@ On SIGINT or SIGTERM the server SHALL stop accepting new requests, let in-flight
 #### Scenario: SIGINT during idle
 - **WHEN** the process receives SIGINT with no requests in flight
 - **THEN** it behaves as for SIGTERM
+
+#### Scenario: stdin closed in stdio mode
+- **WHEN** the client closes stdin of a stdio-mode server
+- **THEN** it closes its resources and exits with status 0
+
+#### Scenario: In-flight request that outlives the bound
+- **WHEN** SIGTERM arrives while a tool call is still running and it has not finished after 10 seconds
+- **THEN** the server closes its resources and exits without waiting further
 
 #### Scenario: In-flight request at SIGTERM
 - **WHEN** SIGTERM arrives while a tool call is still running and it finishes within 10 seconds

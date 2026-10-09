@@ -54,12 +54,16 @@ On HTTP 429 the client SHALL wait for the `Retry-After` duration when present, o
 - **WHEN** a 429 carries `Retry-After: 600` and the maximum wait is 30 seconds
 - **THEN** the client raises `rate_limited` without sleeping
 
-### Requirement: No duplicate billable runs
-The client SHALL NOT retry a request that creates work (a POST) after the API has responded with any HTTP status. It SHALL retry idempotent reads (GET) on 5xx and on connection failure before any response, using the same backoff and attempt limit as rate-limit retry. It SHALL NOT retry a create request after a read or write timeout, because the run may already exist and be billed. It MAY retry a create request only after a connect failure, where the request was provably not sent.
+### Requirement: Create requests are not replayed
+The client SHALL NOT retry a request that creates work (a POST) after the API has responded with any HTTP status other than 429; a 429 is a rejection that is never billed and follows the rate-limit retry rule. It SHALL NOT retry a create request after a timeout that occurs once the request was sent, because the run may already exist and be billed. It SHALL retry a create request after a connect failure, where the request was provably not sent, and in no other circumstance.
 
 #### Scenario: 5xx on create
 - **WHEN** a POST that creates a run returns 503
 - **THEN** the client raises `upstream_failure` without sending a second request
+
+#### Scenario: Rate limited on create
+- **WHEN** a POST that creates a run returns 429 with `Retry-After: 2` and then 200
+- **THEN** the client returns the 200 result after two requests
 
 #### Scenario: Read timeout on create
 - **WHEN** a POST that creates a run is sent and the read times out
@@ -68,6 +72,9 @@ The client SHALL NOT retry a request that creates work (a POST) after the API ha
 #### Scenario: Connect failure on create
 - **WHEN** a POST fails to connect on the first attempt and connects on the second
 - **THEN** the client returns the second attempt's result
+
+### Requirement: Reads are retried
+The client SHALL retry idempotent reads (GET) on 5xx, on timeouts and on connection failure, using the same backoff and attempt limit as rate-limit retry.
 
 #### Scenario: 5xx on read
 - **WHEN** a GET returns 503 and then 200
