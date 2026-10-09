@@ -72,22 +72,29 @@ def server_env(tmp_path: Path, **extra: str) -> dict[str, str]:
         "PERPLEXITY_DATA_DIR": str(tmp_path / "data"),
         "PERPLEXITY_BASE_URL": "http://127.0.0.1:9",  # nothing listens; never leaves the host
     }
+    env["FIXTURE_CLOSE_LOG"] = str(tmp_path / "closed.log")
     env.update(extra)
     (tmp_path / "home").mkdir(exist_ok=True)
     return env
 
 
-def start_fixture_server(tmp_path: Path, transport: str, **extra_env: str) -> subprocess.Popen:
+def start_fixture_server(
+    tmp_path: Path, transport: str, *, cwd: Path | None = None, **extra_env: str
+) -> subprocess.Popen:
     """Start ``fixture_server.py`` (the real ``build_server`` + ``run`` plus test tools)."""
-    return subprocess.Popen(
+    proc = subprocess.Popen(
         [sys.executable, str(FIXTURE_SERVER), transport],
         env=server_env(tmp_path, **extra_env),
+        cwd=cwd,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
         bufsize=1,
+        start_new_session=True,  # a signal sent to the test run never reaches the server
     )
+    proc.close_log = tmp_path / "closed.log"  # lines appear only when a close really ran
+    return proc
 
 
 def send(proc: subprocess.Popen, message: dict) -> None:
@@ -122,3 +129,32 @@ def wait_for_http(port: int, proc: subprocess.Popen, timeout: float = 20) -> Non
         except OSError:
             time.sleep(0.05)
     raise AssertionError("server did not start listening")
+
+
+class StderrTail:
+    """Collects a subprocess's stderr on a thread so tests can wait for a line without blocking."""
+
+    def __init__(self, proc: subprocess.Popen) -> None:
+        import threading
+
+        self.lines: list[str] = []
+        self._thread = threading.Thread(target=self._read, args=(proc,), daemon=True)
+        self._thread.start()
+
+    def _read(self, proc: subprocess.Popen) -> None:
+        for line in proc.stderr:
+            self.lines.append(line)
+
+    def text(self) -> str:
+        self._thread.join(timeout=5)
+        return "".join(self.lines)
+
+    def wait_for(self, needle: str, timeout: float = 15) -> None:
+        import time
+
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if any(needle in line for line in list(self.lines)):
+                return
+            time.sleep(0.02)
+        raise AssertionError(f"{needle!r} never appeared on stderr:\n{''.join(self.lines)}")

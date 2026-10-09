@@ -6,12 +6,44 @@ environment variables, exactly as in production; only the two tools below are ad
 
 import asyncio
 import logging
+import os
 import sys
 
 from mcp_perplexity_pro.__main__ import bootstrap, run
 
 server, settings = bootstrap()
 log = logging.getLogger("fixture_tool")
+
+
+def _note(path, label):
+    with open(path, "a") as handle:
+        handle.write(label + "\n")
+
+
+def _record_real_closure(path):
+    """Append a line to ``path`` once a close really ran. The log line alone is no proof: it
+    would survive a deleted close call. AsyncEngine is slotted, so the sync engine under it is
+    wrapped (``AsyncEngine.dispose`` delegates to it)."""
+    http = server.app.http
+    original_aclose = http.aclose
+
+    async def aclose():
+        await original_aclose()
+        _note(path, "http.aclose")
+
+    http.aclose = aclose
+    sync_engine = server.app.engine.sync_engine
+    original_dispose = sync_engine.dispose
+
+    def dispose(*args, **kwargs):
+        original_dispose(*args, **kwargs)
+        _note(path, "engine.dispose")
+
+    sync_engine.dispose = dispose
+
+
+if os.environ.get("FIXTURE_CLOSE_LOG"):
+    _record_real_closure(os.environ["FIXTURE_CLOSE_LOG"])
 
 
 @server.tool
@@ -34,4 +66,6 @@ async def nap(seconds: float) -> str:
 
 
 if __name__ == "__main__":
-    run(server, settings, transport=sys.argv[1])
+    timeout = os.environ.get("FIXTURE_GRACEFUL_TIMEOUT")
+    extra = {"graceful_timeout": float(timeout)} if timeout else {}
+    run(server, settings, transport=sys.argv[1], **extra)

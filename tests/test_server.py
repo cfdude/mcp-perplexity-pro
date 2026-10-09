@@ -112,6 +112,11 @@ async def test_defaults_are_loopback_8102_without_binding(make_server):
     assert (config.host, config.port) == ("127.0.0.1", 8102)
 
 
+async def test_http_runner_drains_for_the_ten_second_bound(make_server):
+    server, settings = await make_server()
+    assert build_http_server(server, settings).config.timeout_graceful_shutdown == 10
+
+
 async def test_port_override_listens_only_on_the_override(make_server):
     port = free_port()
     server, settings = await make_server(port=port)

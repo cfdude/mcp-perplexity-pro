@@ -9,6 +9,7 @@ database session with ``storage.session.unit_of_work(app.engine)``.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from importlib.metadata import version as package_version
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
 
 PACKAGE_NAME = "mcp-perplexity-pro"
 GENERIC_MESSAGE = "An internal error occurred while running the tool."
+DRAINING_MESSAGE = "The server is shutting down and is not accepting new tool calls."
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,39 @@ def error_result(category: str, message: str) -> ToolResult:
         meta={"category": category},
         is_error=True,
     )
+
+
+class InFlightMiddleware(Middleware):
+    """Counts running tool calls; once draining, refuses new ones."""
+
+    def __init__(self) -> None:
+        self.count = 0
+        self.draining = False
+        self._idle = asyncio.Event()
+        self._idle.set()
+
+    def start_draining(self) -> None:
+        self.draining = True
+
+    async def wait_idle(self, timeout: float) -> bool:
+        """Wait until no call is running; False if ``timeout`` seconds elapsed first."""
+        try:
+            await asyncio.wait_for(self._idle.wait(), timeout)
+        except TimeoutError:
+            return False
+        return True
+
+    async def on_call_tool(self, context: Any, call_next: Any) -> Any:
+        if self.draining:
+            return error_result("internal_error", DRAINING_MESSAGE)
+        self.count += 1
+        self._idle.clear()
+        try:
+            return await call_next(context)
+        finally:
+            self.count -= 1
+            if self.count == 0:
+                self._idle.set()
 
 
 class ErrorContractMiddleware(Middleware):
@@ -100,7 +135,8 @@ class ErrorContractMiddleware(Middleware):
 def build_server(settings: Settings, http: httpx2.AsyncClient, engine: AsyncEngine) -> FastMCP:
     """Build the server around caller-owned ``http`` and ``engine``.
 
-    ``server.app`` is the ``AppContext`` (so ``__main__.run`` can close its members).
+    ``server.app`` is the ``AppContext`` (so ``__main__.run`` can close its members) and
+    ``server.in_flight`` the ``InFlightMiddleware`` (so stdio shutdown can wait for calls).
     """
     pkg_version = package_version(PACKAGE_NAME)
     app = AppContext(
@@ -114,12 +150,13 @@ def build_server(settings: Settings, http: httpx2.AsyncClient, engine: AsyncEngi
     async def app_lifespan(_server: FastMCP):
         yield app  # the caller closes these; a signal never reaches this teardown in stdio mode
 
+    in_flight = InFlightMiddleware()
     server = FastMCP(
         "perplexity-pro",
         version=pkg_version,
         lifespan=app_lifespan,
         mask_error_details=True,
-        middleware=[ErrorContractMiddleware((settings.api_key.get_secret_value(),))],
+        middleware=[in_flight, ErrorContractMiddleware((settings.api_key.get_secret_value(),))],
     )
 
     @server.custom_route("/health", methods=["GET"])
@@ -127,4 +164,5 @@ def build_server(settings: Settings, http: httpx2.AsyncClient, engine: AsyncEngi
         return JSONResponse({"status": "ok", "version": pkg_version})
 
     server.app = app  # type: ignore[attr-defined]
+    server.in_flight = in_flight  # type: ignore[attr-defined]
     return server
