@@ -1,0 +1,51 @@
+[project]
+name = "mcp-perplexity-pro"
+version = "2.0.0"
+description = "MCP server for the Perplexity API"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=4.0.11,<5",
+    "sqlalchemy[asyncio]",
+    "alembic",
+    "aiosqlite",
+]
+
+[project.scripts]
+mcp-perplexity-pro = "mcp_perplexity_pro.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+    "pre-commit",
+    "jsonschema>=4.26.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_perplexity_pro"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["node_modules", "dist", ".venv", ".perplexity"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-m 'not live'"
+markers = [
+    "live: calls the real Perplexity API; run only with -m live",
+    "allow_network: opt out of the offline socket guard",
+]
+filterwarnings = [
+    "error::fastmcp.exceptions.FastMCPDeprecationWarning",
+]

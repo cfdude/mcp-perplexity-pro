@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-10-09
+
+### Changed
+
+- **BREAKING** Rewrote the server in Python (FastMCP, SQLAlchemy 2.0 async with SQLite and Alembic, httpx2, pytest, ruff). Perplexity retired its Sonar endpoints (they return `403 chat_completions_not_available`), so the 1.x tools could no longer answer any query. The TypeScript source, npm packaging, Smithery and Docker files are removed.
+- Only two tools are available in this release: `perplexity_models` (live model list with prices) and `perplexity_projects` (list and confirmed delete). The Agent, Search, Embeddings and Decisions tools follow in later releases.
+- Data is kept in one SQLite file under `~/.perplexity-pro/`. Nothing is imported from the old `.perplexity/` folders.
+- Tool failures carry a stable `category` (eleven values) in structured content.
+- The HTTP endpoint is still `http://localhost:8102/mcp`; it listens on 127.0.0.1 only and is stateless.
+
 ## [1.3.1] - 2026-01-26
 
 ### Fixed
