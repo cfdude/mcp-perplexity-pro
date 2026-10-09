@@ -12,12 +12,17 @@ now return `403 chat_completions_not_available` ("Sonar is now the Agent API"), 
 answer a single query. There was no working behavior to port, so the TypeScript code is deleted
 (git history keeps it) and the server was rebuilt in Python.
 
-**Only two tools exist today:**
+**Only three tools exist today:**
 
 | Tool | What it does |
 |---|---|
 | `perplexity_models` | Lists the models your key can use, with live prices, plus the documented Agent API presets |
-| `perplexity_projects` | Lists projects, or deletes one with everything stored in it |
+| `perplexity_projects` | Lists projects, or deletes one and its stored records (spend history is kept) |
+| `perplexity_usage` | Reports what recorded upstream calls cost, grouped by tool, API, model, project or day. Read-only |
+
+**No tool records usage yet.** The usage table and the recorder exist, but none of the three tools
+above makes a costed upstream call, so `perplexity_usage` reports zero calls on a fresh install.
+Real recording arrives with each later tool: Agent, Search, Embeddings and Decisions.
 
 The Agent, Search, Embeddings and Decisions tools arrive in later releases. The old tool names
 (`ask_perplexity`, `chat_perplexity` and the rest) are gone and are not coming back under those
@@ -196,9 +201,94 @@ captured 2026-10-09; the real list changes):
 The example is shortened: a real result lists every matching model (14 for `anthropic` in that
 fixture) and all five presets.
 
+### `perplexity_usage`
+
+Reports what the recorded upstream Perplexity calls cost. It reads the usage events (one row per
+costed upstream call, stored by the server itself) and never writes. **Nothing is recorded yet:**
+no 2.0.0 tool makes a costed call, so the totals are zero until the Agent, Search, Embeddings and
+Decisions tools arrive and each starts recording its own calls.
+
+| Argument | Type | Default | Meaning |
+|---|---|---|---|
+| `project` | string | all projects | Only calls recorded under this project name. Matched by the name stored with each call, so a deleted project still reports; naming one that never existed returns zeros and creates nothing |
+| `since` | string | no start | First UTC day to include, written `YYYY-MM-DD` |
+| `until` | string | no end | Last UTC day to include, written `YYYY-MM-DD`; the whole day is included. `9999-12-31` is refused |
+| `group_by` | `tool`, `api`, `model`, `project` or `day` | `tool` | The one grouping to return |
+| `limit` | integer | `20` | Most groups to return, 1 to 200 |
+
+A bad date, `since` after `until`, a `limit` outside 1 to 200 or an invalid project name is
+`invalid_request`.
+
+Output (`structuredContent`, with a small plain-text table rendering the same data):
+
+| Key | Meaning |
+|---|---|
+| `totals` | The measures over every matching call, whatever `limit` is |
+| `groups` | At most `limit` entries, each the same measures plus `key`. Ordered by cost, highest first (ties by key); `day` returns the latest `limit` days in ascending order. A call with no value for the grouping column is grouped under `(none)` |
+| `groups_total` | How many groups matched in all |
+| `groups_truncated` | `true` when `limit` cut the list, so `groups` does not cover everything (`totals` still does) |
+| `group_by`, `project`, `since`, `until`, `limit` | The filters and grouping that were applied |
+
+The measures in `totals` and in each group: `calls`, `errors` (calls whose status is not `ok`),
+`input_tokens`, `output_tokens`, `total_tokens`, `cost_nano_usd`, `cost_usd`, `calls_cost_computed`
+and `calls_cost_unknown`. Money is exact. `cost_nano_usd` is an integer count of nano-USD (10^-9
+USD), summed in the database, and `cost_usd` is the same amount as an exact decimal string such as
+`"0.00875"` (trailing zeros trimmed, `"0"` for none), never a float.
+
+How each call's cost is known (`cost_source`, stored per call):
+
+- `reported`: the API returned the cost in its response, and the server stores it as given.
+- `computed`: the response carried no cost, so the server priced the call from Perplexity's
+  documented prices, kept in `pricing.py` and dated (`PRICES_AS_OF`). The date is stored with the
+  call, so a later price change does not rewrite old rows. `calls_cost_computed` counts these.
+- `none`: the cost is unknown, not free. Such a call adds 0 to the cost, and
+  `calls_cost_unknown` counts it. An unknown token count likewise adds 0 to the token sums.
+
+**The cost is a lower bound.** Error calls count cost 0 and may still have been billed, and every
+unknown-cost call adds 0, so the true spend is at least the reported figure. Read
+`calls_cost_unknown` next to `cost_usd`: any value above 0 means the figure is missing some spend.
+
+Example call and result, from a test server on a temporary data directory holding six sample
+calls (agent usage taken from the recorded `tests/fixtures/agent_fast.json`, one search priced from
+the documented table, one failed call, one search with an unknown cost). Real totals will differ:
+
+```json
+{"name": "perplexity_usage", "arguments": {"group_by": "tool", "limit": 5}}
+```
+
+```json
+{
+  "totals": {"calls": 6, "errors": 1, "input_tokens": 10278, "output_tokens": 90,
+             "total_tokens": 10368, "cost_nano_usd": 8750000, "cost_usd": "0.00875",
+             "calls_cost_computed": 1, "calls_cost_unknown": 2},
+  "group_by": "tool",
+  "groups": [
+    {"key": "perplexity_search", "calls": 2, "errors": 0, "input_tokens": 0, "output_tokens": 0,
+     "total_tokens": 0, "cost_nano_usd": 5000000, "cost_usd": "0.005",
+     "calls_cost_computed": 1, "calls_cost_unknown": 1},
+    {"key": "perplexity_agent", "calls": 4, "errors": 1, "input_tokens": 10278,
+     "output_tokens": 90, "total_tokens": 10368, "cost_nano_usd": 3750000,
+     "cost_usd": "0.00375", "calls_cost_computed": 0, "calls_cost_unknown": 1}
+  ],
+  "groups_total": 2,
+  "groups_truncated": false,
+  "project": null, "since": null, "until": null, "limit": 5
+}
+```
+
+The text content of the same result:
+
+```
+Usage: 6 call(s), 1 error(s), 10368 token(s), cost 0.00875 USD (8750000 nano-USD).
+The cost is a lower bound: error calls count cost 0 and may have been billed; 2 call(s) have no known cost and 1 cost(s) were computed from documented prices.
+By tool: key | calls | errors | tokens | cost USD
+perplexity_search | 2 | 0 | 0 | 0.005
+perplexity_agent | 4 | 1 | 10368 | 0.00375
+```
+
 ### `perplexity_projects`
 
-Projects group everything the server stores. Later tools create a project the first time they
+Projects group what the server stores. Later tools create a project the first time they
 name one and use the project `default` when none is given; this tool only looks projects up and
 never creates one. Project names are case-sensitive, 1 to 64 characters of ASCII letters, digits,
 `-`, `_` and `.`, may not begin with `.`, and may not look like an API key.
@@ -210,17 +300,24 @@ never creates one. Project names are case-sensitive, 1 to 64 characters of ASCII
 | `confirm` | boolean | Must be `true` for `delete`; deletion cannot be undone |
 
 Output: `action`; for `list`, `projects` (each with `name` and `created_at`, UTC); for `delete`,
-`project` and `rows_removed` (rows removed from tables that reference the project directly; rows
-two levels down go by cascade and are not counted). The project `default` may be deleted; it is
-recreated the first time a later tool stores records in it. Because no 2.0.0 tool stores records yet, a fresh install lists no projects.
+`project`, `rows_removed` and `rows_retained`. `rows_removed` counts rows removed from tables that
+reference the project directly (rows two levels down go by cascade and are not counted).
+
+**Deleting a project keeps its spend history.** Usage events are not deleted: each is detached from
+the project (its project reference is cleared) and kept, together with the project's name as it was
+written, so `perplexity_usage` still reports that spend under the deleted name. `rows_retained`
+counts the events detached. Everything else stored in the project is removed. The project
+`default` may be deleted; it is recreated the first time a later tool stores records in it.
+Because no 2.0.0 tool stores records yet, a fresh install lists no projects.
 
 ```json
 {"name": "perplexity_projects", "arguments": {"action": "list"}}
 ```
 
 ```json
-{"action": "list", "projects": [{"name": "demo", "created_at": "2026-10-09T17:36:14Z"}],
- "project": null, "rows_removed": null}
+{"action": "list", "projects": [{"name": "demo", "created_at": "2026-10-09T19:32:31Z"},
+                                {"name": "research", "created_at": "2026-10-09T19:32:31Z"}],
+ "project": null, "rows_removed": null, "rows_retained": null}
 ```
 
 ```json
@@ -228,8 +325,16 @@ recreated the first time a later tool stores records in it. Because no 2.0.0 too
 ```
 
 ```json
-{"action": "delete", "projects": null, "project": "demo", "rows_removed": 0}
+{"action": "delete", "projects": null, "project": "demo", "rows_removed": 0, "rows_retained": 3}
 ```
+
+The spend of the deleted project is still there:
+
+```json
+{"name": "perplexity_usage", "arguments": {"project": "demo", "group_by": "project"}}
+```
+
+reports `totals.calls` 3 and `totals.cost_usd` `"0.0025"` under the group key `demo`.
 
 ## Errors
 
@@ -243,9 +348,9 @@ client can read the category three ways:
 ```json
 {"isError": true,
  "structuredContent": {"category": "confirmation_required",
-   "message": "Deleting project 'demo' removes all its data and cannot be undone; call again with confirm=true."},
+   "message": "Deleting project 'demo' removes the project and its stored records and cannot be undone; spend history is kept. Call again with confirm=true."},
  "_meta": {"category": "confirmation_required"},
- "content": [{"type": "text", "text": "[confirmation_required] Deleting project 'demo' removes ..."}]}
+ "content": [{"type": "text", "text": "[confirmation_required] Deleting project 'demo' removes the project ..."}]}
 ```
 
 | Category | Meaning |
@@ -299,6 +404,12 @@ exists for a migration that succeeded but turned out wrong. Restoring is manual:
    `cp ~/.perplexity-pro/backup-<rev>.db ~/.perplexity-pro/perplexity.db`
 4. Run the previous version of the server (the one that matches that schema revision) and check
    `GET /health`.
+
+**Downgrading drops spend history.** Revision `0002` creates the `usage_events` table. A downgrade
+of `0002` (migration code only; the server never downgrades by itself) drops that table and every
+usage event in it. The automatic backup is taken before the upgrade, so it holds revision `0001`
+only: it has no usage rows and cannot bring them back. Copy `perplexity.db` somewhere safe first if
+you need the history.
 
 Use your own `PERPLEXITY_DATA_DIR` in the paths if you set one. Both server processes (a pm2 HTTP
 instance and a stdio instance) may share one data directory.
@@ -355,11 +466,14 @@ src/mcp_perplexity_pro/
   catalog.py      model list cache, stale-on-failure rule, documented presets
   models/         tolerant pydantic models for API payloads
   tools/          one module per tool, each with register(server)
-  storage/        engine, unit_of_work session, migration runner, project rules
+  usage.py        usage recorder (record_usage), money helpers, the Agent usage parser
+  pricing.py      documented Perplexity prices in nano-USD, for costs the API does not report
+  usage_report.py read-only spend report behind perplexity_usage
+  storage/        engine, unit_of_work session, migration runner, project rules, ORM models
   migrations/     Alembic environment and versions/NNNN_slug.py (packaged in the wheel)
   log_setup.py, redaction.py   stderr logging with secrets removed
 tests/            offline tests, fixtures/, and the live-marked capture helper
-openspec/         the spec-driven change records (py-foundation)
+openspec/         the spec-driven change records (py-foundation, py-usage-log)
 ```
 
 Contributor and agent guidance is in `CLAUDE.md`.
