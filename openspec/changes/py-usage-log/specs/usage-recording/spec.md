@@ -93,7 +93,7 @@ Each event SHALL carry every scalar the API reported: input, output, total, cach
 - **THEN** the field is present in the stored copy
 
 ### Requirement: Parsing never fails
-Turning a usage object into recorder input SHALL never raise. Any malformed part (a non-mapping detail object, a string, negative, boolean or out-of-range token count, a non-mapping per-tool entry) SHALL become unknown for that figure and be logged, while every well-formed figure is kept.
+The recorder SHALL accept a usage object either already parsed or as the raw mapping and, for a raw mapping, parse it inside its own guarded block, so a parser fault never reaches the calling tool. Parsing SHALL never raise. Any malformed part (a non-mapping detail object, a string, negative, boolean or out-of-range token count, a non-mapping per-tool entry) SHALL become unknown for that figure and be logged, while every well-formed figure is kept.
 
 #### Scenario: Malformed sub-fields
 - **WHEN** a usage object has `input_tokens_details` as a list, `output_tokens` as `"30"`, `total_tokens` as -1 and a `tool_calls_details` entry that is a string
@@ -103,8 +103,12 @@ Turning a usage object into recorder input SHALL never raise. Any malformed part
 - **WHEN** a token count is `true` or exceeds 10^12
 - **THEN** that count is unknown and the event is still stored
 
+#### Scenario: Parser fault contained
+- **WHEN** the recorder is handed a raw usage mapping and the parser raises
+- **THEN** the recorder returns without raising, logs the fault redacted, and the tool's result is unchanged
+
 ### Requirement: Exact integer money
-The server SHALL store every cost as a whole number of nano-USD (one billionth of a US dollar). A reported decimal cost SHALL be converted from its decimal text, rounding half up, so binary floating-point error never enters stored values, and totals SHALL be integer sums. A conversion that cannot complete, or a value above 10^15 nano-USD (1,000,000 USD) for one cost, SHALL be treated as unusable.
+The server SHALL store every cost as a whole number of nano-USD (one billionth of a US dollar). A reported decimal cost SHALL be converted from its decimal text, rounding half up, so binary floating-point error never enters stored values, and totals SHALL be integer sums. A conversion that cannot complete, or a value above 10^12 nano-USD (1,000 USD) for one cost, SHALL be treated as unusable.
 
 #### Scenario: Reported cost converted
 - **WHEN** a response reports a cost of 0.00021 USD
@@ -149,7 +153,7 @@ The server SHALL hold Perplexity's documented prices as dated constants with the
 - **THEN** it records the date of the price table used
 
 ### Requirement: Recording never disturbs the call
-Recording SHALL never raise into, delay beyond the database busy timeout, or change the result of the tool call it observes. It SHALL run after the upstream call has returned or failed, in its own unit of work separate from any the tool uses, and SHALL NOT create projects. If recording fails, the failure SHALL be logged with secrets removed.
+Recording SHALL never raise into, delay beyond the database busy timeout, or change the result of the tool call it observes, including when parsing the usage it is handed fails. It SHALL run after the upstream call has returned or failed, in its own unit of work separate from any the tool uses, and SHALL NOT create projects. If recording fails, the failure SHALL be logged with secrets removed.
 
 #### Scenario: Database unavailable
 - **WHEN** the database is locked past the busy timeout when an event is recorded
@@ -179,7 +183,7 @@ An event SHALL NOT contain prompts, response text, request bodies, headers or th
 - **THEN** no part of its output text or the request prompt is stored
 
 ### Requirement: Stored usage JSON is sanitized and bounded
-The stored usage JSON SHALL be the usage object serialized as strict JSON (no NaN or Infinity), with key-shaped tokens removed from the serialized text, and SHALL be at most 16 KB. A usage object that cannot be serialized strictly or exceeds the cap SHALL be replaced by a marker object naming the reason and, for size, the original byte count. The upstream-tool names, currency, model, preset, request id, tool and project name SHALL pass the same removal.
+The stored usage JSON SHALL be the usage object serialized as strict JSON (no NaN or Infinity), with key-shaped tokens removed from the text, and at most 16 KB. An object that cannot be serialized strictly, whose redacted text no longer parses, or that exceeds the cap SHALL be replaced by a marker object naming the reason and, for size, the original byte count. The upstream-tool names, currency, model, preset, request id, tool and project name SHALL pass the same removal.
 
 #### Scenario: Key-shaped value inside usage
 - **WHEN** a usage object holds a key-shaped token in one field and ordinary values elsewhere
@@ -188,6 +192,10 @@ The stored usage JSON SHALL be the usage object serialized as strict JSON (no Na
 #### Scenario: Non-finite number
 - **WHEN** a usage object contains NaN
 - **THEN** the event is stored with the marker object in place of the copy and no exception is raised
+
+#### Scenario: Redaction breaks the JSON
+- **WHEN** a configured secret containing a quote is redacted from the serialized usage and the result no longer parses
+- **THEN** the event is stored with the marker object and no exception is raised
 
 #### Scenario: Oversize usage
 - **WHEN** a serialized usage object is larger than 16 KB
