@@ -41,10 +41,32 @@
       "reconcileNeeded": false,
       "parent": "python-rewrite-2-0",
       "description": "uv project, src/ layout, ruff line-length 100, pytest in pyproject, .pre-commit-config.yaml (ruff-check --fix, ruff-format, local pytest hook), CI running the same, pydantic-settings, async httpx client with live-probe-shaped models (extra=allow), SQLAlchemy 2.0 + Alembic 0001_ base, health endpoint, pm2 on port 8102 /mcp. Live-probe /v1/agent and old async path first.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "3a5921c",
+        "255d705",
+        "88ece20"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:44.195Z",
-      "startedAt": "2026-10-07T00:03:44.194Z"
+      "touchedAt": "2026-10-09T16:07:08.913Z",
+      "startedAt": "2026-10-07T00:03:44.194Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T16:07:01.868Z",
+          "artifacts": [
+            "openspec/changes/py-foundation/proposal.md",
+            "openspec/changes/py-foundation/design.md",
+            "openspec/changes/py-foundation/tasks.md",
+            "openspec/changes/py-foundation/specs/server-runtime/spec.md",
+            "openspec/changes/py-foundation/specs/perplexity-client/spec.md",
+            "openspec/changes/py-foundation/specs/model-catalog/spec.md",
+            "openspec/changes/py-foundation/specs/local-storage/spec.md",
+            "openspec/changes/py-foundation/specs/quality-gates/spec.md"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review, re-review, narrow verification (2026-10-09)"
+        }
+      },
+      "release": "release-2-0-0"
     },
     {
       "id": "py-agent-api",
@@ -273,8 +295,43 @@
     }
   ],
   "detourStack": [],
-  "revision": 19,
+  "revision": 25,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
-  "platform": "claude-code"
+  "platform": "claude-code",
+  "releases": [
+    {
+      "id": "release-2-0-0",
+      "intent": "Python rewrite of the Perplexity MCP server on the Agent, Search, Embeddings and Decisions APIs (Sonar is retired and returns 403)",
+      "deferred": [],
+      "target": "2.0.0",
+      "crossSpecReview": {
+        "verdict": "pass",
+        "reviewedAt": "2026-10-09T16:07:09.063Z",
+        "specs": [
+          {
+            "key": "py-foundation/specs/local-storage/spec.md",
+            "sha256": "3888c1ff8cdcb04289ab308c0c3ebab0a3a6fb43af280e5dc6b65a8d7722602d"
+          },
+          {
+            "key": "py-foundation/specs/model-catalog/spec.md",
+            "sha256": "792825d7d1c9bca7403649a1fd7e32d49d856bba5ccc388b4023ed1a6d085f35"
+          },
+          {
+            "key": "py-foundation/specs/perplexity-client/spec.md",
+            "sha256": "85ff3c715584f21482f653a46cf34b4d919afbbaebabf4dee013483446b27297"
+          },
+          {
+            "key": "py-foundation/specs/quality-gates/spec.md",
+            "sha256": "96377aa21a4580e04deda4a0d1eb56cdbdd9a31aa33b60e5d539ddb1d6290044"
+          },
+          {
+            "key": "py-foundation/specs/server-runtime/spec.md",
+            "sha256": "e6905ea9f053c17d06c260c2ac364f121c6cdd197c14e3a5ade60d7bc1e4c38e"
+          }
+        ],
+        "reviewer": "fresh-context general-purpose subagents: cross-spec review, re-review, narrow verification (2026-10-09)"
+      }
+    }
+  ]
 }
