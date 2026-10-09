@@ -38,7 +38,7 @@ from mcp_perplexity_pro.storage.chats import (
 )
 from mcp_perplexity_pro.storage.projects import find_project, validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
-from mcp_perplexity_pro.tools.ask import build_result, render_answer
+from mcp_perplexity_pro.tools.ask import GENERIC_400, build_result, render_answer
 
 logger = logging.getLogger(__name__)
 
@@ -223,20 +223,24 @@ async def _send(
         continuation = "new"
 
     # 4. The upstream call: recorded by run_costed, no write unit open.
-    costed = await run_costed(
-        app,
-        tool=TOOL,
-        project=name,
-        body=body,
-        preset=options.preset,
-        background=False,
-        resolve_project=chat_id is None,
-    )
+    try:
+        costed = await run_costed(
+            app,
+            tool=TOOL,
+            project=name,
+            body=body,
+            preset=options.preset,
+            background=False,
+            resolve_project=chat_id is None,
+        )
+    except PerplexityError as exc:
+        raise (continuation_hint(exc) if continuation == "chained" else exc) from None
     secrets = (app.settings.api_key.get_secret_value(),)
     answer = digest(costed.run, secrets=secrets)
 
     # 5. Only now the chat's own write: one short unit, after the event was recorded.
     saved: ChatSummary | None = None
+    complete = answer.status == "completed"  # an incomplete turn is returned, never stored
     turn = AssistantTurn(
         response_id=costed.run.id,
         content=answer.answer,
@@ -245,14 +249,15 @@ async def _send(
         sources_json=json.dumps([s.model_dump() for s in answer.sources]),
     )
     try:
-        async with unit_of_work(app.engine) as session:
-            if chat_id is None:
-                found = await find_project(session, name)
-                if found is None:
-                    raise _not_found_project(name)
-                saved = await create_chat(session, found.id, clean_title, message, turn)
-            else:
-                saved = await append_turn(session, project_id, chat_id, message, turn)
+        if complete:
+            async with unit_of_work(app.engine) as session:
+                if chat_id is None:
+                    found = await find_project(session, name)
+                    if found is None:
+                        raise _not_found_project(name)
+                    saved = await create_chat(session, found.id, clean_title, message, turn)
+                else:
+                    saved = await append_turn(session, project_id, chat_id, message, turn)
     except PerplexityError as exc:
         if exc.category == "not_found":
             raise
@@ -275,6 +280,30 @@ async def _send(
     )
     header = f"Chat {result.chat_id}" if result.chat_id is not None else "No chat saved"
     return result, f"{header} ({continuation}).\n\n" + render_answer(ask).replace("\n".join(()), "")
+
+
+def continuation_hint(exc: PerplexityError) -> PerplexityError:
+    """The API rejects an unknown, malformed, unfinished or cancelled ``previous_response_id``
+    with one generic 400, the same body it gives for other mistakes (design D6). Only that exact
+    body on a chained send is rewritten; any other error, including a 400 that says what is
+    wrong, passes through untouched. No retry: a hidden second call would double the bill."""
+    if (
+        exc.category == "invalid_request"
+        and exc.status == 400
+        and exc.api_type == "invalid_request"
+        and exc.api_message == GENERIC_400
+    ):
+        return PerplexityError(
+            "invalid_request",
+            "The provider could not continue from the previous response (it answered "
+            f"{GENERIC_400!r}): the stored response id may have expired or been rejected. "
+            "Send again with replay true to resend the stored history.",
+            status=exc.status,
+            api_type=exc.api_type,
+            api_code=exc.api_code,
+            api_message=exc.api_message,
+        )
+    return exc
 
 
 def _not_saved(category: str) -> str:
