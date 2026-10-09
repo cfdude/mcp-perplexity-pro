@@ -125,3 +125,21 @@ async def test_deleting_a_project_cascades_to_children(storage_engine):
     async with unit_of_work(storage_engine) as session:
         await session.execute(text("DELETE FROM projects WHERE name='alpha'"))
     assert await _scalar(storage_engine, "SELECT count(*) FROM notes") == 0
+
+
+KEY_SHAPED = "pplx-" + "abcdefghijklmnopqrstuvwx"  # pplx- followed by 24 letters
+
+
+def test_key_shaped_names_are_rejected():
+    with pytest.raises(PerplexityError) as info:
+        validate_project_name(KEY_SHAPED)
+    assert info.value.category == "invalid_request"
+    assert KEY_SHAPED not in str(info.value)  # the rejection must not echo the key shape
+    validate_project_name("pplx-short")  # not key-shaped: fewer than 20 key characters
+
+
+async def test_key_shaped_name_via_get_or_create_creates_nothing(storage_engine):
+    with pytest.raises(PerplexityError) as info:
+        await write_note(storage_engine, "x", KEY_SHAPED)
+    assert info.value.category == "invalid_request"
+    assert await _project_names(storage_engine) == []

@@ -176,9 +176,14 @@ class PerplexityClient:
                 retryable = is_read or not_sent
             except httpx2.HTTPError as exc:
                 self._log_call(method, path, attempt, started, None)
+                detail = (
+                    "the connection failed"
+                    if isinstance(exc, httpx2.ConnectError)
+                    else "no response was received"
+                )
                 error = PerplexityError(
                     "network_timeout",
-                    f"Could not reach the Perplexity API ({type(exc).__name__}).",
+                    f"Could not reach the Perplexity API: {detail} ({type(exc).__name__}).",
                     secrets=self._secrets(),
                 )
                 retryable = is_read or isinstance(exc, httpx2.ConnectError)

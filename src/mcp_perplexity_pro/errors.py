@@ -71,7 +71,7 @@ class PerplexityError(ToolError):
         self.category = category
         self.status = status
         self.api_type = redact_text(api_type, secrets) if api_type else None
-        self.api_code = api_code
+        self.api_code = redact_text(api_code, secrets) if isinstance(api_code, str) else api_code
 
 
 def category_for_status(status: int) -> str:

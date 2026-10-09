@@ -198,6 +198,26 @@ async def test_post_connect_failure_exhausts_attempts(build):
     assert len(script.requests) == 3
 
 
+async def test_connection_failure_message_states_the_connection_failed(build):
+    """Spec scenario 'Connection failure': every attempt fails to connect."""
+    script = Script(httpx2.ConnectError)
+    with pytest.raises(PerplexityError) as info:
+        await build(script).request_json("POST", "/v1/agent", json={})
+    assert info.value.category == "network_timeout"
+    assert "connection failed" in str(info.value).lower()
+    assert len(script.requests) == 3
+
+
+async def test_invalid_json_body_is_unexpected_response(build):
+    """Spec scenario 'Invalid JSON body': a 200 whose body is not JSON."""
+    script = Script(httpx2.Response(200, content=b"<html>not json</html>"))
+    with pytest.raises(PerplexityError) as info:
+        await build(script).request_json("GET", "/v1/models")
+    assert info.value.category == "unexpected_response"
+    assert info.value.status == 200
+    assert len(script.requests) == 1
+
+
 # --- GETs --------------------------------------------------------------------------------
 
 

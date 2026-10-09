@@ -18,6 +18,9 @@ from mcp_perplexity_pro.storage.models import Project
 DEFAULT_PROJECT = "default"
 MAX_NAME_LENGTH = 64
 _NAME = re.compile(r"[A-Za-z0-9_.-]{1,64}", re.ASCII)
+# A name shaped like an API key (``pplx-`` plus 20 or more key characters) is refused: the name
+# is stored, listed and echoed in errors, and a pasted key must never end up there.
+_KEY_SHAPED_NAME = re.compile(r"pplx-[A-Za-z0-9_-]{20,}")
 
 
 def validate_project_name(name: str) -> str:
@@ -31,6 +34,11 @@ def validate_project_name(name: str) -> str:
     if name.startswith("."):  # also rejects '.' and '..'
         raise PerplexityError(
             "invalid_request", f"Invalid project name {name!r}: must not begin with '.'."
+        )
+    if _KEY_SHAPED_NAME.search(name):
+        raise PerplexityError(
+            "invalid_request",
+            "Invalid project name: it looks like an API key. Choose a descriptive name.",
         )
     return name
 

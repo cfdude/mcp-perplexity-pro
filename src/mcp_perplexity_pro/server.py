@@ -25,7 +25,7 @@ from starlette.responses import JSONResponse
 
 from mcp_perplexity_pro.catalog import Catalog
 from mcp_perplexity_pro.client import PerplexityClient
-from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
 from mcp_perplexity_pro.tools import register_tools
@@ -62,7 +62,10 @@ def error_result(category: str, message: str) -> ToolResult:
 
     ``structuredContent`` and ``_meta`` carry the machine-readable ``category``; the text
     content repeats it as a ``[category]`` prefix for a client that shows only text.
+    ``category`` must be one of the closed vocabulary (``errors.ALL_CATEGORIES``).
     """
+    if category not in ALL_CATEGORIES:
+        raise ValueError(f"unknown error category {category!r}")
     return ToolResult(
         content=f"[{category}] {message}",
         structured_content={"category": category, "message": message},
@@ -119,7 +122,9 @@ class ErrorContractMiddleware(Middleware):
         try:
             return await call_next(context)
         except PerplexityError as exc:
-            return error_result(exc.category, str(exc))
+            # PerplexityError already redacts what it was built with; this covers a message
+            # that gained text afterwards, or a subclass that skipped its own redaction.
+            return error_result(exc.category, redact_text(str(exc), self._secrets))
         except Exception as exc:
             return self._classify(context, exc)
 

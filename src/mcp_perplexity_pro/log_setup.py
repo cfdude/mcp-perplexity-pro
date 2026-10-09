@@ -10,11 +10,10 @@ import logging
 import sys
 import traceback
 from collections.abc import Iterable
-from typing import Any
 
 from mcp_perplexity_pro.redaction import REDACTED, redact_text
 
-__all__ = ["REDACTED", "RedactingFilter", "configure_logging", "log_payload", "redact_text"]
+__all__ = ["REDACTED", "RedactingFilter", "configure_logging", "redact_text"]
 
 HANDLER_NAME = "mcp_perplexity_pro"
 
@@ -81,9 +80,3 @@ def configure_logging(level: str = "INFO", secrets: Iterable[str] = ()) -> None:
     fastmcp_logger = logging.getLogger("fastmcp")
     fastmcp_logger.handlers.clear()
     fastmcp_logger.propagate = True
-
-
-def log_payload(logger: logging.Logger, label: str, payload: Any) -> None:
-    """Log a request or response body. Emitted only at DEBUG, never at the default level."""
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("%s: %r", label, payload)

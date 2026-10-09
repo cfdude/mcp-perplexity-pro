@@ -101,6 +101,23 @@ async def test_delete_with_a_path_like_name_is_invalid_request(server, storage_e
     assert await names(storage_engine) == []
 
 
+async def test_delete_with_a_key_shaped_name_is_invalid_request(server, storage_engine):
+    name = "pplx-" + "abcdefghijklmnopqrstuvwx"
+    result = await call(server, action="delete", project=name, confirm=True)
+    assert result.structured_content["category"] == "invalid_request"
+    assert name not in str(result.structured_content) and name not in result.content[0].text
+    assert await names(storage_engine) == []
+
+
+async def test_error_text_never_contains_the_configured_key(server, dummy_api_key):
+    """The key can be typed as a project name (valid characters); the middleware redacts it."""
+    result = await call(server, action="delete", project=dummy_api_key, confirm=True)
+    assert result.is_error
+    assert result.structured_content["category"] == "not_found"
+    assert dummy_api_key not in str(result.structured_content)
+    assert dummy_api_key not in result.content[0].text
+
+
 async def test_delete_without_a_project_is_invalid_request(server):
     result = await call(server, action="delete", confirm=True)
     assert result.structured_content["category"] == "invalid_request"

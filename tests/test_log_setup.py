@@ -8,7 +8,6 @@ from mcp_perplexity_pro.log_setup import (
     REDACTED,
     RedactingFilter,
     configure_logging,
-    log_payload,
     redact_text,
 )
 
@@ -120,17 +119,3 @@ def test_configure_twice_installs_one_handler():
     ours = [h for h in logging.getLogger().handlers if h.get_name() == "mcp_perplexity_pro"]
     assert len(ours) == 1
     assert logging.getLogger().level == logging.DEBUG
-
-
-def test_payload_is_not_logged_at_the_default_level(capsys):
-    configure_logging("INFO", [KEY])
-    log_payload(logging.getLogger("t"), "request body", {"prompt": "tell me a secret"})
-    assert capsys.readouterr().err == ""
-
-
-def test_payload_at_debug_is_still_redacted(capsys):
-    configure_logging("DEBUG", [KEY])
-    log_payload(logging.getLogger("t"), "request body", {"prompt": f"use {KEY}"})
-    err = capsys.readouterr().err
-    assert "request body" in err
-    assert KEY not in err

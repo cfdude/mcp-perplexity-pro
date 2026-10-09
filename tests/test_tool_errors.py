@@ -200,3 +200,16 @@ async def test_every_failure_kind_lands_in_the_closed_vocabulary(server_and_sett
         result = await call(server, name, arguments)
         assert result.is_error, name
         assert result.structured_content["category"] in SPEC_VOCABULARY, name
+
+
+def test_error_result_rejects_a_category_outside_the_vocabulary():
+    from mcp_perplexity_pro.server import error_result
+
+    with pytest.raises(ValueError):
+        error_result("made_up", "x")
+
+
+def test_api_code_is_redacted_when_it_is_a_string():
+    err = PerplexityError("authentication", "bad", api_code=f"bad key {KEY}")
+    assert KEY not in str(err.api_code)
+    assert PerplexityError("authentication", "bad", api_code=401).api_code == 401
