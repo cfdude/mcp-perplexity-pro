@@ -168,6 +168,7 @@ def test_stdio_refuses_new_calls_while_draining(tmp_path):
         replies[message["id"]] = message["result"]
     assert replies[8]["isError"] is True
     assert replies[8]["structuredContent"]["category"] == "internal_error"
+    assert "shutting down" in replies[8]["structuredContent"]["message"]
     assert replies[7]["structuredContent"]["result"] == "rested"  # the running call still finishes
     assert_clean_exit(proc, tail)
 

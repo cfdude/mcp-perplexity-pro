@@ -124,9 +124,15 @@ def current_revision(db_file: Path) -> str | None:
             return row[0] if row else None
         finally:
             conn.close()
-    except sqlite3.Error as exc:
+    except sqlite3.DatabaseError as exc:
+        # also the parent of OperationalError, so tell a transient lock from a non-database file
+        hint = (
+            "Is it a SQLite database?"
+            if "not a database" in str(exc).lower()
+            else "The database may be locked or damaged."
+        )
         raise MigrationError(
-            f"Cannot read database {db_file}: {exc}. Is it a SQLite database? Nothing was changed."
+            f"Cannot read database {db_file}: {exc}. {hint} Nothing was changed."
         ) from exc
 
 

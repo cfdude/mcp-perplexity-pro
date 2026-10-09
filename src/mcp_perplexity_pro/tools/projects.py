@@ -32,7 +32,10 @@ class ProjectsResult(BaseModel):
     ] = None
     rows_removed: Annotated[
         int | None,
-        Field(description="Rows removed from project-scoped tables (delete only)"),
+        Field(
+            description="Rows removed from tables that reference the project directly; "
+            "deeper rows go by cascade and are not counted (delete only)"
+        ),
     ] = None
 
 

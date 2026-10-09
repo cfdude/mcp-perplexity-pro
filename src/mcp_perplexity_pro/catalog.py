@@ -140,7 +140,7 @@ class Catalog:
         return self._clock() - self._fetched_at
 
     async def get(self, *, refresh: bool = False) -> Listing:
-        if not refresh and self._models is not None and self._age() < self._ttl:
+        if not refresh and self._models is not None and 0 <= self._age() < self._ttl:
             return Listing(self._models, self._age(), stale=False)
         try:
             models = await self._fetch_shared()
@@ -148,7 +148,7 @@ class Catalog:
             if (
                 exc.category in STALE_OK_CATEGORIES
                 and self._models is not None
-                and self._age() < self._max_stale
+                and 0 <= self._age() < self._max_stale
             ):
                 return Listing(self._models, self._age(), stale=True)
             raise

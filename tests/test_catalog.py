@@ -202,6 +202,13 @@ async def test_cache_hit_makes_one_upstream_request(server, upstream, clock):
     assert by_id(first) == by_id(second)
 
 
+async def test_clock_stepping_backwards_never_serves_a_cache_as_fresh(server, upstream, clock):
+    await call(server)
+    clock.advance(-7200)  # an NTP step or manual change moves the wall clock back
+    await call(server)
+    assert upstream.calls == 2
+
+
 async def test_cache_expires_after_the_ttl(server, upstream, clock):
     await call(server)
     clock.advance(3601)
