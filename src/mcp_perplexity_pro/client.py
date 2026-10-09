@@ -7,7 +7,9 @@ escaping ``httpx2`` error with its own fixed message and the category would be l
 from __future__ import annotations
 
 import asyncio
+import logging
 import random
+import time
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
@@ -21,6 +23,10 @@ from mcp_perplexity_pro.models import ModelList
 from mcp_perplexity_pro.settings import Settings
 
 M = TypeVar("M", bound=BaseModel)
+
+logger = logging.getLogger(__name__)
+
+_REQUEST_ID_HEADERS = ("x-request-id", "request-id")
 
 _TIMEOUT_NAMES = (
     (httpx2.ConnectTimeout, "connect"),
@@ -91,6 +97,40 @@ class PerplexityClient:
             timeout=self._timeout,
         )
 
+    @staticmethod
+    def _log_call(
+        method: str,
+        path: str,
+        attempt: int,
+        started: float,
+        response: httpx2.Response | None,
+    ) -> None:
+        """One diagnostic record per upstream call; never a body, header value or credential."""
+        elapsed_ms = round((time.monotonic() - started) * 1000, 1)
+        status = response.status_code if response is not None else None
+        request_id = None
+        if response is not None:
+            request_id = next(
+                (response.headers[h] for h in _REQUEST_ID_HEADERS if h in response.headers), None
+            )
+        logger.info(
+            "upstream %s %s -> %s request_id=%s attempt=%d elapsed_ms=%s",
+            method,
+            path,
+            status if status is not None else "no response",
+            request_id,
+            attempt,
+            elapsed_ms,
+            extra={
+                "http_method": method,
+                "http_path": path,
+                "http_status": status,
+                "request_id": request_id,
+                "attempt": attempt,
+                "elapsed_ms": elapsed_ms,
+            },
+        )
+
     def _backoff(self, attempt: int) -> float:
         """Exponential backoff (1s, 2s, 4s ...) scaled by jitter in [0.5, 1.5), capped."""
         delay = 2.0 ** (attempt - 1) * (0.5 + self._jitter())
@@ -126,13 +166,16 @@ class PerplexityClient:
         attempts = self._settings.max_attempts
         for attempt in range(1, attempts + 1):
             wait: float | None = None  # set when this attempt may be retried
+            started = time.monotonic()
             try:
                 response = await self._send(method, path, json)
             except httpx2.TimeoutException as exc:
+                self._log_call(method, path, attempt, started, None)
                 error = self._timeout_error(exc)
                 not_sent = isinstance(exc, httpx2.ConnectTimeout)
                 retryable = is_read or not_sent
             except httpx2.HTTPError as exc:
+                self._log_call(method, path, attempt, started, None)
                 error = PerplexityError(
                     "upstream_failure",
                     f"Could not reach the Perplexity API ({type(exc).__name__}).",
@@ -140,6 +183,7 @@ class PerplexityClient:
                 )
                 retryable = is_read or isinstance(exc, httpx2.ConnectError)
             else:
+                self._log_call(method, path, attempt, started, response)
                 if response.status_code < 300:
                     try:
                         return response.json()
