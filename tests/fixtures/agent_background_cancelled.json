@@ -1,0 +1,843 @@
+{
+  "background": true,
+  "completed_at": null,
+  "created_at": 1791572997,
+  "error": {
+    "code": "cancelled",
+    "message": "cancelled",
+    "type": "cancelled"
+  },
+  "frequency_penalty": 0,
+  "id": "resp_5e673b76-3ae9-4a96-abd8-46a85b8108df",
+  "incomplete_details": {
+    "reason": "cancelled"
+  },
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "medium",
+  "object": "response",
+  "output": [
+    {
+      "queries": [
+        "site:crates.io stats crates packages downloads",
+        "site:blog.rust-lang.org crates.io packages downloads statistics 2026",
+        "site:doc.rust-lang.org cargo registry crates.io package ecosystem"
+      ],
+      "results": [
+        {
+          "id": 1,
+          "last_updated": "2026-05-24",
+          "snippet": "Cargo installs crates and fetches dependencies from a “registry”.\nThe default registry is crates.io.\nA registry contains an “index” which contains a searchable list of available crates.\nA registry may also provide a web API to support publishing new crates directly from Cargo.\n...\nTo use a registry other than crates.io, the name and index URL of the\nregistry must be added to a\n```\n.cargo/config.toml\n```\nfile.\n...\nA crate can then depend on a crate from another registry by specifying the\n```\nregistry\n```\nkey and a value of the registry’s name in that dependency’s entry\nin\n```\nCargo.toml\n...\nIf the registry supports web API access, then packages can be published\ndirectly to the registry from Cargo.\n...\n```\n--registry\n...\ncommand-line flag to indicate which\n...\nCargo supports two remote registry protocols:\n```\ngit\n```\nand\n```\nsparse\n```\n. If the registry\nindex URL starts with\n```\nsparse+\n```\n, Cargo uses the sparse protocol. Otherwise\nCargo uses the\n```\ngit\n```\nprotocol.\nThe\n```\ngit\n```\nprotocol stores index metadata in a git repository and requires Cargo to clone\nthe entire repo.\nThe\n```\nsparse\n```\nprotocol fetches individual metadata files using plain HTTP requests.\nSince Cargo only downloads the metadata for relevant crates, the\n```\nsparse\n```\nprotocol can\nsave significant time and bandwidth.\nThe crates.io registry supports both protocols. The protocol for crates.io is\ncontrolled via the\n```\nregistries.crates-io.protocol\n```\nconfig key.",
+          "source": "web",
+          "title": "The Cargo Book",
+          "url": "https://doc.rust-lang.org/cargo/reference/registries.html?highlight=registry"
+        },
+        {
+          "id": 2,
+          "last_updated": "2026-03-29",
+          "snippet": "Cargo installs crates and fetches dependencies from a “registry”.\nThe default registry is crates.io.\nA registry contains an “index” which contains a searchable list of available crates.\nA registry may also provide a web API to support publishing new crates directly from Cargo.\n...\nTo use a registry other than crates.io, the name and index URL of the\nregistry must be added to a\n```\n.cargo/config.toml\n```\nfile.\n...\nA crate can then depend on a crate from another registry by specifying the\n```\nregistry\n```\nkey and a value of the registry’s name in that dependency’s entry\nin\n```\nCargo.toml\n...\nIf the registry supports web API access, then packages can be published\ndirectly to the registry from Cargo.\n...\n--registry\n...\ncommand-line flag to indicate which\n...\nCargo supports two remote registry protocols:\n```\ngit\n```\nand\n```\nsparse\n```\n. If the registry\nindex URL starts with\n```\nsparse+\n```\n, Cargo uses the sparse protocol. Otherwise\nCargo uses the\n```\ngit\n```\nprotocol.\nThe\n```\ngit\n```\nprotocol stores index metadata in a git repository and requires Cargo to clone\nthe entire repo.\nThe\n```\nsparse\n```\nprotocol fetches individual metadata files using plain HTTP requests.\nSince Cargo only downloads the metadata for relevant crates, the\n```\nsparse\n```\nprotocol can\nsave significant time and bandwidth.\nThe crates.io registry supports both protocols. The protocol for crates.io is\ncontrolled via the\n```\nregistries.crates-io.protocol\n```\nconfig key.",
+          "source": "web",
+          "title": "The Cargo Book",
+          "url": "https://doc.rust-lang.org/beta/cargo/reference/registries.html"
+        },
+        {
+          "id": 3,
+          "last_updated": "2026-10-02",
+          "snippet": "# Dependencies\ncrates.io is the Rust community’s central *package registry* that serves as a location to discover and download packages.\n`cargo` is configured to use it by default to find\nrequested packages.\nTo depend on a library hosted on crates.io, add it to your `Cargo.toml`.\n...\n## Adding a dependency\nIf your `Cargo.toml` doesn’t already have a `[dependencies]` section, add\nthat, then list the crate name and version that you would like to use.\n...\nRe-run `cargo build`, and Cargo will fetch the new dependencies and all of\ntheir dependencies, compile them all, and update the `Cargo.lock`:",
+          "source": "web",
+          "title": "Dependencies",
+          "url": "https://doc.rust-lang.org/cargo/guide/dependencies.html"
+        },
+        {
+          "id": 4,
+          "last_updated": "2026-10-07",
+          "snippet": "# Dependencies\ncrates.io is the Rust community’s central *package registry* that serves as a location to discover and download packages.\n`cargo` is configured to use it by default to find\nrequested packages.\nTo depend on a library hosted on crates.io, add it to your `Cargo.toml`.\n...\n## Adding a dependency\nIf your `Cargo.toml` doesn’t already have a `[dependencies]` section, add\nthat, then list the crate name and version that you would like to use.\n...\nRe-run `cargo build`, and Cargo will fetch the new dependencies and all of\ntheir dependencies, compile them all, and update the `Cargo.lock`:",
+          "source": "web",
+          "title": "doc.rust-lang.org · stable · cargoDependencies - The Cargo Book - Learn Rust",
+          "url": "https://doc.rust-lang.org/stable/cargo/guide/dependencies.html"
+        },
+        {
+          "id": 5,
+          "last_updated": "2026-10-05",
+          "snippet": "Cargo installs crates and fetches dependencies from a “registry”.\nThe default\nregistry is crates.io.\nA registry contains an “index” which contains a searchable list of available crates.\nA registry may also provide a web API to support publishing new crates directly from Cargo.\n...\nTo use a registry other than crates.io, the name and index URL of the registry must be added to a `.cargo/config.toml` file.\n...\nA crate can then depend on a crate from another registry by specifying the\n`registry` key and a value of the registry’s name in that dependency’s entry\nin `Cargo.toml`:\n...\nIf the registry supports web API access, then packages can be published\ndirectly to the registry from Cargo.\nSeveral of Cargo’s commands such as\n`cargo publish` take a `--registry` command-line flag to indicate which\nregistry to use.\n...\nCargo supports two remote registry protocols: `git` and `sparse`.\nIf the registry\nindex URL starts with `sparse+`, Cargo uses the sparse protocol.\nOtherwise\nCargo uses the `git` protocol.\nThe `git` protocol stores index metadata in a git repository and requires Cargo to clone\nthe entire repo.\nThe `sparse` protocol fetches individual metadata files using plain HTTP requests.\nSince Cargo only downloads the metadata for relevant crates, the `sparse` protocol can\n...\nThe crates.io registry supports both protocols.\nThe protocol for crates.io is controlled via the `registries.crates-io.protocol` config key.",
+          "source": "web",
+          "title": "Registries - The Cargo Bookdoc.rust-lang.org › nightly › cargo › reference › registries",
+          "url": "https://doc.rust-lang.org/nightly/cargo/reference/registries.html"
+        },
+        {
+          "id": 6,
+          "last_updated": "2026-10-02",
+          "snippet": "# The Rust Programming Language\n## Publishing a Crate to Crates.io\nWe’ve used packages from crates.io as dependencies of our project, but you can also share your code with other people by publishing your own packages.\nThe crate registry at crates.io distributes the source code of your packages, so it primarily hosts code that is open source.\nRust and Cargo have features that make your published package easier for people\nto find and use.",
+          "source": "web",
+          "title": "Publishing a Crate to Crates.io - The Rust Programming ...",
+          "url": "https://doc.rust-lang.org/stable/book/ch14-02-publishing-to-crates-io.html?highlight=yank"
+        },
+        {
+          "date": "2026-10-01",
+          "id": 7,
+          "last_updated": "2026-10-09",
+          "snippet": "## Owners\n### Stats Overview\n731,381 Recent downloads 7,798,086 Downloads all time 68 Versions published\n#### Downloads over the last 90 days",
+          "source": "web",
+          "title": "crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates/crates-io"
+        },
+        {
+          "id": 8,
+          "last_updated": "2026-10-03",
+          "snippet": "We’ve used packages from crates.io as dependencies of our project, but you can also share your code with other people by publishing your own packages.\nThe crate registry at crates.io distributes the source code of your packages, so it primarily hosts code that is open source.\nRust and Cargo have features that make your published package easier for people\nto find and use.",
+          "source": "web",
+          "title": "Publishing a Crate to Crates.io - The Rust Programming Language",
+          "url": "https://doc.rust-lang.org/book/ch14-02-publishing-to-crates-io.html"
+        },
+        {
+          "date": "2026-07-31",
+          "id": 9,
+          "last_updated": "2026-10-09",
+          "snippet": "Statistical functions module for SciRS2 (scirs2-stats)\n...\nscirs2-stats = \"0.6.5\"",
+          "source": "web",
+          "title": "scirs2-stats - crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates/scirs2-stats"
+        },
+        {
+          "date": "2026-07-24",
+          "id": 10,
+          "last_updated": "2026-10-08",
+          "snippet": "# The Rust community’s crate registry\n# rs-stats v4.0.0",
+          "source": "web",
+          "title": "rs-stats - crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates/rs-stats"
+        },
+        {
+          "date": "2025-11-12",
+          "id": 11,
+          "last_updated": "2026-10-08",
+          "snippet": "information used by Cargo for accessing the registry.\n...\nThe download endpoint should send the `.crate` file for the requested package.\n...\nfilename is the name of the package in lowercase.",
+          "source": "web",
+          "title": "Registry Index - The Cargo Book - Rust Documentation",
+          "url": "https://doc.rust-lang.org/beta/cargo/reference/registry-index.html"
+        },
+        {
+          "id": 12,
+          "last_updated": "2026-09-23",
+          "snippet": "*Cargo* is the Rust *package manager*, and the primary topic of this book.\n...\nA Rust *crate* is either a library or an executable program, referred to as either a *library crate* or a *binary crate*, respectively.\nEvery target defined for a Cargo package is a *crate*.\n...\nIt may also refer to a compressed package fetched from a registry.\n...\nThe *index* is the searchable list of *crates* in a *registry*.\n...\nA *package* is a collection of source files and a `Cargo.toml`\n*manifest* file which describes the package.\nA package has a name and version which is used for specifying dependencies between packages.\n...\nBroadly speaking, a *package manager* is a program (or collection of related programs) in a software ecosystem that automates the process of obtaining, installing, and upgrading artifacts.\nWithin a programming language ecosystem, a package manager is a developer-focused tool whose primary functionality is to download library artifacts and their dependencies from some central repository; this capability is often combined with the ability to perform software builds (by invoking the language-specific compiler).\n*Cargo* is the package manager within the Rust ecosystem.\nCargo downloads your Rust package’s dependencies (*artifacts* known as *crates*), compiles your packages, makes distributable packages, and (optionally) uploads them to crates.io, the Rust community’s *package registry*.\n...\nA *registry* is a service that contains a collection of downloadable *crates* that can be installed or used as dependencies for a *package*.\nThe default registry in the Rust ecosystem is crates.io.\nThe registry has an *index* which contains a list of all crates, and tells Cargo how to download the crates that are needed.",
+          "source": "web",
+          "title": "Appendix: Glossary - The Cargo Book",
+          "url": "https://doc.rust-lang.org/cargo/appendix/glossary.html"
+        },
+        {
+          "date": "2025-11-12",
+          "id": 13,
+          "last_updated": "2026-10-02",
+          "snippet": "The download endpoint should send the `.crate` file for the requested package.\n...\nfilename is the name of the package in lowercase.",
+          "source": "web",
+          "title": "Registry Index - The Cargo Book",
+          "url": "https://doc.rust-lang.org/cargo/reference/registry-index.html"
+        },
+        {
+          "date": "2026-08-12",
+          "id": 14,
+          "last_updated": "2026-10-07",
+          "snippet": "# statrs v0.19.1\nStatistical computing library for Rust",
+          "source": "web",
+          "title": "statrs - crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates/statrs"
+        },
+        {
+          "date": "2026-03-29",
+          "id": 15,
+          "last_updated": "2026-10-08",
+          "snippet": "## Install\nRun the following Cargo command in your project directory:\ncargo add scivex-stats@=0.1.0 scivex-stats = \"=0.1.0\"",
+          "source": "web",
+          "title": "scivex-stats - crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates/scivex-stats/0.1.0"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "site:go.dev Go modules ecosystem statistics modules count",
+        "site:proxy.golang.org stats modules Go package count",
+        "site:go.dev/blog Go module ecosystem package statistics"
+      ],
+      "results": [
+        {
+          "id": 31,
+          "last_updated": "2026-09-13",
+          "snippet": "# shape-of-go\n## README ¶\n### The Shape of Go\nA map of the Go module ecosystem: every public module, every declared\ndependency edge, one graph.\n2,638,112 modules, 9,443,537 edges, built\nfrom the official module index and proxy and analyzed with\ngonx.",
+          "source": "web",
+          "title": "shape-of-go module - github.com/LuisLSousa/shape-of-go - Go ...",
+          "url": "https://pkg.go.dev/github.com/LuisLSousa/shape-of-go"
+        },
+        {
+          "date": "2020-11-10",
+          "id": 32,
+          "last_updated": "2026-10-02",
+          "snippet": "# Eleven Years of Go\nLast month, we ran our annual Go user survey.\nWe will post results on the blog once we’ve analyzed them.\n...\n## Go Modules\nOne preliminary result from our recent survey is that 96% of users\nhave now adopted Go modules (up from 90% a year ago).",
+          "source": "web",
+          "title": "Eleven Years of Go",
+          "url": "https://go.dev/blog/11years"
+        },
+        {
+          "id": 33,
+          "last_updated": "2026-10-02",
+          "snippet": "# Results from the 2025 Go Developer Survey\n## Survey methodology\nWe received a total of 7,070 responses.\nAfter data cleaning to\n...\nremainder of our analysis.",
+          "source": "web",
+          "title": "Results from the 2025 Go Developer Survey",
+          "url": "https://go.dev/blog/survey2025"
+        },
+        {
+          "date": "2021-03-09",
+          "id": 34,
+          "last_updated": "2026-10-09",
+          "snippet": "# Go Developer Survey 2020 Results\n## Sentiments towards Go\nFor the first time, this year we asked about overall satisfaction.\n92% of respondents said they were very or somewhat satisfied using Go during the past year.\n...\n## Modules\nThis year we found near-universal adoption for Go modules, and a significant increase in the proportion of respondents who only use modules for package management.\n96% of respondents said they were using modules for package management, up from 89% last year.\n87% of respondents said they were using *only* modules for package management, up from 71% last year.\n...\nSatisfaction with modules also increased from last year.\n77% of respondents said they were very, moderately or slightly satisfied with modules, compared to 68% in 2019.",
+          "source": "web",
+          "title": "Go Developer Survey 2020 Results",
+          "url": "https://go.dev/blog/survey2020-results"
+        },
+        {
+          "date": "2022-04-19",
+          "id": 35,
+          "last_updated": "2026-10-09",
+          "snippet": "# Go Developer Survey 2021 Results\n## Go satisfaction and prioritization\n### Challenges when working with modules\nThe most common module-related challenge was working across multiple modules (19% of respondents), followed by comments about versioning (including trepidation around committing to a stable v1 API).",
+          "source": "web",
+          "title": "Go Developer Survey 2021 Results",
+          "url": "https://go.dev/blog/survey2021-results"
+        },
+        {
+          "date": "2020-04-20",
+          "id": 36,
+          "last_updated": "2026-03-10",
+          "snippet": "# Go Developer Survey 2019 Results\n## Working with Go\nRegarding package management, we found that the vast majority of respondents\nhave adopted modules for Go (89%).",
+          "source": "web",
+          "title": "Go Developer Survey 2019 Results - The Go Programming Language",
+          "url": "https://go.dev/blog/survey2019-results"
+        },
+        {
+          "date": "2017-11-10",
+          "id": 37,
+          "last_updated": "2026-09-24",
+          "snippet": "# Eight years of Go\n## Thank You\nSince Go was first open sourced we have had 10 releases of the language,\nlibraries and tooling with more than 1680 contributors making over 50,000\ncommits to the project’s 34 repositories; More than double the number of",
+          "source": "web",
+          "title": "Eight years of Go",
+          "url": "https://go.dev/blog/8years"
+        },
+        {
+          "id": 38,
+          "last_updated": "2026-10-06",
+          "snippet": "# Directory doc / modules\n|File| |Bytes|\n...\n|managing-source.md| |7231|",
+          "source": "web",
+          "title": "- The Go Programming Language",
+          "url": "https://go.dev/doc/modules/"
+        },
+        {
+          "id": 39,
+          "last_updated": "2026-10-08",
+          "snippet": "# sentinel-golang\n## Details\nThe Go module system was introduced in Go 1.11 and is the official dependency management\nsolution for Go.\n...\n## README ¶\n### Sentinel: The Sentinel of Your Microservices\n#### Communication\n|Path|Synopsis|\n|--|--|\n|adapters/gin module| |",
+          "source": "web",
+          "title": "sentinel-golang module - github.com/alibaba/sentinel-golang",
+          "url": "https://pkg.go.dev/github.com/alibaba/sentinel-golang"
+        },
+        {
+          "date": "2022-09-08",
+          "id": 40,
+          "last_updated": "2026-10-04",
+          "snippet": "# Go Developer Survey 2022 Q2 Results\n## Generics\nThe vast majority of survey respondents (86%) were already aware generics\nshipped as part of the Go 1.18 release.",
+          "source": "web",
+          "title": "Go Developer Survey 2022 Q2 Results",
+          "url": "https://go.dev/blog/survey2022-q2-results"
+        },
+        {
+          "date": "2018-12-19",
+          "id": 41,
+          "last_updated": "2026-09-23",
+          "snippet": "# Go Modules in 2019\n## Module Index\nWe are working on a new service, the Go Module Index,\nthat will provide a public log of packages entering the Go ecosystem.",
+          "source": "web",
+          "title": "Go Modules in 2019",
+          "url": "https://go.dev/blog/modules2019"
+        },
+        {
+          "id": 42,
+          "last_updated": "2026-10-05",
+          "snippet": "# pkgsite-metrics\n## Directories ¶\n|Path|Synopsis|\n|--|--|\n|modules Package modules assists in working with modules, e.g., downloading a module via a Go proxy client.|Package modules assists in working with modules, e.g., downloading a module via a Go proxy client.|",
+          "source": "web",
+          "title": "pkgsite-metrics module - golang.org/x ...",
+          "url": "https://pkg.go.dev/golang.org/x/pkgsite-metrics"
+        },
+        {
+          "id": 43,
+          "last_updated": "2026-10-08",
+          "snippet": "# readability\n## README ¶\n### Readability\n#### Available Formulas\n|Formula|Output|Description|\n|--|--|--|\n|`automated_readability_index`|US grade level|Character-based formula|",
+          "source": "web",
+          "title": "readability package - github.com/geordee ...",
+          "url": "https://pkg.go.dev/github.com/geordee/readability"
+        },
+        {
+          "date": "2018-02-26",
+          "id": 44,
+          "last_updated": "2026-10-03",
+          "snippet": "# Go 2017 Survey Results\n## Programming background\nup 5% over 2016), taking over the top spot from writing CLI tools in Go (63%).",
+          "source": "web",
+          "title": "Go 2017 Survey Results",
+          "url": "https://go.dev/blog/survey2017-results"
+        },
+        {
+          "date": "2018-11-10",
+          "id": 45,
+          "last_updated": "2026-10-06",
+          "snippet": "# Nine years of Go\n## Go 2\nLast spring, we published a draft design for Go modules, which provide an integrated mechanism for versioning and package distribution.",
+          "source": "web",
+          "title": "Nine years of Go - The Go Programming Language",
+          "url": "https://go.dev/blog/9years"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "site:ziglang.org package manager packages ecosystem statistics",
+        "site:github.com/ziglang package manager packages Zig package ecosystem",
+        "Zig package ecosystem official package index package count"
+      ],
+      "results": [
+        {
+          "date": "2026-10-07",
+          "id": 16,
+          "last_updated": "2026-10-09",
+          "snippet": "22\n# Packages\n1,761 packages type AllLibrariesApplications sort StarsNameNewestUpdated topics cligamedevlinuxterminalhttpbindingsparserwasmhttp-serverargument-parserbindingtui\n...\nZIG\npackages\nA focused package registry for discovering Zig libraries, applications, and tools.",
+          "source": "web",
+          "title": "Find & Share Zig Libraries - Zig Package Registry",
+          "url": "https://zigpkg.dev/packages"
+        },
+        {
+          "date": "2026-05-18",
+          "id": 17,
+          "last_updated": "2026-05-29",
+          "snippet": "### Rust 1.78 vs Go 1.23 vs Zig 0.13 — side-by-side specs\n|Spec|**Rust 1.78** Free (MIT/Apache-2.0) Best for Correctness|**Go 1.23** Free (BSD) Best for Velocity|**Zig 0.13** Free (MIT) Best for C Interop|\n|--|--|--|--|\n|Package count|138,400 crates|~11,200 modules (pkg.go.dev)|~890 packages|\n...\nSource: The Editorial lab tests, crates.io / pkg.go.dev / ziglang.org package counts, May 2026\n...\n## Round 4: Ecosystem Maturity — Rust Leads in Packages, Go Leads in Stability\nCrates.io hosts 138,400 Rust packages as of May 2026.\nPkg.go.dev indexes roughly 11,200 Go modules (the exact count is fuzzy because Go uses decentralized versioning via Git repositories).\nZig's package ecosystem lists about 890 packages, most experimental or thin wrappers around C libraries.\n...\nTotal packages indexed, May 2026\nRust (crates.io)138,400 packages\nGo (pkg.go.dev est.)11,200 packages\nZig (ziglang.org)890 packages",
+          "source": "web",
+          "title": "Rust vs Go vs Zig 2026: Compile Time & Memory Safety Tested",
+          "url": "https://theeditorial.news/programming/rust-178-vs-go-123-vs-zig-013-compile-time-memory-safety-and-which-one-ships-mpat0i2v"
+        },
+        {
+          "date": "2025-10-02",
+          "id": 18,
+          "last_updated": "2026-10-02",
+          "snippet": "zig ** Public\n- - Fork 3.2k\n- Star 43.3k\n- Issues 2.7k\n- Pull requests 80\n...\n# Install Zig from a Package Manager\nNote: Official builds of master branch and releases are\navailable for download.\n...\nSee Repology for an overview of which package management systems and operating systems Zig has already been packaged for, and what the current packaged version is.\n...\n## NixOS\npackages = [\npkgs.zig\n# other deps here",
+          "source": "web",
+          "title": "github.com › ziglang › zigInstall Zig from a Package Manager · ziglang/zig Wiki · GitHub",
+          "url": "https://github.com/ziglang/zig/wiki/Install-Zig-from-a-Package-Manager/aa978800741ad495ff9a2904e921c6ad55c45635"
+        },
+        {
+          "date": "2025-11-23",
+          "id": 19,
+          "last_updated": "2026-10-08",
+          "snippet": "2. zig\n...\n# Install Zig from a Package Manager\nContent moved to https://ziglang.org/learn/getting-started/#managers",
+          "source": "web",
+          "title": "github.com › Install-Zig-from-a-Package-ManagerInstall Zig from a Package Manager · ziglang/zig Wiki · GitHub",
+          "url": "https://github.com/ziglang/zig/wiki/Install-Zig-from-a-Package-Manager"
+        },
+        {
+          "id": 20,
+          "last_updated": "2026-10-07",
+          "snippet": "# Package manager\n### Zig package manager\nSince 0.11, Zig has now an official built-in package manager that uses files with the `.zig.zon` extension.\nThere is no global repository like crates.io(Rust) or npmjs(Node.js) for Zig packages.\nInstead, Zig packages are distributed as git repositories.",
+          "source": "web",
+          "title": "Package Manager",
+          "url": "https://pismice.github.io/HEIG_ZIG/docs/package-manager/"
+        },
+        {
+          "date": "2021-11-23",
+          "id": 21,
+          "last_updated": "2026-04-17",
+          "snippet": "# introduce declaring zig version ranges in packages; zig package manager additionally perform zig compiler version management #10204\n## Comments\n### andrewrk commented Nov 23, 2021 • edited Loading\nWith the upcoming package manager (#943) there is planned to be a declarative file format, such as `zig-package.json`, which sits alongside build.zig and lists information such as the set of packages that are possibly depended on.",
+          "source": "web",
+          "title": "introduce declaring zig version ranges in packages; zig package manager additionally perform zig compiler version management · Issue #10204 · ziglang/zig",
+          "url": "https://github.com/ziglang/zig/issues/10204"
+        },
+        {
+          "date": "2022-10-25",
+          "id": 22,
+          "last_updated": "2026-10-04",
+          "snippet": "# Zig Is Self-Hosted Now, What's Next?\n## The official package manager\nOnce the self-hosted compiler reaches feature-parity with the bootstrap compiler, we’re going to start working on the first iteration of the official package manager.\n...\nThe main goal of this first iteration is to enable simple usage of dependencies to start building a package ecosystem, and to make sure that we can easily package C/C++ projects, not just Zig.\n...\nWhen it comes to specific features of the official package manager, this is our current take:\n- The package manager will be part of the compiler instead of being a separate executable.\nZig is a language and a compiler toolchain.\n- The package manager will not assume the presence of a central package index.\nWe don’t plan to create an official package index.\n- Version resolution will be similar to Go’s Minimal Version Selection, but with one extra limitation: stable packages will only be able to depend on other stable packages (eg a `v1.x` package cannot depend on a `v0.y` package).",
+          "source": "web",
+          "title": "Zig Is Self-Hosted Now, What's Next? | Loris Cro's Blog",
+          "url": "https://kristoff.it/blog/zig-self-hosted-now-what/"
+        },
+        {
+          "id": 23,
+          "last_updated": "2026-07-29",
+          "snippet": "# Search more than 140 000 packages\n...\n## Showing results 1-50 of 101 packages .\nData from nixpkgs `714a5f8c`.\n...\n- Name: `zig`\n- Version: **0.16.0**",
+          "source": "web",
+          "title": "NixOS Search - Packages - zig",
+          "url": "https://search.nixos.org/packages?channel=23.05&query=zig"
+        },
+        {
+          "date": "2025-12-09",
+          "id": 24,
+          "last_updated": "2025-12-18",
+          "snippet": "# Discover the Best Zig Projects\nThe central registry for Zig projects.\nAutomatically indexed from GitHub to help you build faster.Browse ProjectsAdd Your Project\n...\n## Why use Zig Index?\n### Automated Registry\nAutomatic fetching based on GitHub tags.\nAlways up-to-date with the Zig ecosystem.\n...\n### Fast & Cached\nLive GitHub stats with smart caching.\nFresh data without unnecessary API calls.",
+          "source": "web",
+          "title": "Zig Index | Discover Zig Packages & Applications",
+          "url": "https://zig-index.github.io/"
+        },
+        {
+          "date": "2026-08-21",
+          "id": 25,
+          "last_updated": "2026-10-02",
+          "snippet": "# How to set up a development environment for Zig on Ubuntu ¶\n## Installing Zig ¶\nThere are two main options for installing Zig on Ubuntu:\n- Using Ubuntu packages from the Ubuntu archive: Official packages maintained by the Ubuntu team and installed through the Ubuntu package-management system.",
+          "source": "web",
+          "title": "ubuntu.com › developers › docsHow to set up a development environment for Zig on Ubuntu",
+          "url": "https://ubuntu.com/developers/docs/howto/zig-setup/"
+        },
+        {
+          "date": "2026-01-29",
+          "id": 26,
+          "last_updated": "2026-09-23",
+          "snippet": "# Zig and the M×N Supply Chain Problem\nZig shipped a built-in package manager in version 0.11 in August 2023.\nIt uses `build.zig.zon` files for manifests and fetches dependencies directly from URLs, usually tarballs on GitHub.\nThere’s no central registry yet, though the community runs unofficial indexes like zpm and aquila.^1^\n...\n### What the community has to build\nThe unofficial indexes exist but aren’t authoritative.",
+          "source": "web",
+          "title": "Zig and the M×N Supply Chain Problem - Andrew Nesbitt",
+          "url": "https://nesbitt.io/2026/01/29/zig-and-the-mxn-supply-chain-problem.html"
+        },
+        {
+          "id": 27,
+          "last_updated": "2026-10-09",
+          "snippet": "## 0.14.1\n|OS|Arch|Filename|Signature|Size|\n|--|--|--|--|--|\n|Linux|powerpc64le|zig-powerpc64le-linux-0.14.1.tar.xz|minisig|46MiB|",
+          "source": "web",
+          "title": "Download",
+          "url": "https://ziglang.org/download/"
+        },
+        {
+          "date": "2023-09-13",
+          "id": 28,
+          "last_updated": "2026-04-17",
+          "snippet": "# package manager: transitive dependencies must be listed in the top-level build.zig.zon is painful #17135\n## Comments\n### Steps to Reproduce and Observed Behavior\nMach, mach-core, and mach-glfw all have a handful or two of dependencies.\nThey're logical bits of code that we've extracted into independent Zig packages, actually useful on their own, not an npm-encroaching situation.\nThis *should* be good for us and the ecosystem as a whole.\n...\nThis is because the Zig package manager today requires *all transitive dependencies* be specified in the build.zig.zon file.",
+          "source": "web",
+          "title": "package manager: transitive dependencies must be listed in the top-level build.zig.zon is painful · Issue #17135 · ziglang/zig",
+          "url": "https://github.com/ziglang/zig/issues/17135"
+        },
+        {
+          "date": "2015-08-06",
+          "id": 29,
+          "last_updated": "2025-06-05",
+          "snippet": "# ziglang/zig\nA general-purpose programming language and toolchain for maintaining\n**robust**, **optimal**, and **reusable** software.\n...\n## Packages 0\nNo packages published\n...\n## Languages\n- Zig 97.8%\n- C 1.3%\n- C++ 0.6%\n- Python 0.1%\n- CMake 0.1%\n- JavaScript 0.1%",
+          "source": "web",
+          "title": "GitHub - ziglang/zig: General-purpose programming language and toolchain for maintaining robust, optimal, and reusable software.",
+          "url": "https://github.com/ziglang/zig?tab=readme-ov-file"
+        },
+        {
+          "date": "2024-05-27",
+          "id": 30,
+          "last_updated": "2026-10-09",
+          "snippet": "# Exploring Zig - Ecosystem Edition\n## Package Manager: It exists, sort of\nStarting from v0.11.0, Zig allows the use of an official package manager.\nPackages are described as Zig structures called **ZON (Zig Object Notation)**.\n...\nZon is built into the language system itself and can be used just by installing Zig.\nZig **does not have an official package repository** like npm or crates.io.\nDependent packages are described in a `build.zig.zon` file like this:",
+          "source": "web",
+          "title": "Exploring Zig - Ecosystem Edition",
+          "url": "https://zenn.dev/smallkirby/articles/10dbe02303a201?locale=en"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "crates.io total number crates 2026 official crates.io stats",
+        "site:crates.io \"crates\" \"all time\" \"crates.io\" statistics",
+        "site:rust-lang.org crates.io number crates 2026"
+      ],
+      "results": [
+        {
+          "id": 57,
+          "last_updated": "2026-10-07",
+          "snippet": "# Rust Foundation\n## crates.io and Package Repositories\nThere are currently over 283K crates, with a cumulative 2.5M versions, that have been downloaded over 332B (that’s billion with a B) times.\ncrates.io statistics\n...\n## Datadog to the Observability Rescue\n### How much bandwidth is required for crates.io usage?\nWe had estimated about 18-19 PB of necessary bandwidth to support crates.io in 2026 and we have almost reached that amount in just the first half of 2026!",
+          "source": "web",
+          "title": "Rust Foundation | Datadog Open Source Hub",
+          "url": "https://opensource.datadoghq.com/projects/rust-foundation/"
+        },
+        {
+          "date": "2026-08-23",
+          "id": 58,
+          "last_updated": "2026-10-03",
+          "snippet": "# How no_std are no_std Rust crates really? A survey\n## Methodology\nThis survey is based on a snapshot of crates.io from 2026-06-06.\n...\n## Results\n### Dataset at a glance\nThis survey analyzed 27310 crates, of which 11051 were categorized as `no-std`, and 1246 of these were marked as `no-std::no-alloc`.\nThe total cohort represents just 9.78% of the 279204 crates served by crates.io, indicating that the vast majority of crates make no effort to cater to `no_std` use-cases.\n...\n### The headline figure\nFigure 1 shows the key findings of this survey.\n77.0% of the crates belonging to the `no-std::no-alloc` category were correctly categorized, while 3.45% were `no_std` but required the `alloc` crate, and 11.4% required `std`.\nThe `no-std` category had a slightly lower rate of miscategorized crates at 13.1%, while the total cohort of potentially `no_std` crates unsurprisingly had the highest rate of crates requiring `std`, at 20.2%.^4^",
+          "source": "web",
+          "title": "are ~no_std~ Rust crates really? A survey - Wojciech Graj",
+          "url": "https://w-graj.net/posts/rust-no-std-survey/"
+        },
+        {
+          "date": "2026-06-25",
+          "id": 59,
+          "last_updated": "2026-08-17",
+          "snippet": "### cargo-vet Shows Weak Long-Tail Coverage\nWe conducted a comparison between the public cargo-vet registry sources and the crates.io data dump from June 17, 2026.\nOur findings revealed that only 0.59% of crates contained at least one version classified as covered.\nThis translates to 1,628 crates out of a total of 277,697.\n...\n### Summary of Findings\n| Metric                                 | Count      |\n|----------------------------------------|------------|\n| Total eligible crates                  | 277,697    |",
+          "source": "web",
+          "title": "cargo-vet Shows Weak Long-Tail Coverage",
+          "url": "https://www.reddit.com/r/rust/comments/1uf6rkd/cargovet_shows_weak_longtail_coverage/"
+        },
+        {
+          "date": "2026-08-16",
+          "id": 60,
+          "last_updated": "2026-09-22",
+          "snippet": "# Crates.io Download Stats Tracker — Trend by Crate\n## Output\ncrates.io's public stats retain roughly the last\n90 days of history.",
+          "source": "web",
+          "title": "Crates.io Download Stats Tracker — Trend by Crate",
+          "url": "https://apify.com/m_ctim/crates-download-stats-tracker"
+        },
+        {
+          "date": "2024-03-13",
+          "id": 61,
+          "last_updated": "2026-10-09",
+          "snippet": "# All Crates\nDisplaying 1-50 of 348290 total results Sort by 1.\nhashbrown v0.17.1\nA Rust port of Google's SwissTable hash map\n- All-TimeDownloads: 2,662,036,184\n...\nRust for Windows\n- All-TimeDownloads: 1,695,157,709",
+          "source": "web",
+          "title": "crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates"
+        },
+        {
+          "date": "2026-02-05",
+          "id": 62,
+          "last_updated": "2026-10-09",
+          "snippet": "# Crates.io Dataset\n## Overview\nThis dataset represents the evolutionary history of the Rust package ecosystem.\nDerived from the official Crates.io index, it captures the dependency graph and version metadata for over **222,000 crates**.\n...\n## Statistics\n(See `STATS.md` for latest build details)\n- **Total Crates**: ~222k\n- **Total Versions**: ~1.9M\n- **Yanked Versions**: ~~92k (~~4.8% of all releases)",
+          "source": "web",
+          "title": "Aptlantis/crates_io-all-including-yanked-jan-2026 - Hugging Face",
+          "url": "https://huggingface.co/datasets/Aptlantis/crates_io-all-including-yanked-jan-2026?duplicate=true"
+        },
+        {
+          "date": "2026-05-28",
+          "id": 63,
+          "last_updated": "2026-10-07",
+          "snippet": "# Crates.io Search & Rust Package Scraper 🦀\n## You might also like\n### crates.io Stats (Rust packages)\nGet download counts (total + recent), latest version, license and metadata for Rust crates from crates.io.\nOfficial crates.io API.\nNo key, no proxy.",
+          "source": "web",
+          "title": "Crates.io Search - Rust Package & Download Stats Scraper · Apify",
+          "url": "https://apify.com/scrapeworks/crates-search"
+        },
+        {
+          "date": "2026-05-28",
+          "id": 64,
+          "last_updated": "2026-10-08",
+          "snippet": "# Crates.io Search & Rust Package Scraper\n## You might also like\n### crates.io Stats (Rust packages)\nGet download counts (total + recent), latest version, license and metadata for Rust crates from crates.io.\nOfficial crates.io API.",
+          "source": "web",
+          "title": "Crates.io Search & Rust Package Scraper",
+          "url": "https://apify.com/scrapeworks/crates-search/api"
+        },
+        {
+          "date": "2026-07-16",
+          "id": 65,
+          "last_updated": "2026-09-17",
+          "snippet": "# crates.io Stats (Rust packages)\nGet download counts (total + recent), latest version, license and metadata for Rust crates from crates.io.",
+          "source": "web",
+          "title": "crates.io Stats (Rust package downloads) OpenAPI definition",
+          "url": "https://apify.com/bgfc97/crates-io-stats/api/openapi"
+        },
+        {
+          "id": 66,
+          "last_updated": "2026-07-01",
+          "snippet": "## Growth of the crates.io registry\nThere are 67,323 users or teams that have a crate on crates.io.\nThe number of owners is growing at a rate of\n1.4× per year.\nLib.rs has indexed 2925\n...\n## Development\n### Age\n|22424|26763|31143|27214|38878|31564|28626|20682|31960|19797|4615|",
+          "source": "web",
+          "title": "State of the Rust/Cargo crates ecosystem // Lib.rs",
+          "url": "https://lib.rs/stats"
+        },
+        {
+          "date": "2026-07-16",
+          "id": 67,
+          "last_updated": "2026-10-08",
+          "snippet": "# crates.io Stats (Rust packages)\nGet download counts (total + recent), latest version, license and metadata for Rust crates from crates.io.",
+          "source": "web",
+          "title": "crates.io Stats (Rust package downloads)",
+          "url": "https://apify.com/bgfc97/crates-io-stats"
+        },
+        {
+          "date": "2026-07-31",
+          "id": 68,
+          "last_updated": "2026-10-09",
+          "snippet": "# scirs2-stats\n## Repository\n### Stats Overview\n14,730 Recent downloads 63,576 Downloads all time 39 Versions published",
+          "source": "web",
+          "title": "scirs2-stats - crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates/scirs2-stats"
+        },
+        {
+          "id": 69,
+          "last_updated": "2026-10-08",
+          "snippet": "## io 1.99.0\n(b940084d7 2026-09-28)",
+          "source": "web",
+          "title": "crates_io - Rust",
+          "url": "https://doc.rust-lang.org/stable/nightly-rustc/crates_io/index.html"
+        },
+        {
+          "date": "2026-01-08",
+          "id": 70,
+          "last_updated": "2026-10-08",
+          "snippet": "# Cachelito\n## Which Version Should I Use?\n|Use Case|Crate|Macro|Best For|\n|--|--|--|--|\n|**Memory limits**|`cachelito` (v0.10.0+)|`#[cache(max_memory = \"64MB\")]`|Large objects / controlled memory usage|",
+          "source": "web",
+          "title": "cachelito-core - crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates/cachelito-core"
+        },
+        {
+          "date": "2026-07-24",
+          "id": 71,
+          "last_updated": "2026-10-08",
+          "snippet": "# rs-stats\n## Owners\n### Stats Overview\n674 Recent downloads 7,831 Downloads all time 15 Versions published",
+          "source": "web",
+          "title": "rs-stats - crates.io: Rust Package Registry",
+          "url": "https://crates.io/crates/rs-stats"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "site:go.dev/doc/modules/module-index Go module index public log",
+        "site:proxy.golang.org \"module index\" Go modules count statistics",
+        "site:go.dev Go module index statistics total modules"
+      ],
+      "results": [
+        {
+          "id": 46,
+          "last_updated": "2026-09-13",
+          "snippet": "# shape-of-go\n## README ¶\n### The Shape of Go\nA map of the Go module ecosystem: every public module, every declared\ndependency edge, one graph.\n2,638,112 modules, 9,443,537 edges, built\nfrom the official module index and proxy and analyzed with\ngonx.\n...\n#### Where the data comes from\nThe Go ecosystem publishes itself through two public, machine-readable\nservices, the same ones every `go get` already talks to:\n1. **`index.golang.org/index`**: an append-only JSONL feed of every module version the proxy has ever seen (since April 2019), paginated by timestamp (`?since=...&limit=2000`).\n2. **`proxy.golang.org/<module>/@v/<version>.mod`**: the raw `go.mod`\nfor any module version.\nIts `require` directives are the dependency\nedges.\n`@latest` resolves the current version.",
+          "source": "web",
+          "title": "shape-of-go module - github.com/LuisLSousa/shape-of-go - Go ...",
+          "url": "https://pkg.go.dev/github.com/LuisLSousa/shape-of-go"
+        },
+        {
+          "id": 47,
+          "last_updated": "2026-05-24",
+          "snippet": "## README ¶\n### Kamailio Exporter for Prometheus\n#### Exported core and module metrics\nMetrics are generated by running \"stats.fetch all\" RPC call.\n...\n#### Scripted metrics\nStatistics Module can be used both from Kamailio native scripts and all KEMI Languages, e.g. Lua or Python.",
+          "source": "web",
+          "title": "kamailio_exporter",
+          "url": "https://pkg.go.dev/github.com/angarium-cloud/kamailio_exporter"
+        },
+        {
+          "date": "2019-04-10",
+          "id": 48,
+          "last_updated": "2026-09-22",
+          "snippet": "# Go Module Mirror, Index, and Checksum Database\nThe Go team is providing the following services run by Google: a module mirror for accelerating\nGo module downloads, an index for discovering new modules, and a global go.sum database for\nauthenticating module content.\nSince Go 1.13, the go command by default downloads and authenticates modules using the Go\nmodule mirror and Go checksum database.\n...\n## Services\n**proxy.golang.org** - a module mirror which implements the module proxy protocol.\n...\n**index.golang.org** - an index which serves a feed of new module versions that become available by proxy.golang.org.\nThe feed can be viewed at https://index.golang.org/index.\nThe feed is served as new line delimited JSON, providing the module path (as Path), the module version (as Version), and the time it was first cached by proxy.golang.org (as Timestamp).\nThe list is sorted in chronological order.\nThere are optional parameters:\n...\n- 'limit': the maximum length of the returned list.\nDefault = 2000, Max = 2000, e.g.\n...\n- 'include': by default, the index returns module versions that proxy.golang.org has cached\ncopies.\nIf 'include=all', index.golang.org will return all module versions proxy.golang.org\nor sum.golang.org ever served.\nDefault = \"\" e.g.\n...\nIf you use the index to download many modules from the module mirror, you will want to use\nthe `/cached-only` endpoint, described above.",
+          "source": "web",
+          "title": "Go module proxy",
+          "url": "https://proxy.golang.org/"
+        },
+        {
+          "id": 49,
+          "last_updated": "2026-10-04",
+          "snippet": "#### type Statistics ¶\n```\ntype Statistics struct {\nBytes int // total size of indexed source files\nFiles int // number of indexed source files\nLines int // number of lines (all files)\nWords int // number of different identifiers\nSpots int // number of identifier occurrences\n}\n```\nStatistics provides statistics information for an index.",
+          "source": "web",
+          "title": "godoc package - golang.org/x/tools ...",
+          "url": "https://pkg.go.dev/golang.org/x/tools/godoc"
+        },
+        {
+          "id": 50,
+          "last_updated": "2026-03-29",
+          "snippet": "# Package debug\n## type BuildInfo ¶ 1.12\n### func ReadBuildInfo ¶ 1.12\nReadBuildInfo returns the build information embedded in the running binary.\n...\n## type Module ¶ 1.12\nA Module describes a single module included in a build.",
+          "source": "web",
+          "title": "Package debug",
+          "url": "https://go.dev/pkg/runtime/debug/?m=old"
+        },
+        {
+          "date": "2024-01-15",
+          "id": 51,
+          "last_updated": "2026-09-28",
+          "snippet": "# ChainIndexor\n## README ¶\n### ChainIndexor\n#### ⚙️ Configuration\n##### Downloader Configuration\n###### Database Configuration\n|Parameter|Type|Required|Default|Description|\n|--|--|--|--|--|\n|`max_idle_connections`|int|No|5|Maximum number of idle connections in the pool|",
+          "source": "web",
+          "title": "ChainIndexor module - github.com/goran-ethernal/ChainIndexor ...",
+          "url": "https://pkg.go.dev/github.com/goran-ethernal/ChainIndexor"
+        },
+        {
+          "id": 52,
+          "last_updated": "2026-09-26",
+          "snippet": "# requester\n## Details\nThe Go module system was introduced in Go 1.11 and is the official dependency management",
+          "source": "web",
+          "title": "requester package - github.com/rakyll/hey/requester - Go Packages",
+          "url": "https://pkg.go.dev/github.com/rakyll/hey/requester"
+        },
+        {
+          "id": 53,
+          "last_updated": "2026-09-24",
+          "snippet": "# Source file src / cmd / go / internal / modindex / read.go\nIt is used to\n40  // do the equivalent of build.Import of packages in the module and answer other\n41  // questions based on the index file's data.\n...\n45   n int // number of packages",
+          "source": "web",
+          "title": "cmd/go/internal/imports - - The Go Programming Language",
+          "url": "https://go.dev/src/cmd/go/internal/modindex/read.go"
+        },
+        {
+          "id": 54,
+          "last_updated": "2026-10-03",
+          "snippet": "# stats\n## Details\nThe Go module system was introduced in Go 1.11 and is the official dependency management\n...\n## Repository\n### Types ¶\n#### type Stats ¶\nStats is a helper for gathering statistics about individual benchmark runs.",
+          "source": "web",
+          "title": "stats package - google.golang.org/grpc/benchmark/stats",
+          "url": "https://pkg.go.dev/google.golang.org/grpc/benchmark/stats"
+        },
+        {
+          "id": 55,
+          "last_updated": "2026-09-23",
+          "snippet": "# Go Wiki: Go Modules\n## New Concepts\n### Modules\nA *module* is a collection of related Go packages that are versioned together as a single unit.",
+          "source": "web",
+          "title": "Go Wiki: Go Modules - The Go Programming Language",
+          "url": "https://go.dev/wiki/Modules"
+        },
+        {
+          "id": 56,
+          "last_updated": "2026-09-08",
+          "snippet": "## Documentation ¶\n### Types ¶\n#### type DependencyAnalysisResult ¶\ntype DependencyAnalysisResult struct { // Dependency graph information TotalModules int `json:\"total_modules\" yaml:\"total_modules\"` // Total number of modules TotalDependencies int `json:\"total_dependencies\" yaml:\"total_dependencies\"` // Total number of dependencies ResolvedImports int `json:\"resolved_imports\" yaml:\"resolved_imports",
+          "source": "web",
+          "title": "domain package - github.com/ludo-technologies/pyscn ...",
+          "url": "https://pkg.go.dev/github.com/ludo-technologies/pyscn/domain"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "site:ziglang.org learn package manager build.zig.zon dependencies URL hash",
+        "site:ziglang.org documentation package manager dependency packages URL",
+        "site:github.com/ziglang/zig package manager fetch dependencies build.zig.zon official"
+      ],
+      "results": [
+        {
+          "id": 72,
+          "last_updated": "2026-10-09",
+          "snippet": "# The Basics\n## User-Provided Options\n--fetch[=mode] Fetch dependency tree (optionally choose laziness) and exit",
+          "source": "web",
+          "title": "Running System Tools",
+          "url": "https://ziglang.org/learn/build-system/"
+        },
+        {
+          "id": 73,
+          "last_updated": "2026-10-03",
+          "snippet": "Package information is declared in a file named `build.zig.zon`.\nZON (Zig Object\nNotation) is a simple data interchange format introduced in this release cycle, which uses Zig's\nanonymous struct and array initialization syntax to declare objects in a manner similar to other\nformats such as JSON.\nThe `build.zig.zon` file for a package should look like this:\n...\n.{\n.name = \"my_package_name\",\n.version = \"0.1.0\",\n.dependencies = .{\n.dep_name = .{\n.url = \"https://link.to/dependency.tar.gz\",\n.hash = \"12200f41f9804eb9abff259c5d0d84f27caa0a25e0f72451a0243a806c8f94fdc433\",\n},\n},\n}\n...\nThe information provided is the package name and version, and a list of dependencies, each of\nwhich has a name, a URL to an archive, and a hash.\nThe hash is not of the archive itself, but of\nits contents.\nIn order to find it, it can be omitted from the file, and `zig build`\nwill emit an error containing the expected hash.\n...\nThis information is provided in a separate file (rather than declared in the\n`build.zig` script) to speed up the package manager by allowing package fetching to\nhappen without the need to build and run the build script.",
+          "source": "web",
+          "title": "0.11.0 Release Notes",
+          "url": "https://ziglang.org/download/0.11.0/release-notes.html"
+        },
+        {
+          "date": "2015-08-06",
+          "id": 74,
+          "last_updated": "2026-10-08",
+          "snippet": "This is the manifest file for build.zig scripts.\nIt is named build.zig.zon in\norder to make it clear that it is metadata specifically pertaining to\nbuild.zig.\n...\nwhen a user runs `zig fetch --save <url>`, this field is used as the key in the\n...\nEach dependency must either provide a `url` and `hash`, or a `path`.\n...\nWhen updating this field to a new URL, be sure to delete the corresponding\n`hash`, otherwise you are communicating that you expect to find the old hash at\nthe new URL.\nIf the contents of a URL change this will result in a hash mismatch\nwhich will prevent zig from using it.\n...\nThis is computed from the file contents of the directory of files that is\nobtained after fetching `url` and applying the inclusion rules given by\n`paths`.\nThis field is the source of truth; packages do not come from a `url`; they\ncome from a `hash`.\n`url` is just one of many possible mirrors for how to\nobtain a package matching this `hash`.",
+          "source": "web",
+          "title": "zig/doc/build.zig.zon.md at master · ziglang/zig",
+          "url": "https://github.com/ziglang/zig/blob/master/doc/build.zig.zon.md"
+        },
+        {
+          "date": "2015-08-06",
+          "id": 75,
+          "last_updated": "2026-09-16",
+          "snippet": "# Fetch.zig\n1. Check the global zig package cache to see if the hash already exists.\n//!\nIf so, load, parse, and validate the build.zig.zon file therein, and\n//!\ngoto step 8.\nLikewise if the location is a relative path, treat this\n...\nthe same as a cache hit.\n...\n2. Fetch and unpack a URL into a temporary directory.\n//!\n3. Load, parse, and validate the build.zig.zon file therein.\nIt is allowed\n//!\nfor the file to be missing, in which case this fetched package is considered\n//!\nto be a \"naked\" package.\n//!\n4. Apply inclusion rules of the build.zig.zon to the temporary directory by\n//!\ndeleting excluded files.\nIf any files had errors for files that were\n//!\nultimately excluded, those errors should be ignored, such as failure to\n//!\ncreate symlinks that weren't supposed to be included anyway.\n//!\n5. Compute the package hash based on the remaining files in the temporary\n//! directory.\n...\n7. Validate the computed hash against the expected hash.\nIf invalid,\n//!\n...\n8. Spawn a new fetch job for each dependency in the manifest file.",
+          "source": "web",
+          "title": "zig/src/Package/Fetch.zig at master · ziglang/zig",
+          "url": "https://github.com/ziglang/zig/blob/master/src/Package/Fetch.zig"
+        },
+        {
+          "id": 76,
+          "last_updated": "2026-10-03",
+          "snippet": "# 0.16.0 Release Notes\n## Build System §\n### Ability to Override Packages Locally §\nThis is a **project override** option.\nThe path provided contains a `build.zig.zon` file which contains `name` and `fingerprint` fields.\nAny time the dependency tree would resolve to a package with matching `name` and `fingerprint`, it resolves to the override instead, across the entire tree, completely ignoring `version`.\n...\n### Fetch Packages Into Project-Local Directory §\nInstead of being fetched into `$GLOBAL_ZIG_CACHE/p/$HASH`, package dependencies are now fetched into a \"zig-pkg\" directory relative to the build root (next to `build.zig`).\n...\nAfter a package is fetched, the filters are applied\n(`paths` field in\n`build.zig.zon`) in order to delete files not part of\nthe hash, and then the package is recompressed into a canonical\n`$GLOBAL_ZIG_CACHE/p/$HASH.tar.gz` in order to avoid",
+          "source": "web",
+          "title": "ziglang.org › download › 00.16.0 Release Notes ⚡ The Zig Programming Language",
+          "url": "https://ziglang.org/download/0.16.0/release-notes.html"
+        },
+        {
+          "date": "2023-01-12",
+          "id": 77,
+          "last_updated": "2026-04-17",
+          "snippet": "For this use case, instead of fetching dependencies from the URLs provided by zig build.zig.zon files, instead there should be some kind of override that makes the dependencies fetched from the system package manager.\n...\nAdditionally, this branch:\n* Implements inclusion directives in `build.zig.zon` for deciding which\nfiles belong the package (#14311).\n* Adds basic documentation for `build.zig.zon` files.",
+          "source": "web",
+          "title": "a zig build mode intended to be used when packaging an application or library for a system distribution · Issue #14281 · ziglang/zig",
+          "url": "https://github.com/ziglang/zig/issues/14281"
+        },
+        {
+          "date": "2023-09-13",
+          "id": 78,
+          "last_updated": "2026-04-17",
+          "snippet": "This is because the Zig package manager today requires *all transitive dependencies* be specified in the build.zig.zon file.",
+          "source": "web",
+          "title": "package manager: transitive dependencies must be listed in the top-level build.zig.zon is painful · Issue #17135 · ziglang/zig",
+          "url": "https://github.com/ziglang/zig/issues/17135"
+        },
+        {
+          "date": "2023-01-13",
+          "id": 79,
+          "last_updated": "2025-05-17",
+          "snippet": "make build.zig.zon contain all urls, including mirrors, and hashes of entire dependency tree #14309\n...\nFor adding and updating dependencies of the current main package can be done by just analyzing and modifying the\n```\nbuild.zig.zon\n```",
+          "source": "web",
+          "title": "add tooling to deal with build.zig dependency trees · Issue #14288 · ziglang/zig",
+          "url": "https://github.com/ziglang/zig/issues/14288"
+        },
+        {
+          "date": "2015-08-06",
+          "id": 80,
+          "last_updated": "2026-10-08",
+          "snippet": "zig/build.zig.zon at master · ziglang/zig · GitHub",
+          "source": "web",
+          "title": "zig/build.zig.zon at master · ziglang/zig - GitHub",
+          "url": "https://github.com/ziglang/zig/blob/master/build.zig.zon"
+        },
+        {
+          "date": "2024-02-27",
+          "id": 81,
+          "last_updated": "2026-04-17",
+          "snippet": "Unpack tar without removing leading root folder.\nThen find package root",
+          "source": "web",
+          "title": "package manager: don't strip components in tar · ziglang/zig@c389f67",
+          "url": "https://github.com/ziglang/zig/commit/c389f676db0597910f0b1d9f34d54fd795aa158f"
+        },
+        {
+          "id": 82,
+          "last_updated": "2026-10-03",
+          "snippet": "The Zig Build System provides a cross-platform, dependency-free way to declare\nthe logic required to build a project.",
+          "source": "web",
+          "title": "ziglang.org › documentation › 0Documentation - The Zig Programming Language",
+          "url": "https://ziglang.org/documentation/0.15.1/"
+        },
+        {
+          "id": 83,
+          "last_updated": "2026-10-09",
+          "snippet": "You can also install Zig from a package manager.\n...\n|OS|Arch|Filename|Signature|Size|\n|--|--|--|--|--|\n|Windows|x86_64|zig-x86_64-windows-0.18.0-dev.131+41f885830.zip|minisig|98MiB|",
+          "source": "web",
+          "title": "Download",
+          "url": "https://ziglang.org/download/"
+        },
+        {
+          "id": 84,
+          "last_updated": "2026-10-02",
+          "snippet": "The links take you to the API page for that specific link by changing the location hash.",
+          "source": "web",
+          "title": "0.12.0 Release Notes",
+          "url": "https://ziglang.org/download/0.12.0/release-notes.html"
+        },
+        {
+          "date": "2023-02-08",
+          "id": 85,
+          "last_updated": "2026-04-17",
+          "snippet": "This proposal is to embrace arbitrary logic deciding what is or isn't a dependency.\nInstead of marking categories of dependencies in the `build.zig.zon` file, Zig would have the heuristic choice to pre-fetch some, all, or none of the dependencies.\nWhen running build.zig, if any packages referenced with dependency() were not fetched already, the build runner would exit in a special manner and communicate the set of dependency packages that were missing.\nZig would fetch them and then re-execute the build runner.\nAlong with this proposal would come a new flag to `zig build`: `--fetch`.\nNote that this is still part of the `zig build` subcommand - indeed it would support all of the same flags and build options as a standard `zig build` operation.\nHowever, in this case, after running the build.zig script, it would not actually perform the make().\nInstead it would only fetch missing packages for the given set of flags.\n...\n`--fetch` flag now has additional optional parameter, which specifies\nhow lazy dependencies should be fetched:\n* `lazy` — lazy dependencies are fetched only if they are required\nfor current build configuration to work.\nDefault and works same\nas old `--fetch` flag.",
+          "source": "web",
+          "title": "ability to fetch only needed dependencies · Issue #14597 · ziglang/zig",
+          "url": "https://github.com/ziglang/zig/issues/14597"
+        },
+        {
+          "id": 86,
+          "last_updated": "2026-09-24",
+          "snippet": "pub const FmtStep = @import(\"build/FmtStep.zig\");",
+          "source": "web",
+          "title": "build.zig - source view - ziglang.org",
+          "url": "https://ziglang.org/documentation/0.10.1/std/src/build.zig.html"
+        }
+      ],
+      "type": "search_results"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "cancelled",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": null,
+  "user": null
+}

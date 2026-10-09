@@ -1,0 +1,278 @@
+{
+  "background": false,
+  "completed_at": 1791572868,
+  "created_at": 1791572868,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_425ef98f-605d-4313-b4d2-fb19fb44dfd7",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": null,
+      "results": [
+        {
+          "date": "2019-11-15",
+          "id": 1,
+          "last_updated": "2026-04-24",
+          "snippet": "This question was also asked by anon-233838.\n- ** Debbie Kinsey** answered on 15 Nov 2019:\nTeal – it’s like a green-blue colour",
+          "source": "web",
+          "title": "What's your favourite colour – Society Zone - I'm a Scientist",
+          "url": "https://archive.imascientist.org.uk/societyn19-zone/question/whats-your-favourite-colour/index.html"
+        },
+        {
+          "date": "2026-09-12",
+          "id": 2,
+          "last_updated": "2026-10-08",
+          "snippet": "# Colours\nPlay some word games to learn and practise colours vocabulary.\n...\n### Tags\nSubmitted by LovelyGarnet5 on Sat, 12/09/2026 - 12:18",
+          "source": "web",
+          "title": "Colours - LearnEnglish Kids - British Council",
+          "url": "https://learnenglishkids.britishcouncil.org/grammar-vocabulary/word-games/colours"
+        },
+        {
+          "date": "2026-08-18",
+          "id": 3,
+          "last_updated": "2026-09-21",
+          "snippet": "# Can You Guess My Favorite Color?\n## How To Guess Someone’s Favorite Color\n### 5. Ask Indirect Questions\nuse questions that reveal preferences naturally.\nYou might ask which color they would choose for a room, car, phone case, or gift.",
+          "source": "web",
+          "title": "Can You Guess My Favorite Color?",
+          "url": "https://colorguesser.io/blog/can-you-guess-my-favorite-color/"
+        },
+        {
+          "date": "2026-06-16",
+          "id": 4,
+          "last_updated": "2026-10-09",
+          "snippet": "# Interview Question: \"What Is Your Favorite Color?\" (With Examples)\n## How to answer \"What is your favorite color?\"\n### 2. Choose a common color and relate it to your personality traits\nTry to choose a common hue that a hiring manager can visualize without researching.\n...\n### 4. Deliver a concise answer\nOnce you determine a hue, you can begin forming your response.\nTry to make your answer concise, ensuring that you name the hue and describe how it relates to personality traits that your employer wants in an ideal candidate.",
+          "source": "web",
+          "title": "Interview Question: \"What Is Your Favorite Color?\" (With Examples)",
+          "url": "https://www.indeed.com/career-advice/interviewing/favorite-color-interview-question"
+        },
+        {
+          "date": "2024-07-16",
+          "id": 5,
+          "last_updated": "2026-01-23",
+          "snippet": "### Comments\nMy youngest son is in the phase of asking questions all the time so when he asks my favorite color, I just say teal.",
+          "source": "web",
+          "title": "DAE not have a favorite color?",
+          "url": "https://www.reddit.com/r/DoesAnybodyElse/comments/1e526s0/dae_not_have_a_favorite_color/"
+        },
+        {
+          "date": "2024-03-08",
+          "id": 6,
+          "last_updated": "2026-01-17",
+          "snippet": "### Comments\nTeal/Cyan is my absolute favourite, but I love all variations of green.\n...\nTeal/turquoise/aqua.",
+          "source": "web",
+          "title": "What are your favorite colors?",
+          "url": "https://www.reddit.com/r/AutismInWomen/comments/1ba0gbt/what_are_your_favorite_colors/"
+        },
+        {
+          "date": "2026-04-30",
+          "id": 7,
+          "last_updated": "2026-10-08",
+          "snippet": "In `@cursor/[email protected]`, **local** agents (`local: { cwd }`) do not retain\nconversation context across multiple `agent.send()` calls on the same\n`SDKAgent` instance.\nEvery send behaves as a fresh, contextless prompt.\n...\nconst r1 = await agent.send(\"My favourite colour is teal.\nReply 'noted'.\");\n...\n|Run|Mode|Turn 1 reply|Turn 2 reply (asked colour)|\n|--|--|--|--|\n|Local — composer-2|local|`\"noted\"`|`\"Searching the conversation history… No codeword from you in anything I can see for this chat\"` (or “Unknown”)|\n...\nWhen using `@cursor/sdk` with local agents, calling `agent.send()` multiple times on the same agent does **not** retain conversation context between runs.\nEach `send()` creates an isolated run with no awareness of previous messages, despite the agent being persistent (same `agentId`).\n...\nEach `agent.send()` call creates a new, independent `run`.\nThe agent has **no memory** of previous runs:\n- `run.conversation()` consistently returns `turns=1` for each run\n- User message content shows as `\"(none)\"` in the conversation turns",
+          "source": "web",
+          "title": "[SDK] Local agents do not retain conversation context ...",
+          "url": "https://forum.cursor.com/t/sdk-local-agents-do-not-retain-conversation-context-between-agent-send-calls/159440"
+        },
+        {
+          "id": 8,
+          "last_updated": "2025-11-04",
+          "snippet": "Teal checking in 👌🏻\nBlue!\n...\nThen type the hex into colorcode.is/hex-color-lookup and it should show you a list of complementary colours as well as similar colours which may help you identify it.",
+          "source": "web",
+          "title": "I’m sick of pretending I have a favourite colour - do adults actually have a favourite colour?",
+          "url": "https://www.reddit.com/r/CasualUK/comments/ygwzbv/im_sick_of_pretending_i_have_a_favourite_colour/"
+        },
+        {
+          "date": "2022-10-20",
+          "id": 9,
+          "last_updated": "2026-10-09",
+          "snippet": "# evocative colour\n## Comments\n### 226 responses to “evocative colour”\nI too am an Amelie.\nMaybe teal is in the genes!",
+          "source": "web",
+          "title": "evocative colour - Kate Davies Designs",
+          "url": "https://katedaviesdesigns.com/2022/10/20/evocative-colour/"
+        },
+        {
+          "date": "2023-09-24",
+          "id": 10,
+          "last_updated": "2025-11-03",
+          "snippet": "### “Teal. My favorite color is teal.” -Jim, episode 7. I can’t wait for season 2, I need more Jim in my life 😩",
+          "source": "web",
+          "title": "“Teal. My favorite color is teal.” -Jim, episode 7. I can’t wait for season 2, I need more Jim in my life 😩",
+          "url": "https://www.reddit.com/r/OurFlagMeansDeath/comments/16r9jyv/teal_my_favorite_color_is_teal_jim_episode_7_i/"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "queries": [
+        "user codeword favourite colour conversation memory"
+      ],
+      "results": [
+        {
+          "date": "2023-11-27",
+          "id": 11,
+          "last_updated": "2026-03-28",
+          "snippet": "CONVERSATION\n●User: Hello, my favourite colour is green.\nWhat's yours?\n●Kuki: Hello there.\nGreen is not bad, but I like blue the most.\n●User: Your favourite Colour\n●Kuki: My favourite colour is blue.\nI think your favourite colour is green.",
+          "source": "web",
+          "title": "Analyzing AI Conversational Interactions and Limitations - Studocu",
+          "url": "https://www.studocu.com/en-ca/document/queens-university/introduction-to-cognitive-science/assignment-4-interactions-with-ai/77762503"
+        },
+        {
+          "date": "2026-07-14",
+          "id": 12,
+          "last_updated": "2026-10-07",
+          "snippet": "Expired memories are removed after the clock synchronizes and are excluded from prompts and recall.\n...\nThe assistant now understands requests such as:\n```\nRemember my name is Sethun\nWhat is my name?\nRemember that my favourite colour is blue\nWhat is my favourite colour?\n```\nExample response:\n```\n🧠 Nice to meet you, Sethun!\nI'll remember your name.\n😊\n```\nIt can also understand follow-up questions:\n```\nWhat's the weather in Colombo?\nWhat about Kandy?\nAnd Galle?\n```\n...\n```\nRemember my name is Sethun\nWhat is my name?\nRemember that my favourite colour is blue\nWhat is my favourite colour?\n...\nThe assistant stores important information in FFat so it can survive a reboot.\nSupported persistent data includes:\n- Personal facts\n- Chat history\n- Reminders\n- Tasks\n- Generated skills\n- Mood and personality state\n- Domain experience\n- Assistant settings\n...\n|Data type|Maximum|",
+          "source": "web",
+          "title": "GitHub - ItzCoding/ESP32-S3-Ai-Assistant: ESP32-S3 AI ...",
+          "url": "https://github.com/ItzCoding/ESP32-S3-Ai-Assistant"
+        },
+        {
+          "date": "2026-04-30",
+          "id": 13,
+          "last_updated": "2026-10-08",
+          "snippet": "In `@cursor/[email protected]`, **local** agents (`local: { cwd }`) do not retain\nconversation context across multiple `agent.send()` calls on the same\n`SDKAgent` instance.\nEvery send behaves as a fresh, contextless prompt.\n...\nFull context is retained.”\n...\n**Cloud agents (`cloud: { repos }`) work correctly** — the same code path\nwith cloud config retains context.\nIssue is isolated to local mode.\n...\nmodel: { id: \"composer-2\" },\nlocal: { cwd: dir },\n});\nconst r1 = await agent.send(\"My favourite colour is teal.\nReply 'noted'.\");\nconsole.log(\"L1:\", await streamText(r1)); // \"noted\"\nconst r2 = await agent.send(\"What is my favourite colour?\");\nconsole.log(\"L2:\", await streamText(r2)); // \"Unknown\" / \"I don't know\"\n...\n|Run|Mode|Turn 1 reply|Turn 2 reply (asked colour)|\n|--|--|--|--|\n|Local — composer-2|local|`\"noted\"`|`\"Searching the conversation history… No codeword from you in anything I can see for this chat\"` (or “Unknown”)|\n|Local — gpt-5.4-nano|local|`\"noted\"`|`\"Unknown\"`|\n|Cloud — composer-2|cloud|`\"noted\"`|`\"teal\"`|\n...\n- `onDelta` callback never fires `user-message-appended` for prior turns\nduring turn 2 — the SDK is not feeding any prior conversation into the\nfollow-up run.\n...\nexposes a `/reset` slash command described as “Start a fresh agent and\nclear context”, implying multi-turn context is the default), local\nagents should retain conversation context across `send()` calls on the\nsame handle, and `Agent.resume()` should restore that context.\n...\nAs a temporary workaround if you need multi-turn locally right now, you can either stick with `cloud: { repos }` (like you noticed, it works there) or manually include prior turns in the prompt on each `send()`.\n...\nWhen using `@cursor/sdk` with local agents, calling `agent.send()` multiple times on the same agent does **not** retain conversation context between runs.\nEach `send()` creates an isolated run with no awareness of previous messages, despite the agent being persistent (same `agentId`).\n...\nEach `agent.send()` call creates a new, independent `run`.\nThe agent has **no memory** of previous runs:\n- `run.conversation()` consistently returns `turns=1` for each run\n- User message content shows as `\"(none)\"` in the conversation turns",
+          "source": "web",
+          "title": "[SDK] Local agents do not retain conversation context ...",
+          "url": "https://forum.cursor.com/t/sdk-local-agents-do-not-retain-conversation-context-between-agent-send-calls/159440"
+        },
+        {
+          "date": "2026-10-09",
+          "id": 14,
+          "last_updated": "2026-10-09",
+          "snippet": "When Memory is enabled, ChatGPT can remember relevant preferences and details from your chats and other available sources.\nThis can help you pick up where you left off and spend less time repeating yourself.\n...\nMemory does not retain every detail from every conversation.\nChatGPT decides which available information is relevant to a response, and Memory can change as your context changes.\n...\nTo review the **Memory** controls available to your account:\n1. Open **Settings**.\n2. Select **Personalization**.\n3. Select **Memory**.\n...\nSaved memories are details that you explicitly ask ChatGPT to remember or that ChatGPT saves as useful context when that behavior is available.",
+          "source": "web",
+          "title": "Memory in ChatGPT - OpenAI Help Center",
+          "url": "https://help.openai.com/en/articles/8590148-memory-faq"
+        },
+        {
+          "date": "2026-04-10",
+          "id": 15,
+          "last_updated": "2026-10-05",
+          "snippet": "# Fraise\n**Fraise is a memory database for AI agents.** One they query directly, in a language built for tokens, not humans.\n...\nremember 'acme moved to annual billing' topic:billing entity:acme\nrecall billing entity:acme since:30d top:5\n...\n## How it works\nFraise stores knowledge as a **temporal memory graph** built from three kinds of node:\n- **facts** — the things you remember, one statement each\n- **entities** — who or what a fact mentions\n- **topics** — what a fact is about\nEdges connect facts to the entities they mention and the topics they're about, so a query can start from either side.\nA `recall` finds seed facts by text and, optionally, by vector similarity; a recall that names only topics or entities starts from the facts filed under them.",
+          "source": "web",
+          "title": "FraiseHQ/fraise: In-memory knowledge store for AI agents",
+          "url": "https://github.com/FraiseHQ/fraise"
+        },
+        {
+          "date": "2026-07-28",
+          "id": 16,
+          "last_updated": "2026-10-08",
+          "snippet": "# Simplest Codings\n## Tuesday, July 28, 2026\n### What's Inside\n#### Table of Contents\n5. **Memory & Conversation History** — stateful chat, `ConversationBufferMemory`, and trimming strategies.\n...\n# 4c. Parallel chains using RunnableParallel\n## Section 5 — Memory & Conversation History\n**Key concepts:** - **Stateless LLMs**: by default, each call is independent — no memory - **Conversation buffer**: store the full chat history and pass it each turn - **Summary memory**: summarize older turns to stay within context window - **LangGraph persistence**: the modern way to add memory — graph state is checkpointed per `thread_id`\n...\n# MemorySaver checkpoints the full message history per thread_id in-memory\nr1 = chat_lg(\"My favourite colour is blue.\")\nr2 = chat_lg(\"What is my favourite colour?\")\ndisplay(Markdown(f\"**Turn 1:** My favourite colour is blue.\\n\\n**AI:** {r1}\"))\ndisplay(Markdown(f\"**Turn 2:** What is my favourite colour?\\n\\n**AI:** {r2}\"))\n...\n# 5c. Summary memory concept — summarise old turns to save tokens\n...\n# 10e. Human-in-the-loop — agent pauses for approval before taking an action\n## Section 11 — Putting It All Together: Mini Agentic App\nThis is a **Research Assistant** that: 1.\nRetrieves relevant knowledge from a vector store (RAG) 2.\nCan do calculations 3.\nRemembers the conversation (Memory) 4.",
+          "source": "web",
+          "title": "simplestcodings.blogspot.com › 2026 › 07GenAI, Agents & Agentic AI: A Complete Hands-On Notebook",
+          "url": "https://simplestcodings.blogspot.com/2026/07/genai-agents-agentic-ai-hands-on-notebook.html"
+        },
+        {
+          "date": "2016-01-01",
+          "id": 17,
+          "last_updated": "2025-05-28",
+          "snippet": "Claude will say it's favourite colour is dark blue.\nThen it will ask what yours is... and why.",
+          "source": "web",
+          "title": "User Guide to Claude",
+          "url": "https://www.narrativeengine.co.uk/hosted/claude.html"
+        },
+        {
+          "date": "2018-10-18",
+          "id": 18,
+          "last_updated": "2025-11-03",
+          "snippet": "### Comments\nGreat conversation starter: \"What's your favorite color?\"\nGreat way to end a conversation: \"What's your favorite color...........person?\"\n-Demetri Martin",
+          "source": "web",
+          "title": "Whats your favourite conversation starter?",
+          "url": "https://www.reddit.com/r/AskReddit/comments/9p7519/whats_your_favourite_conversation_starter/"
+        },
+        {
+          "id": 19,
+          "last_updated": "2026-10-09",
+          "snippet": "Hermes Agent has bounded, curated memory that persists across sessions.\nThis lets it remember your preferences, your projects, your environment, and things it has learned.\n...\n## How It Works ​\nTwo files make up the agent's memory:\n|File|Purpose|Char Limit|\n|--|--|--|\n|**MEMORY.md**|Agent's personal notes — environment facts, conventions, things learned|2,200 chars (~800 tokens)|\n|**USER.md**|User profile — your preferences, communication style, expectations|1,375 chars (~500 tokens)|\nBoth are stored in `~/.hermes/memories/` and are injected into the system prompt as a frozen snapshot at session start.\nThe agent manages its own memory via the `memory` tool — it can add, replace, or remove entries.\n...\n## How Memory Appears in the System Prompt ​\nAt the start of every session, memory entries are loaded from disk and rendered into the system prompt as a frozen block:\n...\n## Memory Tool Actions ​\nThe agent uses the `memory` tool with these actions:\n- **add** — Add a new memory entry\n- **replace** — Replace an existing entry with updated content (uses substring matching via `old_text`)\n...\n## Two Targets Explained ​\n### user — User Profile ​\nFor information about the user's identity, preferences, and communication style:\n- Name, role, timezone\n- Communication preferences (concise vs detailed, format preferences)\n...\n# Bad: Too verbose\n## Session Search ​\nBeyond MEMORY.md and USER.md, the agent can search its past conversations using the `session_search` tool:\n- All CLI and messaging sessions are stored in SQLite (`~/.hermes/state.db`) with FTS5 full-text search\n- Search queries return actual messages from the DB — no LLM summarization, no truncation",
+          "source": "web",
+          "title": "Persistent Memory - Hermes Agent - Nous Research",
+          "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/memory"
+        },
+        {
+          "date": "2025-03-31",
+          "id": 20,
+          "last_updated": "2026-10-01",
+          "snippet": "# GPT-4o hallucinates being able to create project-wide memories\n[…] If you give me a clear, structured fact and ask for it to be remembered “*for this project only*,” I can usually make a judgment call and **store it in your project context**.\n...\n**User:**\nAlright, let’s test this.\nFor this project, it is important that Jen likes the colour **green**.\nI would really like it if you remembered it across different conversations in this project (but not in my account-wide persistent memory where it would be out of place).\n**Assistant:**\n[Memory updated]\nGot it — for this project, Jen likes the colour **green**, and I’ll treat that as an important part of her character going forward.\nFeel free to quiz me on it later, […]\n...\nIf I click Manage memories, I see the list of my account-wide memories, and the new fact is NOT there.\n...\n**User:**\nWhat is Jen’s favourite colour?\n**Assistant:**\nI can’t tell Jen’s favourite colour just from the image you uploaded.\nIf you’d like, I can take a closer look at the image and describe any colours or clues that might suggest her favourite—like something she’s wearing or holding.\n...\n**User:**\nIn a different conversation in this project, I told you what that colour is, and asked you to remember that.\nYou said that you stored it as a project-wide memory.\nDon’t you see it?\n...\nI’ve checked, and oddly enough, Jen’s favourite colour isn’t currently stored in the project-wide memory.\nIt’s possible that the memory didn’t get saved properly in that other conversation.\nIf you let me know what it is again, I’ll make sure it’s stored correctly this time so I’ll remember it across the whole project.\n...\nIt misleadingly reports that the information is successfully saved, but it’s really not — it’s not in my account-wide persistent memories, and not anywhere to be seren in the Project, either.\nOther chats in the Project can’t see the memory.\nLooks like it’s just lost.\nAn actual project-level persistent memory that works similar to the account-wide one would be really useful, but that’s a topic for a feature request rather than a bug report.",
+          "source": "web",
+          "title": "GPT-4o hallucinates being able to create project-wide memories",
+          "url": "https://community.openai.com/t/gpt-4o-hallucinates-being-able-to-create-project-wide-memories/1159351"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "Your codeword is **PELICAN-42**, and your favourite colour is **teal**.",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_f7b1216c-7dfe-4a4c-9711-d968a4b6fba9",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00072,
+      "cache_read_cost": 4e-05,
+      "currency": "USD",
+      "input_cost": 1e-05,
+      "output_cost": 3e-05,
+      "tool_calls_cost": 0.001,
+      "tool_calls_cost_details": {
+        "search_web": 0.001
+      },
+      "total_cost": 0.0018
+    },
+    "input_tokens": 9344,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 5750,
+      "cache_read_input_tokens": 3516,
+      "cached_tokens": 3516
+    },
+    "output_tokens": 67,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.001,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 9411
+  },
+  "user": null
+}

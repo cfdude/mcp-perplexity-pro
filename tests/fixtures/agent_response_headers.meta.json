@@ -1,0 +1,10 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "set-cookie values and cf-ray redacted; no API key was ever present in response headers",
+  "note": "Only x-request-id is sent as a request id (response id minus the resp_ prefix); a request-id header is NOT sent. x-ratelimit-limit/remaining/used/reset are present.",
+  "request_note": "headers of the fast_filters call"
+}

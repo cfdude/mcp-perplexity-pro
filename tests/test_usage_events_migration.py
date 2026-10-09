@@ -8,6 +8,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from migration_support import real_chain
 
 from mcp_perplexity_pro.storage.engine import create_engine_for, database_path
 from mcp_perplexity_pro.storage.migrate import (
@@ -105,10 +106,11 @@ def only_0001(tmp_path):
     return target
 
 
-def test_fresh_database_reaches_0002(settings, db):
+def test_fresh_database_reaches_head_through_0002(settings, db):
     result = migrate(settings)
-    assert result.applied == ("0001", "0002")
-    assert current_revision(db) == head_revision() == "0002"
+    assert result.applied == tuple(real_chain())
+    assert current_revision(db) == head_revision()
+    assert {"0001", "0002"} <= set(real_chain())
     assert "usage_events" in tables(db)
 
 
@@ -118,7 +120,7 @@ def test_a_0001_database_upgrades_keeping_projects_and_backing_up(settings, db, 
         sql_exec(db, "INSERT INTO projects (name) VALUES (:n)", n=name)
     before = sql_all(db, "SELECT id, name, created_at FROM projects ORDER BY id")
     result = migrate(settings)
-    assert result.applied == ("0002",)
+    assert result.applied == tuple(real_chain()[1:])
     assert sql_all(db, "SELECT id, name, created_at FROM projects ORDER BY id") == before
     assert sql_all(db, "SELECT count(*) FROM usage_events") == [(0,)]
     backup = backup_path(settings.data_dir, "0001")
@@ -132,8 +134,8 @@ def test_upgrade_downgrade_upgrade_and_downgrade_keeps_projects(settings, db):
     pid = sql_all(db, "SELECT id FROM projects")[0][0]
     sql_exec(db, INSERT, status="ok", pid=pid, pname="kept", rid="r1")
 
-    result = downgrade(settings)
-    assert result.applied == ("0002",)
+    result = downgrade(settings, "0001")  # back through every later revision, down to 0001
+    assert result.applied == tuple(reversed(real_chain()[1:]))
     assert current_revision(db) == "0001"
     assert "usage_events" not in tables(db)
     assert sql_all(db, "SELECT name FROM projects") == [("kept",)]  # projects and rows intact
@@ -141,7 +143,7 @@ def test_upgrade_downgrade_upgrade_and_downgrade_keeps_projects(settings, db):
     assert leftovers == []  # its indexes went with it
 
     migrate(settings)
-    assert current_revision(db) == "0002"
+    assert current_revision(db) == head_revision()
     assert sql_all(db, "SELECT count(*) FROM usage_events") == [(0,)]
 
 

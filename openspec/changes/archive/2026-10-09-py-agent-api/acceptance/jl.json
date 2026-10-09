@@ -1,0 +1,51 @@
+{
+  "content": [
+    {
+      "text": "2 of 2 job(s) in project 'acceptance', newest first:\n2. [cancelled] medium 'Summarize the history of the Python programming language in five bullet points with sources.' (started 2026-10-09 21:52 UTC, finished 21:52, usage recorded)\n1. [completed] medium 'Compare the pricing models of Pinecone, Weaviate Cloud and Qdrant Cloud using current official pricing pages. Short tabl' (started 2026-10-09 21:51 UTC, finished 21:51, usage recorded)",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "list",
+    "project": "acceptance",
+    "job_id": null,
+    "status": null,
+    "job": null,
+    "jobs": [
+      {
+        "job_id": 2,
+        "response_id": "resp_76ef65be-0662-4ad7-8c3c-dfd4bac61317",
+        "depth": "medium",
+        "status": "cancelled",
+        "query_excerpt": "Summarize the history of the Python programming language in five bullet points with sources.",
+        "model": null,
+        "started_at": "2026-10-09T21:52:04.115117Z",
+        "finished_at": "2026-10-09T21:52:11.813305Z",
+        "cancel_requested_at": "2026-10-09T21:52:07.375264Z",
+        "usage_recorded": true
+      },
+      {
+        "job_id": 1,
+        "response_id": "resp_f607dfc5-a69a-44cd-9e45-43cb0587af76",
+        "depth": "medium",
+        "status": "completed",
+        "query_excerpt": "Compare the pricing models of Pinecone, Weaviate Cloud and Qdrant Cloud using current official pricing pages. Short tabl",
+        "model": "openai/gpt-6-luna",
+        "started_at": "2026-10-09T21:51:17.475891Z",
+        "finished_at": "2026-10-09T21:51:56.461160Z",
+        "cancel_requested_at": null,
+        "usage_recorded": true
+      }
+    ],
+    "jobs_total": 2,
+    "truncated": false,
+    "answer": null,
+    "sources": [],
+    "usage": null,
+    "progress": null,
+    "warnings": [],
+    "message": null,
+    "not_refreshed": null
+  }
+}

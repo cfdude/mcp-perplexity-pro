@@ -1,0 +1,43 @@
+{
+  "content": [
+    {
+      "text": "Usage for project acceptance: 6 call(s), 1 error(s), 46051 token(s), cost 0.02297 USD (22970000 nano-USD).\nThe cost is a lower bound: error calls count cost 0 and may have been billed; 1 call(s) have no known cost and 0 cost(s) were computed from documented prices.\nBy day: key | calls | errors | tokens | cost USD\n2026-10-09 | 6 | 1 | 46051 | 0.02297",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "totals": {
+      "calls": 6,
+      "errors": 1,
+      "input_tokens": 44892,
+      "output_tokens": 1159,
+      "total_tokens": 46051,
+      "cost_nano_usd": 22970000,
+      "cost_usd": "0.02297",
+      "calls_cost_computed": 0,
+      "calls_cost_unknown": 1
+    },
+    "group_by": "day",
+    "groups": [
+      {
+        "calls": 6,
+        "errors": 1,
+        "input_tokens": 44892,
+        "output_tokens": 1159,
+        "total_tokens": 46051,
+        "cost_nano_usd": 22970000,
+        "cost_usd": "0.02297",
+        "calls_cost_computed": 0,
+        "calls_cost_unknown": 1,
+        "key": "2026-10-09"
+      }
+    ],
+    "groups_total": 1,
+    "groups_truncated": false,
+    "project": "acceptance",
+    "since": null,
+    "until": null,
+    "limit": 20
+  }
+}

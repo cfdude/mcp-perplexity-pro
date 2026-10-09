@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "validation failed: response_format.json_schema is required when type is \"json_schema\"",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

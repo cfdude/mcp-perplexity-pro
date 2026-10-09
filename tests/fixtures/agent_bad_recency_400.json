@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "validation failed: tools[0]: search recency filter must be one of: hour day week month year",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

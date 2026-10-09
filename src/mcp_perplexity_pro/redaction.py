@@ -22,3 +22,14 @@ def redact_text(text: str, secrets: Iterable[str] = ()) -> str:
     for secret in sorted((s for s in secrets if s), key=len, reverse=True):
         text = text.replace(secret, REDACTED)
     return _KEY_SHAPED.sub(REDACTED, text)
+
+
+def scrub_secrets(text: str, secrets: Iterable[str] = ()) -> str:
+    """Remove only the configured secrets from ``text``, never key-SHAPED tokens.
+
+    For content the caller or the model supplied (a query, a title, an answer, a source URL): a
+    ``pplx-`` shaped example in it is theirs to keep, but the configured key itself must never
+    be stored or echoed back (server-runtime "Secrets are never emitted")."""
+    for secret in sorted((s for s in secrets if s), key=len, reverse=True):
+        text = text.replace(secret, REDACTED)
+    return text

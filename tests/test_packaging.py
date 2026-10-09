@@ -12,6 +12,8 @@ MIGRATION_FILES = (
     "script.py.mako",
     "versions/0001_initial.py",
     "versions/0002_usage_events.py",
+    "versions/0003_chats.py",
+    "versions/0004_research_jobs.py",
 )
 
 

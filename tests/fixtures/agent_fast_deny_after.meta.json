@@ -1,0 +1,27 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "fast preset, denylist domain and after-date filter (MM/DD/YYYY)",
+  "request": {
+    "preset": "fast",
+    "input": "Python 3.15 release candidate news, one sentence.",
+    "tools": [
+      {
+        "type": "web_search",
+        "max_results": 5,
+        "filters": {
+          "search_domain_filter": [
+            "-reddit.com",
+            "-wikipedia.org"
+          ],
+          "search_after_date_filter": "09/15/2026"
+        }
+      }
+    ]
+  }
+}

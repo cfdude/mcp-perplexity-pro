@@ -4,6 +4,9 @@ import ipaddress
 import socket
 
 import pytest
+from chat_support import chat_world  # noqa: F401 - registers the fixture for the chat tests
+from research_support import research_world  # noqa: F401 - the research and jobs tests
+from secrets_support import keyed  # noqa: F401 - the secrets and contract checks
 
 
 def _is_local(address: object) -> bool:

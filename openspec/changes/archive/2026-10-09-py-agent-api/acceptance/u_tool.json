@@ -1,0 +1,67 @@
+{
+  "content": [
+    {
+      "text": "Usage for project acceptance: 6 call(s), 1 error(s), 46051 token(s), cost 0.02297 USD (22970000 nano-USD).\nThe cost is a lower bound: error calls count cost 0 and may have been billed; 1 call(s) have no known cost and 0 cost(s) were computed from documented prices.\nBy tool: key | calls | errors | tokens | cost USD\nperplexity_research | 2 | 1 | 26448 | 0.01722\nperplexity_ask | 2 | 0 | 8887 | 0.00299\nperplexity_chat | 2 | 0 | 10716 | 0.00276",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "totals": {
+      "calls": 6,
+      "errors": 1,
+      "input_tokens": 44892,
+      "output_tokens": 1159,
+      "total_tokens": 46051,
+      "cost_nano_usd": 22970000,
+      "cost_usd": "0.02297",
+      "calls_cost_computed": 0,
+      "calls_cost_unknown": 1
+    },
+    "group_by": "tool",
+    "groups": [
+      {
+        "calls": 2,
+        "errors": 1,
+        "input_tokens": 25474,
+        "output_tokens": 974,
+        "total_tokens": 26448,
+        "cost_nano_usd": 17220000,
+        "cost_usd": "0.01722",
+        "calls_cost_computed": 0,
+        "calls_cost_unknown": 1,
+        "key": "perplexity_research"
+      },
+      {
+        "calls": 2,
+        "errors": 0,
+        "input_tokens": 8762,
+        "output_tokens": 125,
+        "total_tokens": 8887,
+        "cost_nano_usd": 2990000,
+        "cost_usd": "0.00299",
+        "calls_cost_computed": 0,
+        "calls_cost_unknown": 0,
+        "key": "perplexity_ask"
+      },
+      {
+        "calls": 2,
+        "errors": 0,
+        "input_tokens": 10656,
+        "output_tokens": 60,
+        "total_tokens": 10716,
+        "cost_nano_usd": 2760000,
+        "cost_usd": "0.00276",
+        "calls_cost_computed": 0,
+        "calls_cost_unknown": 0,
+        "key": "perplexity_chat"
+      }
+    ],
+    "groups_total": 3,
+    "groups_truncated": false,
+    "project": "acceptance",
+    "since": null,
+    "until": null,
+    "limit": 20
+  }
+}

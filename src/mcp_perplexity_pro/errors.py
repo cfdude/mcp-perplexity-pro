@@ -63,6 +63,7 @@ class PerplexityError(ToolError):
         status: int | None = None,
         api_type: str | None = None,
         api_code: int | str | None = None,
+        api_message: str | None = None,
         secrets: tuple[str, ...] = (),
     ) -> None:
         if category not in ALL_CATEGORIES:
@@ -72,6 +73,9 @@ class PerplexityError(ToolError):
         self.status = status
         self.api_type = redact_text(api_type, secrets) if api_type else None
         self.api_code = redact_text(api_code, secrets) if isinstance(api_code, str) else api_code
+        # The API's own ``error.message``, redacted, without the readable message's
+        # ``(type: ...)`` suffix: a caller that must recognize an exact body compares this.
+        self.api_message = redact_text(api_message, secrets) if api_message else None
 
 
 def category_for_status(status: int) -> str:
@@ -115,5 +119,6 @@ def error_from_response(
         status=status,
         api_type=api_type,
         api_code=code if isinstance(code, int | str) else None,
+        api_message=message,
         secrets=secrets,
     )

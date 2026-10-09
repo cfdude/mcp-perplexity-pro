@@ -1,0 +1,90 @@
+{
+  "content": [
+    {
+      "text": "The latest stable Python release is **Python 3.15.0**, released October 9, 2026.[1]\n\nSources:\n1. Python Release Python 3.14.8 | Python.org - https://www.python.org/downloads/release/python-3150/\n2. Python documentation by version - https://www.python.org/doc/versions/\n3. Status of Python versions - https://devguide.python.org/versions/\n4. Python Release Python 3.14.0 - https://www.python.org/downloads/release/python-3140/\n5. www.python.org › downloads › latestPython Release Python 3.14.8 | Python.org - https://www.python.org/downloads/release/python-3148/\n6. www.python.org › downloadsDownload Python | Python.org - https://www.python.org/downloads/?keys=latest%20python\n7. legacy.python.org › download › indexDownload Python - https://legacy.python.org/download/index.html\n8. www.python.org · downloadsDownload Python | Python.org - https://www.python.org/downloads/?keys=install+python\n9. www.python.org › downloadsDownload Python | Python.org - https://www.python.org/downloads/?keys=latest+python+version\n10. General Python FAQ - https://docs.python.org/3/faq/general.html\n\nUsage: openai/gpt-6-luna, cost 0.00143 USD (reported), 3328 tokens, 2011 ms, project acceptance.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "answer": "The latest stable Python release is **Python 3.15.0**, released October 9, 2026.[1]",
+    "answer_json": null,
+    "sources": [
+      {
+        "url": "https://www.python.org/downloads/release/python-3150/",
+        "title": "Python Release Python 3.14.8 | Python.org",
+        "date": null,
+        "id": 1
+      },
+      {
+        "url": "https://www.python.org/doc/versions/",
+        "title": "Python documentation by version",
+        "date": "2016-03-13",
+        "id": 2
+      },
+      {
+        "url": "https://devguide.python.org/versions/",
+        "title": "Status of Python versions",
+        "date": "2026-05-27",
+        "id": 3
+      },
+      {
+        "url": "https://www.python.org/downloads/release/python-3140/",
+        "title": "Python Release Python 3.14.0",
+        "date": null,
+        "id": 4
+      },
+      {
+        "url": "https://www.python.org/downloads/release/python-3148/",
+        "title": "www.python.org › downloads › latestPython Release Python 3.14.8 | Python.org",
+        "date": null,
+        "id": 5
+      },
+      {
+        "url": "https://www.python.org/downloads/?keys=latest%20python",
+        "title": "www.python.org › downloadsDownload Python | Python.org",
+        "date": "2026-06-10",
+        "id": 6
+      },
+      {
+        "url": "https://legacy.python.org/download/index.html",
+        "title": "legacy.python.org › download › indexDownload Python",
+        "date": null,
+        "id": 7
+      },
+      {
+        "url": "https://www.python.org/downloads/?keys=install+python",
+        "title": "www.python.org · downloadsDownload Python | Python.org",
+        "date": "2026-06-10",
+        "id": 8
+      },
+      {
+        "url": "https://www.python.org/downloads/?keys=latest+python+version",
+        "title": "www.python.org › downloadsDownload Python | Python.org",
+        "date": "2026-06-10",
+        "id": 9
+      },
+      {
+        "url": "https://docs.python.org/3/faq/general.html",
+        "title": "General Python FAQ",
+        "date": null,
+        "id": 10
+      }
+    ],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": "fast",
+    "response_id": "resp_902df360-29f3-4568-b1f6-b78f6cdb7797",
+    "usage": {
+      "input_tokens": 3298,
+      "output_tokens": 30,
+      "total_tokens": 3328,
+      "cost_usd": "0.00143",
+      "cost_source": "reported"
+    },
+    "latency_ms": 2011,
+    "project": "acceptance"
+  }
+}

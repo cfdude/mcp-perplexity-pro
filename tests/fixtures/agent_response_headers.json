@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "headers": {
+    "date": "Fri, 09 Oct 2026 19:07:20 GMT",
+    "content-type": "application/json",
+    "server": "cloudflare",
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "49",
+    "x-ratelimit-reset": "1791572841",
+    "x-ratelimit-used": "1",
+    "x-request-id": "1fbf7849-2f7e-4946-ab3c-7cd0f2e6f3be",
+    "access-control-allow-origin": "*",
+    "set-cookie": [
+      "__cf_bm=<redacted>",
+      "__cflb=<redacted>"
+    ],
+    "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "<redacted>",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  }
+}

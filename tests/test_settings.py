@@ -32,6 +32,7 @@ def test_documented_defaults(key_env):
     assert s.log_level == "INFO"
     assert s.connect_timeout == 10
     assert s.read_timeout == 60
+    assert s.agent_read_timeout == 120
     assert s.max_attempts == 3
     assert s.max_retry_wait == 30
     assert s.catalog_ttl == 3600
@@ -49,6 +50,7 @@ def test_every_documented_name_is_overridable(monkeypatch, tmp_path):
         "LOG_LEVEL": "debug",
         "CONNECT_TIMEOUT": "1.5",
         "READ_TIMEOUT": "2.5",
+        "AGENT_READ_TIMEOUT": "240",
         "MAX_ATTEMPTS": "5",
         "MAX_RETRY_WAIT": "7",
         "CATALOG_TTL": "11",
@@ -61,7 +63,7 @@ def test_every_documented_name_is_overridable(monkeypatch, tmp_path):
     assert (s.host, s.port, s.base_url) == ("0.0.0.0", 8199, "http://127.0.0.1:9")
     assert s.data_dir == tmp_path / "d"
     assert s.log_level == "DEBUG"
-    assert (s.connect_timeout, s.read_timeout) == (1.5, 2.5)
+    assert (s.connect_timeout, s.read_timeout, s.agent_read_timeout) == (1.5, 2.5, 240)
     assert (s.max_attempts, s.max_retry_wait) == (5, 7)
     assert (s.catalog_ttl, s.catalog_max_stale, s.db_busy_timeout) == (11, 22, 9)
 
@@ -162,3 +164,20 @@ def test_tilde_in_data_dir_is_expanded(key_env, monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("PERPLEXITY_DATA_DIR", "~/elsewhere")
     assert load_settings().data_dir == tmp_path / "elsewhere"
+
+
+@pytest.mark.parametrize("value", ["0", "soon"])
+def test_agent_read_timeout_rejects_bad_values_naming_variable_and_value(
+    key_env, monkeypatch, value
+):
+    monkeypatch.setenv("PERPLEXITY_AGENT_READ_TIMEOUT", value)
+    with pytest.raises(SettingsError) as excinfo:
+        load_settings()
+    message = str(excinfo.value)
+    assert "PERPLEXITY_AGENT_READ_TIMEOUT" in message
+    assert repr(value) in message
+
+
+def test_agent_read_timeout_override_is_a_float(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_AGENT_READ_TIMEOUT", "240")
+    assert load_settings().agent_read_timeout == 240.0

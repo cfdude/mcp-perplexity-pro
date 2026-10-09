@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "json_schema.schema must have a root type of 'object' (got type=\"bogus\"). Wrap your data in an object property (e.g. {'type': 'object', 'properties': {'items': {'type': 'array', 'items': ...}}}).",
+    "type": "invalid_parameter",
+    "code": 400
+  }
+}

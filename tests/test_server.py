@@ -104,7 +104,16 @@ async def test_initialize_over_http_lists_registered_tools(make_server):
     assert init["result"]["serverInfo"]["name"] == "perplexity-pro"
     names = [t["name"] for t in tools["result"]["tools"]]
     # production tools exist from construction
-    assert sorted(names) == ["perplexity_models", "perplexity_projects", "perplexity_usage", "ping"]
+    assert sorted(names) == [
+        "perplexity_ask",
+        "perplexity_chat",
+        "perplexity_jobs",
+        "perplexity_models",
+        "perplexity_projects",
+        "perplexity_research",
+        "perplexity_usage",
+        "ping",
+    ]
 
 
 async def test_defaults_are_loopback_8102_without_binding(make_server):

@@ -146,7 +146,7 @@
       "id": "py-agent-api",
       "title": "Agent API tools: ask, research (background), chat, jobs",
       "priority": "P0",
-      "status": "planned",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -159,10 +159,108 @@
       "reconcileNeeded": false,
       "parent": "python-rewrite-2-0",
       "description": "Replace Sonar with POST /v1/agent. depth param maps to presets fast/low/medium/high (xhigh opt-in); explicit model allowed. research uses background mode + GET /v1/agent/{id} + cancel. Chat persisted in SQLite. Citations rebuilt from search_results output items.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "82c747a",
+        "36cc792",
+        "5ae0e96",
+        "745a1a0",
+        "522be27",
+        "4a62d70",
+        "8a6c5d7",
+        "07c035a",
+        "3973f8b",
+        "6df63b8",
+        "78b7aa5",
+        "c562cb3",
+        "94b7580",
+        "ebbb43b",
+        "d761e58",
+        "a282bf4",
+        "1757c85",
+        "223709a",
+        "7cb980d",
+        "ccfee24",
+        "6437222",
+        "47f8642",
+        "7e401e1",
+        "3f5f179",
+        "b67c128",
+        "64e5122",
+        "2310e2f",
+        "c7f5467",
+        "f8a89af",
+        "008bf8e",
+        "1204be2",
+        "fc57dc5",
+        "ef73b05",
+        "ac10883",
+        "ac10883",
+        "516b7d5",
+        "3efa299",
+        "e898cac",
+        "da6576b",
+        "af91e23",
+        "af91e23",
+        "0ef7377",
+        "992222f",
+        "1d49a5a",
+        "0207916",
+        "f33c65d",
+        "f2eee11",
+        "f2eee11",
+        "0cff143",
+        "048ca94",
+        "48c2484",
+        "f34cb8a",
+        "54f7b12"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T18:30:33.347Z",
-      "release": "release-2-0-0"
+      "touchedAt": "2026-10-09T23:19:30.127Z",
+      "release": "release-2-0-0",
+      "startedAt": "2026-10-09T19:42:45.359Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T20:26:13.685Z",
+          "artifacts": [
+            "openspec/changes/py-agent-api/proposal.md",
+            "openspec/changes/py-agent-api/design.md",
+            "openspec/changes/py-agent-api/tasks.md",
+            "openspec/changes/py-agent-api/specs/agent-client/spec.md",
+            "openspec/changes/py-agent-api/specs/agent-ask/spec.md",
+            "openspec/changes/py-agent-api/specs/agent-chat/spec.md",
+            "openspec/changes/py-agent-api/specs/agent-research/spec.md",
+            "openspec/changes/py-agent-api/specs/server-runtime/spec.md",
+            "openspec/changes/py-agent-api/specs/local-storage/spec.md"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review, verification reviews, final narrow check (2026-10-09); last 3 task-text blocks fixed by the parent in 522be27"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T23:19:23.385Z",
+          "baseSha": "f2eee11",
+          "headSha": "54f7b12",
+          "reviewer": "fresh-context general-purpose subagent: documentation diff f2eee11..048ca94 (one IMPORTANT, five MINOR) with the code fix 48c2484 (shielded submit insert and chat row write, red/green/mutation-checked) and doc corrections f34cb8a applied; suite 1399 passed, zero warnings",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-09T22:54:50.454Z",
+            "baseSha": "4a62d70",
+            "headSha": "f2eee11",
+            "reviewer": "fresh-context general-purpose subagents: Gate 2 review (4a62d70..ac10883) + call-site audit (findings fixed), narrow Gate 2 re-review of ac10883..da6576b PASS, minor follow-ups 0ef7377..0207916 (tests green, zero warnings) and spec alignment f33c65d applied by the parent"
+          }
+        }
+      },
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-09T23:19:30.126Z",
+        "reason": "Agent API toolset delivered: perplexity_ask, perplexity_chat, perplexity_research and perplexity_jobs with migrations 0003/0004, recorder wired at run_costed and the observation core, verified live (about $0.023, spend reconciled to the nano-USD); Gate 1, cross-spec, Gate 2, audit and docs reviews recorded"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-09T23:19:30.125Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-09T23:19:30.126Z"
     },
     {
       "id": "py-search-api",
@@ -464,7 +562,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 122,
+  "revision": 182,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
@@ -476,8 +574,32 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-09T18:30:38.726Z",
+        "reviewedAt": "2026-10-09T22:54:50.300Z",
         "specs": [
+          {
+            "key": "py-agent-api/specs/agent-ask/spec.md",
+            "sha256": "e9e07e5b99a3bc281410aa5254a666b73f1430c9895f08c4264604a77e89e606"
+          },
+          {
+            "key": "py-agent-api/specs/agent-chat/spec.md",
+            "sha256": "cb4e760c7d446a0b593f8219d4552488c9637cd1997a2825a336ed00e40718dd"
+          },
+          {
+            "key": "py-agent-api/specs/agent-client/spec.md",
+            "sha256": "4393912d937748a3a78bce422f8462a1c0da0a6db81b06045cc964e9a126a8e2"
+          },
+          {
+            "key": "py-agent-api/specs/agent-research/spec.md",
+            "sha256": "24ec257ee559595813f1832c1067c17d72585f19645d65bb15793d45d4633ce5"
+          },
+          {
+            "key": "py-agent-api/specs/local-storage/spec.md",
+            "sha256": "f15dc1cddb27d573ac0ce8998d4f5d9ad257c74eca10edcc2a80fb4b462cb07b"
+          },
+          {
+            "key": "py-agent-api/specs/server-runtime/spec.md",
+            "sha256": "00b475b5aeca32de31223afc80c40dab3309e16c19f28a194ce53fe34ac93fd7"
+          },
           {
             "key": "py-foundation/specs/local-storage/spec.md",
             "sha256": "d95a0b7498af954a6d58cba43272fa1b259158018a990f47977def50ae38b6a4"
@@ -504,18 +626,42 @@
           },
           {
             "key": "py-usage-log/specs/usage-recording/spec.md",
-            "sha256": "ed2fb148b7842420d0d2d0031228246086c38b09c03351a8515741a4eefc732d"
+            "sha256": "325d2b178c5b1359c4e178bff6605a66c4e68ac599ab910ed22255d76079c232"
           },
           {
             "key": "py-usage-log/specs/usage-reporting/spec.md",
             "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagents: cross-spec review, verification review, final narrow check for py-usage-log (2026-10-09)",
+        "reviewer": "fresh-context general-purpose subagent: final cross-spec review of py-agent-api (1 block + 9 polish, all fixed in f33c65d by the parent's amendment agent) (2026-10-09)",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-09T17:34:02.470Z",
+          "reviewedAt": "2026-10-09T20:26:13.523Z",
           "specs": [
+            {
+              "key": "py-agent-api/specs/agent-ask/spec.md",
+              "sha256": "84afcab103d708282e13632382211a99c61fd8f3b4ab928a43cb467c64255bc3"
+            },
+            {
+              "key": "py-agent-api/specs/agent-chat/spec.md",
+              "sha256": "ded24ff2b0607d80cdc4f1a5f59fd11c1297a257b51ddc4f3d10df2b14028dfe"
+            },
+            {
+              "key": "py-agent-api/specs/agent-client/spec.md",
+              "sha256": "4393912d937748a3a78bce422f8462a1c0da0a6db81b06045cc964e9a126a8e2"
+            },
+            {
+              "key": "py-agent-api/specs/agent-research/spec.md",
+              "sha256": "a79b46a85c17e86095fa4e34b5dd745c99035594942761f381924f5038c70e88"
+            },
+            {
+              "key": "py-agent-api/specs/local-storage/spec.md",
+              "sha256": "7fd6b6da5e22ff07f09162b2a4d6718e2791f746b417d3384193c71ab6a4caef"
+            },
+            {
+              "key": "py-agent-api/specs/server-runtime/spec.md",
+              "sha256": "6d37e406315b86884d448abcbc5d8e4f75441f1517bb1919e8311e32ebd38bbc"
+            },
             {
               "key": "py-foundation/specs/local-storage/spec.md",
               "sha256": "d95a0b7498af954a6d58cba43272fa1b259158018a990f47977def50ae38b6a4"
@@ -535,9 +681,21 @@
             {
               "key": "py-foundation/specs/server-runtime/spec.md",
               "sha256": "330fe948829a15cf26f7f3f8b1e50431ba2bbda7e9ab97b5a037d3ed6803a658"
+            },
+            {
+              "key": "py-usage-log/specs/local-storage/spec.md",
+              "sha256": "a9f771b918223f5d4e65f381cb20f3d7718f43cfc449f50b92ff556b632c7c5a"
+            },
+            {
+              "key": "py-usage-log/specs/usage-recording/spec.md",
+              "sha256": "325d2b178c5b1359c4e178bff6605a66c4e68ac599ab910ed22255d76079c232"
+            },
+            {
+              "key": "py-usage-log/specs/usage-reporting/spec.md",
+              "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagents: cross-spec review of amended specs (2026-10-09), polish applied"
+          "reviewer": "fresh-context general-purpose subagents: cross-spec review, verification reviews, final narrow checks for py-agent-api (2026-10-09); last 3 task-text blocks fixed by the parent in 522be27"
         }
       }
     }

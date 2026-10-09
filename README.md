@@ -4,29 +4,37 @@ An [MCP](https://modelcontextprotocol.io) server for the Perplexity API, written
 (FastMCP, SQLAlchemy, SQLite). It serves MCP over stdio or Streamable HTTP and keeps its own data
 in a local SQLite database.
 
-## Status: 2.0.0 is a foundation release
+## Status: 2.0.0
 
 Version 2.0.0 replaces the TypeScript 1.x server. The reason is that Perplexity retired the Sonar
 endpoints the 1.x server called: both `POST /chat/completions` and `GET /async/chat/completions`
 now return `403 chat_completions_not_available` ("Sonar is now the Agent API"), so 1.x could not
 answer a single query. There was no working behavior to port, so the TypeScript code is deleted
-(git history keeps it) and the server was rebuilt in Python.
+(git history keeps it) and the server was rebuilt in Python on the Agent API (`POST /v1/agent`).
 
-**Only three tools exist today:**
+**Seven tools exist today:**
 
-| Tool | What it does |
-|---|---|
-| `perplexity_models` | Lists the models your key can use, with live prices, plus the documented Agent API presets |
-| `perplexity_projects` | Lists projects, or deletes one and its stored records (spend history is kept) |
-| `perplexity_usage` | Reports what recorded upstream calls cost, grouped by tool, API, model, project or day. Read-only |
+| Tool | What it does | Spends money |
+|---|---|---|
+| `perplexity_ask` | One web-grounded question, answered synchronously with its sources. Depth `fast` (default), `low` or `medium` | yes |
+| `perplexity_chat` | A multi-turn conversation kept in the local database: `send`, `list`, `read`, `delete` | `send` only |
+| `perplexity_research` | Starts a deep research run in the background and returns a job id at once. Depth `medium` (default), `high` or `xhigh` | yes, when a call observes the run finish |
+| `perplexity_jobs` | Manages research runs: `list`, `status`, `result`, `cancel` | no new spend; it records the finished run's |
+| `perplexity_models` | Lists the models your key can use, with live prices, plus the documented Agent API presets | no |
+| `perplexity_projects` | Lists projects, or deletes one and its stored records (spend history is kept) | no |
+| `perplexity_usage` | Reports what recorded upstream calls cost, grouped by tool, API, model, project or day. Read-only | no |
 
-**No tool records usage yet.** The usage table and the recorder exist, but none of the three tools
-above makes a costed upstream call, so `perplexity_usage` reports zero calls on a fresh install.
-Real recording arrives with each later tool: Agent, Search, Embeddings and Decisions.
+**The four Agent tools record their usage.** Every costed upstream call stores one usage event
+(`perplexity_usage` reports them), and a background research run is recorded once, by the first
+`perplexity_jobs` call that sees it finish. The Search, Embeddings and Decisions tools arrive in
+later releases and will each record their calls the same way.
 
-The Agent, Search, Embeddings and Decisions tools arrive in later releases. The old tool names
-(`ask_perplexity`, `chat_perplexity` and the rest) are gone and are not coming back under those
-names. No data is imported from 1.x.
+**These tools can spend money, and there is no cost ceiling.** Defaults are the cheapest depths
+(`fast`; `medium` for research). `high` and `xhigh` exist only behind `perplexity_research`
+because a single run can cost dollars (see "Cost by depth").
+
+The old tool names (`ask_perplexity`, `chat_perplexity` and the rest) are gone and are not coming
+back under those names. No data is imported from 1.x.
 
 ## Install and run
 
@@ -92,6 +100,7 @@ value. No `.env` file is read.
 | `PERPLEXITY_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` (case-insensitive) |
 | `PERPLEXITY_CONNECT_TIMEOUT` | `10` | Seconds to establish a connection to the API |
 | `PERPLEXITY_READ_TIMEOUT` | `60` | Seconds to wait for the API's response |
+| `PERPLEXITY_AGENT_READ_TIMEOUT` | `120` | Seconds to wait for a synchronous Agent run (`perplexity_ask`, `perplexity_chat` send). A background submit and every other request use `PERPLEXITY_READ_TIMEOUT`. Must be greater than 0 |
 | `PERPLEXITY_MAX_ATTEMPTS` | `3` | Attempts per API request (HTTP 429 is retried honoring `Retry-After`; GET requests are also retried on 5xx, timeouts and connection failures; a create POST is retried only after a connect failure) |
 | `PERPLEXITY_MAX_RETRY_WAIT` | `30` | Longest wait in seconds between attempts; a `Retry-After` longer than this is not waited out |
 | `PERPLEXITY_CATALOG_TTL` | `3600` | Seconds the model list is cached |
@@ -141,6 +150,413 @@ The client launches the server, so the key goes in the client's `env` block:
 ```
 
 ## Tools
+
+Four tools (`perplexity_ask`, `perplexity_chat`, `perplexity_research`, `perplexity_jobs`) call the
+Perplexity Agent API (`POST /v1/agent`) and spend money. The first three sections below are what
+applies to all four; each tool follows.
+
+### Cost by depth
+
+A depth is an Agent API preset: a bundle of model, search tools and step budget. You choose it;
+nothing is routed automatically and there is **no spending cap**. Costs are the exact figures the
+API reported in its responses (`usage.cost_usd`, `cost_source: "reported"`), not estimates, except
+where the table says "not measured".
+
+| Depth | Where it is available | Observed cost per call | Evidence | Observed time |
+|---|---|---|---|---|
+| `fast` (default for ask and chat) | `perplexity_ask`, `perplexity_chat` | $0.00118 to $0.00180 | Live acceptance run, 2026-10-09: $0.00143, $0.00118, $0.00158. Probe fixtures, 2026-10-09 (the eight synchronous `fast` captures in `tests/fixtures/`; a ninth, the background poll `agent_background_poll.json`, cost $0.00105): $0.00119 to $0.00180 | 1.7 to 2.6 s (acceptance) |
+| `low` | `perplexity_ask`, `perplexity_chat` | $0.00045 to $0.00386 | Acceptance, 2026-10-09: $0.00156 (one call, 3.2 s). Probe fixtures, 2026-10-09: $0.00045 (`agent_chat_depth_switch.json`, a chained chat turn) and $0.00386 (`agent_low_fetch_url.json`, a call that fetched a page). Up to about $0.02 is the probe report's range; it is not backed by a saved capture | 3.2 s (acceptance) |
+| `medium` | `perplexity_research` (background); `perplexity_ask` and `perplexity_chat` accept it too | $0.01599 to $0.01722 as a research run | Acceptance, 2026-10-09: $0.01722 (job 1, 39 s between our submit and the call that saw it finish). Probe fixture `agent_background_completed.json`, 2026-10-09: $0.01599. About $0.05 as an upper figure is the probe report's range; not backed by a saved capture. A synchronous `medium` call was not run in either | about 35 to 40 s |
+| `high` | `perplexity_research` only | not measured | Never run. "Up to about $0.4 to $0.9, and minutes" is the probe report's and the provider's own positioning: an estimate | minutes (estimate) |
+| `xhigh` | `perplexity_research` only | not measured | Never run; more than `high` | minutes (estimate) |
+
+Two things the table cannot show. A **cancelled** run reports no usage, so its cost is unknown (the
+probe's cancelled run had already run six searches); the usage report counts it as an error with an
+unknown cost. And a run's cost grows with what it searches and fetches, so the same depth costs
+different amounts for different questions. Check `perplexity_usage` after trying a new kind of
+question.
+
+**Why `high` and `xhigh` exist only behind `perplexity_research`.** They can cost dollars and last
+minutes, and the API sits behind Cloudflare, whose default read timeout (100 s) was not verified for
+this API, so a long synchronous request may be cut. A synchronous call that is cut may still be
+billed. `perplexity_ask` and `perplexity_chat` therefore
+refuse both depths with `invalid_request` and point to `perplexity_research`, where the run is
+background, observed later, and can be cancelled.
+
+### What `store: false` does and does not do
+
+`perplexity_ask` and `perplexity_chat` send `store: false`. **That is not a retention control.**
+The provider's documentation says it "only hides a response from retrieval" and does not disable
+persistence, so the provider may still keep the query and answer. Do not rely on it to keep text
+away from Perplexity. The chat tool uses it because a `store: false` response can still be
+continued from (measured on 2026-10-09 for three chained turns), not for privacy.
+
+**Research runs are stored by the provider.** `perplexity_research` sends `store: true`, because a
+background run that is not stored cannot be retrieved. The query and result stay retrievable at the
+provider. This server also keeps the query and the result in its own local database
+(`perplexity.db`, mode 0600), as it does chat text.
+
+### Sources are not citations
+
+`sources` lists the pages the run found or fetched, de-duplicated by URL, in order of first use,
+each with `url`, `title`, `date` (when the page has one) and `id`. It is **not** a list of what
+the answer cited. The API's `annotations` field was empty in every captured response, so nothing
+ties a claim to a source: the inline markers in the answer (`[1]`, `[web:0]`, markdown links) are
+returned unchanged and are **not** mapped to `sources` entries (the markers are not numbered like
+the `id`s, and nothing documents the mapping). A source may be unused by the answer, and an answer
+may rest on a page that is not listed.
+
+### `perplexity_ask`
+
+One web-grounded question, answered synchronously and statelessly. It never waits for a background
+run. A `completed` or `incomplete` run returns a result; any other status is an
+`unexpected_response` error (the call is still recorded, because it was billed).
+
+| Argument | Type | Default | Meaning |
+|---|---|---|---|
+| `query` | string | required | The question, not blank, at most 20000 characters |
+| `project` | string | `default` | The project the call is recorded under; created if absent |
+| `depth` | `fast`, `low` or `medium` | `fast` | The preset. `high` and `xhigh` are refused (see "Cost by depth"). Cannot be combined with `model` |
+| `model` | string | none | An explicit model id (for example `openai/gpt-6-luna`) instead of a depth. It searches with the web search tool and a 3-step budget unless `search` is false. An Anthropic id gets `max_output_tokens` 4096 unless you set one |
+| `search` | boolean | none | `false` answers from the model alone and needs `model` (a depth always searches). `true` is accepted and changes nothing |
+| `domains` | list of strings | none | At most 20 domains to search: all allowed (`python.org`) or all denied with a `-` prefix (`-reddit.com`). Mixing the two is refused |
+| `recency` | `hour`, `day`, `week`, `month` or `year` | none | Only recent results |
+| `after`, `before` | string `YYYY-MM-DD` | none | Only results published after or before this date. A malformed date is refused locally |
+| `country` | string | none | Two-letter country code to localize the search (`US`) |
+| `max_results` | integer 1 to 50 | none | Search results to retrieve |
+| `instructions` | string | none | System-style instructions, at most 10000 characters |
+| `max_output_tokens` | integer 1 to 64000 | none | Cap on answer tokens. A run that hits it is `incomplete` |
+| `json_schema` | object | none | A JSON Schema whose root type is `object`, at most 20000 characters serialized, for a structured answer. The parsed answer is `answer_json` |
+
+A search filter (`domains`, `recency`, `after`, `before`, `country`, `max_results`) replaces the
+preset's own tools with the web search tool alone, so a filtered `medium` run loses the preset's
+page fetching. The filters are validated here because the API accepts some invalid input silently
+(a mixed allow and deny list, a date in the wrong format) and would run, and bill, a call that
+ignored it.
+
+Output (`structuredContent`, with the answer, a numbered source list and one usage line as text):
+
+| Key | Meaning |
+|---|---|
+| `answer` | The answer text; inline markers are unchanged |
+| `answer_json` | The parsed answer when `json_schema` was given and the text parsed, else `null` |
+| `sources` | Pages the run found or fetched (see "Sources are not citations") |
+| `status` | `completed` or `incomplete` |
+| `incomplete_reason` | Why an incomplete run stopped, for example `max_output_tokens`; otherwise `null` |
+| `warnings` | Things worth knowing about this result |
+| `model` | The model that answered |
+| `depth` | The preset used; `null` when `model` was given |
+| `response_id` | The API's response id |
+| `usage` | `input_tokens`, `output_tokens`, `total_tokens`, `cost_usd` (an exact decimal string, `null` when unknown) and `cost_source` (`reported`, `computed` or `none`) |
+| `latency_ms` | Measured wall time of the upstream call |
+| `project` | The project the call was recorded under |
+
+An `incomplete` answer is a result with a warning, not an error: the run happened and was billed.
+An invalid `json_schema` makes the API answer with the same generic `400 invalid request` it gives
+for other mistakes, so the error message names the schema only as the likely cause.
+
+Example, `fast` with a domain filter. The result is from the live acceptance run on 2026-10-09
+(`openspec/changes/py-agent-api/acceptance/a1.json`), shortened to 3 of its 10 sources; nothing
+else is edited. The acceptance files hold results, not requests, so every example call in this
+README is written to match its result (depth, project and the fields the result shows); where a
+result does not repeat the query, the query text is illustrative:
+
+```json
+{"name": "perplexity_ask", "arguments": {"query": "What is the latest stable Python release?", "depth": "fast", "domains": ["python.org"], "project": "acceptance"}}
+```
+
+```json
+{
+  "answer": "The latest stable Python release is **Python 3.15.0**, released October 9, 2026.[1]",
+  "answer_json": null,
+  "sources": [
+    {"url": "https://www.python.org/downloads/release/python-3150/", "title": "Python Release Python 3.14.8 | Python.org", "date": null, "id": 1},
+    {"url": "https://www.python.org/doc/versions/", "title": "Python documentation by version", "date": "2016-03-13", "id": 2},
+    {"url": "https://devguide.python.org/versions/", "title": "Status of Python versions", "date": "2026-05-27", "id": 3}
+  ],
+  "status": "completed",
+  "incomplete_reason": null,
+  "warnings": [],
+  "model": "openai/gpt-6-luna",
+  "depth": "fast",
+  "response_id": "resp_902df360-29f3-4568-b1f6-b78f6cdb7797",
+  "usage": {"input_tokens": 3298, "output_tokens": 30, "total_tokens": 3328, "cost_usd": "0.00143", "cost_source": "reported"},
+  "latency_ms": 2011,
+  "project": "acceptance"
+}
+```
+
+The same file's `low` run (`a2.json`), keys shortened to the ones that differ (it returned 15
+sources and cost more than `fast`):
+
+```json
+{"name": "perplexity_ask", "arguments": {"query": "What is FastMCP?", "depth": "low", "project": "acceptance"}}
+```
+
+```json
+{
+  "answer": "FastMCP is a Python framework for building Model Context Protocol (MCP) servers, clients, and interactive applications that connect AI models to tools and data. [web:1]",
+  "status": "completed",
+  "model": "openai/gpt-6-luna",
+  "depth": "low",
+  "usage": {"input_tokens": 5464, "output_tokens": 95, "total_tokens": 5559, "cost_usd": "0.00156", "cost_source": "reported"},
+  "latency_ms": 3156,
+  "project": "acceptance"
+}
+```
+
+### `perplexity_chat`
+
+A multi-turn conversation kept in the local database, with four actions. The messages are stored in
+this server's `perplexity.db`, project-scoped. Only `send` calls the API and spends money; `list`,
+`read` and `delete` touch only the local database, and none of them ever creates a project (a
+by-id action in an absent project is `not_found`; `list` in one is empty).
+
+| Argument | Type | Default | Meaning |
+|---|---|---|---|
+| `action` | `send`, `list`, `read` or `delete` | required | What to do |
+| `message` | string | none | `send`: the message, not blank, at most 20000 characters |
+| `title` | string | none | `send` starting a chat: its title, 1 to 120 characters, required. Not allowed with `chat_id` |
+| `chat_id` | integer | none | `send`: continue this chat; omit it to start a new one. `read` and `delete`: the chat |
+| `project` | string | `default` | The project the chat belongs to |
+| `replay` | boolean | `false` | `send` with `chat_id`: resend the stored history instead of continuing from the previous response (see below) |
+| `depth`, `model`, `search`, `domains`, `recency`, `after`, `before`, `country`, `max_results`, `instructions`, `max_output_tokens` | as in `perplexity_ask` | as there | `send` only. `depth` may change on every turn; `high` and `xhigh` are refused. There is no `json_schema` |
+| `limit` | integer | 20 (`list`), 50 (`read`) | `list`: chats to return, 1 to 100, newest first. `read`: the last N messages, 1 to 200 |
+| `confirm` | boolean | `false` | `delete` needs `true`; removing a chat cannot be undone |
+
+A `send` continues from the last stored response with `previous_response_id`, sending only the new
+message, so the cost of a turn does not grow with the history. **`replay`** is the fallback: it
+resends the whole stored history (and, with it, every stored character as input on every turn).
+The provider rejects an unknown, malformed, unfinished or cancelled `previous_response_id` with one
+generic `400 invalid request` (that an id can also expire is possible but was not measured); when
+that happens on a chained send, the error says the provider could not continue and to send again
+with `replay: true`. The server does not retry by itself,
+because a hidden second call would double the bill. A replay of more than 100000 stored characters
+adds a warning that every send costs more. Only `completed` turns are stored; an `incomplete`
+answer is returned with a warning (it was billed) and is not saved, and an incomplete first send
+creates no chat (`chat_id` is `null`).
+
+Output of `send` has every `perplexity_ask` key except `answer_json` (always `null` here) plus:
+
+| Key | Meaning |
+|---|---|
+| `action`, `project` | The action and the project |
+| `chat_id`, `chat` | The chat the call concerns (the new one for a first send) and its record: `id`, `title`, `message_count`, `created_at`, `updated_at` |
+| `continuation` | `new`, `chained` (from the last response id) or `replay` |
+
+`list` returns `chats` (newest first), `chats_total` and `truncated`. `read` returns `chat`,
+`messages` (each with `id`, `role`, `content`, `created_at` and, for the assistant, `response_id`,
+`model`, `preset` and `sources`), `messages_total` and `truncated`. `delete` returns
+`messages_removed`. Keys an action does not use are `null`. A chat whose answer could not be
+stored after a billed call still returns the answer, with a `not_saved` warning; the usage event
+is kept.
+
+Example, two turns in a new chat. The results are from the live acceptance run on 2026-10-09
+(`c1.json` and `c2.json`), shortened to the keys shown and, for the first, 2 of its 10 sources.
+Turn 2 answers from turn 1 through the stored response id (`"continuation": "chained"`):
+
+```json
+{"name": "perplexity_chat", "arguments": {"action": "send", "title": "acceptance chat", "message": "Remember this codeword for later: HERON-7. Just reply OK.", "project": "acceptance"}}
+```
+
+```json
+{
+  "action": "send",
+  "project": "acceptance",
+  "chat_id": 1,
+  "chat": {"id": 1, "title": "acceptance chat", "message_count": 2, "created_at": "2026-10-09T21:51:07.605016Z", "updated_at": "2026-10-09T21:51:07.605016Z"},
+  "continuation": "new",
+  "answer": "OK",
+  "sources": [
+    {"url": "https://sharpe.co.za/tools/code-word-generator/", "title": "Code Word Generator: a private phrase your family can say ...", "date": null, "id": 1},
+    {"url": "https://militaryalphabet.net/", "title": "Military Alphabet - NATO Phonetic Alphabet - Communication", "date": "2025-05-05", "id": 2}
+  ],
+  "status": "completed",
+  "model": "openai/gpt-6-luna",
+  "depth": "fast",
+  "usage": {"input_tokens": 3073, "output_tokens": 5, "total_tokens": 3078, "cost_usd": "0.00118", "cost_source": "reported"},
+  "latency_ms": 1689
+}
+```
+
+```json
+{"name": "perplexity_chat", "arguments": {"action": "send", "chat_id": 1, "message": "What was the codeword?", "project": "acceptance"}}
+```
+
+```json
+{
+  "chat_id": 1,
+  "chat": {"id": 1, "title": "acceptance chat", "message_count": 4, "created_at": "2026-10-09T21:51:07.605016Z", "updated_at": "2026-10-09T21:51:10.265646Z"},
+  "continuation": "chained",
+  "answer": "Your codeword is HERON-7.",
+  "model": "openai/gpt-6-luna",
+  "depth": "fast",
+  "usage": {"input_tokens": 7583, "output_tokens": 55, "total_tokens": 7638, "cost_usd": "0.00158", "cost_source": "reported"},
+  "latency_ms": 2613
+}
+```
+
+### `perplexity_research`
+
+Starts a deep research run **in the background** and returns at once with a job id. Nothing ever
+waits for a run to finish: read progress and the answer with `perplexity_jobs`.
+
+| Argument | Type | Default | Meaning |
+|---|---|---|---|
+| `query` | string | required | The research question, not blank, at most 20000 characters |
+| `depth` | `medium`, `high` or `xhigh` | `medium` | Deeper runs take longer and cost more (see "Cost by depth"). `fast` and `low` belong to `perplexity_ask` |
+| `instructions` | string | none | System-style instructions, at most 10000 characters |
+| `project` | string | `default` | The project the job belongs to; created if absent |
+
+Output: `job_id` (the local id, for `perplexity_jobs`), `response_id`, `status` (what the provider
+reported, usually `queued` or `in_progress`), `depth`, `project`, `started_at` (UTC, this server's
+clock) and `message`. A run that had already finished when it was submitted is stored finished and
+recorded at once.
+
+**A run is recorded as spend only when a `perplexity_jobs` call sees it finished.** The submit is
+not recorded while it is still running (the cost is unknown until the run ends); a failed or
+already-finished submit is recorded at once. See "The unobserved-run gap" below.
+
+Example, from the live acceptance run on 2026-10-09 (`r1.json`, unedited). The query's first 120
+characters are the job's `query_excerpt` in `j2.json`; the rest is illustrative:
+
+```json
+{"name": "perplexity_research", "arguments": {"query": "Compare the pricing models of Pinecone, Weaviate Cloud and Qdrant Cloud using current official pricing pages. Short table.", "depth": "medium", "project": "acceptance"}}
+```
+
+```json
+{
+  "job_id": 1,
+  "response_id": "resp_f607dfc5-a69a-44cd-9e45-43cb0587af76",
+  "status": "queued",
+  "depth": "medium",
+  "project": "acceptance",
+  "started_at": "2026-10-09T21:51:17.475891Z",
+  "message": "The run is going in the background. Check it with perplexity_jobs status, or list with refresh true; it is recorded as spend when a call sees it finished."
+}
+```
+
+### `perplexity_jobs`
+
+Manages the runs started by `perplexity_research`. No action waits for a run to progress: call
+again later. An action never creates a project (`list` in an absent project is empty; the others
+are `not_found`), and a job id from another project is `not_found`.
+
+| Argument | Type | Default | Meaning |
+|---|---|---|---|
+| `action` | `list`, `status`, `result` or `cancel` | required | What to do |
+| `job_id` | integer | none | `status`, `result`, `cancel`: the job from `perplexity_research` |
+| `project` | string | `default` | The project the job belongs to |
+| `refresh` | boolean | `false` | `list`: first observe the project's running jobs, up to 10, least recently checked first |
+| `limit` | integer | 20 | `list`: jobs to return, 1 to 100, newest first |
+
+- `status` fetches a running job once, stores what it shows and reports progress (`progress.searches`,
+  `progress.fetches`). A job that is already finished is served from the local database with no
+  request.
+- `result` does the same, and returns the stored `answer`, `sources` and `usage` of a finished
+  job. For a run that ended without an answer (`cancelled`, `failed`, `incomplete`, `lost`) the
+  `message` says why. A run that is not finished returns no answer and a message to try again.
+- `cancel` fetches first, then cancels a running job at most once (a second call while the cancel
+  is pending sends no second request). The result's `status` is `cancelling`; the run turns
+  `cancelled` after a few more polls, so call `status` afterwards. Cancelling stops the run for good.
+- `list` returns `jobs` (each with `job_id`, `response_id`, `depth`, `status`, `query_excerpt`,
+  `model`, `started_at`, `finished_at`, `cancel_requested_at`, `usage_recorded`), `jobs_total` and
+  `truncated`. With `refresh`, `not_refreshed` counts running jobs that were not refreshed (beyond
+  10, or whose fetch failed; a failed one is also a warning naming the job).
+
+A job's `status` is `queued`, `in_progress`, `completed`, `failed`, `incomplete`, `cancelled`,
+`lost` or an unknown provider status verbatim. `lost` means the provider no longer knows the run:
+it needs a second not-found answer at least 10 minutes after submit, and its spend cannot be
+recorded. `cancelling` is only ever reported by `cancel`, never stored. `usage_recorded` says a
+usage event was attempted for the run (best effort: `perplexity_usage` shows what was stored), and
+is always `false` for a lost job.
+
+**The unobserved-run gap.** The first `perplexity_jobs` call that sees a run finished records its
+cost, once (overlapping calls record one event). Nothing watches in the background, so a run that
+nobody observes is never recorded: the provider ran and billed it, and `perplexity_usage` knows
+nothing. `perplexity_jobs list` with `refresh: true` settles up to 10 running jobs in one call and
+is the way to close the gap; use it after starting runs you do not plan to read. Once a job is observed finished, its result is
+served from the local database and stays readable; a run nobody observes can still be fetched
+while the provider keeps it, and becomes `lost` if the provider forgets it. The times a job carries (`started_at`, `finished_at`) are this server's clock, not the
+API's: the API rewrites its own timestamps on every fetch. `finished_at` is when a call saw the
+run finish, so it is an upper bound on when it did.
+
+**Deleting a project that still has running research jobs** (`perplexity_projects delete`) discards
+their local rows, so the spend of those runs is never recorded while the provider keeps running and
+billing them; the delete result reports how many as `running_jobs`, and the confirmation message
+names them. Cancel them first.
+
+Example, from the live acceptance run on 2026-10-09: the result of job 1 (`j2.json`, answer
+shortened to 160 characters and sources to 2 of 30), the cancel of job 2 and the `status` call
+after it (`k1.json`, `k2.json`, shortened to the keys shown), and the list (`jl.json`). Job 2's
+query was "Summarize the history of the Python programming language in five bullet points with
+sources." A cancelled run reports no usage; it was recorded with an unknown cost.
+
+```json
+{"name": "perplexity_jobs", "arguments": {"action": "result", "job_id": 1, "project": "acceptance"}}
+```
+
+```json
+{
+  "action": "result",
+  "project": "acceptance",
+  "job_id": 1,
+  "status": "completed",
+  "job": {"job_id": 1, "response_id": "resp_f607dfc5-a69a-44cd-9e45-43cb0587af76", "depth": "medium", "status": "completed", "query_excerpt": "Compare the pricing models of Pinecone, Weaviate Cloud and Qdrant Cloud using current official pricing pages. Short tabl", "model": "openai/gpt-6-luna", "started_at": "2026-10-09T21:51:17.475891Z", "finished_at": "2026-10-09T21:51:56.461160Z", "cancel_requested_at": null, "usage_recorded": true},
+  "answer": "| Provider | Pricing model |\n|---|---|\n| **Pinecone** | **Starter:** free with usage limits. **Builder:** $20/month flat, with included usage limits. **Standard...",
+  "sources": [
+    {"url": "https://www.pinecone.io/pricing/", "title": "Pricing - Pinecone", "date": null, "id": 21},
+    {"url": "https://www.pinecone.io/pricing/estimate/", "title": "Pricing", "date": null, "id": 22}
+  ],
+  "usage": {"input_tokens": 25474, "output_tokens": 974, "total_tokens": 26448, "cost_usd": "0.01722", "cost_source": "reported"}
+}
+```
+
+```json
+{"name": "perplexity_jobs", "arguments": {"action": "cancel", "job_id": 2, "project": "acceptance"}}
+```
+
+```json
+{
+  "action": "cancel",
+  "job_id": 2,
+  "status": "cancelling",
+  "job": {"job_id": 2, "response_id": "resp_76ef65be-0662-4ad7-8c3c-dfd4bac61317", "depth": "medium", "status": "in_progress", "query_excerpt": "Summarize the history of the Python programming language in five bullet points with sources.", "model": null, "started_at": "2026-10-09T21:52:04.115117Z", "finished_at": null, "cancel_requested_at": "2026-10-09T21:52:07.375264Z", "usage_recorded": false},
+  "progress": {"searches": 1, "fetches": 0},
+  "message": "The cancel was accepted. The run turns cancelled after a few more polls: call status to see it and to record its spend."
+}
+```
+
+```json
+{"name": "perplexity_jobs", "arguments": {"action": "status", "job_id": 2, "project": "acceptance"}}
+```
+
+```json
+{
+  "action": "status",
+  "job_id": 2,
+  "status": "cancelled",
+  "job": {"job_id": 2, "response_id": "resp_76ef65be-0662-4ad7-8c3c-dfd4bac61317", "depth": "medium", "status": "cancelled", "query_excerpt": "Summarize the history of the Python programming language in five bullet points with sources.", "model": null, "started_at": "2026-10-09T21:52:04.115117Z", "finished_at": "2026-10-09T21:52:11.813305Z", "cancel_requested_at": "2026-10-09T21:52:07.375264Z", "usage_recorded": true},
+  "progress": {"searches": 2, "fetches": 0}
+}
+```
+
+```json
+{"name": "perplexity_jobs", "arguments": {"action": "list", "project": "acceptance"}}
+```
+
+```json
+{
+  "action": "list",
+  "project": "acceptance",
+  "jobs": [
+    {"job_id": 2, "response_id": "resp_76ef65be-0662-4ad7-8c3c-dfd4bac61317", "depth": "medium", "status": "cancelled", "query_excerpt": "Summarize the history of the Python programming language in five bullet points with sources.", "model": null, "started_at": "2026-10-09T21:52:04.115117Z", "finished_at": "2026-10-09T21:52:11.813305Z", "cancel_requested_at": "2026-10-09T21:52:07.375264Z", "usage_recorded": true},
+    {"job_id": 1, "response_id": "resp_f607dfc5-a69a-44cd-9e45-43cb0587af76", "depth": "medium", "status": "completed", "query_excerpt": "Compare the pricing models of Pinecone, Weaviate Cloud and Qdrant Cloud using current official pricing pages. Short tabl", "model": "openai/gpt-6-luna", "started_at": "2026-10-09T21:51:17.475891Z", "finished_at": "2026-10-09T21:51:56.461160Z", "cancel_requested_at": null, "usage_recorded": true}
+  ],
+  "jobs_total": 2,
+  "truncated": false
+}
+```
 
 ### `perplexity_models`
 
@@ -204,9 +620,11 @@ fixture) and all five presets.
 ### `perplexity_usage`
 
 Reports what the recorded upstream Perplexity calls cost. It reads the usage events (one row per
-costed upstream call, stored by the server itself) and never writes. **Nothing is recorded yet:**
-no 2.0.0 tool makes a costed call, so the totals are zero until the Agent, Search, Embeddings and
-Decisions tools arrive and each starts recording its own calls.
+costed upstream call, stored by the server itself) and never writes. The four Agent tools record
+their calls (`perplexity_ask`, `perplexity_chat` send and `perplexity_research`, whose background
+runs are recorded when a `perplexity_jobs` call sees them finish); the totals are zero on a fresh
+install and until one of them runs. The Search, Embeddings and Decisions tools will record theirs
+the same way when they arrive.
 
 | Argument | Type | Default | Meaning |
 |---|---|---|---|
@@ -248,49 +666,53 @@ How each call's cost is known (`cost_source`, stored per call):
 unknown-cost call adds 0, so the true spend is at least the reported figure. Read
 `calls_cost_unknown` next to `cost_usd`: any value above 0 means the figure is missing some spend.
 
-Example call and result, from a test server on a temporary data directory holding six sample
-calls (agent usage taken from the recorded `tests/fixtures/agent_fast.json`, one search priced from
-the documented table, one failed call, one search with an unknown cost). Real totals will differ:
+Example call and result, from the live acceptance run on 2026-10-09 (`u_tool.json`, unedited):
+six real calls in the project `acceptance` (2 ask, 2 chat, 2 research, one of them the cancelled
+run). Your totals will differ:
 
 ```json
-{"name": "perplexity_usage", "arguments": {"group_by": "tool", "limit": 5}}
+{"name": "perplexity_usage", "arguments": {"project": "acceptance", "group_by": "tool"}}
 ```
 
 ```json
 {
-  "totals": {"calls": 6, "errors": 1, "input_tokens": 10278, "output_tokens": 90,
-             "total_tokens": 10368, "cost_nano_usd": 8750000, "cost_usd": "0.00875",
-             "calls_cost_computed": 1, "calls_cost_unknown": 2},
+  "totals": {"calls": 6, "errors": 1, "input_tokens": 44892, "output_tokens": 1159, "total_tokens": 46051, "cost_nano_usd": 22970000, "cost_usd": "0.02297", "calls_cost_computed": 0, "calls_cost_unknown": 1},
   "group_by": "tool",
   "groups": [
-    {"key": "perplexity_search", "calls": 2, "errors": 0, "input_tokens": 0, "output_tokens": 0,
-     "total_tokens": 0, "cost_nano_usd": 5000000, "cost_usd": "0.005",
-     "calls_cost_computed": 1, "calls_cost_unknown": 1},
-    {"key": "perplexity_agent", "calls": 4, "errors": 1, "input_tokens": 10278,
-     "output_tokens": 90, "total_tokens": 10368, "cost_nano_usd": 3750000,
-     "cost_usd": "0.00375", "calls_cost_computed": 0, "calls_cost_unknown": 1}
+    {"calls": 2, "errors": 1, "input_tokens": 25474, "output_tokens": 974, "total_tokens": 26448, "cost_nano_usd": 17220000, "cost_usd": "0.01722", "calls_cost_computed": 0, "calls_cost_unknown": 1, "key": "perplexity_research"},
+    {"calls": 2, "errors": 0, "input_tokens": 8762, "output_tokens": 125, "total_tokens": 8887, "cost_nano_usd": 2990000, "cost_usd": "0.00299", "calls_cost_computed": 0, "calls_cost_unknown": 0, "key": "perplexity_ask"},
+    {"calls": 2, "errors": 0, "input_tokens": 10656, "output_tokens": 60, "total_tokens": 10716, "cost_nano_usd": 2760000, "cost_usd": "0.00276", "calls_cost_computed": 0, "calls_cost_unknown": 0, "key": "perplexity_chat"}
   ],
-  "groups_total": 2,
+  "groups_total": 3,
   "groups_truncated": false,
-  "project": null, "since": null, "until": null, "limit": 5
+  "project": "acceptance",
+  "since": null,
+  "until": null,
+  "limit": 20
 }
 ```
 
 The text content of the same result:
 
 ```
-Usage: 6 call(s), 1 error(s), 10368 token(s), cost 0.00875 USD (8750000 nano-USD).
-The cost is a lower bound: error calls count cost 0 and may have been billed; 2 call(s) have no known cost and 1 cost(s) were computed from documented prices.
+Usage for project acceptance: 6 call(s), 1 error(s), 46051 token(s), cost 0.02297 USD (22970000 nano-USD).
+The cost is a lower bound: error calls count cost 0 and may have been billed; 1 call(s) have no known cost and 0 cost(s) were computed from documented prices.
 By tool: key | calls | errors | tokens | cost USD
-perplexity_search | 2 | 0 | 0 | 0.005
-perplexity_agent | 4 | 1 | 10368 | 0.00375
+perplexity_research | 2 | 1 | 26448 | 0.01722
+perplexity_ask | 2 | 0 | 8887 | 0.00299
+perplexity_chat | 2 | 0 | 10716 | 0.00276
 ```
+
+The one unknown-cost call is the cancelled research run, which reports no usage. The research row
+holds both research runs: a run is recorded under the tool that started it, whichever
+`perplexity_jobs` call observed it. The two research costs add up to $0.01722 because only the
+completed run had a known cost.
 
 ### `perplexity_projects`
 
-Projects group what the server stores. Later tools create a project the first time they
-name one and use the project `default` when none is given; this tool only looks projects up and
-never creates one. Project names are case-sensitive, 1 to 64 characters of ASCII letters, digits,
+Projects group what the server stores. A tool that stores something creates the project it names
+the first time, and uses the project `default` when none is given; this tool only looks projects up
+and never creates one. Project names are case-sensitive, 1 to 64 characters of ASCII letters, digits,
 `-`, `_` and `.`, may not begin with `.`, and may not look like an API key.
 
 | Argument | Type | Meaning |
@@ -300,15 +722,21 @@ never creates one. Project names are case-sensitive, 1 to 64 characters of ASCII
 | `confirm` | boolean | Must be `true` for `delete`; deletion cannot be undone |
 
 Output: `action`; for `list`, `projects` (each with `name` and `created_at`, UTC); for `delete`,
-`project`, `rows_removed` and `rows_retained`. `rows_removed` counts rows removed from tables that
-reference the project directly (rows two levels down go by cascade and are not counted).
+`project`, `rows_removed`, `rows_retained` and `running_jobs`. `rows_removed` counts rows removed
+from tables that reference the project directly (the project's chats and research jobs; the chat
+messages go by cascade and are not counted). `running_jobs` counts the project's research jobs that
+had not finished: deleting the project discards their local rows, so the spend of those runs is
+never recorded while the provider keeps running and billing them. When it is above 0, the result
+(and the `confirmation_required` message before it) carries a warning; cancel them first with
+`perplexity_jobs cancel`.
 
 **Deleting a project keeps its spend history.** Usage events are not deleted: each is detached from
 the project (its project reference is cleared) and kept, together with the project's name as it was
 written, so `perplexity_usage` still reports that spend under the deleted name. `rows_retained`
 counts the events detached. Everything else stored in the project is removed. The project
-`default` may be deleted; it is recreated the first time a later tool stores records in it.
-Because no 2.0.0 tool stores records yet, a fresh install lists no projects.
+`default` may be deleted; it is recreated the first time a tool stores records in it. A fresh
+install lists no projects: `perplexity_ask`, `perplexity_research` and the first `send` of a new
+chat create the project they name (or `default`); every other action only looks a project up.
 
 ```json
 {"name": "perplexity_projects", "arguments": {"action": "list"}}
@@ -317,24 +745,30 @@ Because no 2.0.0 tool stores records yet, a fresh install lists no projects.
 ```json
 {"action": "list", "projects": [{"name": "demo", "created_at": "2026-10-09T19:32:31Z"},
                                 {"name": "research", "created_at": "2026-10-09T19:32:31Z"}],
- "project": null, "rows_removed": null, "rows_retained": null}
+
+ "project": null, "rows_removed": null, "rows_retained": null, "running_jobs": null}
+```
+
+Example, from the live acceptance run on 2026-10-09 (`d1.json` and `u3.json`): deleting the
+project `acceptance`, which held 2 research jobs and 1 chat, then reporting its spend by name. The
+delete result was recorded before `running_jobs` was added to it, so that key is not in the saved
+file; the same call now also returns `"running_jobs": 0` for this project (both jobs had finished).
+
+```json
+{"name": "perplexity_projects", "arguments": {"action": "delete", "project": "acceptance", "confirm": true}}
 ```
 
 ```json
-{"name": "perplexity_projects", "arguments": {"action": "delete", "project": "demo", "confirm": true}}
+{"action": "delete", "projects": null, "project": "acceptance", "rows_removed": 3, "rows_retained": 6}
 ```
+
+The spend of the deleted project is still there (`u3.json`, the same totals as before the delete):
 
 ```json
-{"action": "delete", "projects": null, "project": "demo", "rows_removed": 0, "rows_retained": 3}
+{"name": "perplexity_usage", "arguments": {"project": "acceptance", "group_by": "tool"}}
 ```
 
-The spend of the deleted project is still there:
-
-```json
-{"name": "perplexity_usage", "arguments": {"project": "demo", "group_by": "project"}}
-```
-
-reports `totals.calls` 3 and `totals.cost_usd` `"0.0025"` under the group key `demo`.
+reports `totals.calls` 6 and `totals.cost_usd` `"0.02297"`, with the three tools as groups.
 
 ## Errors
 
@@ -389,9 +823,9 @@ Everything persistent lives in `PERPLEXITY_DATA_DIR` (default `~/.perplexity-pro
 
 | File | Purpose |
 |---|---|
-| `perplexity.db` | The SQLite database (WAL mode, so `perplexity.db-wal` and `perplexity.db-shm` appear while it is open) |
+| `perplexity.db` | The SQLite database: projects, usage events, chats and their messages, research jobs with their queries and results (WAL mode, so `perplexity.db-wal` and `perplexity.db-shm` appear while it is open) |
 | `migrate.lock` | Lock file so two processes starting together cannot migrate at once |
-| `backup-<rev>.db` | Copy of the database as it was at schema revision `<rev>`, taken automatically before a migration touches a database that already has a revision (for example `backup-0001.db`) |
+| `backup-<rev>.db` | Copy of the database as it was at schema revision `<rev>`, taken automatically before a migration touches a database that already has a revision (for example `backup-0001.db`, or `backup-0002.db` when a revision-0002 database starts on this release) |
 
 Migrations run at startup. A failed migration rolls back and the server exits non-zero without
 listening. A database that is newer than the code is refused with both versions named. The backup
@@ -414,6 +848,16 @@ it somewhere safe first. The upgrade backup, `backup-0001.db`, holds no usage ro
 install has no backup at all, because only a database that already has a recorded revision is
 backed up.
 
+**Downgrading also drops chats and research jobs.** Revision `0003` creates `chats` and
+`chat_messages`, and revision `0004` creates `research_jobs`. A downgrade of `0004` (migration code
+only) drops `research_jobs` with every job row, its stored queries and answers; a downgrade of
+`0003` drops `chats` and `chat_messages` with every stored conversation. Each downgrade first
+writes the backup named for the revision being left (`backup-0004.db` or `backup-0003.db`), and
+that file holds the table and its rows: restoring it with the steps above brings them back. The
+upgrade backup of a database that was at `0002` is `backup-0002.db`, which holds none of these
+tables. A database that has just been created holds no chats or jobs, and a run that was already
+started at the provider keeps running whatever happens to its row.
+
 Use your own `PERPLEXITY_DATA_DIR` in the paths if you set one. Both server processes (a pm2 HTTP
 instance and a stdio instance) may share one data directory.
 
@@ -421,7 +865,7 @@ instance and a stdio instance) may share one data directory.
 
 ```bash
 uv sync                              # install runtime and dev dependencies from uv.lock
-uv run pytest                        # offline test suite (about 40 s)
+uv run pytest                        # offline test suite (about 60 s)
 uv run ruff check .                  # lint (ruff is the only linter)
 uv run ruff format --check .         # formatting (ruff is the only formatter)
 uv run pre-commit install            # once per clone: runs ruff and pytest on every commit
@@ -464,19 +908,24 @@ src/mcp_perplexity_pro/
   cli.py          argument parsing (--transport, --version)
   settings.py     PERPLEXITY_* settings and their validation
   server.py       build_server(): FastMCP wiring, AppContext, /health, error middleware
-  client.py       the one Perplexity HTTP client (httpx2): retry, typed errors, redaction
+  client.py       the one Perplexity HTTP client (httpx2): retry, typed errors, redaction; the
+                  Agent calls create_run, get_run and cancel_run
   errors.py       PerplexityError and the eleven error categories
   catalog.py      model list cache, stale-on-failure rule, documented presets
-  models/         tolerant pydantic models for API payloads
-  tools/          one module per tool, each with register(server)
+  agent.py        Agent API request building and validation, response digestion, run_costed
+                  (the costed-call sequence) and the research job observation
+  models/         tolerant pydantic models for API payloads (agent.py: Agent runs)
+  tools/          one module per tool, each with register(server): ask, chat, research, jobs,
+                  models, projects, usage
   usage.py        usage recorder (record_usage), money helpers, the Agent usage parser
   pricing.py      documented Perplexity prices in nano-USD, for costs the API does not report
   usage_report.py read-only spend report behind perplexity_usage
-  storage/        engine, unit_of_work session, migration runner, project rules, ORM models
+  storage/        engine, unit_of_work session, migration runner, project rules, ORM models,
+                  chats.py (chat rows and history), jobs.py (research job rows)
   migrations/     Alembic environment and versions/NNNN_slug.py (packaged in the wheel)
   log_setup.py, redaction.py   stderr logging with secrets removed
 tests/            offline tests, fixtures/, and the live-marked capture helper
-openspec/         the spec-driven change records (py-foundation, py-usage-log)
+openspec/         the spec-driven change records (py-foundation, py-usage-log, py-agent-api)
 ```
 
 Contributor and agent guidance is in `CLAUDE.md`.

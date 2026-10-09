@@ -1,9 +1,10 @@
-"""Task 4.2: a change's MODIFIED requirement headers must name requirements that exist in the main
-spec, and its ADDED ones must not (OpenSpec matches headers by exact name, and a misspelled
-MODIFIED header silently becomes a second requirement at sync time).
+"""Task 4.2 (py-usage-log) and 1.4 (py-agent-api): the MODIFIED requirement headers of EVERY
+active change must name requirements that exist in the main spec, and its ADDED ones must not
+(OpenSpec matches headers by exact name, and a misspelled MODIFIED header silently becomes a
+second requirement at sync time).
 
-It skips once the change has moved to ``openspec/changes/archive/``: after the sync the headers
-are the main spec's own.
+Active means a directory under ``openspec/changes/`` other than ``archive/``. With none (every
+change archived: the headers are then the main spec's own) the check skips.
 """
 
 import re
@@ -12,16 +13,21 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-CHANGE = ROOT / "openspec" / "changes" / "py-usage-log"
+CHANGES = ROOT / "openspec" / "changes"
 MAIN = ROOT / "openspec" / "specs"
 SECTION = re.compile(r"^## (ADDED|MODIFIED|REMOVED|RENAMED) Requirements\s*$", re.M)
 HEADER = re.compile(r"^### Requirement: (.+?)\s*$", re.M)
 
-pytestmark = pytest.mark.skipif(
-    not CHANGE.is_dir(),
-    reason="py-usage-log has moved to openspec/changes/archive/: its delta headers are now the "
-    "main spec's own",
-)
+
+def active_deltas(changes_dir: Path) -> list[Path]:
+    """Every delta spec of every active (non-``archive``) change."""
+    if not changes_dir.is_dir():
+        return []
+    return sorted(
+        delta
+        for delta in changes_dir.glob("*/specs/*/spec.md")
+        if delta.relative_to(changes_dir).parts[0] != "archive"
+    )
 
 
 def delta_headers(text: str) -> dict[str, list[str]]:
@@ -55,14 +61,71 @@ def problems(delta_text: str, main_text: str | None) -> list[str]:
     return out
 
 
-DELTAS = sorted(CHANGE.glob("specs/*/spec.md")) if CHANGE.is_dir() else []
+def check_changes(changes_dir: Path, main_dir: Path) -> list[str]:
+    """Header problems of every active change under ``changes_dir`` against ``main_dir``."""
+    out = []
+    for delta in active_deltas(changes_dir):
+        main = main_dir / delta.parent.name / "spec.md"
+        main_text = main.read_text() if main.is_file() else None
+        label = f"{delta.relative_to(changes_dir).parts[0]}/{delta.parent.name}"
+        out += [f"{label}: {p}" for p in problems(delta.read_text(), main_text)]
+    return out
 
 
-@pytest.mark.parametrize("delta", DELTAS, ids=lambda p: p.parent.name)
+DELTAS = active_deltas(CHANGES)
+
+
+@pytest.mark.skipif(not DELTAS, reason="no active change: every delta is archived into main")
+@pytest.mark.parametrize(
+    "delta",
+    DELTAS or [None],
+    ids=lambda p: (
+        "no-active-change" if p is None else f"{p.parent.parent.parent.name}/{p.parent.name}"
+    ),
+)
 def test_delta_headers_line_up_with_the_main_spec(delta):
     main = MAIN / delta.parent.name / "spec.md"
     main_text = main.read_text() if main.is_file() else None
     assert problems(delta.read_text(), main_text) == []
+
+
+def test_every_active_change_is_checked_not_a_hard_coded_one():
+    names = {d.parent.parent.parent.name for d in DELTAS}
+    assert "archive" not in names
+    assert names == {d.name for d in CHANGES.iterdir() if list(d.glob("specs/*/spec.md"))} - {
+        "archive"
+    }
+
+
+def test_a_misspelled_modified_header_in_a_scratch_copy_goes_red(tmp_path):
+    """Self-contained: a scratch change modifies a REAL main-spec requirement, so the proof does
+    not depend on any change being active in the repository."""
+    header = "Configuration from environment"
+    assert f"### Requirement: {header}" in (MAIN / "server-runtime" / "spec.md").read_text()
+    delta = tmp_path / "changes" / "demo" / "specs" / "server-runtime" / "spec.md"
+    delta.parent.mkdir(parents=True)
+    body = (
+        "## MODIFIED Requirements\n\n### Requirement: {}\nText.\n\n"
+        "#### Scenario: s\n- **WHEN** a\n- **THEN** b\n"
+    )
+    delta.write_text(body.format(header))
+    assert check_changes(tmp_path / "changes", MAIN) == []  # the correct header is clean
+    delta.write_text(body.format(header + "s"))
+    result = check_changes(tmp_path / "changes", MAIN)
+    assert result and all("Configuration from environments" in line for line in result)
+
+
+def test_an_archived_change_is_not_checked(tmp_path):
+    changes = tmp_path / "changes"
+    bad = changes / "archive" / "old" / "specs" / "x"
+    bad.mkdir(parents=True)
+    (bad / "spec.md").write_text("## MODIFIED Requirements\n\n### Requirement: Nope\n")
+    assert active_deltas(changes) == []
+    assert check_changes(changes, tmp_path) == []
+
+
+def test_no_changes_directory_means_nothing_to_check(tmp_path):
+    assert active_deltas(tmp_path / "missing") == []
 
 
 # --- the checker itself must fail on a bad header (so a green run means something) -------------

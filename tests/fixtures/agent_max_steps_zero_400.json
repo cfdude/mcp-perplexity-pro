@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "validation failed: max steps must be at least 1",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "background": false,
+  "completed_at": 1791572854,
+  "created_at": 1791572854,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_0692cc55-4807-4e78-8abc-01c5c4a076d2",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "contents": [
+        {
+          "snippet": "## Maximum Line Length\n\n- Limit all lines to a maximum of **79 characters**.\n- For flowing long blocks of text with fewer structural restrictions, such as **docstrings or comments**, limit line length to **72 characters**.\n- Some teams may agree to increase the line-length limit up to **99 characters**, provided that comments and docstrings are still wrapped at **72 characters**.\n- The Python standard library requires limiting lines to **79 characters**, and docstrings/comments to **72 characters**.\n- The preferred way to wrap long lines is to use Python’s implied line continuation inside **parentheses, brackets, and braces**. Long lines can be broken over multiple lines by wrapping expressions in parentheses; these should be preferred over using a backslash.\n- Backslashes may still be appropriate in some cases, such as long multiple `with` statements before Python 3.10 and `assert` statements.\n- Continued lines should be indented appropriately.",
+          "title": "www.python.org · dev · pepsPEP 8 – Style Guide for Python Code - peps.python.org",
+          "url": "https://www.python.org/dev/peps/pep-0008/"
+        }
+      ],
+      "type": "fetch_url_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "PEP 8 says to limit lines to 79 characters, and docstrings and comments to 72 characters. [web:0]",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_f5b12888-156d-4987-8fa1-001d02f1bb3e",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "fetch_url",
+      "max_urls": 2
+    },
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00022,
+      "cache_read_cost": 1e-05,
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 4e-05,
+      "tool_calls_cost": 0.00359,
+      "tool_calls_cost_details": {
+        "fetch_url": 0.00359
+      },
+      "total_cost": 0.00386
+    },
+    "input_tokens": 3271,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 1799,
+      "cache_read_input_tokens": 1466,
+      "cached_tokens": 1466
+    },
+    "output_tokens": 80,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "fetch_url": {
+        "cost_usd": 0.00359,
+        "invocation": 1,
+        "token_usage": [
+          {
+            "input_tokens": 11424,
+            "input_tokens_details": {
+              "cache_creation_input_tokens": 11421,
+              "cached_tokens": 0
+            },
+            "model": "openai/gpt-5.6-luna",
+            "output_tokens": 197,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          }
+        ]
+      }
+    },
+    "total_tokens": 3351
+  },
+  "user": null
+}

@@ -11,6 +11,7 @@ import pytest
 from sqlalchemy import inspect, text
 
 from mcp_perplexity_pro.storage.engine import StorageError
+from mcp_perplexity_pro.storage.models import Base
 from mcp_perplexity_pro.storage.projects import (
     _scoped_tables,
     delete_project,
@@ -18,8 +19,9 @@ from mcp_perplexity_pro.storage.projects import (
 )
 from mcp_perplexity_pro.storage.session import unit_of_work
 
-# tables that exist for other reasons (the conftest fixture, the real migrations)
-KNOWN = {"notes", "usage_events"}
+# tables that exist for other reasons: the conftest fixture and every real table the ORM models
+# declare, so a table a later migration adds (chats, research_jobs) needs no edit here
+KNOWN = {"notes"} | (set(Base.metadata.tables) - {"projects"})
 
 TABLES = {
     "t_cascade": "project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE",

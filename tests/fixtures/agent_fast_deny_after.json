@@ -1,0 +1,147 @@
+{
+  "background": false,
+  "completed_at": 1791572846,
+  "created_at": 1791572846,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_dd55e733-ae1e-4536-9ba4-2a35c6f73944",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": [
+        "Python 3.15 release candidate news, one sentence."
+      ],
+      "results": [
+        {
+          "date": "2026-10-02",
+          "id": 1,
+          "last_updated": "2026-10-02",
+          "snippet": "Python 3.15.0 candidate 3 is here!\n| Python Insider\n# Python 3.15.0 candidate 3 is here!\n...\nFollowing recent tradition, here’s a surprise third release candidate for Python 3.15.0!\nWe got some last-minute lazy-import release blockers, and it makes sense to\ninclude them in 3.15.0 final.\nIt also makes sense to give a bit of time to test\nthem properly, so this week’s planned 3.15.0 final is postponed until next week,\nand here’s an extra 3.15.0rc3.\n...\n**This is a candidate preview of Python 3.15**\nThis release, **3.15.0rc3**, is the final planned release candidate, containing around 156 bugfixes, build improvements and documentation changes from 82 contributors since 3.15.0rc2.\nEntering the release candidate phase, only reviewed code changes which are clear bug fixes are allowed between this release candidate and the final release.\nThe next release of Python 3.15 will be 3.15.0 final, scheduled for 2026-10-09.\nThere will be ***no ABI changes** * from this point forward in the 3.15 series, and the goal is that there will be as few code changes as possible.\n...\n# Call to action\nWe ***strongly encourage** * maintainers of third-party Python projects to prepare their projects for 3.15 during this phase, and publish Python 3.15 wheels on PyPI to be ready for the final release of 3.15.0, and to help other projects do their own testing.\nAny binary wheels built against Python 3.15.0 release candidates ***will work** * with future versions of Python 3.15.\n...\nPlease keep in mind that this is a preview release and while it’s as close to the final release as we can get it, its use is ***not** * recommended for production environments.\n...\n## Major new features of the 3.15 series, compared to 3.14\n### Interpreter improvements\n- PEP 810: Explicit lazy imports for faster startup times\n...\n### Build changes\n...\n### Release changes\n- The official Windows 64-bit binaries now use the tail-calling interpreter\n- The official macOS binaries now install free-threading support by default",
+          "source": "web",
+          "title": "blog.python.org · 2026 · 10Python 3.15.0 candidate 3 is here! | Python Insider",
+          "url": "https://blog.python.org/2026/10/python-3150-rc3/"
+        },
+        {
+          "date": "2026-10-09",
+          "id": 2,
+          "last_updated": "2026-10-09",
+          "snippet": "Two weeks until Python 3.15.0 final!\n...\nOne week until Python 3.15.0 final!!\n...\nPython 3.15.0 release day!\n...\nFollowing recent tradition, I’m going to add a surprise third release candidate!\nIt makes sense to include the last-minute lazy-import fixes in 3.15.0 final.\nIt also makes sense to give time to test them properly, so today’s planned 3.15.0 final is postponed, and I’m going to release a 3.15.0rc3 tomorrow, assuming everything is in place.\nAnd then 3.15.0 final will follow about week later.\nExact date to be announced.\nWe’re nearly there!\n...\nThe three lazy blockers are finally merged into `main`, two have been backported to `3.15`, but wait, the third failed, because it depends on some tests not yet backported.\n...\nPython 3.15.0 final planned for 2026-10-09.\nDiscussions on Python.org · 6d**Python 3.15.0 candidate 3 is here!** Following recent tradition, here’s a surprise third release candidate for Python 3.15.0!\n...\nIt also makes sense to give a bit of time to test them properly, so this week’s planned 3.15.0 final is postponed until next week, and here’s an extra 3.15.0rc3.\nThis is a candidate preview of Python 3.15 This release, 3.15.0rc3, is the final planned release candidate, containing around 156 bugfixes...Python 3.15.0 release day (second attempt)!",
+          "source": "web",
+          "title": "Hugo van Kemenade: \"Pushing the big launch button:…\"",
+          "url": "https://mastodon.social/@hugovk/117410536496169713"
+        },
+        {
+          "date": "2026-10-09",
+          "id": 3,
+          "last_updated": "2026-10-09",
+          "snippet": "Two weeks until Python 3.15.0 final!\n...\nOne week until Python 3.15.0 final!!\n...\nPython 3.15.0 release day!\n...\nFollowing recent tradition, I’m going to add a surprise third release candidate!\nIt makes sense to include the last-minute lazy-import fixes in 3.15.0 final.\nIt also makes sense to give time to test them properly, so today’s planned 3.15.0 final is postponed, and I’m going to release a 3.15.0rc3 tomorrow, assuming everything is in place.\nAnd then 3.15.0 final will follow about week later.\nExact date to be announced.\nWe’re nearly there!\n...\nThe three lazy blockers are finally merged into `main`, two have been backported to `3.15`, but wait, the third failed, because it depends on some tests not yet backported.\n...\nPython 3.15.0 final planned for 2026-10-09.\nDiscussions on Python.org · 6d**Python 3.15.0 candidate 3 is here!** Following recent tradition, here’s a surprise third release candidate for Python 3.15.0!\n...\nIt also makes sense to give a bit of time to test them properly, so this week’s planned 3.15.0 final is postponed until next week, and here’s an extra 3.15.0rc3.\nThis is a candidate preview of Python 3.15 This release, 3.15.0rc3, is the final planned release candidate, containing around 156 bugfixes...Python 3.15.0 release day (second attempt)!\n...\nPydantic finally added support for Python 3.15 yesterday, and aiohttp on Monday, so I *could* use Python 3.15 rc3 to run the release scripts and release Python 3.15.0 final!\nBut...",
+          "source": "web",
+          "title": "Hugo van Kemenade: \"Pydantic finally added support…\"",
+          "url": "https://mastodon.social/@hugovk/117410412765558455"
+        },
+        {
+          "date": "2026-10-09",
+          "id": 4,
+          "last_updated": "2026-10-09",
+          "snippet": "Python 3.15.0 Is Out: Lazy Imports, frozendict, and Faster Speeds\n...\n## Python 3.15.0 Is Out: Lazy Imports, frozendict, and Faster Speeds\nThe final version of Python 3.15.0 has been released today, following a 17-month development cycle that produced 5,643 commits from 1,012 contributors.\nThe headline additions target everyday annoyances, including lazy imports via the lazy keyword, a first-class immutable frozendict, a real sentinel type, and UTF-8 as the default text encoding.\n...\n### Python 3.15.0 Ships With Lazy Imports, frozendict, and a Faster Interpreter\nPython 3.15.0 is now available.\nThe core team at the Python Software Foundation confirmed the final build dropped on today, making it the latest major release in the language's history and the direct successor to 3.14.\n...\nThe headline additions, like explicit lazy imports, a first-class immutable dictionary, a real sentinel type, and UTF-8 as the default text encoding, all chase the same petty daily frustrations.\nSpeed gains show up in a substantially beefed-up experimental JIT, a tail-calling interpreter for Windows, and free-threading turned on by default for macOS.\n...\n#### What actually changed\nDevelopment started May 7, 2025.\nAlpha 1 landed in mid-October 2025, feature freeze hit at Beta 1 in May 2026, Candidate 3 on October 2, and the final build this week.\n...\n#### The speed stuff\nBased on pyperformance numbers reported at doesjitgobrrr.com, you're looking at a 7 to 8 percent geometric mean improvement over stock CPython on x86-64 Linux, and 11 to 12 percent over the tail-calling interpreter on AArch64 macOS.",
+          "source": "web",
+          "title": "Python 3.15.0 Is Out: Lazy Imports, frozendict, and Faster Speeds",
+          "url": "https://www.linuxcompatible.org/story/python-3150-is-out-lazy-imports-frozendict-and-faster-speeds/"
+        },
+        {
+          "date": "2026-10-02",
+          "id": 5,
+          "last_updated": "2026-10-09",
+          "snippet": "Python 3.15.0 candidate 3 is here!\nCore Development\n...\nFollowing recent tradition, here’s a surprise third release candidate for Python 3.15.0!\nWe got some last-minute lazy-import release blockers, and it makes sense to include them in 3.15.0 final.\nIt also makes sense to give a bit of time to test them properly, so this week’s planned 3.15.0 final is postponed until next week, and here’s an extra 3.15.0rc3.\nThis is a candidate preview of Python 3.15 This release, 3.15.0rc3, is the final planned release candidate, containing around 156 bugfixes…\nEveryone *please test*, **3.15.0 final** is planned for **2026-10-09**.",
+          "source": "web",
+          "title": "Python 3.15: following tradition, let's have a surprise rc3!",
+          "url": "https://discuss.python.org/t/python-3-15-following-tradition-lets-have-a-surprise-rc3/109313/4"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "Python 3.15.0rc3, the final planned release candidate, shipped October 2 with about 156 fixes; last-minute lazy-import blockers delayed the final release, which is now scheduled for October 9, 2026.[1]",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_32ee13a4-0a8a-4fff-98f5-75662eabf33e",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search",
+      "max_results": 5,
+      "filters": {
+        "search_domain_filter": [
+          "-reddit.com",
+          "-wikipedia.org"
+        ],
+        "search_after_date_filter": "09/15/2026"
+      }
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00027,
+      "cache_read_cost": 2e-05,
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 3e-05,
+      "tool_calls_cost": 0.001,
+      "tool_calls_cost_details": {
+        "search_web": 0.001
+      },
+      "total_cost": 0.00132
+    },
+    "input_tokens": 3940,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 2157,
+      "cache_read_input_tokens": 1780,
+      "cached_tokens": 1780
+    },
+    "output_tokens": 55,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.001,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 3995
+  },
+  "user": null
+}

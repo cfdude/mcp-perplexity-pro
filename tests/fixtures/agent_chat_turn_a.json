@@ -1,0 +1,183 @@
+{
+  "background": false,
+  "completed_at": 1791572866,
+  "created_at": 1791572866,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_16150d29-05fd-4a93-ae16-529c892f50f0",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": [
+        "Remember this: my favourite colour is teal and my codeword is PELICAN-42. Just reply OK."
+      ],
+      "results": [
+        {
+          "date": "2019-11-15",
+          "id": 1,
+          "last_updated": "2026-04-24",
+          "snippet": "This question was also asked by anon-233838.\n- ** Debbie Kinsey** answered on 15 Nov 2019:\nTeal – it’s like a green-blue colour",
+          "source": "web",
+          "title": "What's your favourite colour – Society Zone - I'm a Scientist",
+          "url": "https://archive.imascientist.org.uk/societyn19-zone/question/whats-your-favourite-colour/index.html"
+        },
+        {
+          "date": "2026-09-12",
+          "id": 2,
+          "last_updated": "2026-10-08",
+          "snippet": "# Colours\nPlay some word games to learn and practise colours vocabulary.\n...\n### Tags\nSubmitted by LovelyGarnet5 on Sat, 12/09/2026 - 12:18",
+          "source": "web",
+          "title": "Colours - LearnEnglish Kids - British Council",
+          "url": "https://learnenglishkids.britishcouncil.org/grammar-vocabulary/word-games/colours"
+        },
+        {
+          "date": "2026-08-18",
+          "id": 3,
+          "last_updated": "2026-09-21",
+          "snippet": "# Can You Guess My Favorite Color?\n## How To Guess Someone’s Favorite Color\n### 5. Ask Indirect Questions\nuse questions that reveal preferences naturally.\nYou might ask which color they would choose for a room, car, phone case, or gift.",
+          "source": "web",
+          "title": "Can You Guess My Favorite Color?",
+          "url": "https://colorguesser.io/blog/can-you-guess-my-favorite-color/"
+        },
+        {
+          "date": "2026-06-16",
+          "id": 4,
+          "last_updated": "2026-10-09",
+          "snippet": "# Interview Question: \"What Is Your Favorite Color?\" (With Examples)\n## How to answer \"What is your favorite color?\"\n### 2. Choose a common color and relate it to your personality traits\nTry to choose a common hue that a hiring manager can visualize without researching.\n...\n### 4. Deliver a concise answer\nOnce you determine a hue, you can begin forming your response.\nTry to make your answer concise, ensuring that you name the hue and describe how it relates to personality traits that your employer wants in an ideal candidate.",
+          "source": "web",
+          "title": "Interview Question: \"What Is Your Favorite Color?\" (With Examples)",
+          "url": "https://www.indeed.com/career-advice/interviewing/favorite-color-interview-question"
+        },
+        {
+          "date": "2024-07-16",
+          "id": 5,
+          "last_updated": "2026-01-23",
+          "snippet": "### Comments\nMy youngest son is in the phase of asking questions all the time so when he asks my favorite color, I just say teal.",
+          "source": "web",
+          "title": "DAE not have a favorite color?",
+          "url": "https://www.reddit.com/r/DoesAnybodyElse/comments/1e526s0/dae_not_have_a_favorite_color/"
+        },
+        {
+          "date": "2024-03-08",
+          "id": 6,
+          "last_updated": "2026-01-17",
+          "snippet": "### Comments\nTeal/Cyan is my absolute favourite, but I love all variations of green.\n...\nTeal/turquoise/aqua.",
+          "source": "web",
+          "title": "What are your favorite colors?",
+          "url": "https://www.reddit.com/r/AutismInWomen/comments/1ba0gbt/what_are_your_favorite_colors/"
+        },
+        {
+          "date": "2026-04-30",
+          "id": 7,
+          "last_updated": "2026-10-08",
+          "snippet": "In `@cursor/[email protected]`, **local** agents (`local: { cwd }`) do not retain\nconversation context across multiple `agent.send()` calls on the same\n`SDKAgent` instance.\nEvery send behaves as a fresh, contextless prompt.\n...\nconst r1 = await agent.send(\"My favourite colour is teal.\nReply 'noted'.\");\n...\n|Run|Mode|Turn 1 reply|Turn 2 reply (asked colour)|\n|--|--|--|--|\n|Local — composer-2|local|`\"noted\"`|`\"Searching the conversation history… No codeword from you in anything I can see for this chat\"` (or “Unknown”)|\n...\nWhen using `@cursor/sdk` with local agents, calling `agent.send()` multiple times on the same agent does **not** retain conversation context between runs.\nEach `send()` creates an isolated run with no awareness of previous messages, despite the agent being persistent (same `agentId`).\n...\nEach `agent.send()` call creates a new, independent `run`.\nThe agent has **no memory** of previous runs:\n- `run.conversation()` consistently returns `turns=1` for each run\n- User message content shows as `\"(none)\"` in the conversation turns",
+          "source": "web",
+          "title": "[SDK] Local agents do not retain conversation context ...",
+          "url": "https://forum.cursor.com/t/sdk-local-agents-do-not-retain-conversation-context-between-agent-send-calls/159440"
+        },
+        {
+          "id": 8,
+          "last_updated": "2025-11-04",
+          "snippet": "Teal checking in 👌🏻\nBlue!\n...\nThen type the hex into colorcode.is/hex-color-lookup and it should show you a list of complementary colours as well as similar colours which may help you identify it.",
+          "source": "web",
+          "title": "I’m sick of pretending I have a favourite colour - do adults actually have a favourite colour?",
+          "url": "https://www.reddit.com/r/CasualUK/comments/ygwzbv/im_sick_of_pretending_i_have_a_favourite_colour/"
+        },
+        {
+          "date": "2022-10-20",
+          "id": 9,
+          "last_updated": "2026-10-09",
+          "snippet": "# evocative colour\n## Comments\n### 226 responses to “evocative colour”\nI too am an Amelie.\nMaybe teal is in the genes!",
+          "source": "web",
+          "title": "evocative colour - Kate Davies Designs",
+          "url": "https://katedaviesdesigns.com/2022/10/20/evocative-colour/"
+        },
+        {
+          "date": "2023-09-24",
+          "id": 10,
+          "last_updated": "2025-11-03",
+          "snippet": "### “Teal. My favorite color is teal.” -Jim, episode 7. I can’t wait for season 2, I need more Jim in my life 😩",
+          "source": "web",
+          "title": "“Teal. My favorite color is teal.” -Jim, episode 7. I can’t wait for season 2, I need more Jim in my life 😩",
+          "url": "https://www.reddit.com/r/OurFlagMeansDeath/comments/16r9jyv/teal_my_favorite_color_is_teal_jim_episode_7_i/"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "OK",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_e372f564-9105-4c58-a314-bad507c2755a",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00017,
+      "cache_read_cost": 2e-05,
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 0,
+      "tool_calls_cost": 0.001,
+      "tool_calls_cost_details": {
+        "search_web": 0.001
+      },
+      "total_cost": 0.00119
+    },
+    "input_tokens": 3158,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 1375,
+      "cache_read_input_tokens": 1780,
+      "cached_tokens": 1780
+    },
+    "output_tokens": 5,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.001,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 3163
+  },
+  "user": null
+}

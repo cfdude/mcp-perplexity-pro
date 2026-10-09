@@ -23,6 +23,7 @@ def test_help_works_with_an_empty_environment():
     assert result.returncode == 0, result.stderr
     assert "--transport" in result.stdout
     assert "PERPLEXITY_API_KEY" in result.stdout
+    assert "PERPLEXITY_AGENT_READ_TIMEOUT" in result.stdout
     assert result.stderr == ""
 
 

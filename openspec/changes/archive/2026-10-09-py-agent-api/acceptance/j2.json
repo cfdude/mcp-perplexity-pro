@@ -1,0 +1,224 @@
+{
+  "content": [
+    {
+      "text": "| Provider | Pricing model |\n|---|---|\n| **Pinecone** | **Starter:** free with usage limits. **Builder:** $20/month flat, with included usage limits. **Standard:** $50/month minimum, applied to usage, then pay-as-you-go; **Enterprise:** $500/month minimum, then pay-as-you-go. Paid database usage is measured in storage, read units, and write units; rates vary by cloud and region. [web:21] |\n| **Weaviate Cloud** | **Free:** $0. **Flex:** starts at $45/month, monthly pay-as-you-go. **Premium:** prepaid commitment, with a $400/month minimum; contact sales for plan pricing. Charges track vector dimensions, storage, and backups; rates vary with deployment and configuration. [web:11] |\n| **Qdrant Cloud** | **Free Tier:** free, single-node cluster with 0.5 vCPU, 1 GB RAM, and 4 GB disk. **Standard:** hourly, usage-based billing for vCPU, memory, cluster and backup storage, and paid-model inference tokens. **Premium:** minimum spend required, amount not published on the pricing page. [web:1] |\n\n*In brief: Pinecone combines flat or minimum-spend plans with metered database usage; Weaviate meters dimensions, storage, and backups; Qdrant meters infrastructure resources hourly.* [web:21][web:11][web:1]\n\nSources:\n1. Pricing - Pinecone - https://www.pinecone.io/pricing/\n2. Pricing - https://www.pinecone.io/pricing/estimate/\n3. Understanding Pinecone cost - https://docs.pinecone.io/guides/manage-cost/understanding-cost\n4. Pods Pricing - https://www.pinecone.io/pricing/pods/\n5. Pinecone Vector Database: Architecture, Pricing and Limits [2026] - https://atlan.com/know/ai-agent/data-for-ai/what-is-pinecone-vector-database/\n6. Pinecone 2026 changelog - https://docs.pinecone.io/release-notes/2026\n7. Pinecone pricing (2026): plans, free tier & compliance · The ... - https://frontdeskreview.com/software/vector-databases/pinecone/\n8. www.scaler.com › topics › pinecone-deep-divePinecone Deep Dive: What a Fully Managed Vector Database Offers - https://www.scaler.com/topics/pinecone-deep-dive/\n9. How Much Does Pinecone Cost? 2026 Pricing and Real Cost ... - https://hackceleration.com/labs/pinecone-pricing\n10. Pinecone Pricing 2026: Free-$500/User Plans Compared - https://costbench.com/software/vector-databases/pinecone/\n11. Vector Database Pricing - Weaviate - https://weaviate.io/pricing\n12. Support plans - https://weaviate.io/support-plans\n13. Weaviate Cloud - https://docs.weaviate.io/cloud\n14. A Simpler, More Transparent Pricing Model for Weaviate Cloud - https://weaviate.io/blog/weaviate-cloud-pricing-update\n15. Services Overview - https://weaviate.io/deployment\n16. Weaviate Cloud Pricing 2026: Vector DB Cost - https://tutorsbot.com/blog/weaviate-cloud-pricing-2026-vector-db-cost\n17. Weaviate Enterprise Cloud Pricing Guide - https://events.weaviate.io/pricing-download\n18. Weaviate Serverless Cloud - https://aws.amazon.com/marketplace/pp/prodview-ng2dfhb4yjoic?applicationId=AWSMPContessa\n19. weaviate.io - https://weaviate.io/pricing.md\n20. Managed Weaviate on DigitalOcean - https://weaviate.io/product/digitalocean-managed-weaviate\n21. Pricing for Cloud and Vector Database Solutions Qdrant - https://qdrant.tech/pricing/\n22. Scalable Managed Cloud Services - https://qdrant.tech/cloud/\n23. Billing & Payments - https://qdrant.tech/documentation/cloud-pricing-payments/\n24. Qdrant High-Performance Vector Search Engine - https://qdrant.tech/qdrant-vector-database/\n25. No pricing minimums - try.qdrant.tech - https://try.qdrant.tech/no-pricing-minimums\n26. Qdrant Cloud Inference | Native Embeddings in your Vector ... - https://qdrant.tech/cloud-inference/\n27. AI-Knowledge/wiki/tools/qdrant.md at master - https://github.com/frederictriquet/AI-Knowledge/blob/master/wiki/tools/qdrant.md\n28. Qdrant Pricing 2026: Plans, Hidden Costs & Alternatives - https://toolradar.com/tools/qdrant/pricing\n29. Getting Started - Qdrant - https://qdrant.tech/documentation/cloud-getting-started/\n30. Serverless Qdrant, Hosted Vector Database - Layerbase - https://layerbase.com/db/qdrant\n\nUsage: openai/gpt-6-luna, cost 0.01722 USD (reported), 26448 tokens, project acceptance.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "result",
+    "project": "acceptance",
+    "job_id": 1,
+    "status": "completed",
+    "job": {
+      "job_id": 1,
+      "response_id": "resp_f607dfc5-a69a-44cd-9e45-43cb0587af76",
+      "depth": "medium",
+      "status": "completed",
+      "query_excerpt": "Compare the pricing models of Pinecone, Weaviate Cloud and Qdrant Cloud using current official pricing pages. Short tabl",
+      "model": "openai/gpt-6-luna",
+      "started_at": "2026-10-09T21:51:17.475891Z",
+      "finished_at": "2026-10-09T21:51:56.461160Z",
+      "cancel_requested_at": null,
+      "usage_recorded": true
+    },
+    "jobs": null,
+    "jobs_total": null,
+    "truncated": null,
+    "answer": "| Provider | Pricing model |\n|---|---|\n| **Pinecone** | **Starter:** free with usage limits. **Builder:** $20/month flat, with included usage limits. **Standard:** $50/month minimum, applied to usage, then pay-as-you-go; **Enterprise:** $500/month minimum, then pay-as-you-go. Paid database usage is measured in storage, read units, and write units; rates vary by cloud and region. [web:21] |\n| **Weaviate Cloud** | **Free:** $0. **Flex:** starts at $45/month, monthly pay-as-you-go. **Premium:** prepaid commitment, with a $400/month minimum; contact sales for plan pricing. Charges track vector dimensions, storage, and backups; rates vary with deployment and configuration. [web:11] |\n| **Qdrant Cloud** | **Free Tier:** free, single-node cluster with 0.5 vCPU, 1 GB RAM, and 4 GB disk. **Standard:** hourly, usage-based billing for vCPU, memory, cluster and backup storage, and paid-model inference tokens. **Premium:** minimum spend required, amount not published on the pricing page. [web:1] |\n\n*In brief: Pinecone combines flat or minimum-spend plans with metered database usage; Weaviate meters dimensions, storage, and backups; Qdrant meters infrastructure resources hourly.* [web:21][web:11][web:1]",
+    "sources": [
+      {
+        "url": "https://www.pinecone.io/pricing/",
+        "title": "Pricing - Pinecone",
+        "date": null,
+        "id": 21
+      },
+      {
+        "url": "https://www.pinecone.io/pricing/estimate/",
+        "title": "Pricing",
+        "date": null,
+        "id": 22
+      },
+      {
+        "url": "https://docs.pinecone.io/guides/manage-cost/understanding-cost",
+        "title": "Understanding Pinecone cost",
+        "date": null,
+        "id": 23
+      },
+      {
+        "url": "https://www.pinecone.io/pricing/pods/",
+        "title": "Pods Pricing",
+        "date": null,
+        "id": 24
+      },
+      {
+        "url": "https://atlan.com/know/ai-agent/data-for-ai/what-is-pinecone-vector-database/",
+        "title": "Pinecone Vector Database: Architecture, Pricing and Limits [2026]",
+        "date": "2026-08-12",
+        "id": 25
+      },
+      {
+        "url": "https://docs.pinecone.io/release-notes/2026",
+        "title": "Pinecone 2026 changelog",
+        "date": null,
+        "id": 26
+      },
+      {
+        "url": "https://frontdeskreview.com/software/vector-databases/pinecone/",
+        "title": "Pinecone pricing (2026): plans, free tier & compliance · The ...",
+        "date": "2026-09-27",
+        "id": 27
+      },
+      {
+        "url": "https://www.scaler.com/topics/pinecone-deep-dive/",
+        "title": "www.scaler.com › topics › pinecone-deep-divePinecone Deep Dive: What a Fully Managed Vector Database Offers",
+        "date": "2026-08-14",
+        "id": 28
+      },
+      {
+        "url": "https://hackceleration.com/labs/pinecone-pricing",
+        "title": "How Much Does Pinecone Cost? 2026 Pricing and Real Cost ...",
+        "date": null,
+        "id": 29
+      },
+      {
+        "url": "https://costbench.com/software/vector-databases/pinecone/",
+        "title": "Pinecone Pricing 2026: Free-$500/User Plans Compared",
+        "date": "2026-07-08",
+        "id": 30
+      },
+      {
+        "url": "https://weaviate.io/pricing",
+        "title": "Vector Database Pricing - Weaviate",
+        "date": null,
+        "id": 11
+      },
+      {
+        "url": "https://weaviate.io/support-plans",
+        "title": "Support plans",
+        "date": null,
+        "id": 12
+      },
+      {
+        "url": "https://docs.weaviate.io/cloud",
+        "title": "Weaviate Cloud",
+        "date": null,
+        "id": 13
+      },
+      {
+        "url": "https://weaviate.io/blog/weaviate-cloud-pricing-update",
+        "title": "A Simpler, More Transparent Pricing Model for Weaviate Cloud",
+        "date": "2025-10-28",
+        "id": 14
+      },
+      {
+        "url": "https://weaviate.io/deployment",
+        "title": "Services Overview",
+        "date": null,
+        "id": 15
+      },
+      {
+        "url": "https://tutorsbot.com/blog/weaviate-cloud-pricing-2026-vector-db-cost",
+        "title": "Weaviate Cloud Pricing 2026: Vector DB Cost",
+        "date": "2026-09-16",
+        "id": 16
+      },
+      {
+        "url": "https://events.weaviate.io/pricing-download",
+        "title": "Weaviate Enterprise Cloud Pricing Guide",
+        "date": null,
+        "id": 17
+      },
+      {
+        "url": "https://aws.amazon.com/marketplace/pp/prodview-ng2dfhb4yjoic?applicationId=AWSMPContessa",
+        "title": "Weaviate Serverless Cloud",
+        "date": "2024-09-06",
+        "id": 18
+      },
+      {
+        "url": "https://weaviate.io/pricing.md",
+        "title": "weaviate.io",
+        "date": null,
+        "id": 19
+      },
+      {
+        "url": "https://weaviate.io/product/digitalocean-managed-weaviate",
+        "title": "Managed Weaviate on DigitalOcean",
+        "date": null,
+        "id": 20
+      },
+      {
+        "url": "https://qdrant.tech/pricing/",
+        "title": "Pricing for Cloud and Vector Database Solutions Qdrant",
+        "date": null,
+        "id": 1
+      },
+      {
+        "url": "https://qdrant.tech/cloud/",
+        "title": "Scalable Managed Cloud Services",
+        "date": null,
+        "id": 2
+      },
+      {
+        "url": "https://qdrant.tech/documentation/cloud-pricing-payments/",
+        "title": "Billing & Payments",
+        "date": null,
+        "id": 3
+      },
+      {
+        "url": "https://qdrant.tech/qdrant-vector-database/",
+        "title": "Qdrant High-Performance Vector Search Engine",
+        "date": null,
+        "id": 4
+      },
+      {
+        "url": "https://try.qdrant.tech/no-pricing-minimums",
+        "title": "No pricing minimums - try.qdrant.tech",
+        "date": null,
+        "id": 5
+      },
+      {
+        "url": "https://qdrant.tech/cloud-inference/",
+        "title": "Qdrant Cloud Inference | Native Embeddings in your Vector ...",
+        "date": null,
+        "id": 6
+      },
+      {
+        "url": "https://github.com/frederictriquet/AI-Knowledge/blob/master/wiki/tools/qdrant.md",
+        "title": "AI-Knowledge/wiki/tools/qdrant.md at master",
+        "date": "2026-06-10",
+        "id": 7
+      },
+      {
+        "url": "https://toolradar.com/tools/qdrant/pricing",
+        "title": "Qdrant Pricing 2026: Plans, Hidden Costs & Alternatives",
+        "date": null,
+        "id": 8
+      },
+      {
+        "url": "https://qdrant.tech/documentation/cloud-getting-started/",
+        "title": "Getting Started - Qdrant",
+        "date": null,
+        "id": 9
+      },
+      {
+        "url": "https://layerbase.com/db/qdrant",
+        "title": "Serverless Qdrant, Hosted Vector Database - Layerbase",
+        "date": "2026-05-20",
+        "id": 10
+      }
+    ],
+    "usage": {
+      "input_tokens": 25474,
+      "output_tokens": 974,
+      "total_tokens": 26448,
+      "cost_usd": "0.01722",
+      "cost_source": "reported"
+    },
+    "progress": null,
+    "warnings": [],
+    "message": null,
+    "not_refreshed": null
+  }
+}

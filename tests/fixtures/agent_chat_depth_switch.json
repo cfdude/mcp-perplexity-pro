@@ -1,0 +1,174 @@
+{
+  "background": false,
+  "completed_at": 1791579670,
+  "created_at": 1791579670,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_e1ce0430-4bc8-440c-a144-369c3b3f1ae8",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": null,
+      "results": [
+        {
+          "date": "2026-10-03",
+          "id": 1,
+          "last_updated": "2026-10-07",
+          "snippet": "# How to Turn an AI Agent into an MCP Server in Python (with Auth)\n## Step 3: Make every call start clean\nWe tested this against the Step 1 server without `output_type=\"final\"`: we sent \"Remember this codeword: PELICAN-42\", then, as a separate call, \"What codeword did I give you earlier?\".\nThe second call answered `PELICAN-42`, and the tool result contained the first call's text too.",
+          "source": "web",
+          "title": "How to Turn an AI Agent into an MCP Server in Python ...",
+          "url": "https://www.swarms.ai/blog/turn-ai-agent-into-mcp-server-python"
+        },
+        {
+          "date": "2026-10-04",
+          "id": 2,
+          "last_updated": "2026-10-09",
+          "snippet": "# [Bug]: Stop silently drops a Claude steer that is waiting behind a running Bash command #15708\n## Description\n### Steps to reproduce\n1. Set **Settings \u2192 General \u2192 Follow-up behavior** to **Steer**.\n2. In a Claude thread, ask the agent to run a command that takes a minute or more in the foreground.\nClaude Code refuses a bare `sleep`, so I used `curl` against a local endpoint that does not answer.\nThe first time I hit this, it was a slow `du` scan.\n3. Wait until the command has run for about 5 seconds, then send a follow-up, for example: `Codeword: PELICAN.\nRemember it, I will ask for it later.` It shows in the thread as a steer.\nThe agent does not react, because the command is still running.\n4. Press **Stop** before the command finishes.\n5. Send: `Earlier in this conversation, did I send you a codeword?\nIf yes, reply with exactly CODEWORD=<the codeword>.\nIf not, reply with exactly NO_CODEWORD.`\nThe timing in step 3 matters.\nAbout 3 seconds after a foreground Bash call starts, Claude Code registers it as a task (`task_started`).\nA steer that arrives before that aborts the call and is read at once, so nothing is lost.\nA steer that arrives after that waits until the call returns.\n...\n|Run|After the steer|Answer to step 5|\n|--|--|--|\n|Stop, 3 runs|Command still running 5 s after the steer reached the CLI, then Stop|`NO_CODEWORD` every time|\n|Control, no Stop|Command released 5 s after the steer reached the CLI|`CODEWORD=PELICAN-60C6`|\n...\n### Actual behavior\nThe steer stays in the stopped run and looks delivered, but Claude never reads it.\nThe next turn answers `NO_CODEWORD`, and nothing tells the user the message was dropped.\nWhat happens, from the provider log and Claude's session file:\n...\nThe Bash call is already a task, so the CLI keeps the steer in its in-memory queue.\n...\n- Stop runs `query.interrupt` and then `query.close` (`interruptTurn`), which ends the CLI process with the steer still queued.\n...\n# Claude session file of the same run: the steer was only ever queued\n### Workaround\nWait for the running command to finish before pressing Stop, or send the message again after stopping.\n...\n## Triage\n### What I found\nThis only happens after Claude emits `task_started` for a foreground `local_bash` call.\nA steer sent before that point aborts the call and is read in the same process.\nA steer sent after it waits in Claude's in-memory queue until the tool returns.\nIf Stop is pressed during that wait, the CLI process exits with the steer still in its queue.\n- `dispatchSteerIntoRun` in `Orchestrator.ts` writes the steer into the active run as a completed user message.\n...\n- `ClaudeAdapterV2.steerTurn` offers the text with `priority: \"now\"` and no `uuid`.",
+          "source": "web",
+          "title": "[Bug]: Stop silently drops a Claude steer that is waiting behind ...",
+          "url": "https://github.com/pingdotgg/t3code/issues/15708"
+        },
+        {
+          "date": "2026-02-14",
+          "id": 3,
+          "last_updated": "2026-10-05",
+          "snippet": "# Codeword Solver\n## How to Use the Codeword Solver Tool\n### Click the Solve Button\nOnce you have entered the pattern to be cracked and known letters, click the \u201cSolve\u201d tab.",
+          "source": "web",
+          "title": "codewordsolver.ukFree Codeword Solver",
+          "url": "https://codewordsolver.uk/"
+        },
+        {
+          "date": "2026-07-29",
+          "id": 4,
+          "last_updated": "2026-10-09",
+          "snippet": "OK\n\u2014 -.-\nConfirmation Message\n\u201cOK\u201d is used all over the world, and it is very popular in Morse code too.\n...\n## How Morse Code Words Are Built Step by Step\n### Spacing Rules Explained (1 Unit, 3 Units, 7 Units)\n|Gap Type|Length|What it is for|\n|--|--|--|\n|Short Gap|1 Unit|The space between dots and dashes in the same letter.|",
+          "source": "web",
+          "title": "Essential Morse Code Words: Meanings and Real-Life Uses",
+          "url": "https://morsecodtranslator.com/morse-code-words/"
+        },
+        {
+          "date": "2026-01-01",
+          "id": 5,
+          "last_updated": "2026-10-09",
+          "snippet": "# Okay , OK\nWe use *okay* (also spelt *OK*) in informal language.\nWe use it in different ways, as a discourse marker, adjective or adverb.",
+          "source": "web",
+          "title": "Okay, OK - English Grammar Today - Cambridge Dictionary",
+          "url": "https://dictionary.cambridge.org/us/grammar/british-grammar/okay-ok"
+        },
+        {
+          "date": "2026-07-09",
+          "id": 6,
+          "last_updated": "2026-09-22",
+          "snippet": "# pelicans.wtf\n*\"draw a pelican riding a bicycle\"*\n...\nPELICAN-DOS 9.0 \u00b7 READY \u203aGenerate an SVGof a pelicanriding a bicycle\u25ae\n...\nPelican\u00a0#42\ngenuine organic waterbird.\nsound beak, ample pouch.\ngranted all perches and bicycle privileges of the Flock.\nnot, repeat *not*, a large language model wearing a beak.",
+          "source": "web",
+          "title": "context window - pelicans.wtf",
+          "url": "https://pelicans.wtf/pelicanplus/context-window"
+        },
+        {
+          "date": "2025-05-05",
+          "id": 7,
+          "last_updated": "2026-10-03",
+          "snippet": "# Military Alphabet: NATO Letters, Numbers and Pronunciation\nThe military alphabet, also called the NATO phonetic alphabet, uses 26 code words to spell letters clearly: A is Alfa, B is Bravo and C is Charlie.",
+          "source": "web",
+          "title": "Military Alphabet - NATO Phonetic Alphabet - Communication",
+          "url": "https://militaryalphabet.net/"
+        },
+        {
+          "date": "2026-08-02",
+          "id": 8,
+          "last_updated": "2026-09-23",
+          "snippet": "# Morse Code Abbreviations: Complete List of CW, Ham Radio, Q-Codes & Prosigns (with PDF)\n## 25 Most Common Morse Code Abbreviations Every Beginner Should Learn\n|**Abbreviation**|**Meaning**|**Common Use**|\n|--|--|--|\n|K|Go ahead|Invites the other station to transmit|",
+          "source": "web",
+          "title": "Morse Code Abbreviations: Complete CW, Ham Radio & Q-Code List",
+          "url": "https://allmorsecode.com/morse-code-abbreviations/"
+        },
+        {
+          "date": "2026-01-01",
+          "id": 9,
+          "last_updated": "2026-10-09",
+          "snippet": "# Meaning of OK in English\n### OK noun ( ADDRESS )\nwritten abbreviation for the US state of Oklahoma: used in addresses\n...\n## OK | American Dictionary\n### OK noun [C] ( AGREED )\nagreement about or permission to do something:",
+          "source": "web",
+          "title": "OK | English meaning - Cambridge Dictionary",
+          "url": "https://dictionary.cambridge.org/dictionary/english/ok"
+        },
+        {
+          "date": "2026-09-21",
+          "id": 10,
+          "last_updated": "2026-10-03",
+          "snippet": "# Stuck on a Codeword? These tips will help you\n## What is Codeword?\nEach puzzle assigns a number to each letter of the alphabet, and then numbers the grid accordingly.\nYour job is to fill the grid with words by correctly working out which letter corresponds to each number.\n...\n## 4 tips to help crack your Codeword\n### 2. Spot patterns of letters in your Codeword\nRemember: almost every word needs at least one vowel, so that can narrow down your guesses even further.\n...\n### 3. Keep track of the letters you\u2019ve solved\nAs you play, keep an eye on the letters that you\u2019ve already solved.\nMore importantly, try to remember a few of the letters that you haven\u2019t solved yet, because if you keep these letters in your mind as you cast your eye around the grid, you may find you\u2019re better at guessing words just by filling in the blanks.",
+          "source": "web",
+          "title": "Tips if you are stuck on a Codeword",
+          "url": "https://www.saga.co.uk/magazine/puzzles/stuck-on-codeword?date=2026-09-28"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "OK",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_0713882d-290d-4781-a237-6c5637de00cc",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    },
+    {
+      "type": "fetch_url"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00042,
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 3e-05,
+      "total_cost": 0.00045
+    },
+    "input_tokens": 3383,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 3380,
+      "cache_read_input_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 61,
+    "output_tokens_details": {
+      "reasoning_tokens": 54
+    },
+    "total_tokens": 3444
+  },
+  "user": null
+}

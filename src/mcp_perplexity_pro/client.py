@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import re
 import time
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
@@ -19,7 +20,7 @@ import httpx2
 from pydantic import BaseModel, ValidationError
 
 from mcp_perplexity_pro.errors import PerplexityError, error_from_response
-from mcp_perplexity_pro.models import ModelList
+from mcp_perplexity_pro.models import AgentRun, CancelResponse, ModelList
 from mcp_perplexity_pro.settings import Settings
 
 M = TypeVar("M", bound=BaseModel)
@@ -27,6 +28,16 @@ M = TypeVar("M", bound=BaseModel)
 logger = logging.getLogger(__name__)
 
 _REQUEST_ID_HEADERS = ("x-request-id", "request-id")
+
+# A response id goes into a request path, so it is checked first: ``resp_`` plus 1 to 100 of
+# letters, digits, hyphen and underscore. ``fullmatch`` (not ``$``) so a trailing newline fails.
+_RESPONSE_ID = re.compile(r"resp_[A-Za-z0-9_-]{1,100}", re.ASCII)
+
+
+def is_response_id(value: object) -> bool:
+    """True for ``resp_`` plus 1 to 100 letters, digits, hyphens or underscores."""
+    return isinstance(value, str) and _RESPONSE_ID.fullmatch(value) is not None
+
 
 _TIMEOUT_NAMES = (
     (httpx2.ConnectTimeout, "connect"),
@@ -67,6 +78,13 @@ class PerplexityClient:
             write=settings.read_timeout,
             pool=settings.connect_timeout,
         )
+        # A synchronous Agent run can take longer than any other call (design D12).
+        self._agent_timeout = httpx2.Timeout(
+            connect=settings.connect_timeout,
+            read=settings.agent_read_timeout,
+            write=settings.agent_read_timeout,
+            pool=settings.connect_timeout,
+        )
 
     async def aclose(self) -> None:
         if self._owns_http:
@@ -75,9 +93,11 @@ class PerplexityClient:
     def _secrets(self) -> tuple[str, ...]:
         return (self._settings.api_key.get_secret_value(),)
 
-    def _timeout_error(self, exc: httpx2.TimeoutException) -> PerplexityError:
+    def _timeout_error(
+        self, exc: httpx2.TimeoutException, timeout: httpx2.Timeout | None = None
+    ) -> PerplexityError:
         kind = next((name for cls, name in _TIMEOUT_NAMES if isinstance(exc, cls)), "request")
-        limit = getattr(self._timeout, kind, None)
+        limit = getattr(timeout or self._timeout, kind, None)  # the one that was in effect
         seconds = f" ({limit:g}s)" if isinstance(limit, int | float) else ""
         return PerplexityError(
             "network_timeout",
@@ -85,7 +105,9 @@ class PerplexityClient:
             secrets=self._secrets(),
         )
 
-    async def _send(self, method: str, path: str, json: Any) -> httpx2.Response:
+    async def _send(
+        self, method: str, path: str, json: Any, timeout: httpx2.Timeout | None = None
+    ) -> httpx2.Response:
         return await self._http.request(
             method,
             self._settings.base_url + path,
@@ -94,7 +116,7 @@ class PerplexityClient:
                 "Authorization": f"Bearer {self._settings.api_key.get_secret_value()}",
                 "Accept": "application/json",
             },
-            timeout=self._timeout,
+            timeout=timeout or self._timeout,
         )
 
     @staticmethod
@@ -155,12 +177,20 @@ class PerplexityClient:
             return None
         return max(seconds, 0.0)
 
-    async def request_json(self, method: str, path: str, json: Any = None) -> Any:
+    async def request_json(
+        self,
+        method: str,
+        path: str,
+        json: Any = None,
+        *,
+        timeout: httpx2.Timeout | None = None,
+    ) -> Any:
         """Send a request, applying the retry rules, and return the parsed 2xx JSON body.
 
         A POST creates work and is replayed only after a 429 (never billed) or a connect
         failure (provably not sent). A GET is also retried on 5xx, timeouts and any
         connection failure. Every other failure is raised as ``PerplexityError`` at once.
+        ``timeout`` replaces the general timeout for this call only.
         """
         is_read = method.upper() == "GET"
         attempts = self._settings.max_attempts
@@ -168,10 +198,10 @@ class PerplexityClient:
             wait: float | None = None  # set when this attempt may be retried
             started = time.monotonic()
             try:
-                response = await self._send(method, path, json)
+                response = await self._send(method, path, json, timeout)
             except httpx2.TimeoutException as exc:
                 self._log_call(method, path, attempt, started, None)
-                error = self._timeout_error(exc)
+                error = self._timeout_error(exc, timeout)
                 not_sent = isinstance(exc, httpx2.ConnectTimeout)
                 retryable = is_read or not_sent
             except httpx2.HTTPError as exc:
@@ -229,3 +259,34 @@ class PerplexityClient:
     async def list_models(self) -> ModelList:
         path = "/v1/models"
         return self._parse(ModelList, await self.request_json("GET", path), path)
+
+    @staticmethod
+    def _check_response_id(response_id: str) -> str:
+        if not is_response_id(response_id):
+            raise PerplexityError(
+                "invalid_request",
+                "A response id is 'resp_' followed by 1 to 100 letters, digits, '-' or '_'.",
+            )
+        return response_id
+
+    async def create_run(self, body: dict[str, Any], *, background: bool) -> AgentRun:
+        """``POST /v1/agent``. A synchronous run (``background`` false) gets the agent read
+        timeout; a background submit returns at once and keeps the general one."""
+        path = "/v1/agent"
+        data = await self.request_json(
+            "POST", path, json=body, timeout=None if background else self._agent_timeout
+        )
+        return self._parse(AgentRun, data, path)
+
+    async def get_run(self, response_id: str) -> AgentRun:
+        """``GET /v1/agent/{id}``: a run's current snapshot (retried like any read)."""
+        self._check_response_id(response_id)
+        data = await self.request_json("GET", f"/v1/agent/{response_id}")
+        return self._parse(AgentRun, data, "/v1/agent/{id}")
+
+    async def cancel_run(self, response_id: str) -> CancelResponse:
+        """``POST /v1/agent/{id}/cancel`` (never replayed; the 400 for an unknown run and for a
+        finished one is the same, so the caller must fetch first, design D9)."""
+        self._check_response_id(response_id)
+        data = await self.request_json("POST", f"/v1/agent/{response_id}/cancel")
+        return self._parse(CancelResponse, data, "/v1/agent/{id}/cancel")

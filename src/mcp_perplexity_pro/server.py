@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib.metadata import version as package_version
 from typing import TYPE_CHECKING, Any
 
@@ -21,17 +21,21 @@ from fastmcp.exceptions import NotFoundError, ValidationError
 from fastmcp.server.lifespan import lifespan
 from fastmcp.server.middleware import Middleware
 from fastmcp.tools import ToolResult
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.responses import JSONResponse
 
+from mcp_perplexity_pro.agent import JobLocks
 from mcp_perplexity_pro.catalog import Catalog
 from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
 from mcp_perplexity_pro.tools import register_tools
+from mcp_perplexity_pro.usage import failure_summary, utcnow
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from datetime import datetime
 
     import httpx2
     from sqlalchemy.ext.asyncio import AsyncEngine
@@ -55,6 +59,10 @@ class AppContext:
     client: PerplexityClient
     engine: AsyncEngine
     catalog: Catalog
+    # OUR clock for research jobs (naive UTC); tests inject one
+    now: Callable[[], datetime] = utcnow
+    # one in-process lock per research job (design D8)
+    job_locks: JobLocks = field(default_factory=JobLocks)
 
 
 def error_result(category: str, message: str) -> ToolResult:
@@ -138,8 +146,15 @@ class ErrorContractMiddleware(Middleware):
         if isinstance(exc, NotFoundError):
             return error_result("not_found", redact_text(str(exc), self._secrets))
         name = getattr(getattr(context, "message", None), "name", "?")
-        # exc_info carries the full detail; the logging filter redacts it before it is written.
-        logger.error("tool %r failed unexpectedly", name, exc_info=root)
+        if isinstance(root, SQLAlchemyError):
+            # its traceback text renders [parameters: ...], every bound value (stored answers,
+            # chat text): only the type and the driver's own message are logged
+            logger.error(
+                "tool %r failed unexpectedly: %s", name, failure_summary(root, self._secrets)
+            )
+        else:
+            # exc_info carries the full detail; the logging filter redacts it before it is written.
+            logger.error("tool %r failed unexpectedly", name, exc_info=root)
         return error_result("internal_error", GENERIC_MESSAGE)
 
 
@@ -149,10 +164,12 @@ def build_server(
     engine: AsyncEngine,
     *,
     clock: Callable[[], float] = time.time,
+    now: Callable[[], datetime] = utcnow,
 ) -> FastMCP:
     """Build the server around caller-owned ``http`` and ``engine``.
 
-    ``clock`` (wall-clock seconds) drives the model-catalog cache; tests inject a fake one.
+    ``clock`` (wall-clock seconds) drives the model-catalog cache and ``now`` (a naive UTC
+    datetime) the research jobs' own times; tests inject fake ones.
 
     ``server.app`` is the ``AppContext`` (so ``__main__.run`` can close its members) and
     ``server.in_flight`` the ``InFlightMiddleware`` (so stdio shutdown can wait for calls).
@@ -170,6 +187,7 @@ def build_server(
             max_stale=settings.catalog_max_stale,
             clock=clock,
         ),
+        now=now,
     )
 
     @lifespan

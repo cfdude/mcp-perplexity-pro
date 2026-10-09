@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "validation failed: input cannot be empty",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

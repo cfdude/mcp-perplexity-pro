@@ -1,0 +1,51 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "chat replay: the stored history of three turns resent as message items, store false, no previous_response_id",
+  "request": {
+    "preset": "fast",
+    "input": [
+      {
+        "type": "message",
+        "role": "user",
+        "content": "Remember this for later: my codeword is PELICAN-42. Just reply OK."
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "content": "OK"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "content": "Also remember: my favourite colour is teal. Just reply OK."
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "content": "OK"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "content": "What is my codeword? Reply with the codeword only."
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "content": "PELICAN-42"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "content": "What is my favourite colour and what is my codeword? One short sentence."
+      }
+    ],
+    "store": false
+  }
+}
