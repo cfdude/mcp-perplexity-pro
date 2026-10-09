@@ -305,7 +305,7 @@ async def test_listing_has_schema_annotations_cost_and_retention_wording(researc
     ann = tool.annotations
     assert (ann.read_only_hint, ann.destructive_hint, ann.open_world_hint) == (False, False, True)
     desc = " ".join(tool.description.split())
-    for cost in ("$0.016 to $0.05", "$0.4 to $0.9"):
+    for cost in ("$0.016 to $0.017", "$0.4 to $0.9"):
         assert cost in desc
     assert "perplexity_jobs" in desc and "estimate" in desc
     assert "stored by the provider" in desc and "store is true" in desc

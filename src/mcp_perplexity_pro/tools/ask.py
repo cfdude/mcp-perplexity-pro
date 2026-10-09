@@ -174,11 +174,13 @@ def register(server: FastMCP) -> None:
         """Ask one web-grounded question and get the answer with its sources. Synchronous and
         stateless; it never waits for a background run (use perplexity_research for those).
 
-        Approximate cost per call by depth: fast about $0.001 to $0.002 (the default), low
-        about $0.004 to $0.02, medium about $0.016 to $0.05. high and xhigh can cost dollars
-        and take minutes, so they exist only behind perplexity_research. Giving a search filter
-        (domains, recency, after, before, country, max_results) makes the run use the web
-        search tool alone, so a filtered medium run loses the preset's page fetching.
+        Approximate cost per call by depth (observed ranges; the upper figures are estimates):
+        fast $0.001 to $0.002 (the default), low $0.0005 to $0.004 (up to about $0.02
+        estimated), medium $0.016 to $0.017 as a research run (up to about $0.05 estimated; a
+        synchronous medium call was not measured). high and xhigh can cost dollars and take
+        minutes (unmeasured estimates), so they exist only behind perplexity_research. Giving a
+        search filter (domains, recency, after, before, country, max_results) makes the run use
+        the web search tool alone, so a filtered medium run loses the preset's page fetching.
 
         The request sets store to false, which only hides the response from retrieval; the
         provider's documentation says it still persists state, so this is not a retention

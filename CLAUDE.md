@@ -53,7 +53,7 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 | `errors.py` | `PerplexityError` (a FastMCP `ToolError`), `CATEGORIES`, `ALL_CATEGORIES`, status-to-category mapping |
 | `catalog.py` | Model list TTL cache, stale-on-failure rule, the dated `PRESETS` table |
 | `models/` | Tolerant pydantic payload models (`extra="allow"`, optional fields) |
-| `models/agent.py` | `AgentRun` and `CancelResponse`: only `id` and `status` are required, `output` is `Any`, so a spend-bearing response is never lost to a schema quibble |
+| `models/agent.py` | `AgentRun` (only `id` and `status` are required) and `CancelResponse` (`response_id` and `status` are required), `output` is `Any`, so a spend-bearing response is never lost to a schema quibble |
 | `agent.py` | The Agent toolset's shared logic: option validation and `build_request`, `digest` (answer, sources, usage summary), `run_costed` (the one costed-call sequence, below), and the research job observation (`observe_job`, `job_columns`, `JobLocks`) |
 | `tools/` | One module per tool, each `register(server)`; `tools/__init__.py:register_tools` calls them |
 | `tools/ask.py`, `tools/chat.py`, `tools/research.py`, `tools/jobs.py` | `perplexity_ask` (stateless, `fast`/`low`/`medium`), `perplexity_chat` (`send`/`list`/`read`/`delete` over local history), `perplexity_research` (background submit, returns a job id), `perplexity_jobs` (`list`/`status`/`result`/`cancel`). Specs: `openspec/changes/py-agent-api/specs/` |
@@ -105,7 +105,10 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
    `tests/test_projects_tool.py`). **Every tool schema costs context in every session.** Going from
    three tools to seven grew the `tools/list` response from 10564 to 39463 bytes (about 10.5 KB to
    about 39.5 KB, measured 2026-10-09 with `wc -c` on one `tools/list` POST; `design.md` "Risks"),
-   most of it output-schema field descriptions. The design target is about nine tools in all, which
+   most of it output-schema field descriptions. Re-measured 2026-10-09 the same way (an
+   ephemeral-port HTTP server, a dummy key, a temporary data directory): 40475 bytes (about 40.5
+   KB) for the same seven tools, at commit `48c2484` plus the cost-wording docstring edits of the
+   commit after it. The design target is about nine tools in all, which
    leaves room for the Search, Embeddings and Decisions tools only if later epics stay lean: prefer
    one tool with an `action` argument over several, and trim descriptions before adding a tool.
 
@@ -170,9 +173,14 @@ The house convention proposed in `design.md` D10 and implemented in `storage/ses
 - A lock held past the timeout surfaces as `PerplexityError("storage_busy", ...)`.
 - **The cleanup survives cancellation.** `rollback()` and `close()` run as their own shielded task,
   because FastMCP and anyio cancel with a level-triggered scope that cuts a bare cleanup short and
-  leaves the connection checked out (`tests/test_unit_of_work_cancel.py`). A write that must land
-  after the provider has already acted (a job row, `cancel_requested_at`, the recorder) is shielded
-  the same way by its caller.
+  leaves the connection checked out (`tests/test_unit_of_work_cancel.py`). Only these
+  writes are shielded from cancellation of the calling task, each so that a client cancel cannot
+  lose what the provider already did: the usage recorder (`record_usage`), the observation row
+  update (`agent._write_job`), `cancel_requested_at` (`tools/jobs.py`), the research submit's job-row
+  insert (`tools/research.py`) and the chat row write after a billed send (`tools/chat.py`). Every
+  other write is not shielded, which is right where the provider has done nothing yet. A new tool
+  whose write follows a provider call that was accepted or billed must wrap that write in
+  `agent.shielded_write` (it re-raises the cancel only after the write finished).
 - **Get-or-create is an upsert** (`INSERT ... ON CONFLICT DO NOTHING`, then select), so concurrent
   first creates cannot violate a unique constraint.
 - `expire_on_commit=False`, so returned ORM objects stay readable after the block.

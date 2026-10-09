@@ -65,7 +65,7 @@ async def test_listing_has_schema_annotations_costs_and_the_honest_wording(world
     ann = tool.annotations
     assert (ann.read_only_hint, ann.destructive_hint, ann.open_world_hint) == (False, False, True)
     desc = " ".join(tool.description.split())  # the docstring wraps lines
-    for cost in ("$0.001 to $0.002", "$0.004 to $0.02", "$0.016 to $0.05"):
+    for cost in ("$0.001 to $0.002", "$0.0005 to $0.004", "$0.016 to $0.017"):
         assert cost in desc
     assert "perplexity_research" in desc
     assert "web search tool alone" in desc  # a filter replaces the preset's own tools

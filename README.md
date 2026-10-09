@@ -164,7 +164,7 @@ where the table says "not measured".
 
 | Depth | Where it is available | Observed cost per call | Evidence | Observed time |
 |---|---|---|---|---|
-| `fast` (default for ask and chat) | `perplexity_ask`, `perplexity_chat` | $0.00118 to $0.00180 | Live acceptance run, 2026-10-09: $0.00143, $0.00118, $0.00158. Probe fixtures, 2026-10-09 (the eight `fast` captures in `tests/fixtures/`): $0.00119 to $0.00180 | 1.7 to 2.6 s (acceptance) |
+| `fast` (default for ask and chat) | `perplexity_ask`, `perplexity_chat` | $0.00118 to $0.00180 | Live acceptance run, 2026-10-09: $0.00143, $0.00118, $0.00158. Probe fixtures, 2026-10-09 (the eight synchronous `fast` captures in `tests/fixtures/`; a ninth, the background poll `agent_background_poll.json`, cost $0.00105): $0.00119 to $0.00180 | 1.7 to 2.6 s (acceptance) |
 | `low` | `perplexity_ask`, `perplexity_chat` | $0.00045 to $0.00386 | Acceptance, 2026-10-09: $0.00156 (one call, 3.2 s). Probe fixtures, 2026-10-09: $0.00045 (`agent_chat_depth_switch.json`, a chained chat turn) and $0.00386 (`agent_low_fetch_url.json`, a call that fetched a page). Up to about $0.02 is the probe report's range; it is not backed by a saved capture | 3.2 s (acceptance) |
 | `medium` | `perplexity_research` (background); `perplexity_ask` and `perplexity_chat` accept it too | $0.01599 to $0.01722 as a research run | Acceptance, 2026-10-09: $0.01722 (job 1, 39 s between our submit and the call that saw it finish). Probe fixture `agent_background_completed.json`, 2026-10-09: $0.01599. About $0.05 as an upper figure is the probe report's range; not backed by a saved capture. A synchronous `medium` call was not run in either | about 35 to 40 s |
 | `high` | `perplexity_research` only | not measured | Never run. "Up to about $0.4 to $0.9, and minutes" is the probe report's and the provider's own positioning: an estimate | minutes (estimate) |
@@ -327,9 +327,10 @@ by-id action in an absent project is `not_found`; `list` in one is empty).
 A `send` continues from the last stored response with `previous_response_id`, sending only the new
 message, so the cost of a turn does not grow with the history. **`replay`** is the fallback: it
 resends the whole stored history (and, with it, every stored character as input on every turn).
-The provider rejects an unknown, expired, unfinished or cancelled `previous_response_id` with one
-generic `400 invalid request`; when that happens on a chained send, the error says the provider
-could not continue and to send again with `replay: true`. The server does not retry by itself,
+The provider rejects an unknown, malformed, unfinished or cancelled `previous_response_id` with one
+generic `400 invalid request` (that an id can also expire is possible but was not measured); when
+that happens on a chained send, the error says the provider could not continue and to send again
+with `replay: true`. The server does not retry by itself,
 because a hidden second call would double the bill. A replay of more than 100000 stored characters
 adds a warning that every send costs more. Only `completed` turns are stored; an `incomplete`
 answer is returned with a warning (it was billed) and is not saved, and an incomplete first send
@@ -413,7 +414,8 @@ clock) and `message`. A run that had already finished when it was submitted is s
 recorded at once.
 
 **A run is recorded as spend only when a `perplexity_jobs` call sees it finished.** The submit is
-not recorded (the cost is unknown until the run ends). See "The unobserved-run gap" below.
+not recorded while it is still running (the cost is unknown until the run ends); a failed or
+already-finished submit is recorded at once. See "The unobserved-run gap" below.
 
 Example, from the live acceptance run on 2026-10-09 (`r1.json`, unedited). The query's first 120
 characters are the job's `query_excerpt` in `j2.json`; the rest is illustrative:

@@ -516,9 +516,11 @@ def register(server: FastMCP) -> None:
         from its last stored response; the messages are kept in this server's local database.
         Actions: send (starts a chat when chat_id is omitted), list, read and delete.
 
-        Approximate cost per send by depth: fast about $0.001 to $0.002 (the default), low
-        about $0.004 to $0.02, medium about $0.016 to $0.05; high and xhigh are not available
-        here (use perplexity_research). Every send is recorded as spend (see perplexity_usage).
+        Approximate cost per send by depth (observed ranges; the upper figures are estimates):
+        fast $0.001 to $0.002 (the default), low $0.0005 to $0.004 (up to about $0.02
+        estimated), medium $0.016 to $0.017 as a research run (up to about $0.05 estimated;
+        a synchronous medium send was not measured); high and xhigh are not available here
+        (use perplexity_research). Every send is recorded as spend (see perplexity_usage).
         list, read and delete make no upstream call and cost nothing; they read or change only
         the local database and never create a project.
 

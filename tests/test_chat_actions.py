@@ -32,7 +32,7 @@ async def test_the_listing_has_the_annotations_costs_and_wording_of_every_action
         tool.output_schema["properties"]["chat_id"] and "chats" in tool.output_schema["properties"]
     )
     desc = " ".join(tool.description.split())
-    for cost in ("$0.001 to $0.002", "$0.004 to $0.02", "$0.016 to $0.05"):
+    for cost in ("$0.001 to $0.002", "$0.0005 to $0.004", "$0.016 to $0.017"):
         assert cost in desc
     assert "list, read and delete make no upstream call" in desc
     assert "local database" in desc and "only hides" in desc and "retrieval" in desc

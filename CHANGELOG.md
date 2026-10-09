@@ -25,12 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `perplexity_research`: starts a background research run (`medium`, `high` or `xhigh`) and returns a job id at once. `high` and `xhigh` exist only here because they can cost dollars and take minutes. There is no spending cap.
 - `perplexity_jobs`: `list` (with `refresh` to settle running jobs), `status`, `result` and `cancel` over the local job rows. A background run is recorded as spend when a call first sees it finish, once; a run nobody observes is never recorded.
 - Three tables, project-scoped with `ON DELETE CASCADE`: `chats` and `chat_messages` (migration `0003`) and `research_jobs` (migration `0004`). Both migrations are reversible, and a downgrade drops the rows (the pre-migration backup, `backup-<rev>.db`, holds them). `perplexity_projects` `delete` reports `running_jobs`: deleting a project with unfinished research runs discards their rows, so their spend is never recorded while the provider keeps running them.
+- Database writes run in a unit of work that survives cancellation: a unit that is cancelled mid-block (a client dropping a request) returns its database connection, because the rollback and close run as their own shielded task (FastMCP and anyio cancel with a level-triggered scope that would cut a bare cleanup short). The writes that follow a provider call that was accepted or billed are shielded too, so a client cancel cannot lose them: the usage recorder, the research submit's job row, the chat turn after a billed send, a job's observation update and `cancel_requested_at`.
 - Setting `PERPLEXITY_AGENT_READ_TIMEOUT` (default 120 seconds): how long a synchronous Agent run (`perplexity_ask`, `perplexity_chat` send) may take.
 - `perplexity_usage`: a read-only spend report with exact totals over every matching call plus one grouping (`tool`, `api`, `model`, `project` or `day`), filtered by project and UTC date range. Costs are exact decimal USD strings and a lower bound: `calls_cost_unknown` counts calls whose cost is not known.
-
-### Fixed
-
-- A unit of work that is cancelled mid-block (a client dropping a request) now returns its database connection: the rollback and close run as their own shielded task, because FastMCP and anyio cancel with a level-triggered scope that cut the bare cleanup short and left the connection checked out until garbage collection.
 
 ## [1.3.1] - 2026-01-26
 

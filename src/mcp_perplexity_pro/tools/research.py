@@ -135,12 +135,12 @@ def register(server: FastMCP) -> None:
         call never waits for the run: read progress and the result with perplexity_jobs
         (status, result, list, cancel).
 
-        Approximate cost per run by depth (estimates from one probe and the provider's
-        positioning, not measured by this server): medium about $0.016 to $0.05 and about 35
-        seconds; high can cost up to about $0.4 to $0.9 and take minutes; xhigh more. There is
-        no spending cap. A run is recorded as spend only once a perplexity_jobs call observes it
-        finished, so call status or list with refresh true; a run nobody checks is never
-        recorded.
+        Approximate cost per run by depth: medium $0.016 to $0.017 observed (up to about $0.05
+        estimated) and about 35 to 40 seconds; high can cost up to about $0.4 to $0.9 and take
+        minutes, and xhigh more (both unmeasured estimates, from the provider's positioning).
+        There is no spending cap. A run is recorded as spend only once a perplexity_jobs call
+        observes it finished, so call status or list with refresh true; a run nobody checks is
+        never recorded.
 
         Research runs are stored by the provider (store is true, because a background run that
         is not stored cannot be retrieved), so the query and result stay retrievable there. The
