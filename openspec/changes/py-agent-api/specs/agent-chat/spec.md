@@ -7,18 +7,25 @@ Defines `perplexity_chat`, the multi-turn conversation tool: a chat is kept in t
 ## ADDED Requirements
 
 ### Requirement: Chat tool
-The server SHALL provide `perplexity_chat` with actions `send`, `list`, `read` and `delete`, each scoped to a `project` (default `default`). It SHALL advertise an output schema, `destructiveHint` true and `openWorldHint` true. Its description SHALL state the per-depth costs of a send (fast about $0.001 to $0.002, low about $0.004 to $0.02, medium about $0.016 to $0.05) and that `list`, `read` and `delete` make no upstream call.
+The server SHALL provide `perplexity_chat` with actions `send`, `list`, `read` and `delete`, each scoped to a `project` (default `default`). It SHALL advertise an output schema, `readOnlyHint` false, `destructiveHint` true and `openWorldHint` true. Its description SHALL state the per-depth costs of a send (fast about $0.001 to $0.002, low about $0.004 to $0.02, medium about $0.016 to $0.05) and that `list`, `read` and `delete` make no upstream call.
 
 #### Scenario: Tool listing
 - **WHEN** a client lists the tools
-- **THEN** `perplexity_chat` is present with typed parameters, an output schema and the three costs in its description
+- **THEN** `perplexity_chat` is present with typed parameters, an output schema, the three annotations above and the three costs in its description
 
 #### Scenario: Unknown action
 - **WHEN** a client calls the tool with action `rename`
 - **THEN** the call fails with `invalid_request` naming `action`
 
+### Requirement: Description makes no retention claim
+The description of `perplexity_chat` SHALL say that chat text is stored in the local database and that sends use `store` false, which only hides a response from provider retrieval, and SHALL NOT claim that the provider keeps nothing or deletes anything.
+
+#### Scenario: Privacy wording
+- **WHEN** a client lists the tools
+- **THEN** the description says the local database holds the messages and that `store` false hides retrieval only, and contains no claim of non-retention
+
 ### Requirement: Chat storage
-Chats SHALL be stored in two local tables, `chats` (project, title, creation and update times) and `chat_messages` (chat, role `user` or `assistant`, content, time, and for an assistant message the response id, model, preset and sources), created by migration `0003`. Chats belong to a project and are removed with it; their messages are removed with the chat.
+Chats SHALL be stored in two local tables, `chats` (project, title, creation and update times) and `chat_messages` (chat, role `user` or `assistant`, content, time, and for an assistant message the response id, model, preset and sources), created by migration `0003`. `chats` SHALL never reuse the id of a deleted row (`sqlite_autoincrement`). Chats belong to a project and are removed with it; their messages are removed with the chat.
 
 #### Scenario: Migration up and down
 - **WHEN** a revision-0002 database is upgraded to 0003, downgraded to 0002 and upgraded again
@@ -28,16 +35,39 @@ Chats SHALL be stored in two local tables, `chats` (project, title, creation and
 - **WHEN** a project owning 2 chats with 6 messages is deleted with `confirm` true
 - **THEN** the chats and their messages are gone, the 2 chats are counted in `rows_removed` and the messages are not counted
 
+#### Scenario: Ids are not reused
+- **WHEN** the newest chat is deleted and a new chat is created, then a send names the deleted chat's id
+- **THEN** the new chat has a different id and the send fails with `not_found` instead of appending to the new chat
+
+### Requirement: Actions that store nothing never create a project
+`list`, `read`, `delete` and a `send` that names a `chat_id` SHALL look the project up and never create it. In an absent project `list` SHALL return no chats with total 0, and `read`, `delete` and `send` SHALL fail with `not_found`. A `send` with `chat_id` SHALL resolve the project only after it has found the chat. Only a `send` that starts a chat creates its project.
+
+#### Scenario: List in an absent project
+- **WHEN** a client lists chats of project `ghost`, which does not exist
+- **THEN** the result has no chats and total 0, and project `ghost` still does not exist
+
+#### Scenario: Read or send in an absent project
+- **WHEN** a client reads chat 1, or sends to chat 1, naming the absent project `ghost`
+- **THEN** each call fails with `not_found`, no request reaches the API and project `ghost` still does not exist
+
 ### Requirement: Send starts a chat
-A `send` without `chat_id` SHALL require `title` (1 to 120 characters after trimming) and a non-blank `message`, and SHALL create the chat only after the upstream call has succeeded, storing the chat and both messages in one unit of work, so a failed first send leaves no chat. The result carries the new `chat_id`.
+A `send` without `chat_id` SHALL require `title` (1 to 120 characters after trimming) and a `message` that is not blank and has at most 20000 characters, and SHALL create the chat only after the upstream call has succeeded, storing the chat and both messages in one unit of work, so a failed first send leaves no chat. The result carries the new `chat_id`.
 
 #### Scenario: First turn
 - **WHEN** a client sends `message` with `title` `Teal notes` and the API returns the recorded first-turn response
 - **THEN** a chat titled `Teal notes` exists with a user message and an assistant message holding the response id, and the result names `continuation` `new`
 
-#### Scenario: Missing title
-- **WHEN** a client sends without `chat_id` and without `title`
-- **THEN** the call fails with `invalid_request` naming `title` and no request reaches the API
+#### Scenario: First turn request shape
+- **WHEN** a first send at the default depth reaches the API
+- **THEN** the request has preset `fast`, the message as its string `input`, `store` false and no `previous_response_id`
+
+#### Scenario: Missing, blank or long title
+- **WHEN** a client sends without `chat_id` and with no `title`, a title of spaces, or a title of 121 characters
+- **THEN** each call fails with `invalid_request` naming `title` and no request reaches the API
+
+#### Scenario: Blank message
+- **WHEN** a client sends a message of spaces, with or without a `chat_id`
+- **THEN** the call fails with `invalid_request` naming `message` and no request reaches the API
 
 #### Scenario: Failed first turn
 - **WHEN** the upstream call of a first send fails
@@ -63,7 +93,7 @@ A `send` with `chat_id` SHALL send only the new message and the response id of t
 - **THEN** the call fails with `not_found`
 
 ### Requirement: Send takes the ask options
-`send` SHALL accept the ask tool's `depth` (`fast`, `low` or `medium`), `model`, `search`, search filters, `instructions` and `max_output_tokens` and apply the ask tool's rules for them, except that it takes no `json_schema`. Each send may choose them anew.
+`send` SHALL accept the ask tool's `depth` (`fast`, `low` or `medium`), `model`, `search`, search filters, `instructions` and `max_output_tokens` and apply the ask tool's rules and limits for them, except that it takes no `json_schema`. Each send may choose them anew.
 
 #### Scenario: Depth per turn
 - **WHEN** a first turn is sent at depth `fast` and the next at depth `low`
@@ -74,18 +104,22 @@ A `send` with `chat_id` SHALL send only the new message and the response id of t
 - **THEN** the call fails with `invalid_request`
 
 ### Requirement: Replay of stored history
-With `replay` true, a `send` SHALL NOT use `previous_response_id`; it SHALL send the chat's stored messages followed by the new message as an input list of `message` items with roles `user` and `assistant`, so a chat can continue when the provider cannot continue from its stored response.
+With `replay` true, a `send` SHALL NOT use `previous_response_id`; it SHALL set `store` false and send the chat's stored messages followed by the new message as an `input` list of items `{"type": "message", "role": "user" or "assistant", "content": <string>}`, the shape the API documents for conversation state. When the stored text exceeds 100000 characters the result SHALL carry a warning that a replay resends all of it.
 
 #### Scenario: Replay request
 - **WHEN** a chat holds one user and one assistant message and a client sends `replay` true with a follow-up
-- **THEN** the request has no `previous_response_id` and an input of three message items: user, assistant, user, in that order with the stored texts
+- **THEN** the request has no `previous_response_id`, `store` false and an input of three items of type `message`: user, assistant, user, in that order with the stored texts as string content
 
 #### Scenario: Replay without chat
 - **WHEN** a client sends `replay` true without `chat_id`
 - **THEN** the call fails with `invalid_request`
 
+#### Scenario: Large history
+- **WHEN** a replay resends more than 100000 characters of stored text
+- **THEN** the call still goes ahead and the result carries a warning naming the size
+
 ### Requirement: Failed continuation is explained
-When a chained send is rejected by the API with its generic `invalid request` 400, the tool SHALL fail with `invalid_request` saying the provider could not continue from the previous response and that `replay` true resends the stored history, and SHALL store nothing. Any other API error SHALL pass through unchanged.
+When a chained send is rejected by the API with its generic `invalid request` 400, recognized by `api_message` equal to `invalid request` with status 400 and type `invalid_request`, the tool SHALL fail with `invalid_request` saying the provider could not continue from the previous response and that `replay` true resends the stored history, and SHALL store nothing. Any other API error SHALL pass through unchanged.
 
 #### Scenario: Provider cannot continue
 - **WHEN** the API answers a chained send with the recorded generic 400 for an unknown `previous_response_id`
@@ -96,11 +130,19 @@ When a chained send is rejected by the API with its generic `invalid request` 40
 - **THEN** the tool's error carries that message and does not mention `replay`
 
 ### Requirement: Only complete turns are stored
-A send whose response is not `completed` (an `incomplete` run) SHALL return its result with a warning and SHALL NOT store the turn, so the chat still continues from its last complete turn.
+A send whose response is `incomplete` SHALL return its result with a warning and SHALL NOT store the turn, so a chat continues from its last complete turn; an incomplete first send creates no chat, returns `chat_id` null and `continuation` `new`. A response with any other status, or an error, fails as the ask tool's statuses rule says and stores nothing.
 
 #### Scenario: Truncated turn
 - **WHEN** a send returns the recorded truncated response
 - **THEN** the result has status `incomplete` and a warning, the chat's messages are unchanged, and the next send chains from the earlier response
+
+#### Scenario: Truncated first turn
+- **WHEN** a first send with a title returns the recorded truncated response
+- **THEN** the result has `chat_id` null, `continuation` `new` and status `incomplete`, and no chat exists
+
+#### Scenario: Failed run on HTTP 200
+- **WHEN** a send returns a 200 whose status is `failed`
+- **THEN** the call fails with `unexpected_response`, one event exists and nothing is stored
 
 ### Requirement: Listing chats
 `list` SHALL return the project's chats newest-updated first with `id`, `title`, message count and times, honoring `limit` (default 20, 1 to 100) and reporting the total and whether the list was cut.
@@ -142,6 +184,13 @@ Each send that reaches the API SHALL be recorded once as tool `perplexity_chat`,
 - **WHEN** the recorded generic 400 rejects a chained send
 - **THEN** one event exists with status `invalid_request` and cost 0
 
-#### Scenario: Own write rolls back
-- **WHEN** the chat's own write fails after a completed upstream call
-- **THEN** the usage event remains and the chat's messages are not stored
+### Requirement: A failed local write does not discard a billed answer
+When the chat's own write fails after a completed upstream call, the send SHALL return its result with a warning `not_saved` and the usage event SHALL remain; the turn is not stored. When the write fails because the chat or its project no longer exists (deleted during the call), the send SHALL fail with `not_found`, not `storage_busy`.
+
+#### Scenario: Own write fails
+- **WHEN** the chat's own write fails with a busy database after a completed upstream call
+- **THEN** the result carries the answer and a `not_saved` warning, the usage event remains and no messages are stored
+
+#### Scenario: Chat deleted during the send
+- **WHEN** the chat is deleted by another call while a send to it is in flight
+- **THEN** the send fails with `not_found`, one event exists and no message was stored

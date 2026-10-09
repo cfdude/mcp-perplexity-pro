@@ -33,7 +33,7 @@ A response id placed in a request path SHALL consist of `resp_` followed by 1 to
 - **THEN** the request is sent to `/v1/agent/` followed by that id
 
 ### Requirement: Tolerant run parsing
-A run SHALL be parsed with every unknown field and unknown output item type retained, and only `id` and `status` required. An absent `output` is an empty list; an absent or null `usage`, `model` and `error` stay absent. A response lacking a required field SHALL raise `unexpected_response` naming the endpoint and the field.
+A run SHALL be parsed with every unknown field and unknown output item type retained, and only `id` and `status` required. An absent `output` is an empty list and a value that is not a list is kept as received (callers must cope with it); an absent or null `usage`, `model` and `error` stay absent. A response lacking a required field SHALL raise `unexpected_response` naming the endpoint and the field.
 
 #### Scenario: Unknown output item
 - **WHEN** a response carries an output item of a type the client has no definition for
@@ -42,6 +42,10 @@ A run SHALL be parsed with every unknown field and unknown output item type reta
 #### Scenario: Queued run without usage
 - **WHEN** the API returns the recorded queued submit response (`usage` null, `output` empty)
 - **THEN** the client returns a run with status `queued`, no usage and an empty output
+
+#### Scenario: Output that is not a list
+- **WHEN** a response carries `output` as an object or a string
+- **THEN** parsing succeeds and the value is retained as received
 
 #### Scenario: Missing status
 - **WHEN** a create response has no `status`
@@ -91,6 +95,13 @@ Agent API failures SHALL map by HTTP status to the existing categories and keep 
 #### Scenario: Ambiguous cancel failure
 - **WHEN** a cancel returns the recorded unknown-id 400 and another returns the recorded already-finished 400
 - **THEN** both raise `invalid_request` with identical messages
+
+### Requirement: The API's own message is kept
+An error raised for an API failure SHALL carry the API's error message on its own (`api_message`: the text of `error.message`, redacted of secrets, without the `(type: ...)` suffix the readable message adds), so a caller can recognize an exact body without parsing prose.
+
+#### Scenario: Generic 400 body
+- **WHEN** the API returns the recorded generic 400 (`invalid request`, type `invalid_request`)
+- **THEN** the error's `api_message` is exactly `invalid request` and its `api_type` is `invalid_request`, while its readable message also names the type
 
 ### Requirement: Agent call diagnostics
 Each Agent API call SHALL be logged like any upstream call: method, path, status, the upstream request id from the `x-request-id` header when present, attempt and elapsed time, and never the request or response body.
