@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from dataclasses import dataclass
 from importlib.metadata import version as package_version
 from typing import TYPE_CHECKING, Any
@@ -22,12 +23,16 @@ from fastmcp.server.middleware import Middleware
 from fastmcp.tools import ToolResult
 from starlette.responses import JSONResponse
 
+from mcp_perplexity_pro.catalog import Catalog
 from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
+from mcp_perplexity_pro.tools import register_tools
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import httpx2
     from sqlalchemy.ext.asyncio import AsyncEngine
     from starlette.requests import Request
@@ -49,6 +54,7 @@ class AppContext:
     http: httpx2.AsyncClient
     client: PerplexityClient
     engine: AsyncEngine
+    catalog: Catalog
 
 
 def error_result(category: str, message: str) -> ToolResult:
@@ -132,18 +138,33 @@ class ErrorContractMiddleware(Middleware):
         return error_result("internal_error", GENERIC_MESSAGE)
 
 
-def build_server(settings: Settings, http: httpx2.AsyncClient, engine: AsyncEngine) -> FastMCP:
+def build_server(
+    settings: Settings,
+    http: httpx2.AsyncClient,
+    engine: AsyncEngine,
+    *,
+    clock: Callable[[], float] = time.monotonic,
+) -> FastMCP:
     """Build the server around caller-owned ``http`` and ``engine``.
+
+    ``clock`` (monotonic seconds) drives the model-catalog cache; tests inject a fake one.
 
     ``server.app`` is the ``AppContext`` (so ``__main__.run`` can close its members) and
     ``server.in_flight`` the ``InFlightMiddleware`` (so stdio shutdown can wait for calls).
     """
     pkg_version = package_version(PACKAGE_NAME)
+    client = PerplexityClient(settings, http=http)
     app = AppContext(
         settings=settings,
         http=http,
-        client=PerplexityClient(settings, http=http),
+        client=client,
         engine=engine,
+        catalog=Catalog(
+            client,
+            ttl=settings.catalog_ttl,
+            max_stale=settings.catalog_max_stale,
+            clock=clock,
+        ),
     )
 
     @lifespan
@@ -162,6 +183,8 @@ def build_server(settings: Settings, http: httpx2.AsyncClient, engine: AsyncEngi
     @server.custom_route("/health", methods=["GET"])
     async def health(_request: Request) -> JSONResponse:
         return JSONResponse({"status": "ok", "version": pkg_version})
+
+    register_tools(server)  # tools exist from construction, so the tool contract covers them
 
     server.app = app  # type: ignore[attr-defined]
     server.in_flight = in_flight  # type: ignore[attr-defined]

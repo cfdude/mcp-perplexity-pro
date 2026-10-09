@@ -102,7 +102,11 @@ async def test_initialize_over_http_lists_registered_tools(make_server):
             init = await rpc(client, url, "initialize", _initialize_params())
             tools = await rpc(client, url, "tools/list")
     assert init["result"]["serverInfo"]["name"] == "perplexity-pro"
-    assert [t["name"] for t in tools["result"]["tools"]] == ["ping"]
+    names = [t["name"] for t in tools["result"]["tools"]]
+    assert sorted(names) == [
+        "perplexity_models",
+        "ping",
+    ]  # production tools exist from construction
 
 
 async def test_defaults_are_loopback_8102_without_binding(make_server):
