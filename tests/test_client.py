@@ -84,14 +84,14 @@ async def test_timeout_names_which_timeout(make_settings, exc, which):
     assert info.value.status is None
 
 
-async def test_connect_failure_is_upstream_failure(make_settings):
+async def test_connect_failure_is_network_timeout(make_settings):
     def handler(request):
         raise httpx2.ConnectError("refused", request=request)
 
     client = make_client(make_settings(max_attempts=1), handler)
     with pytest.raises(PerplexityError) as info:
         await client.request_json("GET", "/v1/models")
-    assert info.value.category == "upstream_failure"
+    assert info.value.category == "network_timeout"
 
 
 async def test_http_errors_become_perplexity_errors(make_settings):

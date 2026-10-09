@@ -194,7 +194,7 @@ async def test_post_connect_failure_exhausts_attempts(build):
     script = Script(httpx2.ConnectError)
     with pytest.raises(PerplexityError) as info:
         await build(script).request_json("POST", "/v1/agent", json={})
-    assert info.value.category == "upstream_failure"
+    assert info.value.category == "network_timeout"
     assert len(script.requests) == 3
 
 

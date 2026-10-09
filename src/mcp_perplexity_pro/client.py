@@ -177,7 +177,7 @@ class PerplexityClient:
             except httpx2.HTTPError as exc:
                 self._log_call(method, path, attempt, started, None)
                 error = PerplexityError(
-                    "upstream_failure",
+                    "network_timeout",
                     f"Could not reach the Perplexity API ({type(exc).__name__}).",
                     secrets=self._secrets(),
                 )
