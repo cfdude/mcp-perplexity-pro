@@ -13,12 +13,22 @@ call.
 from __future__ import annotations
 
 import copy
+import json
+import logging
 import re
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
-from typing import Any
+from typing import Annotated, Any
+
+from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.models import AgentRun
+from mcp_perplexity_pro.redaction import redact_text
+from mcp_perplexity_pro.usage import format_usd, usage_from_agent_response
+
+logger = logging.getLogger(__name__)
 
 # Depths a caller of ask or chat may pick; high and xhigh belong to perplexity_research (D2).
 ASK_DEPTHS = ("fast", "low", "medium")
@@ -37,6 +47,12 @@ ANTHROPIC_PREFIX = "anthropic/"
 ANTHROPIC_DEFAULT_CAP = 4096  # the API rejects an Anthropic model without a cap
 EXPLICIT_MODEL_MAX_STEPS = 3  # the only step budget this server ever sends
 SCHEMA_NAME = "answer"
+
+# Caps for strings that come FROM the API and are stored or returned (design D14).
+STATUS_CAP = 64
+REASON_CAP = 200
+ERROR_TEXT_CAP = 2000
+MODEL_CAP = 200
 
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", re.ASCII)
 _COUNTRY = re.compile(r"[A-Za-z]{2}", re.ASCII)
@@ -237,3 +253,182 @@ def build_request(
         request["background"] = True
     request["store"] = store
     return request
+
+
+# --- Response side (design D3, D14) ----------------------------------------------------------
+
+
+def clean_text(value: object, cap: int, secrets: Iterable[str] = ()) -> str:
+    """Upstream text made safe to store or return: the configured key and key-shaped tokens
+    removed FIRST, then cut to ``cap`` characters, so a key straddling the cut leaves no
+    fragment (the order the recorder uses). Never raises."""
+    return redact_text(value if isinstance(value, str) else str(value), secrets)[:cap]
+
+
+def clean_status(value: object, secrets: Iterable[str] = ()) -> str:
+    return clean_text(value, STATUS_CAP, secrets)
+
+
+def clean_reason(value: object, secrets: Iterable[str] = ()) -> str:
+    return clean_text(value, REASON_CAP, secrets)
+
+
+def clean_error_text(error: object, secrets: Iterable[str] = ()) -> str:
+    """The text of an upstream ``error`` (an object with a ``message``, or a plain string)."""
+    if error is None:
+        return ""
+    if isinstance(error, Mapping):
+        message = error.get("message")
+        error = message if isinstance(message, str) and message else "the API reported an error"
+    return clean_text(error, ERROR_TEXT_CAP, secrets)
+
+
+class Source(BaseModel):
+    url: Annotated[str, Field(description="Page URL")]
+    title: Annotated[str | None, Field(description="Page title when known")] = None
+    date: Annotated[str | None, Field(description="Publication date when the API gave one")] = None
+    id: Annotated[
+        int | None, Field(description="The API's result id; absent for fetched pages")
+    ] = None
+
+
+class UsageSummary(BaseModel):
+    """What a call used, from the same parser the usage event uses (design D10)."""
+
+    input_tokens: Annotated[int | None, Field(description="Input tokens when reported")] = None
+    output_tokens: Annotated[int | None, Field(description="Output tokens when reported")] = None
+    total_tokens: Annotated[int | None, Field(description="Total tokens when reported")] = None
+    cost_usd: Annotated[
+        str | None,
+        Field(description="Exact decimal USD cost as a string; null when the cost is unknown"),
+    ] = None
+    cost_source: Annotated[
+        str, Field(description="reported, computed or none (unknown, not free)")
+    ] = "none"
+
+
+def usage_summary(usage: object) -> UsageSummary:
+    """A ``UsageSummary`` of a raw ``usage`` mapping (None and malformed values are unknown)."""
+    parsed = usage_from_agent_response(usage)
+    return UsageSummary(
+        input_tokens=parsed.input_tokens,
+        output_tokens=parsed.output_tokens,
+        total_tokens=parsed.total_tokens,
+        cost_usd=format_usd(parsed.cost_nano_usd) if parsed.cost_source != "none" else None,
+        cost_source=parsed.cost_source,
+    )
+
+
+class Digest(BaseModel):
+    """The tool-facing reading of one run (the part of ``AskResult`` a response decides)."""
+
+    answer: str = ""
+    answer_json: Any = None
+    sources: list[Source] = Field(default_factory=list)
+    status: str = ""
+    incomplete_reason: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    model: str | None = None
+    response_id: str | None = None
+    usage: UsageSummary = Field(default_factory=UsageSummary)
+
+
+def _answer_text(output: object) -> str:
+    """The last ``output_text`` part of the last ``message`` item, else the empty string."""
+    if not isinstance(output, list):
+        return ""
+    messages = [i for i in output if isinstance(i, Mapping) and i.get("type") == "message"]
+    if not messages:
+        return ""
+    content = messages[-1].get("content")
+    if not isinstance(content, list):
+        return ""
+    for part in reversed(content):
+        if isinstance(part, Mapping) and part.get("type") == "output_text":
+            text = part.get("text")
+            return text if isinstance(text, str) else ""
+    return ""
+
+
+def _sources(output: object) -> list[Source]:
+    """Search results and fetched pages in output order, de-duplicated by exact URL."""
+    if not isinstance(output, list):
+        return []
+    found: dict[str, Source] = {}
+    for item in output:
+        if not isinstance(item, Mapping):
+            continue
+        entries = {"search_results": "results", "fetch_url_results": "contents"}.get(
+            item.get("type")  # type: ignore[arg-type]
+        )
+        rows = item.get(entries) if entries else None
+        if not isinstance(rows, list):
+            continue
+        for row in rows:
+            url = row.get("url") if isinstance(row, Mapping) else None
+            if not isinstance(url, str) or not url or url in found:
+                continue
+            title, when, ident = row.get("title"), row.get("date"), row.get("id")
+            found[url] = Source(
+                url=url,
+                title=title if isinstance(title, str) else None,
+                date=when if isinstance(when, str) else None,
+                id=ident if isinstance(ident, int) and not isinstance(ident, bool) else None,
+            )
+    return list(found.values())
+
+
+def _parse_json(text: str) -> tuple[bool, Any]:
+    def refuse(name: str) -> Any:
+        raise ValueError(name)  # NaN and Infinity are not JSON and could not be returned
+
+    try:
+        return True, json.loads(text, parse_constant=refuse)
+    except (ValueError, RecursionError):
+        return False, None
+
+
+def digest(
+    run: AgentRun | Mapping[str, Any], *, structured: bool = False, secrets: Iterable[str] = ()
+) -> Digest:
+    """Read a run into the answer, sources, usage summary and warnings (design D3).
+
+    Never raises: ``AgentRun.output`` is ``Any`` on purpose, so a body the API shaped in a way
+    nobody recorded yields an empty answer rather than an error that would hide a billed call.
+    ``structured`` says a ``json_schema`` was sent, so the text is parsed into ``answer_json``.
+    Upstream-originated strings (status, reason, model, id) are redacted and capped; the answer
+    and the sources are content and are returned as received.
+    """
+    secrets = tuple(secrets)
+    try:
+        body = run if isinstance(run, Mapping) else run.model_dump(mode="json")
+        status = clean_status(body.get("status", ""), secrets)
+        details = body.get("incomplete_details")
+        reason = details.get("reason") if isinstance(details, Mapping) else None
+        reason_text = clean_reason(reason, secrets) if isinstance(reason, str) and reason else None
+        answer = _answer_text(body.get("output"))
+        warnings: list[str] = []
+        if status == "incomplete":
+            why = f" (reason: {reason_text})" if reason_text else ""
+            warnings.append(f"The answer was cut short{why}; the call was billed.")
+        answer_json: Any = None
+        if structured:
+            parsed, value = _parse_json(answer) if answer else (False, None)
+            answer_json = value if parsed else None
+            if not parsed and status != "incomplete":
+                warnings.append("The answer is not valid JSON, so answer_json is null.")
+        model, ident = body.get("model"), body.get("id")
+        return Digest(
+            answer=answer,
+            answer_json=answer_json,
+            sources=_sources(body.get("output")),
+            status=status,
+            incomplete_reason=reason_text,
+            warnings=warnings,
+            model=clean_text(model, MODEL_CAP, secrets) if isinstance(model, str) else None,
+            response_id=clean_text(ident, 128, secrets) if isinstance(ident, str) else None,
+            usage=usage_summary(body.get("usage")),
+        )
+    except Exception:  # total by contract: a malformed body must not hide a billed call
+        logger.warning("agent digest: response could not be read", exc_info=True)
+        return Digest(warnings=["The response could not be read."])
