@@ -22,6 +22,7 @@ from mcp_perplexity_pro.agent import (
     Observation,
     Source,
     UsageSummary,
+    check_row_id,
     error_category,
     observe_job,
     observe_job_locked,
@@ -156,7 +157,7 @@ def _not_found_project(name: str) -> PerplexityError:
 def _need_job_id(job_id: int | None, action: str) -> int:
     if job_id is None:
         raise _bad("job_id", f"{action} needs a job_id.")
-    return job_id
+    return check_row_id("job_id", job_id)
 
 
 async def _find(app: Any, name: str, job_id: int) -> tuple[int, ResearchJob]:

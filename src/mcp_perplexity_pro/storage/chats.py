@@ -25,7 +25,7 @@ from mcp_perplexity_pro.usage import utcnow
 class AssistantTurn:
     """What an assistant message keeps: the text and what the API returned for it."""
 
-    response_id: str
+    response_id: str | None
     content: str
     model: str | None = None
     preset: str | None = None
@@ -142,14 +142,14 @@ async def chat_summary(session: AsyncSession, chat: Chat) -> ChatSummary:
 
 async def last_anchor(session: AsyncSession, chat_id: int) -> str | None:
     """The response id of the chat's last assistant message: the next send's
-    ``previous_response_id``. ``None`` when the chat has no assistant message."""
+    ``previous_response_id``. ``None`` when the chat has no assistant message, or when the last
+    one has no usable id (never an older turn's id: chaining from it would drop the last turn)."""
     return (
         await session.execute(
             select(ChatMessage.response_id)
             .where(
                 ChatMessage.chat_id == chat_id,
                 ChatMessage.role == "assistant",
-                ChatMessage.response_id.is_not(None),
             )
             .order_by(ChatMessage.id.desc())
             .limit(1)

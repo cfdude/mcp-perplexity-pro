@@ -159,6 +159,11 @@ def register(server: FastMCP) -> None:
                 "The API accepted the run but returned a response id of an unexpected shape, so "
                 "no job was stored.",
             )
+        logger.info(  # the trail if the call is cancelled or dies before the row is stored
+            "research run %s accepted by the provider (status %s); storing its job row",
+            response_id,
+            clean_text(raw.get("status"), 64, secrets),
+        )
         # A terminal submit is stored terminal and already recorded by run_costed (usage_recorded
         # is set by job_columns); any other status is stored verbatim as a running job.
         values = {

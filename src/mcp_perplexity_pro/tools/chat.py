@@ -21,10 +21,13 @@ from mcp_perplexity_pro.agent import (
     Source,
     UsageSummary,
     build_request,
+    check_row_id,
     check_text,
+    clean_text,
     digest,
     run_costed,
 )
+from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.redaction import scrub_secrets
 from mcp_perplexity_pro.storage.chats import (
@@ -177,6 +180,8 @@ async def _send(
 ) -> tuple[ChatResult, str]:
     # 1. Everything local, before any database access or request.
     check_text("message", message)
+    if chat_id is not None:
+        chat_id = check_row_id("chat_id", chat_id)
     clean_title = ""
     if chat_id is None:
         if replay:
@@ -248,8 +253,11 @@ async def _send(
     # 5. Only now the chat's own write: one short unit, after the event was recorded.
     saved: ChatSummary | None = None
     complete = answer.status == "completed"  # an incomplete turn is returned, never stored
+    # The anchor of the next chained send: stored only when it is a response id (and holds no
+    # key); otherwise None, and the next send must replay.
+    stored_id = clean_text(costed.run.id, 128, secrets)
     turn = AssistantTurn(
-        response_id=costed.run.id,
+        response_id=stored_id if is_response_id(stored_id) else None,
         content=answer.answer,
         model=answer.model,
         preset=options.preset,
@@ -294,7 +302,7 @@ async def _send(
         **ask.model_dump(exclude={"project"}),
     )
     header = f"Chat {result.chat_id}" if result.chat_id is not None else "No chat saved"
-    return result, f"{header} ({continuation}).\n\n" + render_answer(ask).replace("\n".join(()), "")
+    return result, f"{header} ({continuation}).\n\n" + render_answer(ask)
 
 
 def _limit(value: int | None, default: int, high: int) -> int:
@@ -308,7 +316,7 @@ def _limit(value: int | None, default: int, high: int) -> int:
 def _need_chat_id(chat_id: int | None, action: str) -> int:
     if chat_id is None:
         raise _bad("chat_id", f"{action} needs a chat_id.")
-    return chat_id
+    return check_row_id("chat_id", chat_id)
 
 
 async def _list(app: Any, *, project: str | None, limit: int | None) -> tuple[ChatResult, str]:

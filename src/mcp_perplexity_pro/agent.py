@@ -59,6 +59,10 @@ MAX_TEXT_CHARS = 20000  # a query or a chat message
 MAX_INSTRUCTIONS_CHARS = 10000
 MAX_OUTPUT_TOKENS = 64000
 MAX_DOMAINS = 20
+MAX_DOMAIN_CHARS = 253  # the longest a DNS name can be
+MAX_SCHEMA_CHARS = 20000  # serialized: the same cap as a query, far above any real answer schema
+ECHO_CHARS = 40  # how much of an offending caller value an error repeats
+MAX_ROW_ID = 2**63 - 1  # the largest integer the database stores
 MAX_RESULTS = 50
 
 ANTHROPIC_PREFIX = "anthropic/"
@@ -71,6 +75,7 @@ STATUS_CAP = 64
 REASON_CAP = 200
 ERROR_TEXT_CAP = 2000
 MODEL_CAP = 200
+DATE_CAP = 64
 
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", re.ASCII)
 _COUNTRY = re.compile(r"[A-Za-z]{2}", re.ASCII)
@@ -79,6 +84,20 @@ _WHITESPACE = re.compile(r"\s")
 
 def _bad(option: str, message: str) -> PerplexityError:
     return PerplexityError("invalid_request", f"{option}: {message}")
+
+
+def check_row_id(name: str, value: object) -> int:
+    """A chat or job id from a caller: a whole number the database can hold. Anything else is
+    refused here, because an id of 2**63 or more overflows the driver (an internal error)."""
+    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= MAX_ROW_ID:
+        raise _bad(name, f"must be a whole number from 1 to {MAX_ROW_ID}.")
+    return value
+
+
+def _echo(value: object) -> str:
+    """A caller's offending value, safe to put in an error: key-shaped tokens removed first, then
+    cut short (the order ``clean_text`` uses), and quoted."""
+    return repr(clean_text(value, ECHO_CHARS))
 
 
 def check_text(name: str, value: object, limit: int = MAX_TEXT_CHARS) -> str:
@@ -125,11 +144,11 @@ def _int_in(option: str, value: object, low: int, high: int) -> int:
 
 def _strict_date(option: str, value: str) -> date:
     if not isinstance(value, str) or _DATE.fullmatch(value) is None:
-        raise _bad(option, f"must be a date written YYYY-MM-DD, got {value!r}.")
+        raise _bad(option, f"must be a date written YYYY-MM-DD, got {_echo(value)}.")
     try:
         return date.fromisoformat(value)
     except ValueError:
-        raise _bad(option, f"is not a real calendar date: {value!r}.") from None
+        raise _bad(option, f"is not a real calendar date: {_echo(value)}.") from None
 
 
 def _domains(value: list[str]) -> list[str]:
@@ -138,8 +157,12 @@ def _domains(value: list[str]) -> list[str]:
     if len(value) > MAX_DOMAINS:
         raise _bad("domains", f"at most {MAX_DOMAINS} entries are allowed (got {len(value)}).")
     for entry in value:
+        if len(entry) > MAX_DOMAIN_CHARS:
+            raise _bad("domains", f"each entry is at most {MAX_DOMAIN_CHARS} characters.")
         if not entry or entry == "-" or _WHITESPACE.search(entry):
-            raise _bad("domains", f"entries must be non-empty and hold no whitespace: {entry!r}.")
+            raise _bad(
+                "domains", f"entries must be non-empty and hold no whitespace: {_echo(entry)}."
+            )
     denied = [d.startswith("-") for d in value]
     if any(denied) and not all(denied):
         raise _bad(
@@ -210,6 +233,8 @@ def build_request(
     if options.model is not None:
         if not isinstance(options.model, str) or not options.model.strip():
             raise _bad("model", "must be a non-empty model id.")
+        if len(options.model) > MODEL_CAP:
+            raise _bad("model", f"must be at most {MODEL_CAP} characters.")
         if options.depth is not None:
             raise _bad("depth", "cannot be combined with model: the model replaces the preset.")
     elif options.search is False:
@@ -261,6 +286,12 @@ def build_request(
         schema = options.json_schema
         if not isinstance(schema, dict) or schema.get("type") != "object":
             raise _bad("json_schema", "must be a JSON Schema object whose root type is 'object'.")
+        try:
+            size = len(json.dumps(schema))
+        except (TypeError, ValueError, RecursionError):
+            raise _bad("json_schema", "must be plain JSON.") from None
+        if size > MAX_SCHEMA_CHARS:
+            raise _bad("json_schema", f"must be at most {MAX_SCHEMA_CHARS} characters serialized.")
         request["response_format"] = {
             "type": "json_schema",
             "json_schema": {"name": SCHEMA_NAME, "schema": copy.deepcopy(schema)},
@@ -390,7 +421,7 @@ def _sources(output: object, secrets: Iterable[str] = ()) -> list[Source]:
             found[url] = Source(
                 url=scrub_secrets(url, secrets),
                 title=scrub_secrets(title, secrets) if isinstance(title, str) else None,
-                date=when if isinstance(when, str) else None,
+                date=scrub_secrets(when, secrets)[:DATE_CAP] if isinstance(when, str) else None,
                 id=ident if isinstance(ident, int) and not isinstance(ident, bool) else None,
             )
     return list(found.values())
