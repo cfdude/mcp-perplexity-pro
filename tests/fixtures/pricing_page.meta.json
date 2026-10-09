@@ -1,0 +1,9 @@
+{
+  "endpoint": "/docs/getting-started/pricing.md",
+  "method": "GET",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "text/markdown",
+  "scrubbed": "nothing: public documentation page, no account-specific values",
+  "note": "Excerpt, not the whole page: only the table rows under the Tool Pricing, Search API Pricing, Standard Embeddings, Contextualized Embeddings and Decisions API Pricing headings, verbatim. Fetched with curl -sL; extracted by tests/pricing_page.py."
+}

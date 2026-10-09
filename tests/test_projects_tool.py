@@ -163,6 +163,7 @@ async def test_default_can_be_deleted_and_is_recreated_on_next_use(server, stora
         "projects": None,
         "project": "default",
         "rows_removed": 1,
+        "rows_retained": 0,
     }
     assert await names(storage_engine) == []
     assert await write_note(storage_engine, "second") == "default"  # get-or-create recreates it

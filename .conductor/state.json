@@ -161,7 +161,8 @@
       "description": "Replace Sonar with POST /v1/agent. depth param maps to presets fast/low/medium/high (xhigh opt-in); explicit model allowed. research uses background mode + GET /v1/agent/{id} + cancel. Chat persisted in SQLite. Citations rebuilt from search_results output items.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:40.849Z"
+      "touchedAt": "2026-10-09T18:30:33.347Z",
+      "release": "release-2-0-0"
     },
     {
       "id": "py-search-api",
@@ -182,15 +183,16 @@
       "description": "POST /search: multi-query, dates (MM/DD/YYYY), language, domain allow/deny, recency, country, max_tokens, search_type web|fast|people. Structured JSON results. Resolve page-snippets endpoint if one is documented.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:41.116Z"
+      "touchedAt": "2026-10-09T18:30:33.347Z",
+      "release": "release-2-0-0"
     },
     {
       "id": "py-usage-log",
       "title": "Per-call cost and usage log",
       "priority": "P1",
-      "status": "planned",
+      "status": "archived",
       "role": "epic",
-      "lane": "superpowers",
+      "lane": "openspec",
       "links": [
         {
           "type": "depends-on",
@@ -201,9 +203,93 @@
       "reconcileNeeded": false,
       "parent": "python-rewrite-2-0",
       "description": "Persist usage.cost per call (tokens, tool costs, preset/model, latency) in SQLite; usage tool reports spend. Feedback data that model-routing needs.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "fbfb5d4",
+        "e0b2796",
+        "52b72b5",
+        "24e2e81",
+        "3035d8b",
+        "82c666c",
+        "f4f2195",
+        "d87d9fd",
+        "3fa611d",
+        "ea934c5",
+        "fd2ef85",
+        "43c12fb",
+        "de09bc1",
+        "e36bbcf",
+        "93fd08f",
+        "4bf6a48",
+        "b44af08",
+        "c78ef78",
+        "a351f7a",
+        "2718a56",
+        "d2eb6cf",
+        "0b1bdab",
+        "51433a3",
+        "344b587",
+        "3bd2123",
+        "0d32291",
+        "6ab0309",
+        "e53b984",
+        "1f67e30",
+        "8b35ce8",
+        "8b35ce8",
+        "5a7383c",
+        "1616705",
+        "dfbfc97"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:41.374Z"
+      "touchedAt": "2026-10-09T19:39:06.703Z",
+      "notes": [
+        {
+          "at": "2026-10-09T18:06:33.972Z",
+          "actor": "agent",
+          "text": "lane: openspec not superpowers (routed) — the usage table is an accumulation table persisting external API data; a spec and Gate 1/2 are the durable record (asymmetric tie-break)"
+        }
+      ],
+      "startedAt": "2026-10-09T18:06:34.663Z",
+      "release": "release-2-0-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T18:30:38.877Z",
+          "artifacts": [
+            "openspec/changes/py-usage-log/proposal.md",
+            "openspec/changes/py-usage-log/design.md",
+            "openspec/changes/py-usage-log/tasks.md",
+            "openspec/changes/py-usage-log/specs/usage-recording/spec.md",
+            "openspec/changes/py-usage-log/specs/usage-reporting/spec.md",
+            "openspec/changes/py-usage-log/specs/local-storage/spec.md"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review, verification review, final narrow check (2026-10-09)"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T19:39:00.583Z",
+          "baseSha": "8b35ce8",
+          "headSha": "dfbfc97",
+          "reviewer": "fresh-context general-purpose subagent: documentation diff 8b35ce8..1616705 (one IMPORTANT and two MINOR, all fixed in dfbfc97)",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-09T19:31:43.547Z",
+            "baseSha": "24e2e81",
+            "headSha": "8b35ce8",
+            "reviewer": "fresh-context general-purpose subagents: Gate 2 review (24e2e81..344b587) PASS, call-site audit findings fixed, narrow Gate 2 re-review of 344b587..e53b984 PASS; follow-ups 1f67e30 (lessons) and 8b35ce8 (spec scenario)"
+          }
+        }
+      },
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-09T19:39:06.702Z",
+        "reason": "Usage log delivered: usage_events (migration 0002), best-effort recorder with pricing constants, perplexity_usage tool, retained-table convention for project delete; Gate 2, audit and docs review recorded; live-verified on the running server"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-09T19:39:06.702Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-09T19:39:06.702Z"
     },
     {
       "id": "py-embeddings",
@@ -224,7 +310,8 @@
       "description": "pplx-embed models, base64 int8/binary decode, local storage, semantic search over saved chats/reports. Never return raw vectors to the model.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:41.627Z"
+      "touchedAt": "2026-10-09T18:30:33.347Z",
+      "release": "release-2-0-0"
     },
     {
       "id": "py-decisions-tool",
@@ -232,7 +319,7 @@
       "priority": "P2",
       "status": "planned",
       "role": "epic",
-      "lane": "superpowers",
+      "lane": "openspec",
       "links": [
         {
           "type": "depends-on",
@@ -245,7 +332,15 @@
       "description": "Thin wrapper over POST /v1/decisions (noul/choice/score questions), question-count cap, no image support in v1.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:41.880Z"
+      "touchedAt": "2026-10-09T18:30:33.347Z",
+      "notes": [
+        {
+          "at": "2026-10-09T18:06:34.134Z",
+          "actor": "agent",
+          "text": "lane: openspec not superpowers (routed) — new tool surface with cost accounting; spec + gates give the durable record"
+        }
+      ],
+      "release": "release-2-0-0"
     },
     {
       "id": "routing-rules-v1",
@@ -369,7 +464,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 79,
+  "revision": 122,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
@@ -381,7 +476,7 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-09T17:34:02.470Z",
+        "reviewedAt": "2026-10-09T18:30:38.726Z",
         "specs": [
           {
             "key": "py-foundation/specs/local-storage/spec.md",
@@ -402,35 +497,47 @@
           {
             "key": "py-foundation/specs/server-runtime/spec.md",
             "sha256": "330fe948829a15cf26f7f3f8b1e50431ba2bbda7e9ab97b5a037d3ed6803a658"
+          },
+          {
+            "key": "py-usage-log/specs/local-storage/spec.md",
+            "sha256": "a9f771b918223f5d4e65f381cb20f3d7718f43cfc449f50b92ff556b632c7c5a"
+          },
+          {
+            "key": "py-usage-log/specs/usage-recording/spec.md",
+            "sha256": "ed2fb148b7842420d0d2d0031228246086c38b09c03351a8515741a4eefc732d"
+          },
+          {
+            "key": "py-usage-log/specs/usage-reporting/spec.md",
+            "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagents: cross-spec review of amended specs (2026-10-09), polish applied",
+        "reviewer": "fresh-context general-purpose subagents: cross-spec review, verification review, final narrow check for py-usage-log (2026-10-09)",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-09T16:07:09.063Z",
+          "reviewedAt": "2026-10-09T17:34:02.470Z",
           "specs": [
             {
               "key": "py-foundation/specs/local-storage/spec.md",
-              "sha256": "3888c1ff8cdcb04289ab308c0c3ebab0a3a6fb43af280e5dc6b65a8d7722602d"
+              "sha256": "d95a0b7498af954a6d58cba43272fa1b259158018a990f47977def50ae38b6a4"
             },
             {
               "key": "py-foundation/specs/model-catalog/spec.md",
-              "sha256": "792825d7d1c9bca7403649a1fd7e32d49d856bba5ccc388b4023ed1a6d085f35"
+              "sha256": "9c4b085b427bc5a5c6aeb4aad2b679ebb7aa7e7230128756eeb3348229138dd4"
             },
             {
               "key": "py-foundation/specs/perplexity-client/spec.md",
-              "sha256": "85ff3c715584f21482f653a46cf34b4d919afbbaebabf4dee013483446b27297"
+              "sha256": "886eeca0b6730519e05554e275905b2bc3a35549296e75728b225f94398df66e"
             },
             {
               "key": "py-foundation/specs/quality-gates/spec.md",
-              "sha256": "96377aa21a4580e04deda4a0d1eb56cdbdd9a31aa33b60e5d539ddb1d6290044"
+              "sha256": "a68b75843580f0452b75f501d4a1fc6b38be99194e14b2cdd10d1b51e0fb8d27"
             },
             {
               "key": "py-foundation/specs/server-runtime/spec.md",
-              "sha256": "e6905ea9f053c17d06c260c2ac364f121c6cdd197c14e3a5ade60d7bc1e4c38e"
+              "sha256": "330fe948829a15cf26f7f3f8b1e50431ba2bbda7e9ab97b5a037d3ed6803a658"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagents: cross-spec review, re-review, narrow verification (2026-10-09)"
+          "reviewer": "fresh-context general-purpose subagents: cross-spec review of amended specs (2026-10-09), polish applied"
         }
       }
     }
