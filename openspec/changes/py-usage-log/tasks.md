@@ -35,7 +35,7 @@
 
 ## 6. Acceptance (manual gate)
 
-- [ ] 6.1 Stop and ask Rob to restart the pm2 service and reconnect the `perplexity` MCP server in Claude Code, then call `perplexity_usage` (no arguments, then each `group_by`) and `perplexity_projects list` from the live session; verify the migrated live database reports zero calls and an empty group list (no production tool records yet), `GET /health` still returns the version, `backup-0001.db` exists in the data directory, and the service log shows the 0002 migration applied once
+- [x] 6.1 Stop and ask Rob to restart the pm2 service and reconnect the `perplexity` MCP server in Claude Code, then call `perplexity_usage` (no arguments, then each `group_by`) and `perplexity_projects list` from the live session; verify the migrated live database reports zero calls and an empty group list (no production tool records yet), `GET /health` still returns the version, `backup-0001.db` exists in the data directory, and the service log shows the 0002 migration applied once
 
 ## 7. Gate procedure (required, per the pm conductor)
 
