@@ -1,7 +1,8 @@
 """Project-name rules and the shared get-or-create operation.
 
 Every tool that stores records resolves its project through ``get_or_create_project``;
-``perplexity_projects`` and tools without a project argument never call it.
+``perplexity_projects``, tools without a project argument and by-id actions never call it (a
+by-id action uses ``find_project``, which never creates).
 """
 
 from __future__ import annotations
@@ -54,6 +55,16 @@ async def get_or_create_project(session: AsyncSession, name: str | None = None) 
     name = validate_project_name(DEFAULT_PROJECT if name is None else name)
     await session.execute(insert(Project).values(name=name).on_conflict_do_nothing(["name"]))
     return (await session.execute(select(Project).where(Project.name == name))).scalar_one()
+
+
+async def find_project(session: AsyncSession, name: str | None = None) -> Project | None:
+    """Look ``name`` (default ``default``) up and return it, or ``None`` when it does not exist.
+
+    Read-only and never creates the project (design D15): the lookup for every action that
+    stores nothing, and for a by-id action. An invalid name still raises ``invalid_request``.
+    """
+    name = validate_project_name(DEFAULT_PROJECT if name is None else name)
+    return (await session.execute(select(Project).where(Project.name == name))).scalar_one_or_none()
 
 
 async def list_projects(session: AsyncSession) -> list[Project]:
