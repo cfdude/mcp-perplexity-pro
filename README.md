@@ -1,658 +1,365 @@
 # MCP Perplexity Pro
 
-A comprehensive Model Context Protocol (MCP) server for the Perplexity API, featuring intelligent model selection, conversation management, and project-aware storage.
+An [MCP](https://modelcontextprotocol.io) server for the Perplexity API, written in Python
+(FastMCP, SQLAlchemy, SQLite). It serves MCP over stdio or Streamable HTTP and keeps its own data
+in a local SQLite database.
 
-[![npm version](https://badge.fury.io/js/mcp-perplexity-pro.svg)](https://badge.fury.io/js/mcp-perplexity-pro)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
+## Status: 2.0.0 is a foundation release
 
-## ✨ Features
+Version 2.0.0 replaces the TypeScript 1.x server. The reason is that Perplexity retired the Sonar
+endpoints the 1.x server called: both `POST /chat/completions` and `GET /async/chat/completions`
+now return `403 chat_completions_not_available` ("Sonar is now the Agent API"), so 1.x could not
+answer a single query. There was no working behavior to port, so the TypeScript code is deleted
+(git history keeps it) and the server was rebuilt in Python.
 
-- **🧠 Intelligent Model Selection**: Automatically chooses the optimal Perplexity model based on query analysis
-- **💬 Conversation Management**: Stateful chat sessions with full conversation history
-- **🔍 Comprehensive Search**: Access to all Perplexity models (sonar, sonar-pro, sonar-reasoning-pro, sonar-deep-research)
-- **📊 Async Operations**: Support for long-running research tasks
-- **🗂️ Project-Aware Storage**: Conversations and reports stored in your project directory
-- **🔒 Thread-Safe**: Concurrent access with file locking
-- **🐳 Docker Ready**: Full Docker and Docker Compose support
-- **📈 Production Ready**: Comprehensive error handling, logging, and monitoring
-- **🧪 Well Tested**: Extensive unit and integration test coverage
+**Only two tools exist today:**
 
-## 🚀 Quick Start
+| Tool | What it does |
+|---|---|
+| `perplexity_models` | Lists the models your key can use, with live prices, plus the documented Agent API presets |
+| `perplexity_projects` | Lists projects, or deletes one with everything stored in it |
 
-### Prerequisites
+The Agent, Search, Embeddings and Decisions tools arrive in later releases. The old tool names
+(`ask_perplexity`, `chat_perplexity` and the rest) are gone and are not coming back under those
+names. No data is imported from 1.x.
 
-- Node.js 20+
-- Perplexity API key ([Get one here](https://perplexity.ai/))
+## Install and run
 
-### Installation
+Requires Python 3.12 or newer and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-npm install -g mcp-perplexity-pro
+git clone <this repository> && cd mcp-perplexity-pro
+uv sync
+export PERPLEXITY_API_KEY=<your-perplexity-api-key>
 ```
 
-## 🚀 Deployment Options
+Start commands:
 
-### 1. NPX Deployment with Transport Mode
+```bash
+# stdio (the default transport): the MCP client launches this process
+uv run mcp-perplexity-pro --transport stdio
 
-The recommended way to use the MCP server with explicit transport control:
+# Streamable HTTP on http://127.0.0.1:8102/mcp (health: http://127.0.0.1:8102/health)
+uv run mcp-perplexity-pro --transport http
 
-**For Claude Desktop** (`claude_desktop_config.json`):
+# without a checkout-managed environment
+uvx --from . mcp-perplexity-pro --transport http
+
+# check the install
+uv run mcp-perplexity-pro --version
+uv run mcp-perplexity-pro --help
+```
+
+In stdio mode stdout carries only MCP messages; every log line goes to stderr. A missing or invalid
+setting prints a message naming the variable and exits with status 1 before anything is created
+on disk or any port is opened.
+
+### Run under pm2
+
+The supervised setup is one pm2 app that runs the HTTP transport on port 8102. Copy the example
+configuration, set your key in the copy, and start it. The copy is gitignored so the key never
+enters the repository:
+
+```bash
+cp ecosystem.example.cjs ecosystem.config.cjs   # then replace REPLACE_ME with your key
+pm2 start ecosystem.config.cjs
+curl -s http://127.0.0.1:8102/health            # {"status":"ok","version":"2.0.0"}
+```
+
+`kill_timeout` is 15000 ms because on SIGTERM or SIGINT the server finishes in-flight calls for up
+to 10 seconds, closes its HTTP client and database connections, and exits 0; pm2 must wait longer
+than that before it sends SIGKILL. `pm2 restart mcp-perplexity-pro` brings the server back on the
+same port.
+
+## Settings
+
+All settings are environment variables with the prefix `PERPLEXITY_`. They are validated at
+startup; an invalid value aborts startup with a message naming the variable and the offending
+value. No `.env` file is read.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PERPLEXITY_API_KEY` | none, required | The Perplexity API key. Never logged, returned or stored on disk |
+| `PERPLEXITY_HOST` | `127.0.0.1` | HTTP bind host. A non-loopback value logs a startup warning (see Security) |
+| `PERPLEXITY_PORT` | `8102` | HTTP port, 1 to 65535 |
+| `PERPLEXITY_BASE_URL` | `https://api.perplexity.ai` | Perplexity API base URL (`http` or `https`) |
+| `PERPLEXITY_DATA_DIR` | `~/.perplexity-pro/` | Where the SQLite database, migration lock and backups live |
+| `PERPLEXITY_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` (case-insensitive) |
+| `PERPLEXITY_CONNECT_TIMEOUT` | `10` | Seconds to establish a connection to the API |
+| `PERPLEXITY_READ_TIMEOUT` | `60` | Seconds to wait for the API's response |
+| `PERPLEXITY_MAX_ATTEMPTS` | `3` | Attempts per API request (retries apply to HTTP 429, honoring `Retry-After`, and to safe reads) |
+| `PERPLEXITY_MAX_RETRY_WAIT` | `30` | Longest wait in seconds between attempts; a `Retry-After` longer than this is not waited out |
+| `PERPLEXITY_CATALOG_TTL` | `3600` | Seconds the model list is cached |
+| `PERPLEXITY_CATALOG_MAX_STALE` | `86400` | Oldest cached model list, in seconds, that may be returned when the live request fails |
+| `PERPLEXITY_DB_BUSY_TIMEOUT` | `5` | Seconds a write waits for the database lock before failing with `storage_busy` |
+
+Variables starting with `FASTMCP_` belong to FastMCP and are not used for this server's own
+settings.
+
+## Client configuration
+
+### Claude Code over HTTP (`.mcp.json`)
+
+Start the server first (pm2 or `uv run mcp-perplexity-pro --transport http`), then:
 
 ```json
 {
   "mcpServers": {
     "perplexity": {
-      "command": "npx",
-      "args": ["mcp-perplexity-pro", "--transport=stdio"],
-      "env": {
-        "PERPLEXITY_API_KEY": "your-api-key-here"
-      }
+      "type": "http",
+      "url": "http://localhost:8102/mcp"
     }
   }
 }
 ```
 
-**For Claude Code** (`.mcp.json`):
+The URL is the same as in 1.x. The equivalent command is
+`claude mcp add --transport http perplexity http://localhost:8102/mcp`.
+
+### Over stdio
+
+The client launches the server, so the key goes in the client's `env` block:
 
 ```json
 {
   "mcpServers": {
     "perplexity": {
-      "command": "npx",
-      "args": ["mcp-perplexity-pro", "--transport=stdio"],
-      "env": {
-        "PERPLEXITY_API_KEY": "your-api-key-here"
-      }
+      "command": "uv",
+      "args": [
+        "run", "--directory", "/absolute/path/to/mcp-perplexity-pro",
+        "mcp-perplexity-pro", "--transport", "stdio"
+      ],
+      "env": { "PERPLEXITY_API_KEY": "<your-perplexity-api-key>" }
     }
   }
 }
 ```
 
-**Alternative: Use the dedicated stdio binary** (legacy):
+## Tools
+
+### `perplexity_models`
+
+Lists the models available to the configured key, from the live `GET /v1/models`, with prices as
+the API reports them. Nothing is hardcoded, so the list and prices track Perplexity.
+
+| Argument | Type | Default | Meaning |
+|---|---|---|---|
+| `provider` | string | all | Only models from this provider, compared case-insensitively (for example `anthropic`) |
+| `refresh` | boolean | `false` | Bypass the cache and fetch the list now |
+
+Output (`structuredContent`, with the same data rendered as text):
+
+| Key | Meaning |
+|---|---|
+| `models` | Entries with `id`, `provider` (the API's `owned_by`) and `pricing`: `input`, `output`, `cache_read`, `cache_write`, `unit`. A field the API did not supply is `null` |
+| `providers` | Every provider in the live list, ignoring the filter, so a typo in `provider` shows the real names |
+| `stale` | `true` when the live request failed and an older cached list is shown instead |
+| `age_seconds` | Seconds since the list was fetched live |
+| `presets` | The Agent API preset names (`fast`, `low`, `medium`, `high`, `xhigh`) and the model each maps to, with `source: "documentation"` and `as_of` (the recording date). Presets are copied from Perplexity's documentation, not live data, and the model behind a name can change |
+
+A failed refresh serves the cached list (`stale: true`) only for `rate_limited`, `upstream_failure`
+and `network_timeout`, and only while it is younger than `PERPLEXITY_CATALOG_MAX_STALE`. An
+`authentication` or `forbidden` failure is always returned as an error, never hidden behind a cache.
+
+Example call and result (values are from the recorded fixture `tests/fixtures/models.json`,
+captured 2026-10-09; the real list changes):
+
+```json
+{"name": "perplexity_models", "arguments": {"provider": "anthropic"}}
+```
 
 ```json
 {
-  "mcpServers": {
-    "perplexity": {
-      "command": "npx",
-      "args": ["mcp-perplexity-pro-stdio"],
-      "env": {
-        "PERPLEXITY_API_KEY": "your-api-key-here"
-      }
+  "models": [
+    {
+      "id": "anthropic/claude-haiku-4-5",
+      "provider": "anthropic",
+      "pricing": {"input": 1.0, "output": 5.0, "cache_read": 0.1, "cache_write": 1.25,
+                  "unit": "usd_per_1m_tokens"}
     }
+  ],
+  "providers": ["anthropic", "google", "openai", "perplexity", "xai"],
+  "stale": false,
+  "age_seconds": 0.0,
+  "presets": {
+    "source": "documentation",
+    "as_of": "2026-10-06",
+    "presets": [
+      {"name": "fast", "model": "openai/gpt-6-luna"},
+      {"name": "xhigh", "model": "anthropic/claude-opus-5-5"}
+    ],
+    "note": "Taken from Perplexity's documentation, not from the live API. ..."
   }
 }
 ```
 
-### 2. Docker Deployment (stdio-docker)
+The example is shortened: a real result lists every matching model (14 for `anthropic` in that
+fixture) and all five presets.
 
-Run the MCP server in a Docker container with stdio transport:
+### `perplexity_projects`
 
-**Using Docker Compose:**
+Projects group everything the server stores. Later tools create a project the first time they
+name one and use the project `default` when none is given; this tool only looks projects up and
+never creates one. Project names are case-sensitive, 1 to 64 characters of ASCII letters, digits,
+`-`, `_` and `.`, may not begin with `.`, and may not look like an API key.
 
-```bash
-# Set your API key
-export PERPLEXITY_API_KEY="your-api-key-here"
+| Argument | Type | Meaning |
+|---|---|---|
+| `action` | `list` or `delete` | Required. `list` shows all projects; `delete` removes one |
+| `project` | string | Project name (`delete` only) |
+| `confirm` | boolean | Must be `true` for `delete`; deletion cannot be undone |
 
-# Start the stdio service
-docker-compose --profile stdio up -d mcp-perplexity-pro-stdio
-```
-
-**For Claude Desktop** (`claude_desktop_config.json`):
+Output: `action`; for `list`, `projects` (each with `name` and `created_at`, UTC); for `delete`,
+`project` and `rows_removed` (rows removed from tables that reference the project directly; rows
+two levels down go by cascade and are not counted). The project `default` may be deleted; it is
+recreated on next use. Because no 2.0.0 tool stores records yet, a fresh install lists no projects.
 
 ```json
-{
-  "mcpServers": {
-    "perplexity": {
-      "command": "docker",
-      "args": ["exec", "-i", "mcp-perplexity-pro-stdio", "node", "/app/dist/stdio-server.js"],
-      "env": {
-        "PERPLEXITY_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
+{"name": "perplexity_projects", "arguments": {"action": "list"}}
 ```
-
-**Direct Docker Run:**
-
-```bash
-docker run -it --rm \
-  -e PERPLEXITY_API_KEY="your-api-key-here" \
-  -v "$(pwd)/data:/app/data" \
-  mcp-perplexity-pro:stdio
-```
-
-### 3. HTTP Transport (Legacy)
-
-**For Claude Code** (`.mcp.json`):
 
 ```json
-{
-  "mcpServers": {
-    "perplexity": {
-      "command": "node",
-      "args": ["dist/launcher.js", "--http-port=8124"],
-      "env": {
-        "PERPLEXITY_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
+{"action": "list", "projects": [{"name": "demo", "created_at": "2026-10-09T17:36:14Z"}],
+ "project": null, "rows_removed": null}
 ```
-
-**For Claude Desktop** (`claude_desktop_config.json`):
 
 ```json
-{
-  "mcpServers": {
-    "perplexity": {
-      "command": "node",
-      "args": ["dist/launcher.js", "--http-port=8125"],
-      "env": {
-        "PERPLEXITY_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
+{"name": "perplexity_projects", "arguments": {"action": "delete", "project": "demo", "confirm": true}}
 ```
-
-**Default Ports:**
-
-- Claude Code: 8124 (default when no port specified)
-- Claude Desktop: 8125 (recommended)
-
-**Environment Variables:**
-
-- `PERPLEXITY_API_KEY` (required): Your Perplexity API key
-- `DEFAULT_MODEL` (optional): Default model (default: sonar-reasoning-pro)
-- `PROJECT_ROOT` (optional): Project root directory for storage
-- `STORAGE_PATH` (optional): Storage subdirectory (default: .perplexity)
-
-The launcher automatically:
-
-- Detects if a build is needed and rebuilds if necessary
-- Starts HTTP server with streamable transport
-- No manual build or start commands required
-
-## 📋 Available Tools
-
-### Query Tools
-
-#### `ask_perplexity`
-
-Ask questions with intelligent model selection based on query type.
-
-**Parameters:**
-
-- `query` (required): Your question or prompt
-- `model` (optional): Specific model to use
-- `temperature` (optional): Response creativity (0.0-2.0)
-- `max_tokens` (optional): Maximum response length
-
-**Example:**
-
-```
-Ask Perplexity: "What are the latest developments in quantum computing?"
-```
-
-#### `research_perplexity`
-
-Conduct comprehensive research with detailed reports saved to your project.
-
-**Parameters:**
-
-- `topic` (required): Research topic or question
-- `model` (optional): Defaults to `sonar-deep-research`
-- `save_report` (optional): Save report to project directory (default: `true`)
-- `project_name` (optional): Project name for organizing reports (auto-detected if not provided)
-- `max_tokens` (optional): Maximum response length
-
-**Example:**
-
-```
-Research: "Market analysis of renewable energy trends in 2024"
-```
-
-### Chat Tools
-
-#### `chat_perplexity`
-
-Start or continue conversations with full context.
-
-**Parameters:**
-
-- `message` (required): Your message
-- `chat_id` (optional): Continue existing conversation
-- `title` (optional): Title for new conversation
-- `model` (optional): Model selection
-
-**Example:**
-
-```
-Chat: "Hello, I'd like to discuss AI ethics" (title: "AI Ethics Discussion")
-```
-
-#### `list_chats_perplexity`
-
-List all conversations in your project.
-
-#### `read_chat_perplexity`
-
-Retrieve full conversation history.
-
-**Parameters:**
-
-- `chat_id` (required): Conversation ID
-
-### Async Tools
-
-#### `async_perplexity`
-
-Create long-running research jobs for complex queries.
-
-**Parameters:**
-
-- `query` (required): Research question
-- `model` (optional): Defaults to `sonar-deep-research`
-
-#### `check_async_perplexity`
-
-Check status of async research job. By default, excludes full content to save context and auto-saves completed reports.
-
-**Parameters:**
-
-- `job_id` (required): Job identifier
-- `include_content` (optional): Include full response content (default: `false` to save context)
-- `save_report` (optional): Save completed report to project directory (default: `true`)
-- `project_name` (optional): Project name for saving report (auto-detected if not provided)
-
-**Returns:** Job status, and when complete: `report_path` showing where the report was saved.
-
-#### `list_async_jobs`
-
-List all async jobs in your project.
-
-### Utility Tools
-
-#### `storage_stats_perplexity`
-
-Get storage statistics and usage information.
-
-#### `model_info_perplexity`
-
-Get information about available models and their capabilities.
-
-## 🧠 Intelligent Model Selection
-
-The server automatically selects the optimal model based on query analysis:
-
-| Query Type        | Selected Model        | Use Case                                                    |
-| ----------------- | --------------------- | ----------------------------------------------------------- |
-| Research requests | `sonar-deep-research` | "I need comprehensive research on..."                       |
-| Real-time queries | `sonar-pro`           | "What's the current price of...", "Latest news..."          |
-| Complex reasoning | `sonar-reasoning-pro` | "Analyze the implications of...", "Compare and contrast..." |
-| Simple questions  | `sonar`               | Quick factual questions                                     |
-| Default           | `sonar-reasoning-pro` | Fallback for all other queries                              |
-
-### Model Capabilities
-
-```typescript
-{
-  "sonar": {
-    search: true, reasoning: false, realTime: false, research: false
-  },
-  "sonar-pro": {
-    search: true, reasoning: false, realTime: true, research: false
-  },
-  "sonar-reasoning-pro": {
-    search: true, reasoning: true, realTime: true, research: false
-  },
-  "sonar-deep-research": {
-    search: true, reasoning: true, realTime: false, research: true
-  }
-}
-```
-
-## 🗂️ Project-Aware Storage
-
-All conversations and research reports are stored in your project directory:
-
-```
-your-project/
-├── .perplexity/
-│   ├── chats/
-│   │   ├── chat-uuid-1.json
-│   │   └── chat-uuid-2.json
-│   ├── reports/
-│   │   ├── research-report-1.json
-│   │   └── research-report-2.json
-│   └── async-jobs/
-│       ├── job-uuid-1.json
-│       └── job-uuid-2.json
-```
-
-### Storage Features
-
-- **Thread-safe**: File locking prevents concurrent access issues
-- **Session-aware**: Multiple sessions can work with the same project
-- **Organized**: Separate directories for different content types
-- **Persistent**: All data survives server restarts
-- **Portable**: Easy to backup, move, or version control
-
-## 🐳 Docker Deployment
-
-### Development
-
-```bash
-# Clone repository
-git clone https://github.com/cfdude/mcp-perplexity-pro.git
-cd mcp-perplexity-pro
-
-# Start development environment
-docker-compose --profile dev up -d
-```
-
-### Production
-
-```bash
-# Set environment variables
-export PROJECT_ROOT=/path/to/your/project
-
-# Start production environment
-docker-compose up -d
-```
-
-### Custom Docker
-
-```dockerfile
-FROM mcp-perplexity-pro:latest
-
-# Custom configuration
-COPY my-config.json /app/config.json
-
-# Custom entrypoint
-CMD ["node", "dist/index.js", "--config", "config.json"]
-```
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-| Variable             | Description          | Default               |
-| -------------------- | -------------------- | --------------------- |
-| `NODE_ENV`           | Environment mode     | `development`         |
-| `PERPLEXITY_API_KEY` | Your API key         | Required              |
-| `PROJECT_ROOT`       | Project directory    | Current directory     |
-| `STORAGE_PATH`       | Storage subdirectory | `.perplexity`         |
-| `DEFAULT_MODEL`      | Default model        | `sonar-reasoning-pro` |
-| `SESSION_ID`         | Session identifier   | Auto-generated        |
-
-### Advanced Configuration
 
 ```json
-{
-  "api_key": "your-key",
-  "default_model": "sonar-reasoning-pro",
-  "project_root": "/workspace",
-  "storage_path": ".perplexity",
-  "session_id": "unique-session",
-  "request_timeout": 30000,
-  "max_retries": 3,
-  "rate_limit": {
-    "requests_per_minute": 60,
-    "concurrent_requests": 5
-  }
-}
+{"action": "delete", "projects": null, "project": "demo", "rows_removed": 0}
 ```
 
-## 🧪 Development
+## Errors
 
-### Setup
+Every tool failure is an MCP tool error (`isError: true`) in exactly one of eleven categories. A
+client can read the category three ways:
 
-```bash
-# Clone and install
-git clone https://github.com/cfdude/mcp-perplexity-pro.git
-cd mcp-perplexity-pro
-npm install
-
-# Development mode
-npm run dev
-
-# Run tests
-npm test
-npm run test:coverage
-
-# Linting and formatting
-npm run lint
-npm run format
-```
-
-### Project Structure
-
-```
-src/
-├── index.ts              # Main MCP server
-├── types.ts              # TypeScript definitions
-├── models.ts             # Model registry & selection
-├── perplexity-api.ts     # API client wrapper
-├── storage.ts            # Storage management
-└── tools/
-    ├── query.ts          # Query tools
-    ├── chat.ts           # Chat tools
-    └── async.ts          # Async tools
-
-tests/
-├── models.test.ts        # Model selection tests
-├── storage.test.ts       # Storage tests
-├── perplexity-api.test.ts # API tests
-└── integration.test.ts   # End-to-end tests
-```
-
-### Testing
-
-```bash
-# Run all tests
-npm test
-
-# Watch mode
-npm run test:watch
-
-# Coverage report
-npm run test:coverage
-
-# Specific test file
-npm test -- models.test.ts
-```
-
-## 📊 API Usage Examples
-
-### Basic Query
-
-```javascript
-// Simple question
-const result = await askPerplexity({
-  query: 'What is machine learning?',
-});
-
-// With specific model
-const result = await askPerplexity({
-  query: 'Current Bitcoin price',
-  model: 'sonar-pro',
-});
-```
-
-### Conversation
-
-```javascript
-// Start new conversation
-const chat = await chatPerplexity({
-  message: 'Hello!',
-  title: 'General Discussion',
-});
-
-// Continue conversation
-const response = await chatPerplexity({
-  chat_id: chat.id,
-  message: 'Tell me about quantum computing',
-});
-```
-
-### Research
-
-```javascript
-// Comprehensive research
-const research = await researchPerplexity({
-  query: 'Impact of AI on healthcare industry',
-  save_report: true,
-});
-
-// Async research for complex topics
-const job = await asyncPerplexity({
-  query: 'Detailed analysis of climate change solutions',
-});
-
-// Check job status
-const status = await checkAsync({
-  job_id: job.id,
-});
-```
-
-## 🔒 Security
-
-### API Key Management
-
-- Store API keys securely using environment variables
-- Never commit API keys to version control
-- Rotate keys regularly
-- Use different keys for different environments
-
-### Network Security
-
-- HTTPS in production
-- Rate limiting implemented
-- Input validation and sanitization
-- Error handling without information leakage
-
-### Container Security
-
-- Non-root user execution
-- Minimal base images
-- Regular security updates
-- Vulnerability scanning
-
-## 📈 Monitoring
-
-### Health Checks
-
-```bash
-# Basic health check
-curl http://localhost:3000/health
-
-# Detailed status
-curl http://localhost:3000/status
-```
-
-### Metrics
-
-The server exposes Prometheus-compatible metrics:
-
-- Request count and duration
-- Error rates by endpoint
-- Storage usage statistics
-- Model usage distribution
-
-### Logging
-
-Structured JSON logging with configurable levels:
+- `structuredContent.category` (with `structuredContent.message`), for code
+- `_meta.category`, for code that only looks at metadata
+- the text content, which always starts `[category] message`, for clients that show only text
 
 ```json
-{
-  "timestamp": "2024-08-20T19:00:00.000Z",
-  "level": "info",
-  "message": "Query processed successfully",
-  "model": "sonar-reasoning-pro",
-  "duration": 1250,
-  "session_id": "session-123"
-}
+{"isError": true,
+ "structuredContent": {"category": "confirmation_required",
+   "message": "Deleting project 'demo' removes all its data and cannot be undone; call again with confirm=true."},
+ "_meta": {"category": "confirmation_required"},
+ "content": [{"type": "text", "text": "[confirmation_required] Deleting project 'demo' removes ..."}]}
 ```
 
-## 🚨 Troubleshooting
+| Category | Meaning |
+|---|---|
+| `invalid_request` | A missing or mistyped argument, an invalid project name, or HTTP 400/422 from the API |
+| `authentication` | The API rejected the key (HTTP 401) |
+| `forbidden` | The key is not allowed to do this (HTTP 403) |
+| `not_found` | Unknown tool, a project that does not exist, or HTTP 404 from the API |
+| `rate_limited` | HTTP 429 after the allowed attempts |
+| `upstream_failure` | HTTP 5xx from the API |
+| `network_timeout` | The API did not connect or answer within the timeouts |
+| `unexpected_response` | Any other HTTP status, or a response missing a field the server needs |
+| `confirmation_required` | A destructive action was called without `confirm: true`; nothing changed |
+| `storage_busy` | A database write waited longer than `PERPLEXITY_DB_BUSY_TIMEOUT`; retry shortly |
+| `internal_error` | An unexpected failure, or a call made while the server is shutting down. The message is generic and never contains exception text; the detail is logged to stderr with secrets removed |
 
-### Common Issues
+## Security
 
-**API Key Errors**
+- **Unauthenticated, loopback by default.** The HTTP endpoints (`/mcp`, `/health`) have no
+  authentication. The default host is `127.0.0.1`. If `PERPLEXITY_HOST` is anything other than
+  `127.0.0.1`, `::1` or `localhost`, startup logs a warning to stderr. Use beyond loopback is
+  unsupported until authentication exists.
+- **Host and origin protection.** FastMCP's host and origin checks are enabled explicitly. A
+  request with a foreign `Host` header gets HTTP 421 and one with a foreign `Origin` gets 403,
+  which blocks DNS-rebinding attacks from a web page against the local server.
+- **The key is never emitted.** It is held as a secret value and is removed, together with any
+  `pplx-` shaped token, from logs, error messages, tool results, `/health` and every file the
+  server writes. It is not stored in the data directory.
+- **Owner-only data.** The data directory is created with mode 0700 and the database with 0600;
+  a looser existing directory is tightened or startup fails naming it.
+- The server never writes into the working directory of the project that calls it.
+
+## Data and backups
+
+Everything persistent lives in `PERPLEXITY_DATA_DIR` (default `~/.perplexity-pro/`):
+
+| File | Purpose |
+|---|---|
+| `perplexity.db` | The SQLite database (WAL mode, so `perplexity.db-wal` and `perplexity.db-shm` appear while it is open) |
+| `migrate.lock` | Lock file so two processes starting together cannot migrate at once |
+| `backup-<rev>.db` | Copy of the database as it was at schema revision `<rev>`, taken automatically before a migration touches a database that already has a revision (for example `backup-0001.db`) |
+
+Migrations run at startup. A failed migration rolls back and the server exits non-zero without
+listening. A database that is newer than the code is refused with both versions named. The backup
+exists for a migration that succeeded but turned out wrong. Restoring is manual:
+
+1. Stop the server (`pm2 stop mcp-perplexity-pro`, or stop the stdio client).
+2. Delete the write-ahead files so stale pages are not replayed over the restored file:
+   `rm -f ~/.perplexity-pro/perplexity.db-wal ~/.perplexity-pro/perplexity.db-shm`
+3. Copy the backup over the database:
+   `cp ~/.perplexity-pro/backup-<rev>.db ~/.perplexity-pro/perplexity.db`
+4. Run the previous version of the server (the one that matches that schema revision) and check
+   `GET /health`.
+
+Use your own `PERPLEXITY_DATA_DIR` in the paths if you set one. Both server processes (a pm2 HTTP
+instance and a stdio instance) may share one data directory.
+
+## Development
 
 ```bash
-Error: Invalid API key
-Solution: Verify PERPLEXITY_API_KEY is set correctly
+uv sync                              # install runtime and dev dependencies from uv.lock
+uv run pytest                        # offline test suite (about 25 s)
+uv run ruff check .                  # lint (ruff is the only linter)
+uv run ruff format --check .         # formatting (ruff is the only formatter)
+uv run pre-commit install            # once per clone: runs ruff and pytest on every commit
+uv run pre-commit run --all-files    # run the commit checks by hand
 ```
 
-**Storage Permission Errors**
+The commit hook runs `ruff check --fix`, `ruff format` and `uv run --locked pytest`. CI
+(`.github/workflows/ci.yml`) runs `uv sync --locked`, `ruff check`, `ruff format --check` and
+`pytest` on Python 3.12 and 3.14 for every push and pull request. `--locked` makes the install
+fail when `uv.lock` is out of date; `--frozen` would not.
 
-```bash
-Error: EACCES: permission denied
-Solution: Ensure storage directory is writable
+### Tests
+
+- Tests are offline. A socket guard in `tests/conftest.py` fails any connection to a non-loopback
+  address; a test that truly needs the network opts out with `@pytest.mark.allow_network`.
+- Upstream calls are faked by injecting an `httpx2.AsyncClient` on an `httpx2.MockTransport`
+  (`respx` and `pytest-httpx` do not intercept `httpx2`).
+- Recorded API responses live in `tests/fixtures/`, each with a `.meta.json` sidecar naming the
+  endpoint and capture date. Fixtures come from real calls and are scanned for key-shaped strings.
+- Tests marked `live` call the real API and are deselected by default (`addopts = -m 'not live'`).
+  Run them deliberately with a real key:
+
+  ```bash
+  PERPLEXITY_API_KEY=<your-perplexity-api-key> uv run pytest -m live
+  ```
+
+- The fixtures capture helper is `tests/test_live_capture.py` (a `live` test). It re-records the
+  fixtures, scrubs account identifiers, scans every payload for keys before writing anything, and
+  stops without writing if one is found:
+
+  ```bash
+  PERPLEXITY_API_KEY=<your-perplexity-api-key> uv run pytest -m live tests/test_live_capture.py
+  ```
+
+### Layout
+
+```
+src/mcp_perplexity_pro/
+  __main__.py     entry point: startup order, stdio and HTTP runners, graceful shutdown
+  cli.py          argument parsing (--transport, --version)
+  settings.py     PERPLEXITY_* settings and their validation
+  server.py       build_server(): FastMCP wiring, AppContext, /health, error middleware
+  client.py       the one Perplexity HTTP client (httpx2): retry, typed errors, redaction
+  errors.py       PerplexityError and the eleven error categories
+  catalog.py      model list cache, stale-on-failure rule, documented presets
+  models/         tolerant pydantic models for API payloads
+  tools/          one module per tool, each with register(server)
+  storage/        engine, unit_of_work session, migration runner, project rules
+  migrations/     Alembic environment and versions/NNNN_slug.py (packaged in the wheel)
+  log_setup.py, redaction.py   stderr logging with secrets removed
+tests/            offline tests, fixtures/, and the live-marked capture helper
+openspec/         the spec-driven change records (py-foundation)
 ```
 
-**Model Selection Issues**
-
-```bash
-Error: Model not available
-Solution: Check model name spelling and availability
-```
-
-### Debug Mode
-
-```bash
-DEBUG=mcp-perplexity:* npm start
-```
-
-### Support
-
-- 📚 [Documentation](https://github.com/cfdude/mcp-perplexity-pro/wiki)
-- 🐛 [Issues](https://github.com/cfdude/mcp-perplexity-pro/issues)
-- 💬 [Discussions](https://github.com/cfdude/mcp-perplexity-pro/discussions)
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
-
-### Code Standards
-
-- TypeScript with strict mode
-- ESLint + Prettier formatting
-- 100% test coverage for new features
-- Conventional commit messages
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Perplexity AI](https://perplexity.ai/) for providing the excellent API
-- [Model Context Protocol](https://github.com/modelcontextprotocol) for the MCP specification
-- [Smithery](https://smithery.ai/) for MCP development tools
-- The open-source community for inspiration and contributions
-
-## 📊 Project Stats
-
-![GitHub stars](https://img.shields.io/github/stars/cfdude/mcp-perplexity-pro)
-![GitHub forks](https://img.shields.io/github/forks/cfdude/mcp-perplexity-pro)
-![GitHub issues](https://img.shields.io/github/issues/cfdude/mcp-perplexity-pro)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/cfdude/mcp-perplexity-pro)
-
----
-
-**Built with ❤️ for the MCP community**
+Contributor and agent guidance is in `CLAUDE.md`.
