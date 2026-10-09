@@ -163,9 +163,11 @@ async def test_a_key_shaped_token_is_redacted_in_every_text_column(storage_engin
         usage=usage,
     )
     (row,) = await rows(storage_engine)
-    for column in ("tool", "request_id", "model", "preset", "project_name"):
+    for column in ("tool", "request_id", "model", "preset"):
         assert "pplx-" not in row[column], column
         assert "[redacted]" in row[column], column
+    # a key-shaped project name fails the project-name rule: stored as NULL, never as text
+    assert row["project_name"] is None and row["project_id"] is None
     assert "pplx-" not in row["tool_calls_json"]
     assert "[redacted]" in row["tool_calls_json"]
     assert "pplx-" not in row["usage_json"]

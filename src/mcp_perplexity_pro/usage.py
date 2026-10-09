@@ -25,6 +25,7 @@ import asyncio
 import contextlib
 import json
 import logging
+import re
 import traceback
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field, fields
@@ -40,6 +41,7 @@ from mcp_perplexity_pro.errors import ALL_CATEGORIES
 from mcp_perplexity_pro.pricing import PRICES_AS_OF
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.storage.models import Project, UsageEvent
+from mcp_perplexity_pro.storage.projects import validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
 
 logger = logging.getLogger(__name__)
@@ -270,15 +272,15 @@ def _agent_tool_calls(details: object, problems: list[str]) -> dict[str, ToolCal
         if not isinstance(name, str):
             problems.append("tool_calls_details.<key>")
         elif not isinstance(entry, Mapping):
-            problems.append(f"tool_calls_details.{name}")
+            problems.append(f"tool_calls_details.{_log_name(name)}")
             calls[name] = ToolCallUsage()
         else:
             invocations = to_tokens(entry.get("invocation"))
             cost = to_nano(entry.get("cost_usd"))
             if invocations is None and entry.get("invocation") is not None:
-                problems.append(f"tool_calls_details.{name}.invocation")
+                problems.append(f"tool_calls_details.{_log_name(name)}.invocation")
             if cost is None and entry.get("cost_usd") is not None:
-                problems.append(f"tool_calls_details.{name}.cost_usd")
+                problems.append(f"tool_calls_details.{_log_name(name)}.cost_usd")
             calls[name] = ToolCallUsage(invocations, cost)
     return calls
 
@@ -409,12 +411,36 @@ def _failure_text(exc: BaseException, secrets: Iterable[str]) -> str:
 
 
 def _safe(value: object, secrets: Iterable[str]) -> str:
-    return redact_text(repr(value)[:80], secrets)
+    # Redact BEFORE cutting: a key straddling the cut would survive as a short prefix.
+    return redact_text(repr(value), secrets)[:80]
 
 
 def _text(value: object, secrets: Iterable[str]) -> str | None:
-    """An identity string with secrets removed, or ``None`` for anything that is not a string."""
-    return redact_text(value[:MAX_TEXT], secrets) if isinstance(value, str) else None
+    """An identity string with secrets removed, or ``None`` for anything that is not a string.
+
+    Redacted first and cut after, so a key straddling ``MAX_TEXT`` cannot leave a fragment."""
+    return redact_text(value, secrets)[:MAX_TEXT] if isinstance(value, str) else None
+
+
+def _log_name(name: object) -> str:
+    """An upstream-supplied key name made safe for a log line: redacted, one printable line, at
+    most 64 characters."""
+    shown = redact_text(name, ()) if isinstance(name, str) else repr(name)
+    return re.sub(r"[^\x20-\x7e]", "?", shown)[:64]
+
+
+def _project_name(project: object, secrets: Iterable[str]) -> str | None:
+    """The project name to store: validated by the same rule that creates projects and stored
+    as written (a name that passes cannot hold a key, so redacting it would only corrupt valid
+    names such as ``pplx-embeddings``). ``None`` for no project or one the rule refuses; the
+    refusal is logged redacted and never raised."""
+    if project is None:
+        return None
+    try:
+        return validate_project_name(project)
+    except Exception:  # PerplexityError, or anything odd a caller passed
+        logger.warning("usage event project name ignored: %s", _safe(project, secrets))
+        return None
 
 
 def _marker(reason: str, size: int | None) -> str:
@@ -528,7 +554,7 @@ def _build_event(
         "model": _text(model, secrets),
         "preset": _text(preset, secrets),
         "request_id": _text(request_id, secrets),
-        "project_name": _text(project, secrets),
+        "project_name": _project_name(project, secrets),
         **_event_values(_resolve_usage(usage, api, secrets), secrets),
     }
 
