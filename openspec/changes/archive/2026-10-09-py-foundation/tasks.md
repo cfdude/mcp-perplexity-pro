@@ -75,7 +75,7 @@
 
 ## 12. Archive
 
-- [ ] 12.1 Archive the change and record the disposition (`update-epic py-foundation --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->
+- [x] 12.1 Archive the change and record the disposition (`update-epic py-foundation --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->
 
 ## Workflow follow-up
 

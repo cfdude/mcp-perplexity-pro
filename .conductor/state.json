@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "py-foundation",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -34,7 +34,7 @@
       "id": "py-foundation",
       "title": "Foundation: uv/src layout, ruff+pytest pre-commit, CI, FastMCP app, settings, httpx client, SQLAlchemy+Alembic base, pm2 swap",
       "priority": "P0",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [],
@@ -91,10 +91,12 @@
         "5625c01",
         "6cf9340",
         "54d2cdb",
-        "301ae30"
+        "301ae30",
+        "40a5daf",
+        "40a5daf"
       ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T17:45:26.026Z",
+      "touchedAt": "2026-10-09T18:03:13.627Z",
       "startedAt": "2026-10-07T00:03:44.194Z",
       "gateReview": {
         "gate1": {
@@ -114,20 +116,31 @@
         },
         "gate2": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-09T17:45:26.026Z",
-          "baseSha": "0454cd2",
-          "headSha": "301ae30",
-          "reviewer": "fresh-context general-purpose subagent: documentation diff 0454cd2..5625c01 PASS (no IMPORTANT); its MINOR wording fixes applied in 54d2cdb",
+          "reviewedAt": "2026-10-09T18:03:07.624Z",
+          "baseSha": "301ae30",
+          "headSha": "40a5daf",
+          "reviewer": "parent re-check of 301ae30..40a5daf: one commit ticking task 1.4 with CI evidence (PR #20 green on 3.12/3.14, throwaway PR #21 red); no code changed since the docs-range Gate 2 pass",
           "superseded": {
             "verdict": "pass",
-            "reviewedAt": "2026-10-09T17:35:00.450Z",
-            "baseSha": "2791a47",
-            "headSha": "0454cd2",
-            "reviewer": "fresh-context general-purpose subagents: Gate 2 review (2791a47..774c4a7), call-site audit, Gate 2 re-review PASS at 18e9a77; MINOR follow-ups applied in 0fc7906 (clock-backwards, migration hint, draining text) and reviewed by the parent"
+            "reviewedAt": "2026-10-09T17:45:26.026Z",
+            "baseSha": "0454cd2",
+            "headSha": "301ae30",
+            "reviewer": "fresh-context general-purpose subagent: documentation diff 0454cd2..5625c01 PASS (no IMPORTANT); its MINOR wording fixes applied in 54d2cdb"
           }
         }
       },
-      "release": "release-2-0-0"
+      "release": "release-2-0-0",
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-09T18:03:13.627Z",
+        "reason": "Python 2.0 foundation delivered: FastMCP server, httpx2 client, SQLite/Alembic storage, perplexity_models and perplexity_projects, ruff+pytest gates, live under pm2 on 8102; Gate 2 and cross-spec review recorded"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-09T18:03:13.626Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-09T18:03:13.627Z"
     },
     {
       "id": "py-agent-api",
@@ -356,7 +369,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 75,
+  "revision": 79,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
