@@ -10,14 +10,26 @@ alone: every later epic calls it and never re-derives the rule.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
+import json
 import logging
-from collections.abc import Mapping
+import traceback
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field, fields
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
 
+from sqlalchemy import select
+from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.ext.asyncio import AsyncEngine
+
+from mcp_perplexity_pro.errors import ALL_CATEGORIES
 from mcp_perplexity_pro.pricing import PRICES_AS_OF
+from mcp_perplexity_pro.redaction import redact_text
+from mcp_perplexity_pro.storage.models import Project, UsageEvent
+from mcp_perplexity_pro.storage.session import unit_of_work
 
 logger = logging.getLogger(__name__)
 
@@ -361,3 +373,227 @@ def agent_response_status(response: object) -> str | None:
         return "unexpected_response"
     except Exception:  # total by contract
         return "unexpected_response"
+
+
+# --- The recorder (design D6, D7, D8) ---------------------------------------------------------
+
+API_FAMILIES = ("agent", "search", "embeddings", "decisions")
+VALID_STATUSES = frozenset({"ok", *ALL_CATEGORIES})
+MAX_USAGE_JSON = 16384  # bytes; 32 times the recorded 501-byte Agent usage object
+MAX_TEXT = 512  # characters kept of an identity string (ids, model names): far above any real one
+
+# api -> parser turning a raw usage Mapping into a Usage. Each later epic adds its own entry
+# after probing the live response; an api without one stores the mapping unpriced (source none).
+_PARSERS: dict[str, Callable[[Mapping], Usage]] = {"agent": usage_from_agent_response}
+
+
+def _failure_text(exc: BaseException, secrets: Iterable[str]) -> str:
+    """The exception and its traceback as text with secrets removed (a log filter may not be
+    installed where this runs, and the text of a database error can echo bound values)."""
+    rendered = "".join(traceback.format_exception(exc))
+    return redact_text(rendered[-2000:], secrets)
+
+
+def _safe(value: object, secrets: Iterable[str]) -> str:
+    return redact_text(repr(value)[:80], secrets)
+
+
+def _text(value: object, secrets: Iterable[str]) -> str | None:
+    """An identity string with secrets removed, or ``None`` for anything that is not a string."""
+    return redact_text(value[:MAX_TEXT], secrets) if isinstance(value, str) else None
+
+
+def _marker(reason: str, size: int | None) -> str:
+    return json.dumps({"_truncated": True, "_reason": reason, "_original_bytes": size})
+
+
+def _usage_json(raw: object, secrets: Iterable[str]) -> str | None:
+    """The usage object as strict, redacted JSON of at most ``MAX_USAGE_JSON`` bytes, else a
+    marker object naming why it was not kept (design D6)."""
+    if raw is None:
+        return None
+    try:
+        serialized = json.dumps(raw, allow_nan=False, separators=(",", ":"))
+    except (ValueError, TypeError, RecursionError, OverflowError):
+        return _marker("unserializable", None)
+    size = len(serialized.encode())
+    if size > MAX_USAGE_JSON:
+        return _marker("oversize", size)
+    redacted = redact_text(serialized, secrets)
+    try:
+        json.loads(redacted)  # a secret holding a quote can break the text
+    except (ValueError, RecursionError):
+        return _marker("unserializable", None)
+    return redacted
+
+
+def _tool_calls_json(calls: dict[str, ToolCallUsage], secrets: Iterable[str]) -> str | None:
+    if not calls:
+        return None
+    body = {
+        redact_text(name, secrets): {"invocations": c.invocations, "cost_nano": c.cost_nano}
+        for name, c in calls.items()
+    }
+    text = json.dumps(body, separators=(",", ":"))
+    if len(text.encode()) > MAX_USAGE_JSON:
+        return _marker("oversize", len(text.encode()))
+    return text
+
+
+def _resolve_usage(usage: object, api: str, secrets: Iterable[str]) -> Usage:
+    """``usage`` as a validated ``Usage``: a Mapping is parsed here, inside the guarded block."""
+    if usage is None:
+        return Usage()
+    if isinstance(usage, Mapping):
+        parser = _PARSERS.get(api)
+        if parser is None:
+            return Usage(raw=dict(usage))
+        try:
+            return parser(usage)
+        except Exception as exc:  # a parser bug must never reach the tool
+            logger.warning("usage parser for %r failed: %s", api, _failure_text(exc, secrets))
+            return Usage()
+    if isinstance(usage, Usage):
+        return usage
+    logger.warning("usage of type %s ignored", type(usage).__name__)
+    return Usage()
+
+
+def _event_values(parsed: Usage, secrets: Iterable[str]) -> dict[str, object]:
+    """The cost and detail columns of ``parsed``, revalidated (a caller may build a ``Usage``)."""
+    cost = _cost_int(parsed.cost_nano_usd)
+    source = parsed.cost_source if parsed.cost_source in ("reported", "computed") else "none"
+    if cost is None or source == "none":
+        cost, source = 0, "none"
+    values: dict[str, object] = {
+        "cost_nano_usd": cost,
+        "cost_source": source,
+        "currency": _text(parsed.currency, secrets) or "USD",
+        "price_table": _text(parsed.price_table, secrets) if source == "computed" else None,
+        "tool_calls_json": _tool_calls_json(_clean_tool_calls(parsed.tool_calls, []), secrets),
+        "usage_json": _usage_json(parsed.raw, secrets),
+    }
+    values.update({name: to_tokens(getattr(parsed, name)) for name in _TOKEN_FIELDS})
+    values.update({name: _cost_int(getattr(parsed, name)) for name in _COST_FIELDS})
+    return values
+
+
+def _build_event(
+    *,
+    tool: object,
+    api: object,
+    status: object,
+    usage: object,
+    model: object,
+    preset: object,
+    request_id: object,
+    project: object,
+    latency_ms: object,
+    secrets: tuple[str, ...],
+    clock: Callable[[], datetime],
+) -> dict[str, object] | None:
+    """The row to insert, or ``None`` after logging why the event is refused."""
+    if api not in API_FAMILIES:
+        logger.warning("usage event refused: unknown api %s", _safe(api, secrets))
+        return None
+    if not isinstance(status, str) or status not in VALID_STATUSES:
+        logger.warning("usage event refused: unknown status %s", _safe(status, secrets))
+        return None
+    if not isinstance(tool, str) or not tool:
+        logger.warning("usage event refused: tool is not a name (%s)", _safe(tool, secrets))
+        return None
+    created = clock()
+    if created.tzinfo is not None:
+        created = created.astimezone(UTC).replace(tzinfo=None)
+    return {
+        "created_at": created,
+        "tool": _text(tool, secrets),
+        "api": api,
+        "status": status,
+        "latency_ms": to_tokens(latency_ms),
+        "model": _text(model, secrets),
+        "preset": _text(preset, secrets),
+        "request_id": _text(request_id, secrets),
+        "project_name": _text(project, secrets),
+        **_event_values(_resolve_usage(usage, api, secrets), secrets),
+    }
+
+
+async def _store(engine: AsyncEngine, values: dict[str, object], secrets: tuple[str, ...]) -> bool:
+    """Insert one event in its own unit of work. Never raises (``Exception``)."""
+    try:
+        async with unit_of_work(engine) as session:
+            project_id = None
+            if values["project_name"] is not None:  # a lookup: recording never creates a project
+                project_id = (
+                    await session.execute(
+                        select(Project.id).where(Project.name == values["project_name"])
+                    )
+                ).scalar_one_or_none()
+            result = await session.execute(
+                insert(UsageEvent).values(**values, project_id=project_id).on_conflict_do_nothing()
+            )
+            stored = result.rowcount == 1
+        if not stored:
+            logger.debug("usage event for %s %s already recorded", values["api"], "response")
+        return stored
+    except Exception as exc:
+        logger.warning("usage event not recorded: %s", _failure_text(exc, secrets))
+        return False
+
+
+async def record_usage(
+    engine: AsyncEngine,
+    *,
+    tool: str,
+    api: str,
+    status: str = "ok",
+    usage: Usage | Mapping | None = None,
+    model: str | None = None,
+    preset: str | None = None,
+    request_id: str | None = None,
+    project: str | None = None,
+    latency_ms: int | None = None,
+    secrets: Iterable[str] = (),
+    clock: Callable[[], datetime] = utcnow,
+) -> bool:
+    """Store one usage event for a costed upstream call, best effort. Never raises.
+
+    Runs after the upstream call, in its OWN unit of work, so it must be called while the caller
+    holds no write unit of work on ``engine`` (SQLite has one writer: it would wait the busy
+    timeout for its own caller's lock, fail and lose the event). Returns ``True`` when the event
+    was stored; ``False`` when it was refused (unknown ``api`` or ``status``), a duplicate of an
+    already recorded ``ok`` response, or recording failed (logged with secrets removed).
+
+    ``usage`` is a parsed ``Usage``, the raw usage mapping (parsed here, inside the guarded block,
+    by the parser registered for ``api``) or ``None``. The write is shielded from cancellation of
+    the calling task: once the upstream call has returned the spend has happened, so a cancel
+    that arrives now is re-raised only after the event is written.
+    """
+    secrets = tuple(s for s in secrets if isinstance(s, str) and s)
+    try:
+        values = _build_event(
+            tool=tool,
+            api=api,
+            status=status,
+            usage=usage,
+            model=model,
+            preset=preset,
+            request_id=request_id,
+            project=project,
+            latency_ms=latency_ms,
+            secrets=secrets,
+            clock=clock,
+        )
+    except Exception as exc:
+        logger.warning("usage event not recorded: %s", _failure_text(exc, secrets))
+        return False
+    if values is None:
+        return False
+    write = asyncio.ensure_future(_store(engine, values, secrets))
+    try:
+        return await asyncio.shield(write)
+    except asyncio.CancelledError:
+        with contextlib.suppress(Exception, asyncio.CancelledError):
+            await asyncio.shield(write)  # let the write finish before the cancel moves on
+        raise
