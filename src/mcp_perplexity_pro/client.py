@@ -33,6 +33,12 @@ _REQUEST_ID_HEADERS = ("x-request-id", "request-id")
 # letters, digits, hyphen and underscore. ``fullmatch`` (not ``$``) so a trailing newline fails.
 _RESPONSE_ID = re.compile(r"resp_[A-Za-z0-9_-]{1,100}", re.ASCII)
 
+
+def is_response_id(value: object) -> bool:
+    """True for ``resp_`` plus 1 to 100 letters, digits, hyphens or underscores."""
+    return isinstance(value, str) and _RESPONSE_ID.fullmatch(value) is not None
+
+
 _TIMEOUT_NAMES = (
     (httpx2.ConnectTimeout, "connect"),
     (httpx2.ReadTimeout, "read"),
@@ -256,7 +262,7 @@ class PerplexityClient:
 
     @staticmethod
     def _check_response_id(response_id: str) -> str:
-        if not isinstance(response_id, str) or _RESPONSE_ID.fullmatch(response_id) is None:
+        if not is_response_id(response_id):
             raise PerplexityError(
                 "invalid_request",
                 "A response id is 'resp_' followed by 1 to 100 letters, digits, '-' or '_'.",

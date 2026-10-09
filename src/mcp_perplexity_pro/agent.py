@@ -12,14 +12,16 @@ call.
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
 import logging
 import re
 import time
-from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
-from datetime import date
+from collections.abc import AsyncIterator, Iterable, Mapping
+from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
 from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
@@ -27,12 +29,14 @@ from pydantic import BaseModel, Field
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text
+from mcp_perplexity_pro.storage import jobs as job_store
+from mcp_perplexity_pro.storage.models import ResearchJob
 from mcp_perplexity_pro.storage.projects import (
     DEFAULT_PROJECT,
     get_or_create_project,
     validate_project_name,
 )
-from mcp_perplexity_pro.storage.session import unit_of_work
+from mcp_perplexity_pro.storage.session import is_busy_error, unit_of_work
 from mcp_perplexity_pro.usage import (
     agent_response_status,
     format_usd,
@@ -528,7 +532,7 @@ async def run_costed(
             api="agent",
             status=status,
             usage=raw.get("usage"),  # the raw mapping: the recorder parses it
-            model=raw.get("model"),
+            model=snapshot_model(raw, preset) if background else raw.get("model"),
             preset=preset,
             request_id=raw.get("id"),
             project=name,
@@ -550,3 +554,253 @@ async def run_costed(
 
 def _ms(started: float) -> int:
     return round((time.monotonic() - started) * 1000)
+
+
+# --- Background research (design D7 to D9) --------------------------------------------------
+
+RESEARCH_TOOL = "perplexity_research"
+RESEARCH_DEPTHS = ("medium", "high", "xhigh")
+DEFAULT_RESEARCH_DEPTH = "medium"
+LOST_AFTER = timedelta(minutes=10)  # a chosen margin for propagation delay, not measured
+REFRESH_LIMIT = 10
+
+
+def build_research_request(
+    depth: object, query: object, instructions: object = None
+) -> dict[str, Any]:
+    """The ``POST /v1/agent`` body of a research run (design D2). Pure; raises
+    ``invalid_request`` naming the option. ``background`` and ``store`` are both always true:
+    a background run with ``store`` false cannot be retrieved, so its result and cost would be
+    lost, and the tool offers no way to send false."""
+    if depth not in RESEARCH_DEPTHS:
+        raise _bad(
+            "depth",
+            f"must be one of {', '.join(RESEARCH_DEPTHS)}; fast and low answers belong to "
+            "perplexity_ask.",
+        )
+    request: dict[str, Any] = {"preset": depth, "input": check_text("query", query)}
+    if instructions is not None:
+        if not isinstance(instructions, str):
+            raise _bad("instructions", "must be a string.")
+        if instructions.strip():  # blank instructions are the same as none
+            request["instructions"] = check_text(
+                "instructions", instructions, MAX_INSTRUCTIONS_CHARS
+            )
+    request["background"] = True
+    request["store"] = True
+    return request
+
+
+def snapshot_model(raw: Mapping[str, Any], depth: str | None) -> str | None:
+    """The model of a snapshot, or None when it is not known (design D7). The API reports the
+    preset NAME (``medium``) as ``model`` on queued, in-progress and cancelled snapshots; that
+    is not a model. Known only from a ``completed`` snapshot, or a value that contains ``/``
+    and differs from the job's depth."""
+    model = raw.get("model")
+    if not isinstance(model, str) or not model:
+        return None
+    if raw.get("status") == "completed" or ("/" in model and model != depth):
+        return model
+    return None
+
+
+def terminal_status(status: object, error: object) -> str:
+    """The status stored for a finished run: the API's own when it belongs to the vocabulary the
+    terminal test knows, else ``failed`` (an error on any other status, or on ``completed``)."""
+    if error is None:
+        return str(status)
+    return status if status in ("failed", "incomplete", "cancelled") else "failed"  # type: ignore[return-value]
+
+
+def search_progress(raw: Mapping[str, Any]) -> tuple[int, int]:
+    """How many search and fetch steps a snapshot has shown: output items of each kind."""
+    output = raw.get("output")
+    if not isinstance(output, list):
+        return 0, 0
+    kinds = [i.get("type") for i in output if isinstance(i, Mapping)]
+    return kinds.count("search_results"), kinds.count("fetch_url_results")
+
+
+def job_columns(
+    raw: Mapping[str, Any], depth: str, now: datetime, secrets: Iterable[str] = ()
+) -> dict[str, Any]:
+    """The ``research_jobs`` column values a snapshot decides. Only OUR times are stored: the
+    API rewrites its own ``created_at`` and ``completed_at`` on every fetch (design D7).
+
+    A running snapshot gives its status (verbatim, redacted, cut to 64) and the model when it is
+    known. A terminal one also gives the finish time, the answer and sources when present, the
+    reason, the error text, the usage summary, and ``usage_recorded`` 1: the caller records the
+    event BEFORE writing these (design D8)."""
+    secrets = tuple(secrets)
+    error = raw.get("error")
+    model = snapshot_model(raw, depth)
+    values: dict[str, Any] = {
+        "status": clean_status(raw.get("status", ""), secrets),
+        "last_checked_at": now,
+        "missing_since": None,
+    }
+    if model is not None:
+        values["model"] = clean_text(model, MODEL_CAP, secrets)
+    if not is_terminal(raw.get("status"), error):
+        return values
+    read = digest(raw, secrets=secrets)
+    usage = usage_from_agent_response(raw.get("usage"))
+    values.update(
+        status=terminal_status(raw.get("status"), error),
+        finished_at=now,
+        result_text=read.answer or None,
+        sources_json=json.dumps([s.model_dump() for s in read.sources]) if read.sources else None,
+        incomplete_reason=read.incomplete_reason,
+        error_text=clean_error_text(error, secrets) if error is not None else None,
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+        total_tokens=usage.total_tokens,
+        cost_nano_usd=usage.cost_nano_usd,
+        cost_source=usage.cost_source,
+        usage_recorded=1,
+    )
+    return values
+
+
+def stored_usage(job: ResearchJob) -> UsageSummary:
+    """The ``UsageSummary`` of a finished job, read from the stored columns (design D10)."""
+    known = job.cost_source not in (None, "none") and job.cost_nano_usd is not None
+    return UsageSummary(
+        input_tokens=job.input_tokens,
+        output_tokens=job.output_tokens,
+        total_tokens=job.total_tokens,
+        cost_usd=format_usd(job.cost_nano_usd) if known else None,  # type: ignore[arg-type]
+        cost_source=job.cost_source or "none",
+    )
+
+
+def error_category(exc: BaseException) -> str:
+    """The category a failure of any kind has on the wire (the server's own mapping)."""
+    if isinstance(exc, PerplexityError):
+        return exc.category
+    if is_busy_error(exc):
+        return "storage_busy"
+    return "internal_error"
+
+
+class JobLocks:
+    """One in-process ``asyncio.Lock`` per job id, created on demand and dropped when unused
+    (design D8). Enough because the server is one process; a second process on the same
+    database would reintroduce the window the lock closes."""
+
+    def __init__(self) -> None:
+        self._held: dict[int, list[Any]] = {}  # job id -> [lock, users]
+
+    @asynccontextmanager
+    async def hold(self, job_id: int) -> AsyncIterator[None]:
+        entry = self._held.get(job_id)
+        if entry is None:
+            entry = self._held[job_id] = [asyncio.Lock(), 0]
+        entry[1] += 1
+        try:
+            async with entry[0]:
+                yield
+        finally:
+            entry[1] -= 1
+            if entry[1] == 0:
+                del self._held[job_id]
+
+
+@dataclass
+class Observation:
+    """What one observation of a job found.
+
+    ``job`` is the row as stored afterwards, ``state`` the status to report (the stored one,
+    ``lost`` included), ``run`` the snapshot fetched (None when the stored row was returned
+    without a fetch, or the provider did not know the run) and ``warnings`` what the caller
+    should show."""
+
+    job: ResearchJob
+    state: str
+    run: dict[str, Any] | None = None
+    fetched: bool = False
+    warnings: list[str] = field(default_factory=list)
+
+
+async def _write_job(app: Any, project_id: int, job_id: int, values: dict[str, Any]) -> ResearchJob:
+    async with unit_of_work(app.engine) as session:  # its own unit; nothing else shares it
+        return await job_store.update_job(session, project_id, job_id, values)
+
+
+async def observe_job(app: Any, *, project_id: int, project: str, job_id: int) -> Observation:
+    """Observe one job: fetch it and store what it shows (design D7, D8, D9). The SECOND
+    ``record_usage`` call site (the first is ``run_costed``).
+
+    Under the job's in-process lock, the stored row is RE-READ and a final one (or one whose
+    usage is already recorded) is returned with no fetch. Otherwise the run is fetched once:
+
+    * the provider does not know it (``not_found``): the first time records ``missing_since``;
+      a later one, at least 10 minutes after submit, makes the job ``lost`` (no event);
+    * a snapshot that is not terminal stores its status (verbatim) and the model when known;
+    * a terminal snapshot is recorded FIRST (the recorder's own unit, no write unit open), then
+      its row update is its own unit, so a failing update keeps the event and the next
+      observation records the ``ok`` run again into the dedupe index.
+
+    Any other failure propagates; the caller decides (``refresh`` warns, the rest raise).
+    """
+    secrets = (app.settings.api_key.get_secret_value(),)
+    async with app.job_locks.hold(job_id):
+        async with unit_of_work(app.engine, write=False) as session:
+            job = await job_store.load_job(session, project_id, job_id)
+        if job_store.is_final(job):
+            return Observation(job, job.status)
+        try:
+            run = await app.client.get_run(job.response_id)
+        except PerplexityError as exc:
+            if exc.category != "not_found":
+                raise
+            return await _missing(app, project_id, job, secrets)
+        now = app.now()
+        raw = run.model_dump(mode="json")
+        if is_terminal(raw.get("status"), raw.get("error")):
+            await record_usage(  # NO write unit is open here (the recorder contract)
+                app.engine,
+                tool=RESEARCH_TOOL,
+                api="agent",
+                status=agent_response_status(raw) or "unexpected_response",
+                usage=raw.get("usage"),
+                model=snapshot_model(raw, job.depth),
+                preset=job.depth,
+                request_id=job.response_id,
+                project=project,
+                latency_ms=max(round((now - job.started_at).total_seconds() * 1000), 0),
+                secrets=secrets,
+            )
+        job = await _write_job(app, project_id, job_id, job_columns(raw, job.depth, now, secrets))
+        return Observation(job, job.status, run=raw, fetched=True)
+
+
+async def _missing(
+    app: Any, project_id: int, job: ResearchJob, secrets: tuple[str, ...]
+) -> Observation:
+    """The provider answered ``not_found`` for a job that is not final (design D7): never proof
+    the run is gone, so the first time only records when, and ``lost`` needs a second."""
+    now = app.now()
+    if job.missing_since is not None and now - job.started_at >= LOST_AFTER:
+        job = await _write_job(
+            app, project_id, job.id, {"status": "lost", "finished_at": now, "last_checked_at": now}
+        )
+        return Observation(
+            job,
+            "lost",
+            warnings=[
+                "The provider no longer knows this run, so it is marked lost. Its spend was not "
+                "recorded and cannot be: the run's cost is unknown."
+            ],
+        )
+    if job.missing_since is None:
+        job = await _write_job(app, project_id, job.id, {"missing_since": now})
+    return Observation(
+        job,
+        job.status,
+        warnings=[
+            "The provider did not find this run (not_found). It is treated as still running: "
+            f"a later not_found at least {int(LOST_AFTER.total_seconds() // 60)} minutes after "
+            "submit marks it lost."
+        ],
+    )

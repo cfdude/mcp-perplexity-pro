@@ -109,6 +109,7 @@ async def test_initialize_over_http_lists_registered_tools(make_server):
         "perplexity_chat",
         "perplexity_models",
         "perplexity_projects",
+        "perplexity_research",
         "perplexity_usage",
         "ping",
     ]

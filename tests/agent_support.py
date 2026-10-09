@@ -71,7 +71,7 @@ class World:
         await self.engine.dispose()
 
 
-async def make_world(make_settings, responder, **settings: Any) -> World:
+async def make_world(make_settings, responder, *, now=None, **settings: Any) -> World:
     cfg = make_settings(**{"max_attempts": 1, **settings})
     migrate(cfg)
     engine = create_engine_for(cfg)
@@ -84,5 +84,5 @@ async def make_world(make_settings, responder, **settings: Any) -> World:
         return await upstream(request)
 
     http = httpx2.AsyncClient(transport=httpx2.MockTransport(handler))
-    server = build_server(cfg, http, engine)
+    server = build_server(cfg, http, engine, **({} if now is None else {"now": now}))
     return World(server, engine, upstream, http, cfg, requests)

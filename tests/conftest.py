@@ -5,6 +5,7 @@ import socket
 
 import pytest
 from chat_support import chat_world  # noqa: F401 - registers the fixture for the chat tests
+from research_support import research_world  # noqa: F401 - the research and jobs tests
 
 
 def _is_local(address: object) -> bool:
