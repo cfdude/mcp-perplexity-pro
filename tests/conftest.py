@@ -53,3 +53,20 @@ def _block_external_sockets(request, monkeypatch):
 def dummy_api_key() -> str:
     """A key-shaped value that is deliberately not key-shaped to the secret scanners."""
     return "test-dummy-api-key"
+
+
+@pytest.fixture
+def make_settings(dummy_api_key, monkeypatch, tmp_path):
+    """Build ``Settings`` without reading the real environment or home directory."""
+    from mcp_perplexity_pro.settings import Settings
+
+    for name in list(__import__("os").environ):
+        if name.startswith("PERPLEXITY_"):
+            monkeypatch.delenv(name)
+
+    def factory(**overrides):
+        values = {"api_key": dummy_api_key, "data_dir": tmp_path / "data"}
+        values.update(overrides)
+        return Settings(**values)
+
+    return factory
