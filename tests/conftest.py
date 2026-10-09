@@ -4,6 +4,7 @@ import ipaddress
 import socket
 
 import pytest
+from chat_support import chat_world  # noqa: F401 - registers the fixture for the chat tests
 
 
 def _is_local(address: object) -> bool:

@@ -9,11 +9,12 @@ annotations at registration time (``Context`` must be a real class there).
 
 from fastmcp import FastMCP
 
-from mcp_perplexity_pro.tools import ask, models, projects, usage
+from mcp_perplexity_pro.tools import ask, chat, models, projects, usage
 
 
 def register_tools(server: FastMCP) -> None:
     ask.register(server)
+    chat.register(server)
     models.register(server)
     projects.register(server)
     usage.register(server)

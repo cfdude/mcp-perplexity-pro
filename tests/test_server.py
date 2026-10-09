@@ -106,6 +106,7 @@ async def test_initialize_over_http_lists_registered_tools(make_server):
     # production tools exist from construction
     assert sorted(names) == [
         "perplexity_ask",
+        "perplexity_chat",
         "perplexity_models",
         "perplexity_projects",
         "perplexity_usage",
