@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": null,
+  "active": "py-usage-log",
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -188,9 +188,9 @@
       "id": "py-usage-log",
       "title": "Per-call cost and usage log",
       "priority": "P1",
-      "status": "planned",
+      "status": "active",
       "role": "epic",
-      "lane": "superpowers",
+      "lane": "openspec",
       "links": [
         {
           "type": "depends-on",
@@ -203,7 +203,15 @@
       "description": "Persist usage.cost per call (tokens, tool costs, preset/model, latency) in SQLite; usage tool reports spend. Feedback data that model-routing needs.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:41.374Z"
+      "touchedAt": "2026-10-09T18:06:34.664Z",
+      "notes": [
+        {
+          "at": "2026-10-09T18:06:33.972Z",
+          "actor": "agent",
+          "text": "lane: openspec not superpowers (routed) — the usage table is an accumulation table persisting external API data; a spec and Gate 1/2 are the durable record (asymmetric tie-break)"
+        }
+      ],
+      "startedAt": "2026-10-09T18:06:34.663Z"
     },
     {
       "id": "py-embeddings",
@@ -232,7 +240,7 @@
       "priority": "P2",
       "status": "planned",
       "role": "epic",
-      "lane": "superpowers",
+      "lane": "openspec",
       "links": [
         {
           "type": "depends-on",
@@ -245,7 +253,14 @@
       "description": "Thin wrapper over POST /v1/decisions (noul/choice/score questions), question-count cap, no image support in v1.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:41.880Z"
+      "touchedAt": "2026-10-09T18:06:34.135Z",
+      "notes": [
+        {
+          "at": "2026-10-09T18:06:34.134Z",
+          "actor": "agent",
+          "text": "lane: openspec not superpowers (routed) — new tool surface with cost accounting; spec + gates give the durable record"
+        }
+      ]
     },
     {
       "id": "routing-rules-v1",
@@ -369,7 +384,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 79,
+  "revision": 82,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
