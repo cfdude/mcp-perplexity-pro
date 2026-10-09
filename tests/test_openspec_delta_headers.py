@@ -8,7 +8,6 @@ change archived: the headers are then the main spec's own) the check skips.
 """
 
 import re
-import shutil
 from pathlib import Path
 
 import pytest
@@ -78,7 +77,11 @@ DELTAS = active_deltas(CHANGES)
 
 @pytest.mark.skipif(not DELTAS, reason="no active change: every delta is archived into main")
 @pytest.mark.parametrize(
-    "delta", DELTAS or [None], ids=lambda p: f"{p.parent.parent.parent.name}/{p.parent.name}"
+    "delta",
+    DELTAS or [None],
+    ids=lambda p: (
+        "no-active-change" if p is None else f"{p.parent.parent.parent.name}/{p.parent.name}"
+    ),
 )
 def test_delta_headers_line_up_with_the_main_spec(delta):
     main = MAIN / delta.parent.name / "spec.md"
@@ -95,23 +98,20 @@ def test_every_active_change_is_checked_not_a_hard_coded_one():
 
 
 def test_a_misspelled_modified_header_in_a_scratch_copy_goes_red(tmp_path):
-    scratch = tmp_path / "changes"
-    shutil.copytree(CHANGES, scratch, ignore=shutil.ignore_patterns("archive"))
-    assert check_changes(scratch, MAIN) == []  # the real active changes are clean
-    victims = [
-        p
-        for p in active_deltas(scratch)
-        if "### Requirement: Configuration from environment" in p.read_text()
-    ]
-    assert victims, "no active change modifies 'Configuration from environment'"
-    for victim in victims:
-        victim.write_text(
-            victim.read_text().replace(
-                "### Requirement: Configuration from environment",
-                "### Requirement: Configuration from environments",
-            )
-        )
-    result = check_changes(scratch, MAIN)
+    """Self-contained: a scratch change modifies a REAL main-spec requirement, so the proof does
+    not depend on any change being active in the repository."""
+    header = "Configuration from environment"
+    assert f"### Requirement: {header}" in (MAIN / "server-runtime" / "spec.md").read_text()
+    delta = tmp_path / "changes" / "demo" / "specs" / "server-runtime" / "spec.md"
+    delta.parent.mkdir(parents=True)
+    body = (
+        "## MODIFIED Requirements\n\n### Requirement: {}\nText.\n\n"
+        "#### Scenario: s\n- **WHEN** a\n- **THEN** b\n"
+    )
+    delta.write_text(body.format(header))
+    assert check_changes(tmp_path / "changes", MAIN) == []  # the correct header is clean
+    delta.write_text(body.format(header + "s"))
+    result = check_changes(tmp_path / "changes", MAIN)
     assert result and all("Configuration from environments" in line for line in result)
 
 

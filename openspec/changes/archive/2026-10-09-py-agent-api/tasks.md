@@ -66,7 +66,7 @@ Existing tests that hard-code state this change moves are named in the group tha
 
 ## 9. Archive
 
-- [ ] 9.1 Archive the change and record the disposition (`update-epic py-agent-api --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->
+- [x] 9.1 Archive the change and record the disposition (`update-epic py-agent-api --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->
 
 ## Workflow follow-up
 
