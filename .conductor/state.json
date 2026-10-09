@@ -44,10 +44,57 @@
       "attributedCommits": [
         "3a5921c",
         "255d705",
-        "88ece20"
+        "88ece20",
+        "2bd69a7",
+        "05a681b",
+        "09f58a0",
+        "79b41c1",
+        "cf7ff83",
+        "720dfc9",
+        "ebeca66",
+        "bf28302",
+        "7a9320b",
+        "95e1d5f",
+        "e5af58a",
+        "d9ca80b",
+        "9e47d62",
+        "f80bdd3",
+        "cdef8dc",
+        "eea900c",
+        "97e2a22",
+        "d98efa9",
+        "c564117",
+        "84b5d5b",
+        "40c614b",
+        "93f0b08",
+        "c4e53d4",
+        "45b0f73",
+        "b79c57c",
+        "a870e4b",
+        "1f792fd",
+        "e9e514f",
+        "feac89b",
+        "5aa9461",
+        "a3b5d9a",
+        "6bf464d",
+        "774c4a7",
+        "40aaa15",
+        "40aaa15",
+        "04eedc0",
+        "294dbeb",
+        "cfeeff0",
+        "18e9a77",
+        "41bdfcb",
+        "0fc7906",
+        "0454cd2",
+        "a351c43",
+        "5625c01",
+        "6cf9340",
+        "54d2cdb",
+        "301ae30"
       ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T16:07:08.913Z",
+      "touchedAt": "2026-10-09T17:45:26.026Z",
       "startedAt": "2026-10-07T00:03:44.194Z",
       "gateReview": {
         "gate1": {
@@ -64,6 +111,20 @@
             "openspec/changes/py-foundation/specs/quality-gates/spec.md"
           ],
           "reviewer": "fresh-context general-purpose subagents: Gate 1 review, re-review, narrow verification (2026-10-09)"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T17:45:26.026Z",
+          "baseSha": "0454cd2",
+          "headSha": "301ae30",
+          "reviewer": "fresh-context general-purpose subagent: documentation diff 0454cd2..5625c01 PASS (no IMPORTANT); its MINOR wording fixes applied in 54d2cdb",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-09T17:35:00.450Z",
+            "baseSha": "2791a47",
+            "headSha": "0454cd2",
+            "reviewer": "fresh-context general-purpose subagents: Gate 2 review (2791a47..774c4a7), call-site audit, Gate 2 re-review PASS at 18e9a77; MINOR follow-ups applied in 0fc7906 (clock-backwards, migration hint, draining text) and reviewed by the parent"
+          }
         }
       },
       "release": "release-2-0-0"
@@ -295,7 +356,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 25,
+  "revision": 75,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
@@ -307,30 +368,57 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-09T16:07:09.063Z",
+        "reviewedAt": "2026-10-09T17:34:02.470Z",
         "specs": [
           {
             "key": "py-foundation/specs/local-storage/spec.md",
-            "sha256": "3888c1ff8cdcb04289ab308c0c3ebab0a3a6fb43af280e5dc6b65a8d7722602d"
+            "sha256": "d95a0b7498af954a6d58cba43272fa1b259158018a990f47977def50ae38b6a4"
           },
           {
             "key": "py-foundation/specs/model-catalog/spec.md",
-            "sha256": "792825d7d1c9bca7403649a1fd7e32d49d856bba5ccc388b4023ed1a6d085f35"
+            "sha256": "9c4b085b427bc5a5c6aeb4aad2b679ebb7aa7e7230128756eeb3348229138dd4"
           },
           {
             "key": "py-foundation/specs/perplexity-client/spec.md",
-            "sha256": "85ff3c715584f21482f653a46cf34b4d919afbbaebabf4dee013483446b27297"
+            "sha256": "886eeca0b6730519e05554e275905b2bc3a35549296e75728b225f94398df66e"
           },
           {
             "key": "py-foundation/specs/quality-gates/spec.md",
-            "sha256": "96377aa21a4580e04deda4a0d1eb56cdbdd9a31aa33b60e5d539ddb1d6290044"
+            "sha256": "a68b75843580f0452b75f501d4a1fc6b38be99194e14b2cdd10d1b51e0fb8d27"
           },
           {
             "key": "py-foundation/specs/server-runtime/spec.md",
-            "sha256": "e6905ea9f053c17d06c260c2ac364f121c6cdd197c14e3a5ade60d7bc1e4c38e"
+            "sha256": "330fe948829a15cf26f7f3f8b1e50431ba2bbda7e9ab97b5a037d3ed6803a658"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagents: cross-spec review, re-review, narrow verification (2026-10-09)"
+        "reviewer": "fresh-context general-purpose subagents: cross-spec review of amended specs (2026-10-09), polish applied",
+        "superseded": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-09T16:07:09.063Z",
+          "specs": [
+            {
+              "key": "py-foundation/specs/local-storage/spec.md",
+              "sha256": "3888c1ff8cdcb04289ab308c0c3ebab0a3a6fb43af280e5dc6b65a8d7722602d"
+            },
+            {
+              "key": "py-foundation/specs/model-catalog/spec.md",
+              "sha256": "792825d7d1c9bca7403649a1fd7e32d49d856bba5ccc388b4023ed1a6d085f35"
+            },
+            {
+              "key": "py-foundation/specs/perplexity-client/spec.md",
+              "sha256": "85ff3c715584f21482f653a46cf34b4d919afbbaebabf4dee013483446b27297"
+            },
+            {
+              "key": "py-foundation/specs/quality-gates/spec.md",
+              "sha256": "96377aa21a4580e04deda4a0d1eb56cdbdd9a31aa33b60e5d539ddb1d6290044"
+            },
+            {
+              "key": "py-foundation/specs/server-runtime/spec.md",
+              "sha256": "e6905ea9f053c17d06c260c2ac364f121c6cdd197c14e3a5ade60d7bc1e4c38e"
+            }
+          ],
+          "reviewer": "fresh-context general-purpose subagents: cross-spec review, re-review, narrow verification (2026-10-09)"
+        }
       }
     }
   ]
