@@ -11,6 +11,9 @@ dependencies = [
     "aiosqlite",
 ]
 
+[project.scripts]
+mcp-perplexity-pro = "mcp_perplexity_pro.__main__:main"
+
 [dependency-groups]
 dev = [
     "pytest",
