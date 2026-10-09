@@ -62,7 +62,8 @@ def _body(resp: httpx2.Response):
 
 def test_capture_fixtures():
     key = os.environ.get("PERPLEXITY_API_KEY")
-    assert key, "PERPLEXITY_API_KEY must be set in the environment"
+    if not key:
+        pytest.skip("PERPLEXITY_API_KEY is not set")
     today = date.today().isoformat()
     raw_dir = os.environ.get("FIXTURE_RAW_DIR")
     pending: dict[str, tuple[dict, dict]] = {}  # name -> (payload, meta)
