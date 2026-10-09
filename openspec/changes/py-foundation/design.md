@@ -77,7 +77,7 @@ See `proposal.md` for motivation and `specs/` for requirements. State that shape
 
 1. Land Python scaffold and gates on `python-rewrite`; deploy nothing.
 2. Land client, catalog and storage with tests.
-3. Cut over: delete TypeScript, update docs, swap the pm2 entry, register the port in `~/SERVER_PORTS.md`.
+3. Cut over: delete TypeScript, swap the pm2 entry, register the port in `~/SERVER_PORTS.md`. Documentation (`README.md`, `CLAUDE.md`) follows Gate 2.
 4. You reconnect the MCP server in Claude Code; call `perplexity_models` and `perplexity_projects list`.
 5. Merge to `main` only after Gate 2 review and your acceptance. Rollback: restore the previous pm2 entry (not running today) and revert the merge.
 

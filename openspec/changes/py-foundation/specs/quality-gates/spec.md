@@ -10,7 +10,7 @@ Defines the checks that every change must pass before it is committed or merged,
 A commit SHALL be rejected when ruff linting reports an error, when ruff formatting would change any staged Python file, or when the test suite fails. Ruff SHALL apply safe auto-fixes and formatting before checking.
 
 #### Scenario: Lint error
-- **WHEN** a commit stages a file with an unused import that ruff cannot fix automatically
+- **WHEN** a commit stages a file containing an undefined name, which ruff cannot fix automatically
 - **THEN** the commit is rejected and the ruff message is shown
 
 #### Scenario: Failing test

@@ -84,11 +84,11 @@ The server SHALL read configuration from environment variables with the prefix `
 - **THEN** startup fails with a message naming that variable and the offending value
 
 ### Requirement: Secrets are never emitted
-The API key SHALL NOT appear in logs, error messages, tool results, `/health`, or any file the server writes, including partial forms such as a prefix.
+The API key SHALL NOT appear in logs, error messages, tool results, `/health`, or any file the server writes, and no string shaped like an API key (`pplx-` followed by key characters) SHALL appear in any of them either.
 
 #### Scenario: Upstream authentication failure
 - **WHEN** the Perplexity API rejects the key and the failure is logged and returned to the client
-- **THEN** neither the log nor the returned error contains any part of the key
+- **THEN** neither the log nor the returned error contains the key or any `pplx-`-shaped token
 
 ### Requirement: Graceful shutdown
 On SIGINT or SIGTERM, or on stdin reaching end of file in stdio mode, the server SHALL stop accepting new requests, let in-flight requests finish for at most 10 seconds, close its upstream HTTP client and database connections, and exit 0. The supervisor's kill timeout SHALL be longer than that bound.
