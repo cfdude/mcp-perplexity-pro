@@ -4,6 +4,17 @@ Money is an integer count of nano-USD (10^-9 USD) so sums are exact (design D2).
 float is converted through the text of its JSON value (``Decimal(repr(value))``), never by
 multiplying a binary float, and rounds half up.
 
+Caller sequence (design D6/D7; usage-recording "Recording order"). SQLite has ONE writer, and a
+write unit of work (``BEGIN IMMEDIATE``) holds its lock until it commits, so a tool must:
+
+1. validate the project name (pure, no database);
+2. resolve the project in a short write unit that COMMITS before the call;
+3. make the upstream call, holding NO write unit of work;
+4. call ``record_usage`` (its own unit of work) while holding no write unit on that engine: invoked
+   inside the caller's open one it waits the busy timeout for its own caller's lock, then returns
+   ``False`` and the event is lost;
+5. run the tool's own write unit last, so its rollback on failure never removes the event.
+
 Deciding whether an Agent response is recorded (and as what) is ``agent_response_status``'s job
 alone: every later epic calls it and never re-derives the rule.
 """
