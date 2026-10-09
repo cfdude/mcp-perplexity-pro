@@ -89,6 +89,11 @@ def migration_lock(data_dir: Path, timeout: float = LOCK_TIMEOUT) -> Iterator[No
         raise MigrationError(f"Cannot open migration lock file {lock_file}: {exc}") from exc
     deadline = time.monotonic() + timeout
     try:
+        try:
+            if os.fstat(fd).st_mode & 0o077:  # a lock file left loose by an earlier version
+                os.fchmod(fd, FILE_MODE)
+        except OSError as exc:
+            raise MigrationError(f"Cannot secure migration lock file {lock_file}: {exc}") from exc
         while True:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)

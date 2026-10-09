@@ -105,3 +105,27 @@ async def test_nothing_is_written_to_the_working_directory(make_settings, tmp_pa
         await engine.dispose()
     assert os.listdir(cwd) == []
     assert database_path(settings.data_dir).exists()
+
+
+async def test_wal_and_shm_files_are_owner_only(make_settings):
+    """SQLite derives the -wal and -shm files from the database file's mode; check, don't assume."""
+    from sqlalchemy import text
+
+    from mcp_perplexity_pro.storage.engine import create_engine_for
+    from mcp_perplexity_pro.storage.migrate import migrate
+
+    settings = make_settings()
+    migrate(settings)
+    engine = create_engine_for(settings)
+    try:
+        async with engine.begin() as conn:  # leaves a pooled connection, so the WAL files exist
+            await conn.execute(text("INSERT INTO projects (name) VALUES ('x')"))
+        db = settings.data_dir / "perplexity.db"
+        side_files = [
+            p for p in (db.with_name(db.name + x) for x in ("-wal", "-shm")) if p.exists()
+        ]
+        assert side_files, "expected -wal/-shm files while a connection is open"
+        for path in side_files:
+            assert _mode(path) == 0o600, f"{path.name} is {oct(_mode(path))}"
+    finally:
+        await engine.dispose()

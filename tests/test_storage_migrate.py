@@ -10,11 +10,13 @@ import time
 from pathlib import Path
 
 import pytest
+from alembic.script import ScriptDirectory
 
 from mcp_perplexity_pro.storage.engine import database_path
 from mcp_perplexity_pro.storage.migrate import (
     MIGRATIONS_DIR,
     MigrationError,
+    _config,
     backup_path,
     current_revision,
     downgrade,
@@ -108,9 +110,39 @@ def _add_project(db_file, name):
     conn.close()
 
 
-def test_head_is_the_four_digit_initial_revision():
-    assert head_revision() == "0001"
-    assert [p.name for p in (MIGRATIONS_DIR / "versions").glob("*.py")] == ["0001_initial.py"]
+def test_migration_files_are_named_contiguously_and_match_their_revision_ids():
+    """Every versions/*.py is ``NNNN_slug.py``, numbered 0001.. without gaps, chained in order."""
+    import re
+
+    files = sorted(p.name for p in (MIGRATIONS_DIR / "versions").glob("*.py"))
+    assert files, "no migrations found"
+    for name in files:
+        assert re.fullmatch(r"\d{4}_[a-z0-9_]+\.py", name), f"bad migration file name {name!r}"
+    numbers = [int(name[:4]) for name in files]
+    assert numbers == list(range(1, len(files) + 1)), f"not contiguous from 0001: {files}"
+
+    script = ScriptDirectory.from_config(_config(MIGRATIONS_DIR))
+    chain = list(reversed(list(script.walk_revisions())))  # base -> head
+    assert [r.revision for r in chain] == [f"{n:04d}" for n in numbers]
+    assert chain[0].down_revision is None
+    for previous, current in zip(chain, chain[1:], strict=False):
+        assert current.down_revision == previous.revision
+    assert head_revision() == f"{numbers[-1]:04d}"
+
+
+def test_every_migration_is_reversible_walking_head_to_base_and_back(make_settings):
+    settings = make_settings()
+    db = database_path(settings.data_dir)
+    migrate(settings)
+    head = head_revision()
+    assert current_revision(db) == head
+    while current_revision(db) is not None:  # one downgrade per revision proves each works
+        before = current_revision(db)
+        result = downgrade(settings)  # default: the latest revision
+        assert result.applied == (before,)
+    assert _tables(db) <= {"alembic_version"}  # nothing a migration made is left behind
+    migrate(settings)
+    assert current_revision(db) == head
 
 
 def test_fresh_database_reaches_head(make_settings):
@@ -274,34 +306,87 @@ import json, sys
 from pathlib import Path
 from mcp_perplexity_pro.settings import Settings
 from mcp_perplexity_pro.storage.migrate import migrate
-data_dir, scripts, gate = sys.argv[1:4]
+data_dir, scripts, ready, gate = sys.argv[1:5]
+Path(ready).touch()  # imports done: this process is ready to race
 while not Path(gate).exists():
     pass
 r = migrate(Settings(api_key="x", data_dir=data_dir), script_location=Path(scripts))
-print(json.dumps({"applied": list(r.applied), "to": r.to_revision}))
+print(json.dumps({"applied": list(r.applied), "to": r.to_revision,
+                  "backup": str(r.backup) if r.backup else None}))
 """
 
 
-def test_two_processes_starting_together_apply_exactly_once(tmp_path, scripts):
-    loc = scripts(**{"0002_slow": SLOW})
+def _wait_for_files(paths, timeout=30):
+    deadline = time.monotonic() + timeout
+    while not all(p.exists() for p in paths):
+        assert time.monotonic() < deadline, (
+            f"never appeared: {[p for p in paths if not p.exists()]}"
+        )
+        time.sleep(0.01)
+
+
+def test_two_processes_on_a_non_empty_database_apply_once_and_back_up_once(
+    tmp_path, scripts, make_settings
+):
+    """Both processes start from a revision-0001 database holding rows, so the backup path runs.
+
+    The lock is what makes the outcome one backup of the OLD schema: without it the second
+    process also backs up (same file, same temp name) while the first is mid-migration.
+    """
     data_dir = tmp_path / "shared"
+    settings = make_settings(data_dir=data_dir)
+    migrate(settings)  # the real migrations: revision 0001
+    db = database_path(data_dir)
+    for name in ("one", "two", "three"):
+        _add_project(db, name)
+    loc = scripts(**{"0002_slow": SLOW})
     gate = tmp_path / "go"
+    ready = [tmp_path / "ready-0", tmp_path / "ready-1"]
     procs = [
         subprocess.Popen(
-            [sys.executable, "-c", CHILD, str(data_dir), str(loc), str(gate)],
+            [sys.executable, "-c", CHILD, str(data_dir), str(loc), str(r), str(gate)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
-        for _ in range(2)
+        for r in ready
     ]
-    time.sleep(1.0)  # both interpreters are imported and spinning on the gate
+    _wait_for_files(ready)  # both interpreters are imported and spinning on the gate
     gate.touch()
     outputs = []
     for proc in procs:
         out, err = proc.communicate(timeout=60)
         assert proc.returncode == 0, err
         outputs.append(json.loads(out.strip().splitlines()[-1]))
-    assert sorted(len(o["applied"]) for o in outputs) == [0, 2]  # one applied, one waited
+
+    assert sorted(len(o["applied"]) for o in outputs) == [0, 1]  # exactly one applied 0002
     assert all(o["to"] == "0002" for o in outputs)
-    assert current_revision(database_path(data_dir)) == "0002"
+    assert sorted(o["backup"] is not None for o in outputs) == [False, True]  # one backup
+    assert current_revision(db) == "0002"
+
+    backup = backup_path(data_dir, "0001")
+    assert [o["backup"] for o in outputs if o["backup"]] == [str(backup)]
+    conn = sqlite3.connect(backup)
+    try:
+        assert conn.execute("PRAGMA integrity_check").fetchone() == ("ok",)
+        assert "notes" not in {
+            r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        assert conn.execute("SELECT version_num FROM alembic_version").fetchone() == ("0001",)
+        assert conn.execute("SELECT name FROM projects ORDER BY name").fetchall() == [
+            ("one",),
+            ("three",),
+            ("two",),
+        ]
+    finally:
+        conn.close()
+    assert not list(data_dir.glob("*.tmp"))  # no half-written backup left behind
+
+
+def test_an_existing_loose_lock_file_is_tightened_to_owner_only(tmp_path):
+    lock = tmp_path / "migrate.lock"
+    lock.write_bytes(b"")
+    lock.chmod(0o644)
+    with migration_lock(tmp_path):
+        assert oct(lock.stat().st_mode & 0o777) == "0o600"
+    assert oct(lock.stat().st_mode & 0o777) == "0o600"
