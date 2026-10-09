@@ -14,6 +14,7 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.storage.engine import StorageError
 from mcp_perplexity_pro.storage.models import Project
 
 DEFAULT_PROJECT = "default"
@@ -71,6 +72,11 @@ async def list_projects(session: AsyncSession) -> list[Project]:
 #   ``rows_retained``. Such a table must keep its own copy of the project name (a column the
 #   migration adds), because the reference is gone afterwards.
 #
+# Limits (a table that breaks one is REFUSED with a ``StorageError`` naming it, never half
+# handled): every foreign key to ``projects`` must be single-column; a table must give all its
+# keys to ``projects`` the same rule (one SET NULL plus one CASCADE would destroy the rows the
+# SET NULL key was meant to keep); a SET NULL column must be nullable.
+#
 # Neither case needs a change here. The delete rule is read with ``PRAGMA foreign_key_list``
 # because SQLAlchemy's inspector omits it on SQLite. Rows two hops away (a table whose foreign
 # key points at a project-scoped table, not at ``projects``) are handled by their own
@@ -99,21 +105,49 @@ def _scoped_tables(sync_conn: Connection) -> list[ScopedTable]:
         )
         if row[5]
     ]
-    found = []
+    found: list[ScopedTable] = []
     for table in list(names):
         # columns: id, seq, table, from, to, on_update, on_delete, match
         keys: dict[int, list] = {}
         for row in sync_conn.exec_driver_sql(f"PRAGMA foreign_key_list({_quote_sqlite(table)})"):
             keys.setdefault(row[0], []).append(row)
+        mine: list[ScopedTable] = []
         for rows in keys.values():
-            if len(rows) != 1 or rows[0][2].lower() != Project.__tablename__:
+            if rows[0][2].lower() != Project.__tablename__:
                 continue
+            if len(rows) != 1:
+                raise StorageError(
+                    f"Table {table!r} has a composite foreign key to projects, which project "
+                    "deletion cannot handle; give it a single-column key to projects.id."
+                )
             _, _, _, column, target, _, on_delete, _ = rows[0]
             # ``REFERENCES projects`` without a column means the parent's primary key.
             if (target is None and projects_pk != ["id"]) or target not in (None, "id"):
                 continue
-            found.append(ScopedTable(table, column, on_delete.upper() == "SET NULL"))
+            mine.append(ScopedTable(table, column, on_delete.upper() == "SET NULL"))
+        if len({t.retained for t in mine}) > 1:
+            raise StorageError(
+                f"Table {table!r} has foreign keys to projects with different delete rules "
+                "(SET NULL and CASCADE or no action); project deletion would destroy rows it "
+                "must retain. Give every key to projects the same rule."
+            )
+        for scoped in mine:
+            if scoped.retained and _is_not_null(sync_conn, table, scoped.column):
+                raise StorageError(
+                    f"Column {table}.{scoped.column} is NOT NULL but declared ON DELETE SET "
+                    "NULL, so detaching its rows on project deletion would fail; make the "
+                    "column nullable."
+                )
+        found.extend(mine)
     return found
+
+
+def _is_not_null(sync_conn: Connection, table: str, column: str) -> bool:
+    # columns: cid, name, type, notnull, dflt_value, pk
+    return any(
+        row[1] == column and row[3]
+        for row in sync_conn.exec_driver_sql(f"PRAGMA table_info({_quote_sqlite(table)})")
+    )
 
 
 async def delete_project(session: AsyncSession, name: str) -> tuple[int, int] | None:

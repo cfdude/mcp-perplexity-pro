@@ -10,6 +10,7 @@ SQLAlchemy's inspector.
 import pytest
 from sqlalchemy import inspect, text
 
+from mcp_perplexity_pro.storage.engine import StorageError
 from mcp_perplexity_pro.storage.projects import (
     _scoped_tables,
     delete_project,
@@ -189,3 +190,66 @@ async def test_a_table_name_with_a_double_quote_is_introspected_and_detached(sto
     assert [(t.table, t.retained) for t in found if t.table not in KNOWN] == [('weird"name', True)]
     async with unit_of_work(storage_engine) as session:
         assert await delete_project(session, "alpha") == (0, 1)
+
+
+# --- shapes the convention cannot serve are refused, naming the table -------------------------
+
+
+async def make(engine, ddl):
+    async with engine.begin() as conn:
+        await conn.execute(text(ddl))
+
+
+async def test_a_table_mixing_set_null_and_cascade_keys_to_projects_is_refused(storage_engine):
+    await make(
+        storage_engine,
+        "CREATE TABLE t_mixed (id INTEGER PRIMARY KEY, "
+        "kept INTEGER REFERENCES projects(id) ON DELETE SET NULL, "
+        "lost INTEGER REFERENCES projects(id) ON DELETE CASCADE)",
+    )
+    async with unit_of_work(storage_engine) as session:
+        await get_or_create_project(session, "alpha")
+    async with storage_engine.connect() as conn:
+        with pytest.raises(StorageError, match="t_mixed.*SET NULL.*CASCADE"):
+            await conn.run_sync(_scoped_tables)
+    with pytest.raises(StorageError, match="t_mixed"):
+        async with unit_of_work(storage_engine) as session:
+            await delete_project(session, "alpha")
+    assert await count(storage_engine, "projects") == 1  # nothing was removed
+
+
+async def test_two_keys_with_the_same_rule_are_still_fine(storage_engine):
+    await make(
+        storage_engine,
+        "CREATE TABLE t_twin (id INTEGER PRIMARY KEY, "
+        "a INTEGER REFERENCES projects(id) ON DELETE SET NULL, "
+        "b INTEGER REFERENCES projects(id) ON DELETE SET NULL)",
+    )
+    async with storage_engine.connect() as conn:
+        found = await conn.run_sync(_scoped_tables)
+    assert {(t.column, t.retained) for t in found if t.table == "t_twin"} == {
+        ("a", True),
+        ("b", True),
+    }
+
+
+async def test_a_composite_key_to_projects_is_refused(storage_engine):
+    await make(
+        storage_engine,
+        "CREATE TABLE t_composite (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER, "
+        "FOREIGN KEY (a, b) REFERENCES projects(id, name) ON DELETE SET NULL)",
+    )
+    async with storage_engine.connect() as conn:
+        with pytest.raises(StorageError, match="t_composite.*composite"):
+            await conn.run_sync(_scoped_tables)
+
+
+async def test_a_not_null_column_with_set_null_is_refused(storage_engine):
+    await make(
+        storage_engine,
+        "CREATE TABLE t_notnull (id INTEGER PRIMARY KEY, "
+        "project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE SET NULL)",
+    )
+    async with storage_engine.connect() as conn:
+        with pytest.raises(StorageError, match="t_notnull.*NOT NULL"):
+            await conn.run_sync(_scoped_tables)
