@@ -7,18 +7,16 @@ stdout is reserved for MCP protocol messages in stdio mode, so nothing here ever
 from __future__ import annotations
 
 import logging
-import re
 import sys
 import traceback
 from collections.abc import Iterable
 from typing import Any
 
-REDACTED = "[redacted]"
-HANDLER_NAME = "mcp_perplexity_pro"
+from mcp_perplexity_pro.redaction import REDACTED, redact_text
 
-# ``pplx-`` followed by key characters. Shorter than the 20-character shape the fixture scan
-# uses, so a truncated key is caught as well.
-_KEY_SHAPED = re.compile(r"pplx-[A-Za-z0-9_-]{8,}")
+__all__ = ["REDACTED", "RedactingFilter", "configure_logging", "log_payload", "redact_text"]
+
+HANDLER_NAME = "mcp_perplexity_pro"
 
 # Attributes every LogRecord has; anything else was passed through ``extra=``.
 _STANDARD_ATTRS = frozenset(logging.LogRecord("", 0, "", 0, "", None, None).__dict__) | {
@@ -26,13 +24,6 @@ _STANDARD_ATTRS = frozenset(logging.LogRecord("", 0, "", 0, "", None, None).__di
     "asctime",
     "taskName",
 }
-
-
-def redact_text(text: str, secrets: Iterable[str] = ()) -> str:
-    """Remove each configured secret and any key-shaped token from ``text``."""
-    for secret in sorted((s for s in secrets if s), key=len, reverse=True):
-        text = text.replace(secret, REDACTED)
-    return _KEY_SHAPED.sub(REDACTED, text)
 
 
 class RedactingFilter(logging.Filter):
