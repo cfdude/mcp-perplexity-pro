@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 from alembic.script import ScriptDirectory
+from migration_support import real_chain
 
 from mcp_perplexity_pro.storage.engine import database_path
 from mcp_perplexity_pro.storage.migrate import (
@@ -25,12 +26,17 @@ from mcp_perplexity_pro.storage.migrate import (
     migration_lock,
 )
 
+# The scratch revisions sit one past the REAL head, computed, so adding a real revision never
+# makes them collide with it.
+HEAD = head_revision()
+NXT = f"{int(HEAD) + 1:04d}"
+
 ADD_NOTES = """
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0003"
-down_revision = "0002"
+revision = "{revision}"
+down_revision = "{down_revision}"
 branch_labels = None
 depends_on = None
 
@@ -47,8 +53,8 @@ BOOM = """
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0003"
-down_revision = "0002"
+revision = "{revision}"
+down_revision = "{down_revision}"
 branch_labels = None
 depends_on = None
 
@@ -64,6 +70,12 @@ def downgrade():
 """
 
 SLOW = ADD_NOTES.replace("def upgrade():", "def upgrade():\n    import time\n    time.sleep(0.7)")
+
+
+def scratch(slug: str, template: str) -> dict[str, str]:
+    """``scripts(**scratch("add_notes", ADD_NOTES))``: a scratch revision one past the real head."""
+    source = template.replace("{revision}", NXT).replace("{down_revision}", HEAD)
+    return {f"{NXT}_{slug}": source}
 
 
 @pytest.fixture
@@ -98,7 +110,12 @@ def _snapshot(db_file):
 def _tables(db_file):
     conn = sqlite3.connect(db_file)
     try:
-        return {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        # sqlite_sequence outlives a dropped AUTOINCREMENT table; it is SQLite's, not ours
+        return {
+            r[0]
+            for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            if not r[0].startswith("sqlite_")
+        }
     finally:
         conn.close()
 
@@ -149,9 +166,9 @@ def test_fresh_database_reaches_head(make_settings):
     settings = make_settings()
     result = migrate(settings)
     db = database_path(settings.data_dir)
-    assert result.applied == ("0001", "0002")
+    assert result.applied == tuple(real_chain())
     assert result.from_revision is None
-    assert current_revision(db) == head_revision() == "0002"
+    assert current_revision(db) == head_revision() == HEAD
     assert "projects" in _tables(db)
     assert result.backup is None  # nothing to back up
 
@@ -176,21 +193,21 @@ def test_projects_name_is_case_sensitive_unique(make_settings):
 
 def test_upgrade_downgrade_upgrade_round_trip(make_settings, scripts):
     settings = make_settings()
-    loc = scripts(**{"0003_add_notes": ADD_NOTES})
+    loc = scripts(**scratch("add_notes", ADD_NOTES))
     migrate(settings, script_location=loc)
     db = database_path(settings.data_dir)
     _add_project(db, "kept")
     assert {"projects", "notes"} <= _tables(db)
 
     result = downgrade(settings, script_location=loc)
-    assert result.applied == ("0003",)
-    assert current_revision(db) == "0002"
+    assert result.applied == (NXT,)
+    assert current_revision(db) == HEAD
     assert "notes" not in _tables(db)
     kept = sqlite3.connect(db).execute("SELECT name FROM projects").fetchall()
     assert kept == [("kept",)]  # earlier data intact
 
     migrate(settings, script_location=loc)
-    assert current_revision(db) == "0003"
+    assert current_revision(db) == NXT
     assert "notes" in _tables(db)
 
 
@@ -205,15 +222,15 @@ def test_initial_migration_downgrade_drops_projects(make_settings):
 
 def test_database_from_the_future_is_refused_unchanged(make_settings, scripts):
     settings = make_settings()
-    migrate(settings, script_location=scripts(**{"0003_add_notes": ADD_NOTES}))
+    migrate(settings, script_location=scripts(**scratch("add_notes", ADD_NOTES)))
     db = database_path(settings.data_dir)
     _add_project(db, "precious")
     before = _snapshot(db)
 
     with pytest.raises(MigrationError) as err:
-        migrate(settings)  # the real code only knows 0002
-    assert "0003" in str(err.value)
-    assert "0002" in str(err.value)
+        migrate(settings)  # the real code only knows the real head
+    assert NXT in str(err.value)
+    assert HEAD in str(err.value)
     assert _snapshot(db) == before
     assert not list(settings.data_dir.glob("backup-*"))
 
@@ -226,12 +243,12 @@ def test_failing_migration_keeps_schema_rows_and_names_itself(make_settings, scr
     before = _snapshot(db)
 
     with pytest.raises(MigrationError) as err:
-        migrate(settings, script_location=scripts(**{"0003_boom": BOOM}))
-    assert "0003_boom.py" in str(err.value)
+        migrate(settings, script_location=scripts(**scratch("boom", BOOM)))
+    assert f"{NXT}_boom.py" in str(err.value)
     assert "boom in migration" in str(err.value)
     assert _snapshot(db) == before
-    assert current_revision(db) == "0002"
-    backup = backup_path(settings.data_dir, "0002")
+    assert current_revision(db) == HEAD
+    backup = backup_path(settings.data_dir, HEAD)
     assert backup.exists()
     old = sqlite3.connect(backup).execute("SELECT name FROM projects").fetchall()
     assert old == [("precious",)]
@@ -239,8 +256,8 @@ def test_failing_migration_keeps_schema_rows_and_names_itself(make_settings, scr
 
 def test_failing_migration_on_a_fresh_database_leaves_it_empty(make_settings, scripts):
     settings = make_settings()
-    loc = scripts(**{"0003_boom": BOOM})
-    with pytest.raises(MigrationError, match=r"0003_boom\.py"):
+    loc = scripts(**scratch("boom", BOOM))
+    with pytest.raises(MigrationError, match=rf"{NXT}_boom\.py"):
         migrate(settings, script_location=loc)
     db = database_path(settings.data_dir)
     assert _tables(db) == set()  # 0001 rolled back too: one transaction
@@ -253,10 +270,10 @@ def test_backup_exists_after_upgrading_a_non_empty_database(make_settings, scrip
     db = database_path(settings.data_dir)
     _add_project(db, "before-upgrade")
     # an earlier backup of the same revision is replaced, not kept
-    backup_path(settings.data_dir, "0002").write_bytes(b"stale garbage")
+    backup_path(settings.data_dir, HEAD).write_bytes(b"stale garbage")
 
-    result = migrate(settings, script_location=scripts(**{"0003_add_notes": ADD_NOTES}))
-    backup = backup_path(settings.data_dir, "0002")
+    result = migrate(settings, script_location=scripts(**scratch("add_notes", ADD_NOTES)))
+    backup = backup_path(settings.data_dir, HEAD)
     assert result.backup == backup
     conn = sqlite3.connect(backup)
     try:
@@ -328,18 +345,18 @@ def _wait_for_files(paths, timeout=30):
 def test_two_processes_on_a_non_empty_database_apply_once_and_back_up_once(
     tmp_path, scripts, make_settings
 ):
-    """Both processes start from a revision-0002 database holding rows, so the backup path runs.
+    """Both processes start from a database at the real head holding rows, so the backup path runs.
 
     The lock is what makes the outcome one backup of the OLD schema: without it the second
     process also backs up (same file, same temp name) while the first is mid-migration.
     """
     data_dir = tmp_path / "shared"
     settings = make_settings(data_dir=data_dir)
-    migrate(settings)  # the real migrations: revision 0002
+    migrate(settings)  # the real migrations: the real head
     db = database_path(data_dir)
     for name in ("one", "two", "three"):
         _add_project(db, name)
-    loc = scripts(**{"0003_slow": SLOW})
+    loc = scripts(**scratch("slow", SLOW))
     gate = tmp_path / "go"
     ready = [tmp_path / "ready-0", tmp_path / "ready-1"]
     procs = [
@@ -359,12 +376,12 @@ def test_two_processes_on_a_non_empty_database_apply_once_and_back_up_once(
         assert proc.returncode == 0, err
         outputs.append(json.loads(out.strip().splitlines()[-1]))
 
-    assert sorted(len(o["applied"]) for o in outputs) == [0, 1]  # exactly one applied 0003
-    assert all(o["to"] == "0003" for o in outputs)
+    assert sorted(len(o["applied"]) for o in outputs) == [0, 1]  # exactly one applied the new one
+    assert all(o["to"] == NXT for o in outputs)
     assert sorted(o["backup"] is not None for o in outputs) == [False, True]  # one backup
-    assert current_revision(db) == "0003"
+    assert current_revision(db) == NXT
 
-    backup = backup_path(data_dir, "0002")
+    backup = backup_path(data_dir, HEAD)
     assert [o["backup"] for o in outputs if o["backup"]] == [str(backup)]
     conn = sqlite3.connect(backup)
     try:
@@ -372,7 +389,7 @@ def test_two_processes_on_a_non_empty_database_apply_once_and_back_up_once(
         assert "notes" not in {
             r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
         }
-        assert conn.execute("SELECT version_num FROM alembic_version").fetchone() == ("0002",)
+        assert conn.execute("SELECT version_num FROM alembic_version").fetchone() == (HEAD,)
         assert conn.execute("SELECT name FROM projects ORDER BY name").fetchall() == [
             ("one",),
             ("three",),

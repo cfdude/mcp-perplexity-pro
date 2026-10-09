@@ -75,3 +75,47 @@ class UsageEvent(Base):
     price_table: Mapped[str | None] = mapped_column(String())
     tool_calls_json: Mapped[str | None] = mapped_column(Text())
     usage_json: Mapped[str | None] = mapped_column(Text())
+
+
+class Chat(Base):
+    """A conversation owned by a project (agent-chat spec; design D6).
+
+    An ordinary project-scoped table (``ON DELETE CASCADE``): ``delete_project`` removes and
+    counts it, and its messages go by cascade, uncounted. ``sqlite_autoincrement`` keeps the id
+    of a deleted chat from being reused, so a stale ``chat_id`` can never append to a different
+    conversation. Times are naive UTC (``usage.utcnow``). The schema is built by migration
+    ``0003``; this model must match it (a test compares the two).
+    """
+
+    __tablename__ = "chats"
+    __table_args__ = (
+        Index("ix_chats_project_id_updated_at", "project_id", "updated_at"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    title: Mapped[str] = mapped_column(String())
+    created_at: Mapped[datetime] = mapped_column(DateTime())
+    updated_at: Mapped[datetime] = mapped_column(DateTime())
+
+
+class ChatMessage(Base):
+    """One message of a chat; an assistant message also keeps what the API returned.
+
+    ``response_id`` of the last assistant message is the continuation anchor (design D6).
+    ``sources_json`` is a JSON list of the run's sources (assistant messages only).
+    """
+
+    __tablename__ = "chat_messages"
+    __table_args__ = (Index("ix_chat_messages_chat_id_id", "chat_id", "id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id", ondelete="CASCADE"))
+    role: Mapped[str] = mapped_column(String())  # user | assistant
+    content: Mapped[str] = mapped_column(Text())
+    created_at: Mapped[datetime] = mapped_column(DateTime())
+    response_id: Mapped[str | None] = mapped_column(String())
+    model: Mapped[str | None] = mapped_column(String())
+    preset: Mapped[str | None] = mapped_column(String())
+    sources_json: Mapped[str | None] = mapped_column(Text())
