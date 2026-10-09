@@ -9,7 +9,9 @@
   working through the cache.
 * The documented preset table is a constant kept apart from the live list.
 
-The clock is injected (monotonic seconds) so tests never sleep.
+The clock is injected (wall-clock seconds, ``time.time``: a monotonic clock stops while the
+machine sleeps, so a cache would never age across a laptop's lid-closed night) so tests never
+sleep.
 """
 
 from __future__ import annotations
@@ -63,6 +65,9 @@ class PresetSection(BaseModel):
     note: str
 
 
+# Sources: https://docs.perplexity.ai/docs/agent-api/presets.md ("current preset values"), read
+# 2026-10-06 and re-read 2026-10-09. Only ``fast`` was also observed live (2026-10-09, resolved to
+# openai/gpt-6-luna); the other four are documentation-only (design.md, "Preset sources").
 PRESETS = PresetSection(
     as_of="2026-10-06",
     presets=[
@@ -121,7 +126,7 @@ class Catalog:
         *,
         ttl: float,
         max_stale: float,
-        clock: Callable[[], float] = time.monotonic,
+        clock: Callable[[], float] = time.time,
     ) -> None:
         self._client = client
         self._ttl = ttl

@@ -83,7 +83,10 @@ def head_revision(script_location: Path | None = None) -> str | None:
 def migration_lock(data_dir: Path, timeout: float = LOCK_TIMEOUT) -> Iterator[None]:
     """Exclusive cross-process lock; waits up to ``timeout`` seconds then raises."""
     lock_file = Path(data_dir) / LOCK_FILENAME
-    fd = os.open(lock_file, os.O_RDWR | os.O_CREAT, FILE_MODE)
+    try:
+        fd = os.open(lock_file, os.O_RDWR | os.O_CREAT, FILE_MODE)
+    except OSError as exc:
+        raise MigrationError(f"Cannot open migration lock file {lock_file}: {exc}") from exc
     deadline = time.monotonic() + timeout
     try:
         while True:
@@ -104,32 +107,42 @@ def migration_lock(data_dir: Path, timeout: float = LOCK_TIMEOUT) -> Iterator[No
 
 def current_revision(db_file: Path) -> str | None:
     """The revision recorded in the database, or ``None`` for an unmigrated one."""
-    conn = sqlite3.connect(db_file)
     try:
-        has_table = conn.execute(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='alembic_version'"
-        ).fetchone()
-        if not has_table:
-            return None
-        row = conn.execute("SELECT version_num FROM alembic_version").fetchone()
-        return row[0] if row else None
-    finally:
-        conn.close()
+        conn = sqlite3.connect(db_file)
+        try:
+            has_table = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='alembic_version'"
+            ).fetchone()
+            if not has_table:
+                return None
+            row = conn.execute("SELECT version_num FROM alembic_version").fetchone()
+            return row[0] if row else None
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        raise MigrationError(
+            f"Cannot read database {db_file}: {exc}. Is it a SQLite database? Nothing was changed."
+        ) from exc
 
 
 def _backup(db_file: Path, data_dir: Path, revision: str) -> Path:
     target = backup_path(data_dir, revision)
     tmp = target.with_suffix(".db.tmp")
-    tmp.unlink(missing_ok=True)
-    os.close(os.open(tmp, os.O_RDWR | os.O_CREAT | os.O_TRUNC, FILE_MODE))
-    src = sqlite3.connect(db_file)
-    dst = sqlite3.connect(tmp)
     try:
-        src.backup(dst)
-    finally:
-        dst.close()
-        src.close()
-    os.replace(tmp, target)  # replaces an existing backup of this revision
+        tmp.unlink(missing_ok=True)
+        os.close(os.open(tmp, os.O_RDWR | os.O_CREAT | os.O_TRUNC, FILE_MODE))
+        src = sqlite3.connect(db_file)
+        dst = sqlite3.connect(tmp)
+        try:
+            src.backup(dst)
+        finally:
+            dst.close()
+            src.close()
+        os.replace(tmp, target)  # replaces an existing backup of this revision
+    except (sqlite3.Error, OSError) as exc:
+        raise MigrationError(
+            f"Cannot write backup {target} of {db_file}: {exc}. The database was not changed."
+        ) from exc
     return target
 
 

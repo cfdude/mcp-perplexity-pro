@@ -210,3 +210,21 @@ def test_nothing_is_written_outside_the_data_directory(tmp_path, transport):
     assert _tree(tmp_path / "cwd") == []
     assert _tree(tmp_path / "tmp") == []
     assert (tmp_path / "data" / "perplexity.db").exists()  # the one place it does write
+
+
+@pytest.mark.parametrize("sig", SIGNALS)
+def test_stdio_signal_still_exits_zero_when_a_close_raises(tmp_path, sig):
+    """A failing aclose() must not leave the process alive: os._exit(0) always runs."""
+    proc = start_fixture_server(tmp_path, "stdio", FIXTURE_FAIL_CLOSE="1")
+    tail = StderrTail(proc)
+    stdio_initialize(proc)
+    started = time.monotonic()
+    proc.send_signal(sig)
+    code = proc.wait(timeout=5)
+    stderr = tail.text()
+    assert code == 0, f"exit status {code}\n{stderr}"
+    assert time.monotonic() - started < 5
+    assert "close exploded" in stderr  # the failure was logged ...
+    assert "test-dummy-api-key" not in stderr  # ... redacted
+    # the second resource was still closed (the first close was the one that raised)
+    assert proc.close_log.read_text().split() == ["engine.dispose"]

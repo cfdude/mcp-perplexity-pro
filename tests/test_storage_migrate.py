@@ -237,6 +237,29 @@ def test_backup_exists_after_upgrading_a_non_empty_database(make_settings, scrip
     assert oct(backup.stat().st_mode & 0o777) == "0o600"
 
 
+def test_current_revision_of_a_non_database_file_is_a_migration_error(tmp_path):
+    bad = tmp_path / "perplexity.db"
+    bad.write_text("not a database\n" * 100)
+    with pytest.raises(MigrationError, match="perplexity.db"):
+        current_revision(bad)
+
+
+def test_unusable_lock_file_is_a_migration_error(tmp_path):
+    with pytest.raises(MigrationError, match="migrate.lock"):
+        with migration_lock(tmp_path / "missing-dir"):
+            pass
+
+
+def test_unwritable_backup_target_is_a_migration_error(make_settings, tmp_path):
+    from mcp_perplexity_pro.storage.migrate import _backup
+
+    settings = make_settings()
+    migrate(settings)
+    db_file = database_path(settings.data_dir)
+    with pytest.raises(MigrationError, match="backup"):
+        _backup(db_file, tmp_path / "no-such-dir", "0001")
+
+
 def test_lock_wait_is_bounded(tmp_path):
     with migration_lock(tmp_path, timeout=5):
         start = time.monotonic()

@@ -46,6 +46,20 @@ if os.environ.get("FIXTURE_CLOSE_LOG"):
     _record_real_closure(os.environ["FIXTURE_CLOSE_LOG"])
 
 
+def _make_close_fail():
+    """Make the HTTP client's aclose() raise, naming the API key so redaction is exercised."""
+    key = settings.api_key.get_secret_value()
+
+    async def aclose():
+        raise RuntimeError(f"close exploded (key {key})")
+
+    server.app.http.aclose = aclose
+
+
+if os.environ.get("FIXTURE_FAIL_CLOSE"):
+    _make_close_fail()
+
+
 @server.tool
 async def log_all() -> str:
     """Log once at every level."""

@@ -148,11 +148,11 @@ def build_server(
     http: httpx2.AsyncClient,
     engine: AsyncEngine,
     *,
-    clock: Callable[[], float] = time.monotonic,
+    clock: Callable[[], float] = time.time,
 ) -> FastMCP:
     """Build the server around caller-owned ``http`` and ``engine``.
 
-    ``clock`` (monotonic seconds) drives the model-catalog cache; tests inject a fake one.
+    ``clock`` (wall-clock seconds) drives the model-catalog cache; tests inject a fake one.
 
     ``server.app`` is the ``AppContext`` (so ``__main__.run`` can close its members) and
     ``server.in_flight`` the ``InFlightMiddleware`` (so stdio shutdown can wait for calls).

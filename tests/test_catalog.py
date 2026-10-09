@@ -350,3 +350,15 @@ async def test_the_schema_carries_descriptions(server):
     assert set(props) == {"provider", "refresh"}
     assert all(p.get("description") for p in props.values())
     assert tool.description
+
+
+def test_default_clock_is_wall_clock_so_the_cache_ages_while_the_machine_sleeps():
+    """time.monotonic does not advance during sleep on macOS; the TTL must use time.time."""
+    import inspect
+    import time
+
+    from mcp_perplexity_pro.catalog import Catalog
+    from mcp_perplexity_pro.server import build_server
+
+    assert inspect.signature(Catalog.__init__).parameters["clock"].default is time.time
+    assert inspect.signature(build_server).parameters["clock"].default is time.time

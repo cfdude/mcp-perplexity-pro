@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("mcp_perplexity_pro")
 
 HTTP_PATH = "/mcp"
+LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
 GRACEFUL_TIMEOUT = 10  # seconds in-flight requests may take after a stop signal
 STDOUT_FLUSH_GRACE = 0.3  # seconds for a finished call's reply to reach stdout before exit
 
@@ -56,6 +57,12 @@ def bootstrap() -> tuple[FastMCP, Settings]:
     except SettingsError as exc:
         raise _fail(str(exc)) from None
     configure_logging(settings.log_level, [settings.api_key.get_secret_value()])
+    if settings.host not in LOOPBACK_HOSTS:
+        logger.warning(
+            "PERPLEXITY_HOST is %s, not loopback: the HTTP endpoints are unauthenticated and "
+            "reachable by anything that can reach this address",
+            settings.host,
+        )
 
     # 2. Data directory and migrations. A failure aborts before anything listens.
     try:
@@ -173,10 +180,17 @@ async def _run_stdio(server: FastMCP, graceful_timeout: float) -> None:
     stopping: list[asyncio.Task[None]] = []  # holds the task so it is not garbage collected
 
     async def stop_on_signal() -> None:
-        await _drain_and_close(server, graceful_timeout)
-        sys.stdout.flush()
-        sys.stderr.flush()
-        os._exit(0)  # a blocked stdin reader thread would otherwise hang the exit
+        try:
+            await _drain_and_close(server, graceful_timeout)
+        except BaseException:
+            # A failing close must not keep the process alive: the exit below always runs.
+            logger.exception("shutdown cleanup failed; exiting anyway")
+        finally:
+            try:
+                sys.stdout.flush()
+                sys.stderr.flush()
+            finally:
+                os._exit(0)  # a blocked stdin reader thread would otherwise hang the exit
 
     def on_signal() -> None:
         if not stopping:

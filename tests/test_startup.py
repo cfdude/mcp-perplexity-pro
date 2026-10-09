@@ -11,7 +11,7 @@ from server_support import free_port, server_env
 from mcp_perplexity_pro import __main__ as entry
 
 
-def run_main(tmp_path, *args, drop=(), **extra_env):
+def run_main(tmp_path, *args, drop=(), stdin=None, **extra_env):
     env = server_env(tmp_path, **extra_env)
     for name in drop:
         env.pop(name, None)
@@ -20,6 +20,7 @@ def run_main(tmp_path, *args, drop=(), **extra_env):
         env=env,
         capture_output=True,
         text=True,
+        input=stdin,
         timeout=60,
     )
 
@@ -56,6 +57,41 @@ def test_failing_migration_exits_nonzero_before_any_listener(tmp_path):
 
     with pytest.raises(ConnectionRefusedError), socket.create_connection(("127.0.0.1", port), 1):
         pass
+
+
+def test_corrupt_database_file_fails_clearly_before_any_listener(tmp_path):
+    data = tmp_path / "data"
+    data.mkdir(mode=0o700)
+    (data / "perplexity.db").write_text("this is not a sqlite database, just text\n" * 50)
+    port = free_port()
+    result = run_main(tmp_path, "--transport", "http", PERPLEXITY_PORT=str(port))
+    assert result.returncode != 0
+    assert "Traceback" not in result.stderr
+    assert "perplexity.db" in result.stderr  # names the file
+    assert "Application startup complete" not in result.stderr
+    errors = [line for line in result.stderr.splitlines() if "startup failed" in line]
+    assert len(errors) == 1  # one clear line
+    import socket
+
+    with pytest.raises(ConnectionRefusedError), socket.create_connection(("127.0.0.1", port), 1):
+        pass
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1", "::1", "localhost"])
+def test_loopback_host_logs_no_exposure_warning(tmp_path, host):
+    result = run_main(tmp_path, "--transport", "stdio", PERPLEXITY_HOST=host, stdin="")
+    assert result.returncode == 0, result.stderr
+    assert "unauthenticated" not in result.stderr
+
+
+@pytest.mark.parametrize("host", ["0.0.0.0", "192.168.1.20"])
+def test_non_loopback_host_warns_that_endpoints_are_unauthenticated(tmp_path, host):
+    # stdio never binds, so this starts and exits on EOF; only the startup warning matters
+    result = run_main(tmp_path, "--transport", "stdio", PERPLEXITY_HOST=host, stdin="")
+    assert result.returncode == 0, result.stderr
+    warning = [line for line in result.stderr.splitlines() if "unauthenticated" in line]
+    assert len(warning) == 1
+    assert "WARNING" in warning[0] and host in warning[0]
 
 
 @pytest.fixture
