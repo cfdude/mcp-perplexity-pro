@@ -183,7 +183,7 @@ re-raise. A pure example of the whole pattern is `tests/usage_support.py:costed_
   with none stores the mapping with cost source `none`. Pass `body.get("usage")`, never
   `body["usage"]`. If the response carries no cost, build the usage with `computed_usage(cost,
   **facts)` from `pricing.py`, which stamps `PRICES_AS_OF`.
-- **It never raises** (it catches `Exception`, logs with secrets removed, returns `False`). `True`
+- **It never raises an error** (a cancellation is re-raised after the shielded write lands; it catches `Exception`, logs with secrets removed, returns `False`). `True`
   means stored. `False` also covers an unknown `api` or `status`, and a duplicate: one `ok` row per
   `(api, request_id)`, enforced by a partial unique index, so a retry of the same response is not
   counted twice. Errors have no such key and always store.

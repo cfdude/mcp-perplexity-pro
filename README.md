@@ -407,9 +407,12 @@ exists for a migration that succeeded but turned out wrong. Restoring is manual:
 
 **Downgrading drops spend history.** Revision `0002` creates the `usage_events` table. A downgrade
 of `0002` (migration code only; the server never downgrades by itself) drops that table and every
-usage event in it. The automatic backup is taken before the upgrade, so it holds revision `0001`
-only: it has no usage rows and cannot bring them back. Copy `perplexity.db` somewhere safe first if
-you need the history.
+usage event in it. A downgrade first writes `backup-0002.db` (the backup is named for the revision
+being left), and that file holds the `usage_events` table and its rows: restoring it with the steps
+above brings the history back. Another downgrade of the same revision replaces that file, so copy
+it somewhere safe first. The upgrade backup, `backup-0001.db`, holds no usage rows, and a fresh
+install has no backup at all, because only a database that already has a recorded revision is
+backed up.
 
 Use your own `PERPLEXITY_DATA_DIR` in the paths if you set one. Both server processes (a pm2 HTTP
 instance and a stdio instance) may share one data directory.

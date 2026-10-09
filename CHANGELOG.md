@@ -14,16 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Data is kept in one SQLite file under `~/.perplexity-pro/`. Nothing is imported from the old `.perplexity/` folders.
 - Tool failures carry a stable `category` (eleven values) in structured content.
 - The HTTP endpoint is still `http://localhost:8102/mcp`; it listens on 127.0.0.1 only and is stateless.
+- `perplexity_projects` `delete` now keeps spend history: usage events are detached from the deleted project and stay reportable by its name, and the result reports them as `rows_retained` next to `rows_removed`. The confirmation message says so.
 
 ### Added
 
 - A `usage_events` table (migration `0002`) that keeps one row per costed upstream call: tool, API, model, preset, status, latency, token counts, cost in integer nano-USD, where the cost came from (`reported`, `computed` or `none`) and the project name as written. Downgrading `0002` drops the table and its history.
-- A best-effort usage recorder (`record_usage`) for the Agent, Search, Embeddings and Decisions tools to call after each upstream call. It never raises, stores one row per successful response, removes secrets before storing, and survives a rollback of the tool's own writes. `pricing.py` holds Perplexity's documented prices (dated 2026-10-09) for calls whose response carries no cost. No tool records usage yet; recording arrives with each later tool.
+- A best-effort usage recorder (`record_usage`) for the Agent, Search, Embeddings and Decisions tools to call after each upstream call. It never raises an error (a cancellation is re-raised after the write lands), stores one row per successful response, removes secrets before storing, and survives a rollback of the tool's own writes. `pricing.py` holds Perplexity's documented prices (dated 2026-10-09) for calls whose response carries no cost. No tool records usage yet; recording arrives with each later tool.
 - `perplexity_usage`: a read-only spend report with exact totals over every matching call plus one grouping (`tool`, `api`, `model`, `project` or `day`), filtered by project and UTC date range. Costs are exact decimal USD strings and a lower bound: `calls_cost_unknown` counts calls whose cost is not known.
-
-### Changed (usage)
-
-- `perplexity_projects` `delete` now keeps spend history: usage events are detached from the deleted project and stay reportable by its name, and the result reports them as `rows_retained` next to `rows_removed`. The confirmation message says so.
 
 ## [1.3.1] - 2026-01-26
 
