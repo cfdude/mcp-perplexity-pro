@@ -5,10 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MCP server for the Perplexity API, written in Python (FastMCP, SQLAlchemy 2.0 async, SQLite,
 Alembic). Version 2.0.0 replaced the TypeScript 1.x server, which is deleted (git history keeps
 it): Perplexity retired the Sonar endpoints (`403 chat_completions_not_available`), so there was
-nothing to port. Only two tools exist, `perplexity_models` and `perplexity_projects`; the Agent,
-Search, Embeddings and Decisions tools come in later OpenSpec changes. Read `README.md` for the
-user-facing behavior and `openspec/changes/py-foundation/` (`design.md` especially) for why things
-are the way they are.
+nothing to port. Only three tools exist, `perplexity_models`, `perplexity_projects` and the
+read-only `perplexity_usage`; the Agent, Search, Embeddings and Decisions tools come in later
+OpenSpec changes, and each must record its costed calls (see "How to record usage"). No tool
+records usage yet. Read `README.md` for the user-facing behavior and `openspec/changes/archive/2026-10-09-py-foundation/`
+and `openspec/changes/py-usage-log/` (`design.md` especially) for why things are the way they are.
 
 ## Development Commands
 
@@ -17,7 +18,7 @@ Python 3.12+, uv. Never use `pip`, bare `python` or a hand-made venv.
 ```bash
 uv sync                              # install from uv.lock (runtime + dev)
 uv run mcp-perplexity-pro --transport stdio    # or: --transport http (127.0.0.1:8102/mcp)
-uv run pytest                        # offline suite, about 25 s
+uv run pytest                        # offline suite, about 40 s
 uv run pytest tests/test_catalog.py -k stale   # one file / one test
 uv run ruff check .                  # lint
 uv run ruff format --check .         # formatting (use `uv run ruff format .` to fix)
@@ -50,7 +51,10 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 | `catalog.py` | Model list TTL cache, stale-on-failure rule, the dated `PRESETS` table |
 | `models/` | Tolerant pydantic payload models (`extra="allow"`, optional fields) |
 | `tools/` | One module per tool, each `register(server)`; `tools/__init__.py:register_tools` calls them |
-| `storage/` | `engine.py` (data dir, engine, PRAGMAs), `session.py` (`unit_of_work`), `migrate.py` (runner), `models.py` (ORM), `projects.py` (name rules, get-or-create, delete) |
+| `usage.py` | The recorder `record_usage` (best effort, never raises), money helpers (`to_nano`, `format_usd`, nano-USD ints), `Usage`/`ToolCallUsage`, `usage_from_agent_response`, `computed_usage`, `agent_response_status`, and the `_PARSERS` registry (one entry per `api`) |
+| `pricing.py` | Documented Perplexity prices as integer nano-USD (`PRICES_AS_OF`, `PRICES_SOURCE`) and the `*_cost_nano` helpers returning `None` when unknown; pinned to `tests/fixtures/pricing_page.json` |
+| `usage_report.py` | `usage_report`: read-only SQL aggregation behind `perplexity_usage` (totals over all matches, one grouping chosen from a fixed whitelist, bound parameters only) |
+| `storage/` | `engine.py` (data dir, engine, PRAGMAs), `session.py` (`unit_of_work`), `migrate.py` (runner), `models.py` (ORM: `Project`, `UsageEvent`), `projects.py` (name rules, get-or-create, delete, the introspection of scoped and retained tables) |
 | `migrations/` | Alembic env and `versions/NNNN_slug.py`; inside the package so the wheel ships them |
 | `log_setup.py`, `redaction.py` | stderr-only logging; secrets and `pplx-` tokens removed from every record |
 
@@ -86,7 +90,10 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
    masked to `internal_error`.
 7. **Do not use `from __future__ import annotations` in a tool module**: FastMCP reads annotations
    at registration time and `Context` must be a real class there.
-7. Test it offline through `build_server` with a `MockTransport` client (see `tests/test_tool_errors.py`,
+8. A tool that makes a costed upstream call records it: follow "How to record usage" below, in
+   that order. A read-only tool (`perplexity_models`, `perplexity_usage`) opens
+   `unit_of_work(engine, write=False)` and never creates a project.
+9. Test it offline through `build_server` with a `MockTransport` client (see `tests/test_tool_errors.py`,
    `tests/test_projects_tool.py`); every tool schema costs context in every session, so keep the
    total near the design target of about nine tools.
 
@@ -118,6 +125,15 @@ Adding a category means updating the spec, `errors.py`, the README table and the
   a database newer than the code. Restoring a backup is a manual procedure (README), not code.
 - Project-scoped tables: give the table a column with a foreign key to `projects.id` declared
   `ON DELETE CASCADE`. `delete_project` finds such tables by introspection, so it needs no edit.
+- **Retained tables** (records that must outlive their project; `usage_events` is the first):
+  declare the key `ON DELETE SET NULL` (nullable column) AND add the table's own name column (such
+  as `project_name`) holding the project name as written, because the reference is gone after
+  deletion. `delete_project` detaches those rows with `UPDATE ... SET <col> = NULL` and reports
+  them in `rows_retained`; it needs no edit either. Limits, each refused with a `StorageError`
+  naming the table (never half handled, see `storage/projects.py:_scoped_tables`): no table may mix
+  SET NULL and CASCADE keys to `projects`; no composite foreign key to `projects`; no `NOT NULL`
+  column declared SET NULL. A table two hops away is handled by its own `ON DELETE` rule and is in
+  neither count.
 - Every stored record belongs to a project; `get_or_create_project` is the only resolver.
 
 ### SQLAlchemy session convention (design D10)
@@ -136,6 +152,49 @@ The house convention proposed in `design.md` D10 and implemented in `storage/ses
 - **Get-or-create is an upsert** (`INSERT ... ON CONFLICT DO NOTHING`, then select), so concurrent
   first creates cannot violate a unique constraint.
 - `expire_on_commit=False`, so returned ORM objects stay readable after the block.
+
+## How to record usage
+
+Every costed upstream call (Agent, Search, Embeddings, Decisions) stores one `usage_events` row
+through `usage.record_usage` (contract: `openspec/changes/py-usage-log/design.md` D6 to D8). SQLite
+has one writer and a write `unit_of_work` holds its lock until it commits, so the order matters:
+
+1. `validate_project_name(project or DEFAULT_PROJECT)` (pure, no database).
+2. Resolve the project with `get_or_create_project` in a short write unit that **commits before
+   the call**. A project created here survives a later failure of the call (an empty project).
+3. Make the upstream call holding **no write unit**. A write unit open across an LLM call blocks
+   every other writer for its length.
+4. `await record_usage(engine, tool=..., api=..., status=..., usage=body.get("usage"), model=...,
+   preset=..., request_id=body.get("id"), project=name, latency_ms=..., secrets=(api_key,))`
+   while holding no write unit on that engine. Inside the caller's open one it waits the busy
+   timeout for its own caller's lock, fails and returns `False`, and the event is lost.
+5. Run the tool's own write unit **last**, so its rollback on failure cannot remove the event.
+
+For a failed call (a `PerplexityError`), record with `status=exc.category` and no usage, then
+re-raise. A pure example of the whole pattern is `tests/usage_support.py:costed_call`.
+
+- **Status.** For an Agent response call `agent_response_status(body)`: `"ok"` records it,
+  `"unexpected_response"` records it with that status and whatever usage it reports, and `None`
+  (queued or in progress, no usage yet) means **do not record**: an `ok` row for a pending response
+  would take the dedupe key of the real terminal one. Never re-derive that rule.
+- **Pass the raw mapping.** `usage` accepts a parsed `Usage`, the raw usage mapping or `None`; the
+  recorder parses a mapping itself, inside its guarded block, with the parser registered in
+  `_PARSERS` for `api`. A new API adds its parser there after probing the live response; an API
+  with none stores the mapping with cost source `none`. Pass `body.get("usage")`, never
+  `body["usage"]`. If the response carries no cost, build the usage with `computed_usage(cost,
+  **facts)` from `pricing.py`, which stamps `PRICES_AS_OF`.
+- **It never raises** (it catches `Exception`, logs with secrets removed, returns `False`). `True`
+  means stored. `False` also covers an unknown `api` or `status`, and a duplicate: one `ok` row per
+  `(api, request_id)`, enforced by a partial unique index, so a retry of the same response is not
+  counted twice. Errors have no such key and always store.
+- **Cancellation.** The write is shielded, so a cancel arriving after the upstream call returns
+  still lets the event land. A call cancelled before the response is not recorded and may still
+  have been billed.
+- **Redaction.** Pass the API key in `secrets`. Every text field and `usage_json` is redacted
+  before storage (`redaction.redact_text`); the documented `pplx-embed-*` and `pplx-decider-*`
+  model ids are exempt so they are stored as written. A project name is validated, never redacted.
+- **Money** is integer nano-USD (10^-9 USD), never a float; a cost is `reported`, `computed` or
+  `none` (unknown, stored as 0). `perplexity_usage` states the sum as a lower bound.
 
 ## Testing
 
@@ -189,15 +248,16 @@ The house convention proposed in `design.md` D10 and implemented in `storage/ses
 - **The TypeScript sources and their packaging and container files are deleted** on the `python-rewrite` branch. Do not
   propose converting anything back or reviving the 1.x tool names. The Sonar models and
   `/chat/completions` endpoints are retired by Perplexity and must not be called.
-- Not in this change: Agent/Search/Embeddings/Decisions tools, usage logging, routing, PyPI
-  publishing (the package only has to build and run via `uvx --from .`).
+- Not built yet: Agent/Search/Embeddings/Decisions tools (and therefore real usage recording),
+  routing, PyPI publishing (the package only has to build and run via `uvx --from .`).
 
 ## Workflow: where things live
 
 - `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
   generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
   (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). The current change is
-  `py-foundation`. `docs/lessons/` holds process lessons with their enforcement points.
+  `py-usage-log` (`py-foundation` is the archived base). `docs/lessons/` holds process lessons
+  with their enforcement points.
 - Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
   task's `tasks.md` checkbox ticked in the same commit.
 
