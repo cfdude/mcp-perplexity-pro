@@ -25,6 +25,15 @@ CATEGORIES = (
     "unexpected_response",
 )
 
+# Categories that never come from an HTTP status: raised by local validation, storage and the
+# server's own contract. Together with CATEGORIES they are the closed eleven-value vocabulary.
+TOOL_CATEGORIES = (
+    "confirmation_required",
+    "storage_busy",
+    "internal_error",
+)
+ALL_CATEGORIES = CATEGORIES + TOOL_CATEGORIES
+
 _STATUS_CATEGORY = {
     400: "invalid_request",
     422: "invalid_request",
@@ -36,7 +45,11 @@ _STATUS_CATEGORY = {
 
 
 class PerplexityError(ToolError):
-    """A failure talking to the Perplexity API, in exactly one category.
+    """A tool failure in exactly one category (any of ``ALL_CATEGORIES``).
+
+    Raised for upstream API failures (the eight ``CATEGORIES``, usually with ``status``) and for
+    local ones such as an invalid project name (``invalid_request``) or a busy database
+    (``storage_busy``), which carry no status.
 
     ``message`` is sanitized on construction (key-shaped tokens and any ``secrets`` removed),
     so no upstream text is stored or returned unredacted.
@@ -52,7 +65,7 @@ class PerplexityError(ToolError):
         api_code: int | str | None = None,
         secrets: tuple[str, ...] = (),
     ) -> None:
-        if category not in CATEGORIES:
+        if category not in ALL_CATEGORIES:
             raise ValueError(f"unknown error category {category!r}")
         super().__init__(redact_text(message, secrets))
         self.category = category

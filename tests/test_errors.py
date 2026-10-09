@@ -114,3 +114,24 @@ def test_non_status_errors_have_no_status():
 def test_unknown_category_is_rejected():
     with pytest.raises(ValueError):
         PerplexityError("nope", "x")
+
+
+def test_tool_level_categories_extend_the_client_vocabulary():
+    from mcp_perplexity_pro.errors import ALL_CATEGORIES, TOOL_CATEGORIES
+
+    assert TOOL_CATEGORIES == ("confirmation_required", "storage_busy", "internal_error")
+    assert ALL_CATEGORIES == CATEGORIES + TOOL_CATEGORIES
+    assert len(ALL_CATEGORIES) == 11
+
+
+@pytest.mark.parametrize("category", ["confirmation_required", "storage_busy", "internal_error"])
+def test_local_error_carries_tool_category_without_status(category):
+    err = PerplexityError(category, "local failure")
+    assert err.category == category
+    assert err.status is None
+    assert isinstance(err, ToolError)
+
+
+def test_unknown_category_still_rejected():
+    with pytest.raises(ValueError):
+        PerplexityError("nope", "x")

@@ -70,3 +70,29 @@ def make_settings(dummy_api_key, monkeypatch, tmp_path):
         return Settings(**values)
 
     return factory
+
+
+@pytest.fixture
+async def storage_engine(make_settings):
+    """A migrated async engine on a temp-file database, plus a TEST-ONLY child table.
+
+    ``notes`` references ``projects`` with ON DELETE CASCADE; it exists only in tests, standing
+    in for the project-scoped tables later changes add.
+    """
+    from sqlalchemy import text
+
+    from mcp_perplexity_pro.storage.engine import create_engine_for
+    from mcp_perplexity_pro.storage.migrate import migrate
+
+    settings = make_settings()
+    migrate(settings)
+    engine = create_engine_for(settings)
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(
+                "CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT NOT NULL, "
+                "project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE)"
+            )
+        )
+    yield engine
+    await engine.dispose()
