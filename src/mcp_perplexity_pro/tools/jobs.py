@@ -34,6 +34,7 @@ from mcp_perplexity_pro.storage import jobs as job_store
 from mcp_perplexity_pro.storage.models import ResearchJob
 from mcp_perplexity_pro.storage.projects import find_project, validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
+from mcp_perplexity_pro.usage import failure_summary
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,10 @@ def _sources(job: ResearchJob) -> list[Source]:
         return []  # a hand-edited row must not break reading the job
 
 
+def _secrets(app: Any) -> tuple[str, ...]:
+    return (app.settings.api_key.get_secret_value(),)
+
+
 def _bad(option: str, message: str) -> PerplexityError:
     return PerplexityError("invalid_request", f"{option}: {message}")
 
@@ -219,6 +224,16 @@ async def _status(app: Any, *, project: str | None, job_id: int | None) -> tuple
     return result, _state_text(job_id, obs.state, obs, progress)
 
 
+def _why_it_ended(job: ResearchJob) -> str:
+    """What the stored row says about why a run ended badly (both already redacted and cut)."""
+    parts = []
+    if job.incomplete_reason:
+        parts.append(f"Reason: {job.incomplete_reason}.")
+    if job.error_text and job.error_text != job.incomplete_reason:
+        parts.append(f"Error: {job.error_text}")
+    return " ".join(parts)
+
+
 async def _result(app: Any, *, project: str | None, job_id: int | None) -> tuple[JobsResult, str]:
     job_id = _need_job_id(job_id, "result")
     name = validate_project_name(project or DEFAULT_PROJECT)
@@ -233,6 +248,9 @@ async def _result(app: Any, *, project: str | None, job_id: int | None) -> tuple
         message = WHY_NO_ANSWER.get(state, f"The run ended as {state} with no answer.")
     else:
         message = f"The run is not finished (status {state}); try again later."
+    if final and state != "completed":
+        why = _why_it_ended(job)
+        message = f"{message} {why}" if message and why else message or why
     sources = _sources(job) if final else []
     usage = stored_usage(job) if final else None
     progress = _progress(obs)
@@ -321,7 +339,9 @@ async def _cancel_locked(
                     )
             except Exception as exc:  # the run IS being cancelled; do not hide that
                 logger.warning(
-                    "cancel: job %s cancel_requested_at not saved", job_id, exc_info=True
+                    "cancel: job %s cancel_requested_at not saved: %s",
+                    job_id,
+                    failure_summary(exc, _secrets(app)),
                 )
                 warnings.append(_not_saved(error_category(exc)))
     if state == "cancelling":
@@ -374,7 +394,11 @@ async def _refresh(app: Any, pid: int, name: str) -> tuple[list[str], int]:
         except Exception as exc:
             category = error_category(exc)
             if category == "internal_error":
-                logger.exception("refresh: observing job %s failed", job_id)
+                logger.error(
+                    "refresh: observing job %s failed: %s",
+                    job_id,
+                    failure_summary(exc, _secrets(app)),
+                )
             warnings.append(f"Job {job_id} was not refreshed ({category}).")
             failed += 1
             continue

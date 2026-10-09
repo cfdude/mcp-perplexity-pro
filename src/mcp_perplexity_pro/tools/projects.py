@@ -9,6 +9,7 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.storage.jobs import count_running
 from mcp_perplexity_pro.storage.projects import (
     delete_project,
     list_projects,
@@ -44,15 +45,34 @@ class ProjectsResult(BaseModel):
             "(delete only; null for list)"
         ),
     ] = None
+    running_jobs: Annotated[
+        int | None,
+        Field(
+            description="Research jobs of the project that had not finished when it was deleted "
+            "(delete only): their spend is never recorded and the provider keeps billing them "
+            "until they end"
+        ),
+    ] = None
+
+
+def _running_warning(count: int) -> str:
+    return (
+        f"{count} research job(s) in this project are still running at the provider. Deleting "
+        "the project drops their records, their spend will never be recorded, and the provider "
+        "keeps billing them until they end: cancel them first with perplexity_jobs cancel."
+    )
 
 
 def render(result: ProjectsResult) -> str:
     if result.action == "delete":
-        return (
+        text = (
             f"Deleted project {result.project!r}: {result.rows_removed} row(s) removed, "
             f"{result.rows_retained} retained record(s) kept (spend history stays reportable "
             "by project name)."
         )
+        if result.running_jobs:
+            text += f" Warning: {_running_warning(result.running_jobs)}"
+        return text
     projects = result.projects or []
     if not projects:
         return "No projects yet."
@@ -102,17 +122,26 @@ def register(server: FastMCP) -> None:
                 raise PerplexityError("invalid_request", "delete needs a 'project' name.")
             validate_project_name(project)
             if confirm is not True:
+                async with unit_of_work(engine, write=False) as session:
+                    running = await count_running(session, project)
                 raise PerplexityError(
                     "confirmation_required",
                     f"Deleting project {project!r} removes the project and its stored records and "
-                    "cannot be undone; spend history is kept. Call again with confirm=true.",
+                    "cannot be undone; spend history is kept."
+                    + (f" {_running_warning(running)}" if running else "")
+                    + " Call again with confirm=true.",
                 )
             async with unit_of_work(engine) as session:
+                running = await count_running(session, project)
                 outcome = await delete_project(session, project)
                 if outcome is None:
                     raise PerplexityError("not_found", f"No project named {project!r}.")
             removed, retained = outcome
             result = ProjectsResult(
-                action="delete", project=project, rows_removed=removed, rows_retained=retained
+                action="delete",
+                project=project,
+                rows_removed=removed,
+                rows_retained=retained,
+                running_jobs=running,
             )
         return ToolResult(content=render(result), structured_content=result.model_dump(mode="json"))

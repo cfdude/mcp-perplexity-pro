@@ -591,6 +591,15 @@ def _store_failure(exc: BaseException, secrets: Iterable[str]) -> str:
     return _failure_text(exc, secrets)
 
 
+def failure_summary(exc: BaseException, secrets: Iterable[str] = ()) -> str:
+    """One line saying why a write failed, for a log that may sit beside stored content: the
+    exception type and, for a SQLAlchemy error, the driver's own message. Never the traceback
+    or ``str(exc)``, which render ``[parameters: ...]`` (every bound value: chat text, answers)."""
+    if isinstance(exc, SQLAlchemyError):
+        return _store_failure(exc, secrets)
+    return redact_text(type(exc).__name__, secrets)
+
+
 async def _store(engine: AsyncEngine, values: dict[str, object], secrets: tuple[str, ...]) -> bool:
     """Insert one event in its own unit of work. Never raises (``Exception``)."""
     try:

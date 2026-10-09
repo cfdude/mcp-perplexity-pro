@@ -67,6 +67,22 @@ def test_exception_text_and_traceback_are_redacted(capsys):
     assert TOKEN not in captured.err
 
 
+def test_a_database_errors_bound_values_are_not_written(capsys):
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.exc import SQLAlchemyError
+
+    configure_logging("INFO", [KEY])
+    stored = "STORED-" + "ANSWER-TEXT"  # built here so no source line in a traceback holds it
+    try:
+        with create_engine("sqlite://").begin() as conn:
+            conn.execute(text("INSERT INTO nope VALUES (:v)"), {"v": stored})
+    except SQLAlchemyError:
+        logging.getLogger("fastmcp.server.server").exception("Error calling tool 'x'")
+    err = capsys.readouterr().err
+    assert "no such table" in err and "Error calling tool" in err
+    assert stored not in err and "parameters: omitted" in err
+
+
 def test_extra_string_attributes_are_redacted(capsys):
     configure_logging("INFO", [KEY])
     logging.getLogger("t").info("msg", extra={"detail": f"k={KEY}"})

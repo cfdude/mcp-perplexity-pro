@@ -7,6 +7,7 @@ stdout is reserved for MCP protocol messages in stdio mode, so nothing here ever
 from __future__ import annotations
 
 import logging
+import re
 import sys
 import traceback
 from collections.abc import Iterable
@@ -25,6 +26,12 @@ _STANDARD_ATTRS = frozenset(logging.LogRecord("", 0, "", 0, "", None, None).__di
 }
 
 
+# SQLAlchemy appends ``[parameters: ...]`` (every bound value: stored answers, chat text) to the
+# text of a database error, which a traceback then repeats. It ends before the "Background on this
+# error" line, or at the end of the text.
+_BOUND_VALUES = re.compile(r"\[parameters: .*?\](?=\n\(Background on this error|\s*\Z)", re.DOTALL)
+
+
 class RedactingFilter(logging.Filter):
     """Redact the message, its arguments, exception text and string extras of every record."""
 
@@ -33,7 +40,7 @@ class RedactingFilter(logging.Filter):
         self._secrets = tuple(s for s in secrets if s)
 
     def _redact(self, text: str) -> str:
-        return redact_text(text, self._secrets)
+        return _BOUND_VALUES.sub("[parameters: omitted]", redact_text(text, self._secrets))
 
     def filter(self, record: logging.LogRecord) -> bool:
         try:

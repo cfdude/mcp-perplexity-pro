@@ -47,6 +47,7 @@ from mcp_perplexity_pro.storage.chats import (
 from mcp_perplexity_pro.storage.projects import find_project, validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
 from mcp_perplexity_pro.tools.ask import GENERIC_400, build_result, render_answer
+from mcp_perplexity_pro.usage import failure_summary
 
 logger = logging.getLogger(__name__)
 
@@ -285,8 +286,10 @@ async def _send(
         if exc.category == "not_found":
             raise
         warnings.append(_not_saved(exc.category))
-    except Exception:
-        logger.exception("chat write failed after a completed upstream call")
+    except Exception as exc:  # no exc_info: a database error renders every bound value
+        logger.error(
+            "chat write failed after a completed upstream call: %s", failure_summary(exc, secrets)
+        )
         warnings.append(_not_saved("internal_error"))
 
     answer.warnings.extend(warnings)  # the readable text and the structured result agree

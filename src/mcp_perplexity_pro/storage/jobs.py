@@ -14,7 +14,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mcp_perplexity_pro.errors import PerplexityError
-from mcp_perplexity_pro.storage.models import ResearchJob
+from mcp_perplexity_pro.storage.models import Project, ResearchJob
 
 # A stored status in this set is final: nothing is fetched or recorded for the job again.
 # ``lost`` is this server's own verdict; the rest are the API's terminal vocabulary.
@@ -25,6 +25,22 @@ def is_final(job: ResearchJob) -> bool:
     """True when the job is observed for good: a final status, or its usage is already
     recorded (a state only a crash or a hand edit leaves on a non-final status)."""
     return job.status in FINAL_STATUSES or bool(job.usage_recorded)
+
+
+async def count_running(session: AsyncSession, project_name: str) -> int:
+    """How many of a project's jobs are not final (read by name: 0 for an absent project)."""
+    return (
+        await session.execute(
+            select(func.count())
+            .select_from(ResearchJob)
+            .join(Project, Project.id == ResearchJob.project_id)
+            .where(
+                Project.name == project_name,
+                ResearchJob.status.not_in(FINAL_STATUSES),
+                ResearchJob.usage_recorded == 0,
+            )
+        )
+    ).scalar_one()
 
 
 def _gone(job_id: int | None = None) -> PerplexityError:
