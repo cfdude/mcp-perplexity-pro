@@ -245,6 +245,49 @@ async def test_a_non_terminal_row_whose_usage_is_already_recorded_is_not_fetched
     assert w.requests == [] and await w.count("usage_events") == 0
 
 
+async def test_a_cancelled_run_whose_row_update_failed_is_not_recorded_again(research_world):
+    # cancelled/failed/incomplete events are ``unexpected_response``, which the partial unique
+    # index (status = 'ok') does not cover: only the observation's own check stops a duplicate
+    w = await research_world(routes(get=[CANCELLED]))
+    await seed_job(w, response_id=CANCELLED_ID)
+    await veto_updates(w)
+    with pytest.raises(Exception, match="vetoed"):
+        await observe(w)
+    assert await w.count("usage_events") == 1
+    await allow_updates(w)
+    await observe(w)
+    assert await w.count("usage_events") == 1  # not a second one
+    row = await job(w)
+    assert row["status"] == "cancelled" and row["usage_recorded"] == 1
+
+
+async def test_a_client_cancel_between_the_event_and_the_row_update_still_writes_the_row(
+    research_world, monkeypatch
+):
+    from mcp_perplexity_pro.storage import jobs as job_store
+
+    w = await research_world(routes(get=[CANCELLED]))
+    await seed_job(w, response_id=CANCELLED_ID)
+    in_update = asyncio.Event()
+    real = job_store.update_job
+
+    async def slow_update(session, project_id, job_id, values):
+        in_update.set()
+        await asyncio.sleep(0.2)  # the client cancels the call while the row is being written
+        return await real(session, project_id, job_id, values)
+
+    monkeypatch.setattr(job_store, "update_job", slow_update)
+    task = asyncio.create_task(observe(w))
+    await asyncio.wait_for(in_update.wait(), 5)
+    assert await w.count("usage_events") == 1  # the event exists already
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    row = await job(w)  # the cancel was re-raised only after the row was written
+    assert row["status"] == "cancelled" and row["usage_recorded"] == 1
+    assert await w.count("usage_events") == 1
+
+
 # --- the pure rules --------------------------------------------------------------------------
 
 

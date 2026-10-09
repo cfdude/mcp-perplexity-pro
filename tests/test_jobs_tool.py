@@ -274,6 +274,31 @@ async def test_a_second_404_too_early_leaves_the_job_running(research_world):
     assert (await job(w, jid))["status"] == "in_progress"
 
 
+async def test_a_first_404_on_an_old_job_never_marks_it_lost(research_world):
+    # the lost rule needs a SECOND not_found: age alone must not decide it
+    clock = Clock()
+    w = await research_world(routes(get=[(GET_404, 404)]), clock=clock)
+    jid = await seed_job(w)
+    clock.advance(minutes=11)
+    out = (await w.call(TOOL, action="status", job_id=jid)).structured_content
+    assert out["status"] == "in_progress" and out["warnings"]
+    row = await job(w, jid)
+    assert row["status"] == "in_progress" and row["missing_since"] is not None
+    assert await w.count("usage_events") == 0
+
+
+async def test_every_404_records_when_the_job_was_last_checked(research_world):
+    clock = Clock()
+    w = await research_world(routes(get=[(GET_404, 404)]), clock=clock)
+    jid = await seed_job(w)
+    clock.advance(minutes=1)
+    await w.call(TOOL, action="status", job_id=jid)
+    assert (await job(w, jid))["last_checked_at"] == "2026-10-09 12:01:00.000000"
+    clock.advance(minutes=1)  # a second 404, too early to be lost
+    await w.call(TOOL, action="status", job_id=jid)
+    assert (await job(w, jid))["last_checked_at"] == "2026-10-09 12:02:00.000000"
+
+
 async def test_a_successful_fetch_clears_the_missing_record(research_world):
     clock = Clock()
     w = await research_world(routes(get=[(GET_404, 404), IN_PROGRESS]), clock=clock)
@@ -302,6 +327,22 @@ async def test_a_plain_list_is_newest_first_honors_limit_and_makes_no_request(re
     assert [j["job_id"] for j in cut["jobs"]] == [third, running]
     assert cut["jobs_total"] == 3 and cut["truncated"] is True
     await no_upstream(w)
+
+
+async def test_the_list_says_a_usage_event_was_attempted_and_n_a_for_a_lost_job(research_world):
+    from mcp_perplexity_pro.tools.jobs import JobInfo
+
+    w = await research_world()
+    await seed_job(w, status="completed", usage_recorded=1, response_id="resp_a-1")
+    await seed_job(w, response_id="resp_b-1")
+    await seed_job(w, status="lost", response_id="resp_c-1")
+    text_out = (await w.call(TOOL, action="list")).content[0].text
+    lines = {line.split(".")[0]: line for line in text_out.splitlines()[1:]}
+    assert "usage event attempted" in lines["1"] and "usage recorded" not in text_out
+    assert "usage not yet attempted" in lines["2"]
+    assert "usage n/a" in lines["3"] and "lost" in lines["3"]
+    field = JobInfo.model_json_schema()["properties"]["usage_recorded"]["description"]
+    assert "attempted" in field and "usage report" not in field
 
 
 async def test_refresh_settles_a_finished_run_into_one_event(research_world):

@@ -124,6 +124,27 @@ async def test_an_unknown_run_is_not_cancelled_and_stays_running_with_a_warning(
     assert await w.count("usage_events") == 0
 
 
+async def test_two_concurrent_cancels_of_one_job_send_exactly_one_request(research_world):
+    import asyncio
+
+    from research_support import serve
+
+    async def responder(request, n):
+        if request.method == "GET":
+            return serve(IN_PROGRESS)
+        await asyncio.sleep(0.2)  # the window in which a second cancel would also pass the check
+        return serve(CANCEL_ACCEPTED)
+
+    w = await research_world(responder)
+    jid = await seed_job(w, response_id=CANCELLED_ID)
+    first, second = await asyncio.gather(cancel(w, jid), cancel(w, jid))
+    assert [r for r in request_log(w) if r.startswith("POST")] == [POST]
+    assert {first.structured_content["status"], second.structured_content["status"]} == {
+        "cancelling"
+    }
+    assert (await job(w, jid))["cancel_requested_at"] is not None
+
+
 async def test_a_local_failure_after_an_accepted_cancel_still_returns_cancelling(research_world):
     w = await research_world(routes(get=[IN_PROGRESS], cancel=[CANCEL_ACCEPTED]))
     jid = await seed_job(w, response_id=CANCELLED_ID)

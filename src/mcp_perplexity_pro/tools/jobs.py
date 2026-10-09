@@ -24,6 +24,7 @@ from mcp_perplexity_pro.agent import (
     UsageSummary,
     error_category,
     observe_job,
+    observe_job_locked,
     search_progress,
     stored_usage,
 )
@@ -64,7 +65,12 @@ class JobInfo(BaseModel):
         datetime | None, Field(description="When a cancel was accepted (UTC)")
     ] = None
     usage_recorded: Annotated[
-        bool, Field(description="Whether its spend is in the usage report yet")
+        bool,
+        Field(
+            description="Whether a usage event was attempted for this run (best effort: a "
+            "failed write is only logged; perplexity_usage shows what was stored). Always false "
+            "for a lost job, whose spend cannot be recorded"
+        ),
     ]
 
 
@@ -175,7 +181,13 @@ def _line(job: JobInfo) -> str:
         f"{job.job_id}. [{job.status}] {job.depth} {job.query_excerpt!r} "
         f"(started {job.started_at:%Y-%m-%d %H:%M} UTC"
         + (f", finished {job.finished_at:%H:%M}" if job.finished_at else "")
-        + (", usage recorded" if job.usage_recorded else ", usage not yet recorded")
+        + (
+            ", usage n/a (lost)"
+            if job.status == "lost"
+            else ", usage event attempted"
+            if job.usage_recorded
+            else ", usage not yet attempted"
+        )
         + ")"
     )
 
@@ -272,16 +284,13 @@ def _not_saved(category: str) -> str:
     )
 
 
-async def _cancel(app: Any, *, project: str | None, job_id: int | None) -> tuple[JobsResult, str]:
-    """Read first, then cancel at most once (design D9). A run is cancelled only when a fetch
-    shows it running and no cancel is already pending; everything else is reported as found."""
-    job_id = _need_job_id(job_id, "cancel")
-    name = validate_project_name(project or DEFAULT_PROJECT)
-    pid, _ = await _find(app, name, job_id)
+async def _cancel_locked(
+    app: Any, pid: int, name: str, job_id: int
+) -> tuple[Observation, ResearchJob, str, list[str], str | None]:
     # The fetch comes first, always: the API answers a cancel of an unknown run with the same
     # 400 as a cancel of a finished one, and a repeated cancel's fetch is where a cancel that
     # has since completed is observed (and recorded).
-    obs = await observe_job(app, project_id=pid, project=name, job_id=job_id)
+    obs = await observe_job_locked(app, project_id=pid, project=name, job_id=job_id)
     job, state, warnings = obs.job, obs.state, list(obs.warnings)
     message: str | None = None
     if job_store.is_final(job) or obs.run is None:
@@ -294,7 +303,7 @@ async def _cancel(app: Any, *, project: str | None, job_id: int | None) -> tuple
         except PerplexityError as exc:
             if not _already_terminal(exc):
                 raise
-            again = await observe_job(app, project_id=pid, project=name, job_id=job_id)
+            again = await observe_job_locked(app, project_id=pid, project=name, job_id=job_id)
             job, state = again.job, again.state
             warnings.extend(again.warnings)
             if not job_store.is_final(job):
@@ -319,6 +328,20 @@ async def _cancel(app: Any, *, project: str | None, job_id: int | None) -> tuple
             "The cancel was accepted. The run turns cancelled after a few more polls: call "
             "status to see it and to record its spend."
         )
+    return obs, job, state, warnings, message
+
+
+async def _cancel(app: Any, *, project: str | None, job_id: int | None) -> tuple[JobsResult, str]:
+    """Read first, then cancel at most once (design D9). A run is cancelled only when a fetch
+    shows it running and no cancel is already pending; everything else is reported as found."""
+    job_id = _need_job_id(job_id, "cancel")
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    pid, _ = await _find(app, name, job_id)
+    # The decision (is a cancel pending?), the request and the write that records it are one
+    # critical section per job: two concurrent cancels must not both pass the check and both POST.
+    # The observations inside it are the lock-free variant (the lock is not reentrant).
+    async with app.job_locks.hold(job_id):
+        obs, job, state, warnings, message = await _cancel_locked(app, pid, name, job_id)
     result = JobsResult(
         action="cancel",
         project=name,
@@ -432,11 +455,11 @@ def register(server: FastMCP) -> None:
 
         status, result and cancel fetch a job that is not finished at most once and then store
         what it shows; a finished job is served from the local database with no request. The
-        first call that sees a run finished records its cost as spend, once: list with refresh
-        true settles up to 10 running jobs, and a run nobody observes is never recorded. A run
-        the provider no longer knows becomes lost after a second not-found at least 10 minutes
-        after submit, and its spend cannot be recorded. Actions never create a project: list in
-        an absent project is empty, the others fail with not_found."""
+        first call that sees a run finished attempts to record its cost as spend, once: list
+        with refresh true settles up to 10 running jobs, and a run nobody observes is never
+        recorded. A run the provider no longer knows becomes lost after a second not-found at
+        least 10 minutes after submit, and its spend cannot be recorded. Actions never create a
+        project: list in an absent project is empty, the others fail with not_found."""
         if action not in ACTIONS:
             raise _bad("action", f"must be one of {', '.join(ACTIONS)}.")
         app = ctx.lifespan_context

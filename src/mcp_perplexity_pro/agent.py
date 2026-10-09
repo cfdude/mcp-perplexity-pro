@@ -13,6 +13,7 @@ call.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import copy
 import json
 import logging
@@ -25,12 +26,13 @@ from datetime import date, datetime, timedelta
 from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
 from mcp_perplexity_pro.storage import jobs as job_store
-from mcp_perplexity_pro.storage.models import ResearchJob
+from mcp_perplexity_pro.storage.models import ResearchJob, UsageEvent
 from mcp_perplexity_pro.storage.projects import (
     DEFAULT_PROJECT,
     get_or_create_project,
@@ -722,9 +724,37 @@ class Observation:
     warnings: list[str] = field(default_factory=list)
 
 
-async def _write_job(app: Any, project_id: int, job_id: int, values: dict[str, Any]) -> ResearchJob:
+async def _write_job_unit(
+    app: Any, project_id: int, job_id: int, values: dict[str, Any]
+) -> ResearchJob:
     async with unit_of_work(app.engine) as session:  # its own unit; nothing else shares it
         return await job_store.update_job(session, project_id, job_id, values)
+
+
+async def _write_job(app: Any, project_id: int, job_id: int, values: dict[str, Any]) -> ResearchJob:
+    """Write the row, shielded from cancellation of the calling task like the recorder: once the
+    event is stored, a client cancel must not leave the row unwritten (it is re-raised only after
+    the write finished)."""
+    write = asyncio.ensure_future(_write_job_unit(app, project_id, job_id, values))
+    try:
+        return await asyncio.shield(write)
+    except asyncio.CancelledError:
+        with contextlib.suppress(Exception, asyncio.CancelledError):
+            await asyncio.shield(write)
+        raise
+
+
+async def _event_exists(app: Any, response_id: str) -> bool:
+    """Whether the usage log already holds an event for this run. Read-only. The partial unique
+    index covers only ``ok`` events; a cancelled, failed or incomplete run's event is
+    ``unexpected_response``, so a retry after a failed row update would record it again."""
+    async with unit_of_work(app.engine, write=False) as session:
+        found = await session.execute(
+            select(UsageEvent.id)
+            .where(UsageEvent.api == "agent", UsageEvent.request_id == response_id)
+            .limit(1)
+        )
+        return found.scalar_one_or_none() is not None
 
 
 async def observe_job(app: Any, *, project_id: int, project: str, job_id: int) -> Observation:
@@ -738,41 +768,51 @@ async def observe_job(app: Any, *, project_id: int, project: str, job_id: int) -
       a later one, at least 10 minutes after submit, makes the job ``lost`` (no event);
     * a snapshot that is not terminal stores its status (verbatim) and the model when known;
     * a terminal snapshot is recorded FIRST (the recorder's own unit, no write unit open), then
-      its row update is its own unit, so a failing update keeps the event and the next
-      observation records the ``ok`` run again into the dedupe index.
+      its row update is its own unit (shielded from cancellation), so a failing update
+      keeps the event, and the next observation finds that event and only writes the row.
 
     Any other failure propagates; the caller decides (``refresh`` warns, the rest raise).
     """
-    secrets = (app.settings.api_key.get_secret_value(),)
     async with app.job_locks.hold(job_id):
-        async with unit_of_work(app.engine, write=False) as session:
-            job = await job_store.load_job(session, project_id, job_id)
-        if job_store.is_final(job):
-            return Observation(job, job.status)
-        try:
-            run = await app.client.get_run(job.response_id)
-        except PerplexityError as exc:
-            if exc.category != "not_found":
-                raise
-            return await _missing(app, project_id, job, secrets)
-        now = app.now()
-        raw = run.model_dump(mode="json")
-        if is_terminal(raw.get("status"), raw.get("error")):
-            await record_usage(  # NO write unit is open here (the recorder contract)
-                app.engine,
-                tool=RESEARCH_TOOL,
-                api="agent",
-                status=agent_response_status(raw) or "unexpected_response",
-                usage=raw.get("usage"),
-                model=snapshot_model(raw, job.depth),
-                preset=job.depth,
-                request_id=job.response_id,
-                project=project,
-                latency_ms=max(round((now - job.started_at).total_seconds() * 1000), 0),
-                secrets=secrets,
-            )
-        job = await _write_job(app, project_id, job_id, job_columns(raw, job.depth, now, secrets))
-        return Observation(job, job.status, run=raw, fetched=True)
+        return await observe_job_locked(app, project_id=project_id, project=project, job_id=job_id)
+
+
+async def observe_job_locked(
+    app: Any, *, project_id: int, project: str, job_id: int
+) -> Observation:
+    """``observe_job`` for a caller that already holds ``app.job_locks.hold(job_id)`` (the lock
+    is not reentrant): the cancel action holds it across its decision and its request."""
+    secrets = (app.settings.api_key.get_secret_value(),)
+    async with unit_of_work(app.engine, write=False) as session:
+        job = await job_store.load_job(session, project_id, job_id)
+    if job_store.is_final(job):
+        return Observation(job, job.status)
+    try:
+        run = await app.client.get_run(job.response_id)
+    except PerplexityError as exc:
+        if exc.category != "not_found":
+            raise
+        return await _missing(app, project_id, job, secrets)
+    now = app.now()
+    raw = run.model_dump(mode="json")
+    if is_terminal(raw.get("status"), raw.get("error")) and not await _event_exists(
+        app, job.response_id
+    ):
+        await record_usage(  # NO write unit is open here (the recorder contract)
+            app.engine,
+            tool=RESEARCH_TOOL,
+            api="agent",
+            status=agent_response_status(raw) or "unexpected_response",
+            usage=raw.get("usage"),
+            model=snapshot_model(raw, job.depth),
+            preset=job.depth,
+            request_id=job.response_id,
+            project=project,
+            latency_ms=max(round((now - job.started_at).total_seconds() * 1000), 0),
+            secrets=secrets,
+        )
+    job = await _write_job(app, project_id, job_id, job_columns(raw, job.depth, now, secrets))
+    return Observation(job, job.status, run=raw, fetched=True)
 
 
 async def _missing(
@@ -794,7 +834,11 @@ async def _missing(
             ],
         )
     if job.missing_since is None:
-        job = await _write_job(app, project_id, job.id, {"missing_since": now})
+        job = await _write_job(
+            app, project_id, job.id, {"missing_since": now, "last_checked_at": now}
+        )
+    else:  # checked again: refresh goes oldest-checked first, so a stuck job must not starve it
+        job = await _write_job(app, project_id, job.id, {"last_checked_at": now})
     return Observation(
         job,
         job.status,
