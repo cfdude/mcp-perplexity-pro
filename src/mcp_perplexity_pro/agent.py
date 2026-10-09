@@ -16,6 +16,7 @@ import copy
 import json
 import logging
 import re
+import time
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
@@ -26,7 +27,18 @@ from pydantic import BaseModel, Field
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text
-from mcp_perplexity_pro.usage import format_usd, usage_from_agent_response
+from mcp_perplexity_pro.storage.projects import (
+    DEFAULT_PROJECT,
+    get_or_create_project,
+    validate_project_name,
+)
+from mcp_perplexity_pro.storage.session import unit_of_work
+from mcp_perplexity_pro.usage import (
+    agent_response_status,
+    format_usd,
+    record_usage,
+    usage_from_agent_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -432,3 +444,109 @@ def digest(
     except Exception:  # total by contract: a malformed body must not hide a billed call
         logger.warning("agent digest: response could not be read", exc_info=True)
         return Digest(warnings=["The response could not be read."])
+
+
+# --- The one costed-call sequence (design D4) -----------------------------------------------
+
+# A run in one of these states is finished (a non-null ``error`` also finishes it, whatever the
+# status says). Anything else on a background run is still going, or is a status nobody recorded.
+TERMINAL_STATUSES = ("completed", "failed", "incomplete", "cancelled")
+
+
+def is_terminal(status: object, error: object) -> bool:
+    return status in TERMINAL_STATUSES or error is not None
+
+
+@dataclass(frozen=True)
+class CostedRun:
+    """What ``run_costed`` hands back: the run, the measured latency, the project name used,
+    and the status the usage event carries (``None`` when no event was attempted)."""
+
+    run: AgentRun
+    latency_ms: int
+    project: str
+    event_status: str | None
+
+
+async def run_costed(
+    app: Any,
+    *,
+    tool: str,
+    project: str | None,
+    body: dict[str, Any],
+    preset: str | None,
+    background: bool,
+    resolve_project: bool = True,
+) -> CostedRun:
+    """Create a run and record it: the recorder contract of ``CLAUDE.md`` "How to record usage".
+
+    ``app`` is the ``AppContext`` (``.settings``, ``.client``, ``.engine``). The order is fixed:
+
+    1. validate the project name (pure);
+    2. commit the project in a short write unit (``resolve_project=False`` skips it for a caller
+       that has already found its project);
+    3. the timed upstream call, holding NO write unit;
+    4. ``record_usage`` (its own unit) while no write unit is open: a failure is recorded with its
+       category and re-raised; a response is recorded by ``agent_response_status``'s rule;
+    5. a synchronous run that is neither ``completed`` nor ``incomplete``, or carries an
+       ``error``, raises ``unexpected_response`` naming the status, AFTER its recording.
+
+    A background submit records only a terminal body (a queued or unknown status is returned
+    unrecorded and never raised: the caller owns what a submit means). The caller's own write
+    comes after this returns. This and the job observation are the only ``record_usage`` call
+    sites.
+    """
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    if resolve_project:
+        async with unit_of_work(app.engine) as session:  # short, committed before the call
+            await get_or_create_project(session, name)
+    secrets = (app.settings.api_key.get_secret_value(),)
+    started = time.monotonic()
+    try:
+        run = await app.client.create_run(body, background=background)
+    except PerplexityError as exc:
+        await record_usage(
+            app.engine,
+            tool=tool,
+            api="agent",
+            status=exc.category,
+            preset=preset,
+            project=name,
+            latency_ms=_ms(started),
+            secrets=secrets,
+        )
+        raise
+    latency = _ms(started)
+    raw = run.model_dump(mode="json")
+    status = agent_response_status(raw)
+    if background and not is_terminal(raw.get("status"), raw.get("error")):
+        status = None  # a submit that has not finished: nothing to record yet
+    if status is not None:
+        await record_usage(
+            app.engine,
+            tool=tool,
+            api="agent",
+            status=status,
+            usage=raw.get("usage"),  # the raw mapping: the recorder parses it
+            model=raw.get("model"),
+            preset=preset,
+            request_id=raw.get("id"),
+            project=name,
+            latency_ms=latency,
+            secrets=secrets,
+        )
+    if not background and (
+        raw.get("status") not in ("completed", "incomplete") or raw.get("error") is not None
+    ):
+        detail = clean_error_text(raw.get("error"), secrets)
+        raise PerplexityError(
+            "unexpected_response",
+            f"The API returned status {clean_status(raw.get('status'), secrets)!r} instead of a "
+            "finished answer" + (f": {detail}" if detail else "."),
+            secrets=secrets,
+        )
+    return CostedRun(run=run, latency_ms=latency, project=name, event_status=status)
+
+
+def _ms(started: float) -> int:
+    return round((time.monotonic() - started) * 1000)
