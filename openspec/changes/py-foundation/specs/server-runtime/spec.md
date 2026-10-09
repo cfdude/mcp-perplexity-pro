@@ -37,7 +37,7 @@ At startup the server SHALL validate settings first, then create the data direct
 - **THEN** the process exits non-zero before any listener opens and `/health` is not served
 
 ### Requirement: Tool error contract
-Every tool failure SHALL be returned as an MCP tool error. An anticipated failure SHALL carry in its structured content a stable `category` and a sanitized `message`. The categories are the eight client categories (`invalid_request`, `authentication`, `forbidden`, `not_found`, `rate_limited`, `upstream_failure`, `network_timeout`, `unexpected_response`) plus `confirmation_required` and `storage_busy`. An unexpected exception SHALL reach the client as a generic message, never its text.
+Every tool failure SHALL be returned as an MCP tool error whose structured content carries a stable `category` and a sanitized `message`. An unexpected exception SHALL carry category `internal_error` and a generic message, never its text.
 
 #### Scenario: Upstream failure in a tool
 - **WHEN** a tool call fails because the API returned 401
@@ -45,7 +45,14 @@ Every tool failure SHALL be returned as an MCP tool error. An anticipated failur
 
 #### Scenario: Unexpected exception
 - **WHEN** a tool raises an exception the server did not anticipate
-- **THEN** the client receives a generic error message without the exception text and the full detail is logged to stderr with secrets redacted
+- **THEN** the client receives category `internal_error` with a generic message without the exception text, and the full detail is logged to stderr with secrets redacted
+
+### Requirement: Error category vocabulary
+The `category` of a tool error SHALL be one of: `invalid_request`, `authentication`, `forbidden`, `not_found`, `rate_limited`, `upstream_failure`, `network_timeout`, `unexpected_response`, `confirmation_required`, `storage_busy` or `internal_error`.
+
+#### Scenario: Closed vocabulary
+- **WHEN** any tool fails for any reason
+- **THEN** its `category` is exactly one of the eleven listed values
 
 ### Requirement: Protocol output is never polluted
 In stdio mode the server SHALL write only MCP protocol messages to stdout. All logs and diagnostics SHALL go to stderr.
