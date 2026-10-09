@@ -6,6 +6,8 @@ No action waits for a run to progress. Every action looks the project up and nev
 which jobs to observe and how to report what was found.
 """
 
+import asyncio
+import contextlib
 import json
 import logging
 from datetime import UTC, datetime
@@ -303,6 +305,24 @@ def _not_saved(category: str) -> str:
     )
 
 
+async def _write_cancel_requested_unit(app: Any, pid: int, job_id: int) -> ResearchJob:
+    async with unit_of_work(app.engine) as session:  # its own unit; nothing else shares it
+        return await job_store.update_job(session, pid, job_id, {"cancel_requested_at": app.now()})
+
+
+async def _write_cancel_requested(app: Any, pid: int, job_id: int) -> ResearchJob:
+    """Record the accepted cancel, shielded from cancellation of the calling task: the provider
+    already accepted it, so a client cancel must not leave the row unmarked (it is re-raised only
+    after the write finished), or a repeated cancel would send a second POST."""
+    write = asyncio.ensure_future(_write_cancel_requested_unit(app, pid, job_id))
+    try:
+        return await asyncio.shield(write)
+    except asyncio.CancelledError:
+        with contextlib.suppress(Exception, asyncio.CancelledError):
+            await asyncio.shield(write)
+        raise
+
+
 async def _cancel_locked(
     app: Any, pid: int, name: str, job_id: int
 ) -> tuple[Observation, ResearchJob, str, list[str], str | None]:
@@ -333,10 +353,7 @@ async def _cancel_locked(
         else:
             state = "cancelling"
             try:
-                async with unit_of_work(app.engine) as session:
-                    job = await job_store.update_job(
-                        session, pid, job_id, {"cancel_requested_at": app.now()}
-                    )
+                job = await _write_cancel_requested(app, pid, job_id)
             except Exception as exc:  # the run IS being cancelled; do not hide that
                 logger.warning(
                     "cancel: job %s cancel_requested_at not saved: %s",

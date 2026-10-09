@@ -287,7 +287,7 @@ def build_request(
         if not isinstance(schema, dict) or schema.get("type") != "object":
             raise _bad("json_schema", "must be a JSON Schema object whose root type is 'object'.")
         try:
-            size = len(json.dumps(schema))
+            size = len(json.dumps(schema, ensure_ascii=False))  # characters, not JSON escapes
         except (TypeError, ValueError, RecursionError):
             raise _bad("json_schema", "must be plain JSON.") from None
         if size > MAX_SCHEMA_CHARS:

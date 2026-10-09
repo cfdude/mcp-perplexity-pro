@@ -2,6 +2,8 @@
 not lost to a local failure", "Jobs result vocabulary" scenario "Cancelling is not stored").
 Every test reads the request log: what was NOT sent matters as much as what was."""
 
+import asyncio
+
 import pytest
 from chat_support import category
 from research_support import (
@@ -193,3 +195,33 @@ async def test_cancel_of_an_unknown_job_or_in_an_absent_project_is_not_found(
     assert category(await cancel(w, 999, **kwargs)) == "not_found"
     assert w.requests == []
     assert await w.count("projects") == 0
+
+
+async def test_a_client_cancel_right_after_the_accepted_post_still_saves_cancel_requested_at(
+    research_world, monkeypatch
+):
+    from mcp_perplexity_pro.storage import jobs as job_store
+
+    w = await research_world(routes(get=[IN_PROGRESS], cancel=[CANCEL_ACCEPTED]))
+    jid = await seed_job(w, response_id=CANCELLED_ID)
+    in_update = asyncio.Event()
+    real = job_store.update_job
+
+    async def slow_update(session, project_id, job_id, values):
+        if "cancel_requested_at" in values:
+            in_update.set()
+            await asyncio.sleep(0.2)  # the client cancels the call while this is being written
+        return await real(session, project_id, job_id, values)
+
+    monkeypatch.setattr(job_store, "update_job", slow_update)
+    task = asyncio.create_task(cancel(w, jid))
+    await asyncio.wait_for(in_update.wait(), 5)
+    assert request_log(w) == [GET, POST]  # the provider has already accepted the cancel
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    for _ in range(50):  # the shielded write finishes in the background if the cancel repeats
+        if (await job(w, jid))["cancel_requested_at"] is not None:
+            break
+        await asyncio.sleep(0.1)
+    assert (await job(w, jid))["cancel_requested_at"] is not None  # written despite the cancel

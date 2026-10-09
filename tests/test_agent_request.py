@@ -165,6 +165,17 @@ def test_the_schema_and_options_are_not_aliased_into_the_request():
     assert schema["properties"]["a"]["type"] == "string" and options.domains == ["a.com"]
 
 
+def test_the_schema_cap_counts_characters_not_json_escapes():
+    # 15000 non-ASCII characters serialize to ~90000 with ensure_ascii escapes but are 15000 chars
+    schema = {"type": "object", "description": "é" * 15000}
+    built = build_request(AskOptions(json_schema=schema), "q", store=False)
+    assert built["response_format"]["json_schema"]["schema"] == schema
+    too_long = {"type": "object", "description": "é" * 20000}  # over the cap once serialized
+    with pytest.raises(PerplexityError) as info:
+        build_request(AskOptions(json_schema=too_long), "q", store=False)
+    assert info.value.category == "invalid_request" and "json_schema" in str(info.value)
+
+
 def test_max_steps_is_never_taken_from_the_caller():
     assert not hasattr(AskOptions(), "max_steps")
     assert "max_steps" not in build_request(
