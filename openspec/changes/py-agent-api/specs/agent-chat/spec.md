@@ -51,11 +51,11 @@ Chats SHALL be stored in two local tables, `chats` (project, title, creation and
 - **THEN** each call fails with `not_found`, no request reaches the API and project `ghost` still does not exist
 
 ### Requirement: Send starts a chat
-A `send` without `chat_id` SHALL require `title` (1 to 120 characters after trimming) and a `message` that is not blank and has at most 20000 characters, and SHALL create the chat only after the upstream call has succeeded, storing the chat and both messages in one unit of work, so a failed first send leaves no chat. The result carries the new `chat_id`.
+A `send` without `chat_id` SHALL require `title` (1 to 120 characters after trimming) and a `message` that is not blank and has at most 20000 characters, and SHALL create the chat only after the upstream call has succeeded, storing the chat and both messages in one unit of work, so a failed first send leaves no chat. The result's top-level `chat_id` is the new chat's id.
 
 #### Scenario: First turn
 - **WHEN** a client sends `message` with `title` `Teal notes` and the API returns the recorded first-turn response
-- **THEN** a chat titled `Teal notes` exists with a user message and an assistant message holding the response id, and the result names `continuation` `new`
+- **THEN** a chat titled `Teal notes` exists with a user message and an assistant message holding the response id, and the result has `chat_id` equal to the new chat's id and `continuation` `new`
 
 #### Scenario: First turn request shape
 - **WHEN** a first send at the default depth reaches the API
@@ -130,7 +130,7 @@ When a chained send is rejected by the API with its generic `invalid request` 40
 - **THEN** the tool's error carries that message and does not mention `replay`
 
 ### Requirement: Only complete turns are stored
-A send whose response is `incomplete` SHALL return its result with a warning and SHALL NOT store the turn, so a chat continues from its last complete turn; an incomplete first send creates no chat, returns `chat_id` null and `continuation` `new`. A response with any other status, or an error, fails as the ask tool's statuses rule says and stores nothing.
+A send whose response is `incomplete` SHALL return its result with a warning and SHALL NOT store the turn, so a chat continues from its last complete turn; an incomplete first send creates no chat, returns top-level `chat_id` null and `continuation` `new`. A response with any other status, or an error, fails as the ask tool's statuses rule says and stores nothing.
 
 #### Scenario: Truncated turn
 - **WHEN** a send returns the recorded truncated response
@@ -138,14 +138,14 @@ A send whose response is `incomplete` SHALL return its result with a warning and
 
 #### Scenario: Truncated first turn
 - **WHEN** a first send with a title returns the recorded truncated response
-- **THEN** the result has `chat_id` null, `continuation` `new` and status `incomplete`, and no chat exists
+- **THEN** the result has top-level `chat_id` null, `continuation` `new` and `status` `incomplete`, and no chat exists
 
 #### Scenario: Failed run on HTTP 200
 - **WHEN** a send returns a 200 whose status is `failed`
 - **THEN** the call fails with `unexpected_response`, one event exists and nothing is stored
 
 ### Requirement: Listing chats
-`list` SHALL return the project's chats newest-updated first with `id`, `title`, message count and times, honoring `limit` (default 20, 1 to 100) and reporting the total and whether the list was cut.
+`list` SHALL return the project's chats newest-updated first with `id`, `title`, message count and times, honoring `limit` (default 20, 1 to 100) and reporting the total and whether the list was cut. The result's top-level `chat_id` is null.
 
 #### Scenario: Newest first
 - **WHEN** a project has two chats and the older one receives a new message
@@ -156,7 +156,7 @@ A send whose response is `incomplete` SHALL return its result with a warning and
 - **THEN** 2 chats are returned, the total is 3 and the list is marked truncated
 
 ### Requirement: Reading a chat
-`read` SHALL return a chat's messages from local storage in chronological order, the last `limit` of them (default 50, 1 to 200), with the total count, and SHALL make no upstream call.
+`read` SHALL return a chat's messages from local storage in chronological order, the last `limit` of them (default 50, 1 to 200), with the total count, and SHALL make no upstream call. The result's top-level `chat_id` is that chat's id.
 
 #### Scenario: Read from local history
 - **WHEN** a client reads a chat with 4 messages

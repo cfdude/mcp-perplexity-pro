@@ -11,7 +11,7 @@ The server SHALL provide `perplexity_research`, which starts a background run fo
 
 #### Scenario: Submit
 - **WHEN** a client starts research at the default depth and the API returns the recorded queued response
-- **THEN** the result has a job id, the response id, status `queued` and depth `medium`, and a job row exists for the project
+- **THEN** the result has a `job_id`, the response id, `status` `queued` and depth `medium`, and a job row with that id exists for the project
 
 #### Scenario: Blank query
 - **WHEN** a client starts research with a blank query
@@ -106,6 +106,17 @@ The server SHALL provide `perplexity_jobs` with actions `list`, `status`, `resul
 - **WHEN** a client calls `status` without `job_id`
 - **THEN** the call fails with `invalid_request` naming `job_id`
 
+### Requirement: Jobs result vocabulary
+The `perplexity_jobs` result SHALL carry a top-level `job_id` (the job the action concerns; null for `list`) and a top-level `status` (null for `list`) that is the state the action reports: `queued`, `in_progress`, `completed`, `failed`, `incomplete`, `cancelled`, `lost`, `cancelling`, or an unknown API status verbatim. `cancelling` SHALL be reported only by `cancel` and never stored. The `job` record and every `jobs[]` record SHALL carry their own `job_id` and their stored `status`.
+
+#### Scenario: Ids and states in each action
+- **WHEN** `status`, `result` and `cancel` are called for job 7, and `list` is called for its project
+- **THEN** the first three results have `job_id` 7 and a top-level `status`, the `job` record has `job_id` 7, and the `list` result has null `job_id` and `status` with `job_id` 7 inside its `jobs[]` record
+
+#### Scenario: Cancelling is not stored
+- **WHEN** a cancel is accepted for a running job
+- **THEN** the result's `status` is `cancelling` while the `job` record's stored `status` is still `in_progress`
+
 ### Requirement: Jobs actions never create a project
 Every `perplexity_jobs` action SHALL look the project up and never create it. In an absent project `list` SHALL return no jobs with total 0, and `status`, `result` and `cancel` SHALL fail with `not_found`.
 
@@ -122,7 +133,7 @@ Every `perplexity_jobs` action SHALL look the project up and never create it. In
 
 #### Scenario: Running job
 - **WHEN** a job is fetched and the API returns the recorded in-progress snapshot with 3 search results and 3 fetched pages
-- **THEN** the result's status is `in_progress`, progress shows 3 searches and 3 fetches, there is no answer, and no usage event exists
+- **THEN** the result's `status` is `in_progress`, progress shows 3 searches and 3 fetches, there is no answer, and no usage event exists
 
 #### Scenario: Terminal job served locally
 - **WHEN** `status` is called on a job already finished
@@ -170,14 +181,14 @@ A terminal run that is not `completed` SHALL be recorded once with status `unexp
 
 #### Scenario: Cancelled run
 - **WHEN** a job's fetch returns the recorded cancelled snapshot
-- **THEN** the job is `cancelled`, no answer is stored, and one event exists with status `unexpected_response`, no model, cost 0 and source `none`
+- **THEN** the job's stored status is `cancelled`, no answer is stored, and one event exists with status `unexpected_response`, no model, cost 0 and source `none`
 
 #### Scenario: Pending run never recorded
 - **WHEN** a job's fetch returns a queued or in-progress snapshot
 - **THEN** no usage event exists for it
 
 ### Requirement: Observations commit per job
-Each job observation (its usage event, then its row update) SHALL be its own unit of work. A call that observes several jobs (`list` with `refresh`, a cancel's fetch, request and refetch) SHALL commit each in turn, and a later failure SHALL roll back only the observation that failed. In `refresh` a failed observation SHALL be a warning naming the job id and the error category, the list SHALL still be returned, and that job SHALL count in `not_refreshed`.
+An observation of a job SHALL be its usage event (the recorder's own unit, with no write unit open) and then its row update (its own unit); no two jobs share a unit. A call observing several jobs (`refresh`, a cancel) SHALL commit each in turn; a later failure rolls back only the failing observation's row update. In `refresh` a failed observation SHALL be a warning naming the job id and category, the list SHALL still be returned and the job SHALL count in `not_refreshed`.
 
 #### Scenario: Refresh with one failing fetch
 - **WHEN** `refresh` observes three running jobs and the second job's fetch fails with `upstream_failure`
@@ -192,18 +203,18 @@ Each job observation (its usage event, then its row update) SHALL be its own uni
 
 #### Scenario: Not finished
 - **WHEN** `result` is called while the run is in progress
-- **THEN** it returns status `in_progress`, no answer and a message to try again later
+- **THEN** it returns `status` `in_progress`, no answer and a message to try again later
 
 ### Requirement: Cancel
 `cancel` SHALL fetch the run first, even when a cancel is already pending. A terminal run SHALL be reported as it is, with no cancel request. A running one SHALL be cancelled with one request and reported as `cancelling`; the job's status becomes `cancelled` when a later fetch shows it. A cancel rejected as already terminal SHALL trigger one more fetch and report that state, not an error. A run whose cancel is pending and still runs SHALL be reported `cancelling` without a second request.
 
 #### Scenario: Running job cancelled
 - **WHEN** the fetch shows `in_progress` and the cancel request returns the recorded `cancelling` response
-- **THEN** the result has status `cancelling`, the job records that a cancel was requested and no usage event exists yet
+- **THEN** the result's `status` is `cancelling`, the job records that a cancel was requested and no usage event exists yet
 
 #### Scenario: Finished before the cancel
 - **WHEN** the fetch shows `in_progress` and the cancel request returns the recorded already-terminal 400, and the refetch shows `completed`
-- **THEN** the result reports `completed`, no error is raised and the finished run is recorded once
+- **THEN** the result's `status` is `completed`, no error is raised and the finished run is recorded once
 
 #### Scenario: Cancel of a terminal job
 - **WHEN** a job already finished is cancelled
@@ -211,18 +222,18 @@ Each job observation (its usage event, then its row update) SHALL be its own uni
 
 #### Scenario: Cancel twice
 - **WHEN** a second cancel arrives for a job whose first cancel is still pending and the fetch still shows it running
-- **THEN** the run is fetched again, the result is `cancelling` and no second cancel request is sent
+- **THEN** the run is fetched again, the result's `status` is `cancelling` and no second cancel request is sent
 
 #### Scenario: Pending cancel finished meanwhile
 - **WHEN** a second cancel arrives and its fetch shows the recorded cancelled snapshot
-- **THEN** the result reports `cancelled`, one event is recorded and no cancel request is sent
+- **THEN** the result's `status` is `cancelled`, one event is recorded and no cancel request is sent
 
 ### Requirement: A cancel that was accepted is not lost to a local failure
 When the local write that records `cancel_requested_at` fails after the API accepted the cancel, the result SHALL still be returned with a warning `not_saved` instead of an error, since the run is being cancelled whatever the row says.
 
 #### Scenario: Write fails after an accepted cancel
 - **WHEN** the cancel request is accepted and the row update fails with a busy database
-- **THEN** the result is `cancelling` with a `not_saved` warning
+- **THEN** the result's `status` is `cancelling` with a `not_saved` warning
 
 ### Requirement: Runs the provider no longer knows
 A `not_found` fetch of a non-terminal job SHALL record the time (`missing_since`), return the job as still running with a warning, and send no cancel request. The job SHALL become `lost`, terminal locally, only when a further fetch is `not_found` and the run was submitted at least 10 minutes earlier (a chosen margin for propagation delay, not measured); a successful fetch clears the record. A `lost` job creates no event and raises no error.
@@ -233,7 +244,7 @@ A `not_found` fetch of a non-terminal job SHALL record the time (`missing_since`
 
 #### Scenario: Confirmed lost
 - **WHEN** a job submitted 11 minutes ago whose first 404 was recorded gets another 404
-- **THEN** the job's status is `lost`, a warning says its spend was not recorded, no event exists and later calls do not fetch
+- **THEN** the result's `status` and the job's stored status are `lost`, a warning says its spend was not recorded, no event exists and later calls do not fetch
 
 #### Scenario: Not found twice but too early
 - **WHEN** a job submitted 2 minutes ago gets a second 404
