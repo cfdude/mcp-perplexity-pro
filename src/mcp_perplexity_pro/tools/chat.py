@@ -32,9 +32,13 @@ from mcp_perplexity_pro.storage.chats import (
     StoredMessage,
     append_turn,
     chat_history,
+    chat_summary,
     create_chat,
+    delete_chat,
     last_anchor,
+    list_chats,
     load_chat,
+    read_messages,
 )
 from mcp_perplexity_pro.storage.projects import find_project, validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
@@ -43,7 +47,9 @@ from mcp_perplexity_pro.tools.ask import GENERIC_400, build_result, render_answe
 logger = logging.getLogger(__name__)
 
 TOOL = "perplexity_chat"
-ACTIONS = ("send",)
+ACTIONS = ("send", "list", "read", "delete")
+DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT = 20, 100
+DEFAULT_READ_LIMIT, MAX_READ_LIMIT = 50, 200
 MAX_TITLE_CHARS = 120
 REPLAY_WARN_CHARS = 100_000  # stored text above this makes a replay worth a warning
 
@@ -282,6 +288,97 @@ async def _send(
     return result, f"{header} ({continuation}).\n\n" + render_answer(ask).replace("\n".join(()), "")
 
 
+def _limit(value: int | None, default: int, high: int) -> int:
+    if value is None:
+        return default
+    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= high:
+        raise _bad("limit", f"must be a whole number from 1 to {high}.")
+    return value
+
+
+def _need_chat_id(chat_id: int | None, action: str) -> int:
+    if chat_id is None:
+        raise _bad("chat_id", f"{action} needs a chat_id.")
+    return chat_id
+
+
+async def _list(app: Any, *, project: str | None, limit: int | None) -> tuple[ChatResult, str]:
+    """The project's chats; a project that does not exist has none (and is not created)."""
+    cap = _limit(limit, DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT)
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    chats: list[ChatSummary] = []
+    total = 0
+    async with unit_of_work(app.engine, write=False) as session:
+        found = await find_project(session, name)
+        if found is not None:
+            chats, total = await list_chats(session, found.id, cap)
+    result = ChatResult(
+        action="list",
+        project=name,
+        chats=[chat_info(c) for c in chats],
+        chats_total=total,
+        truncated=total > len(chats),
+    )
+    lines = [f"{len(chats)} of {total} chat(s) in project {name!r}, newest first:"]
+    lines.extend(
+        f"{c.id}. {c.title} ({c.message_count} messages, "
+        f"updated {_utc(c.updated_at):%Y-%m-%d %H:%M} UTC)"
+        for c in chats
+    )
+    if total > len(chats):
+        lines.append(f"(cut by limit {cap}; {total - len(chats)} more)")
+    return result, "\n".join(lines)
+
+
+async def _read(
+    app: Any, *, project: str | None, chat_id: int | None, limit: int | None
+) -> tuple[ChatResult, str]:
+    chat_id = _need_chat_id(chat_id, "read")
+    cap = _limit(limit, DEFAULT_READ_LIMIT, MAX_READ_LIMIT)
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    async with unit_of_work(app.engine, write=False) as session:
+        found = await find_project(session, name)
+        if found is None:
+            raise _not_found_project(name)
+        chat = await load_chat(session, found.id, chat_id)
+        info = await chat_summary(session, chat)
+        messages, total = await read_messages(session, chat_id, cap)
+    result = ChatResult(
+        action="read",
+        project=name,
+        chat_id=chat_id,
+        chat=chat_info(info),
+        messages=[message_out(m) for m in messages],
+        messages_total=total,
+        truncated=total > len(messages),
+    )
+    lines = [f"Chat {chat_id} {info.title!r}: {len(messages)} of {total} message(s)."]
+    for m in messages:
+        lines.extend(["", f"[{m.role}] {m.content}"])
+    return result, "\n".join(lines)
+
+
+async def _delete(
+    app: Any, *, project: str | None, chat_id: int | None, confirm: bool
+) -> tuple[ChatResult, str]:
+    chat_id = _need_chat_id(chat_id, "delete")
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    if confirm is not True:
+        raise PerplexityError(
+            "confirmation_required",
+            f"Deleting chat {chat_id} removes it and its messages from the local database and "
+            "cannot be undone; copies the provider keeps are not touched. Call again with "
+            "confirm=true.",
+        )
+    async with unit_of_work(app.engine) as session:
+        found = await find_project(session, name)
+        if found is None:
+            raise _not_found_project(name)
+        removed = await delete_chat(session, found.id, chat_id)
+    result = ChatResult(action="delete", project=name, chat_id=chat_id, messages_removed=removed)
+    return result, f"Chat {chat_id} removed with its {removed} message(s)."
+
+
 def continuation_hint(exc: PerplexityError) -> PerplexityError:
     """The API rejects an unknown, malformed, unfinished or cancelled ``previous_response_id``
     with one generic 400, the same body it gives for other mistakes (design D6). Only that exact
@@ -321,7 +418,7 @@ def register(server: FastMCP) -> None:
     )
     async def perplexity_chat(
         ctx: Context,
-        action: Annotated[str, Field(description="send")],
+        action: Annotated[str, Field(description="send, list, read or delete")],
         message: Annotated[
             str | None,
             Field(description="send: the message (at most 20000 characters, not blank)"),
@@ -379,13 +476,26 @@ def register(server: FastMCP) -> None:
         max_output_tokens: Annotated[
             int | None, Field(description="send: cap on answer tokens, 1 to 64000")
         ] = None,
+        limit: Annotated[
+            int | None,
+            Field(
+                description="list: chats to return, 1 to 100 (default 20), newest first. read: "
+                "the last N messages, 1 to 200 (default 50)"
+            ),
+        ] = None,
+        confirm: Annotated[
+            bool, Field(description="delete: must be true; removing a chat cannot be undone")
+        ] = False,
     ) -> ToolResult:
         """Hold a multi-turn conversation grounded in web search. A send continues the chat
         from its last stored response; the messages are kept in this server's local database.
+        Actions: send (starts a chat when chat_id is omitted), list, read and delete.
 
         Approximate cost per send by depth: fast about $0.001 to $0.002 (the default), low
         about $0.004 to $0.02, medium about $0.016 to $0.05; high and xhigh are not available
         here (use perplexity_research). Every send is recorded as spend (see perplexity_usage).
+        list, read and delete make no upstream call and cost nothing; they read or change only
+        the local database and never create a project.
 
         Chat text is stored in the local database. A send sets store to false, which only hides
         the response from retrieval at the provider; the provider's documentation says it still
@@ -406,13 +516,21 @@ def register(server: FastMCP) -> None:
             instructions=instructions,
             max_output_tokens=max_output_tokens,
         )
-        result, text = await _send(
-            ctx.lifespan_context,
-            project=project,
-            message=message,
-            title=title,
-            chat_id=chat_id,
-            replay=replay,
-            options=options,
-        )
+        app = ctx.lifespan_context
+        if action == "list":
+            result, text = await _list(app, project=project, limit=limit)
+        elif action == "read":
+            result, text = await _read(app, project=project, chat_id=chat_id, limit=limit)
+        elif action == "delete":
+            result, text = await _delete(app, project=project, chat_id=chat_id, confirm=confirm)
+        else:
+            result, text = await _send(
+                app,
+                project=project,
+                message=message,
+                title=title,
+                chat_id=chat_id,
+                replay=replay,
+                options=options,
+            )
         return ToolResult(content=text, structured_content=result.model_dump(mode="json"))

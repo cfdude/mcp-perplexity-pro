@@ -70,3 +70,20 @@ async def messages_of(w: World, chat_id: int) -> list[tuple]:
         "SELECT role, content, response_id FROM chat_messages WHERE chat_id = :c ORDER BY id",
         c=chat_id,
     )
+
+
+async def seed_chat(w: World, project: str, title: str, turns: int = 2, *, tag: str = "") -> int:
+    """A chat with ``turns`` completed turns, written straight to storage (no upstream call, no
+    usage event); the assistant of turn ``n`` has response id ``resp_<tag><n>``."""
+    from mcp_perplexity_pro.storage.chats import AssistantTurn, append_turn, create_chat
+    from mcp_perplexity_pro.storage.projects import get_or_create_project
+    from mcp_perplexity_pro.storage.session import unit_of_work
+
+    async with unit_of_work(w.engine) as session:
+        pid = (await get_or_create_project(session, project)).id
+        first = AssistantTurn(f"resp_{tag}1", f"answer {tag}1", "openai/gpt-6-luna", "fast", "[]")
+        chat = await create_chat(session, pid, title, f"question {tag}1", first)
+        for n in range(2, turns + 1):
+            turn = AssistantTurn(f"resp_{tag}{n}", f"answer {tag}{n}", "openai/gpt-6-luna", "fast")
+            await append_turn(session, pid, chat.id, f"question {tag}{n}", turn)
+    return chat.id
