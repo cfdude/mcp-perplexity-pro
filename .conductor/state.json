@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": null,
+  "active": "py-search-api",
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -266,7 +266,7 @@
       "id": "py-search-api",
       "title": "Search API tool with full filter set",
       "priority": "P1",
-      "status": "planned",
+      "status": "active",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -281,8 +281,9 @@
       "description": "POST /search: multi-query, dates (MM/DD/YYYY), language, domain allow/deny, recency, country, max_tokens, search_type web|fast|people. Structured JSON results. Resolve page-snippets endpoint if one is documented.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T18:30:33.347Z",
-      "release": "release-2-0-0"
+      "touchedAt": "2026-10-09T23:27:54.539Z",
+      "release": "release-2-0-0",
+      "startedAt": "2026-10-09T23:27:54.538Z"
     },
     {
       "id": "py-usage-log",
@@ -562,7 +563,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 182,
+  "revision": 183,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
