@@ -1,0 +1,24 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "max_tokens_per_page 64: snippets shrink from ~3000 chars to ~300",
+  "latency_seconds": 0.256795,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "46",
+    "x-ratelimit-reset": "1791588666",
+    "x-ratelimit-used": "4",
+    "x-request-id": "4a70359c-7dad-4312-92fc-1bd3648d4e12"
+  },
+  "request": {
+    "query": "python packaging",
+    "search_type": "fast",
+    "max_results": 3,
+    "max_tokens_per_page": 64
+  }
+}

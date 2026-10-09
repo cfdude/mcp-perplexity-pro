@@ -1,0 +1,12 @@
+{
+  "id": "5998c9ae-8c9e-48c2-a9af-1b713e4076f8",
+  "results": [
+    {
+      "date": "2026-09-13",
+      "last_updated": "2026-10-03",
+      "snippet": "# Python\n**Python** is a high-level general-purpose programming language.\nIt uses a multi-paradigm approach, meaning it supports procedural, object-oriented, and some functional programming constructs.\nIt was created by Guido van Rossum as a successor to another language (called ABC) between 1985 and 1990, and is currently used on a large array of domains like web development, desktop applications, data science, DevOps, and automation/productivity.\nPython is developed under an OSI-approved open-source license, making it freely usable and distributable, even for commercial use.\nPython's license is administered by the Python Software Foundation.",
+      "title": "Python - Glossary - MDN Web Docs - Mozilla",
+      "url": "https://developer.mozilla.org/en-US/docs/Glossary/Python"
+    }
+  ]
+}

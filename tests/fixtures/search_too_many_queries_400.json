@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "query validation: maximum 5 queries allowed, got 6",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

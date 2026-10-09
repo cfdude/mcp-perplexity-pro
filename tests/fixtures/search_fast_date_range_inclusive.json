@@ -1,0 +1,33 @@
+{
+  "id": "56a4ea77-e878-4729-8b8d-fccb27cfd29b",
+  "results": [
+    {
+      "date": "2026-10-01",
+      "last_updated": "2026-10-07",
+      "snippet": "Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!\n| Python Insider\n# Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!\nPablo Galindo/October 1, 2026\n...\nA full sweep of Python releases is here: **Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!** One last lap around the Sun for Python 3.10, and security updates across all five series.\nGet them here:\n- Python 3.10.22\n- Python 3.11.17\n- Python 3.12.15\n- Python 3.13.16\n- Python 3.14.8\n**Python 3.10.22 is the final release of Python 3.10.** After five years, the series has reached end of life and will receive no further security updates.\n...\nPython 3.11 remains in security-fix-only mode until October 2027, as described in PEP 664.\nSecurity releases are made as needed, with no fixed cadence.\nPython 3.10.22 and 3.11.17 are **source-only**.\n...\nPython 3.12.15 is also a source-only security release, with security support continuing until October 2028.\nPython 3.13.16 is the **last full maintenance release of 3.13**; future 3.13 releases will contain security fixes only.\nPython 3.14.8 is a maintenance release, and both 3.13.16 and 3.14.8 include binary installers.",
+      "title": "Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now ...",
+      "url": "https://blog.python.org/2026/10/python-31022-31117/"
+    },
+    {
+      "date": "2026-09-01",
+      "last_updated": "2026-10-02",
+      "snippet": "Python 3.15.0 candidate 2 is here!\n| Python Insider\n# Python 3.15.0 candidate 2 is here!\n...\nIt’s the final 3.15 release candidate!\npython.org/downloads/release/python-3150rc2\n**This is a candidate preview of Python 3.15**\nThis release, **3.15.0rc2**, is the final planned release candidate, containing around 144 bugfixes, build improvements and documentation changes from 76 contributors since 3.15.0rc1.\n...\nThe next release of Python 3.15 will be 3.15.0 final, scheduled for 2026-10-01.\n...\nPlease keep in mind that this is a preview release and while it’s as close to the final release as we can get it, its use is ***not** * recommended for production environments.\n...\npython.org/downloads/release/python-3150rc2",
+      "title": "blog.python.org › 2026 › 09Python 3.15.0 candidate 2 is here! | Python Insider",
+      "url": "https://blog.python.org/2026/09/python-3150-rc2/"
+    },
+    {
+      "date": "2026-09-18",
+      "last_updated": "2026-10-03",
+      "snippet": "PyPy v8.0.0 release | PyPy\n# PyPy v8.0.0 release\n...\n## PyPy v8.0.0: release of python 2.7, 3.11, and 3.12 beta released 2026-09-19 ¶\nThe PyPy team is proud to release version 8.0.0 of PyPy after the previous\nrelease on May 26, 2026.\n...\nIt is our first release of Python 3.12, which may still have some bugs so we\nare calling it \"beta\" quality.\n...\n### Interpreters ¶\nThe release includes three different interpreters:\n- PyPy2.7, supporting the syntax and the features of\nPython 2.7 including the stdlib for CPython 2.7.18+ (the `+` is for\n  backported security updates)\n- PyPy3.11, supporting the syntax and the features of\nPython 3.11, including the stdlib for CPython 3.11.16.\nBarring security\nissues, this will be the last release to support 3.11.\n- PyPy3.12, supporting the syntax and features of Python 3.12, including the\nstdlib for CPython 3.12.14.\n...\nYou can find links to download the releases here:\n> https://pypy.org/download.html",
+      "title": "PyPy v8.0.0 release",
+      "url": "https://pypy.org/posts/2026/09/pypy-v800-release.html"
+    },
+    {
+      "date": "2026-10-01",
+      "last_updated": "2026-10-08",
+      "snippet": "Python 3.15: following tradition, let's have a surprise rc3!\n- Core Development - Discussions on Python.org\n# Python 3.15: following tradition, let's have a surprise rc3!\n...\nOctober 1, 2026, 9:44pm\n...\nFollowing recent tradition, I’m going to add a surprise third release candidate for Python 3.15.0!\nWe got some last-minute lazy-import release blockers, and it makes sense to include them in 3.15.0 final.\nIt also makes sense to give a bit of time to test them properly, so today’s planned 3.15.0 final is postponed, and I’m going to release a 3.15.0rc3 tomorrow, assuming everything is in place.\nAnd then 3.15.0 final will follow about a week later.\nExact date to be announced.\n- Everyone: once the rc3 is out, please test!\n- Library maintainers: join the cool testers’ club !\n...\nPython 3.15.0 candidate 3 is here!\nCore Development\n>\n...\nThis is a candidate preview of Python 3.15 This release, 3.15.0rc3, is the final planned release candidate, containing around 156 bugfixes…\nEveryone *please test*, **3.15.0 final** is planned for **2026-10-09**.",
+      "title": "Python 3.15: following tradition, let's have a surprise rc3!",
+      "url": "https://discuss.python.org/t/python-3-15-following-tradition-lets-have-a-surprise-rc3/109313"
+    }
+  ]
+}

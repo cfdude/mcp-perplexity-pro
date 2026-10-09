@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "search domain filter must be at most 20; search domain filter has a max length of 20",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

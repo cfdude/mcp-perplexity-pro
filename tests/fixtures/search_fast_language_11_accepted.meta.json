@@ -1,0 +1,36 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "11 language codes: ACCEPTED (200), contradicting the prose docs maximum of 10",
+  "latency_seconds": 0.293782,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "47",
+    "x-ratelimit-reset": "1791588693",
+    "x-ratelimit-used": "3",
+    "x-request-id": "5998c9ae-8c9e-48c2-a9af-1b713e4076f8"
+  },
+  "request": {
+    "query": "python",
+    "search_type": "fast",
+    "max_results": 1,
+    "search_language_filter": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "it",
+      "pt",
+      "nl",
+      "pl",
+      "sv",
+      "da",
+      "fi"
+    ]
+  }
+}

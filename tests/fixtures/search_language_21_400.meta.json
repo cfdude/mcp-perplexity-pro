@@ -1,0 +1,42 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "21 language codes",
+  "latency_seconds": 0.118271,
+  "response_headers": {
+    "x-request-id": "3eb7386a-cd5a-46fe-bdbd-ea4fd055594f"
+  },
+  "request": {
+    "query": "python",
+    "search_type": "fast",
+    "max_results": 1,
+    "search_language_filter": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "it",
+      "pt",
+      "nl",
+      "pl",
+      "sv",
+      "da",
+      "fi",
+      "no",
+      "cs",
+      "hu",
+      "el",
+      "tr",
+      "he",
+      "th",
+      "uk",
+      "ja",
+      "ko"
+    ]
+  }
+}

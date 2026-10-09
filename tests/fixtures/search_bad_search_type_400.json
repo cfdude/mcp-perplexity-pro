@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "search_type must be one of: web, people, fast",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

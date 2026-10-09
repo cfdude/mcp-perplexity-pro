@@ -1,0 +1,24 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "recency + last_updated_after: ACCEPTED (200); only publication-date bounds conflict with recency",
+  "latency_seconds": 0.273292,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "49",
+    "x-ratelimit-reset": "1791588692",
+    "x-ratelimit-used": "1",
+    "x-request-id": "b8bcbeee-456a-4d97-9777-bf1d544bd667"
+  },
+  "request": {
+    "query": "python",
+    "search_type": "fast",
+    "search_recency_filter": "week",
+    "last_updated_after_filter": "01/01/2026"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "id": "b8bcbeee-456a-4d97-9777-bf1d544bd667",
+  "results": [
+    {
+      "date": "2026-10-07",
+      "last_updated": "2026-10-08",
+      "snippet": "# Functions Defined\nPython allows mandatory and optional arguments, keyword arguments,\nand even arbitrary argument lists.\n...\n# Intuitive Interpretation\nCalculations are simple with Python, and expression syntax is\nstraightforward: the operators `+`, `-`,\n`*` and `/` work as expected; parentheses\n`()` can be used for grouping.\n...\n# Quick & Easy to Learn\nExperienced programmers in any other language can pick up Python very\nquickly, and beginners find the clean syntax and indentation structure\neasy to learn.\n...\nPython is a programming language that lets you work quickly and integrate systems more effectively.\n...\n## Download\nPython source code and installers are available for download for all versions!\n...\n## Docs\nDocumentation for Python's standard library, along with tutorials and guides, are available online.\ndocs.python.org\n...\n## >>> Python Software Foundation\nThe mission of the Python Software Foundation is to promote, protect, and advance the Python programming language, and to support and facilitate the growth of a diverse and international community of Python programmers.",
+      "title": "Welcome to Python.org",
+      "url": "https://www.python.org/?hl=id"
+    },
+    {
+      "date": "2026-10-07",
+      "last_updated": "2026-10-08",
+      "snippet": "## Cloud X Berry\n##### Oct 07, 2026 (0:12:10)\nIn this video, Cloud X Berry gives you a complete overview of Python in a simple and beginner-friendly way.\n...\nWe start by separating Python the language from everything that makes it run: the interpreter, the standard library and the package ecosystem.\n...\n### Transcript\nPython is the language, the words, the\n{ts:22} rules, the structure you use to give instructions.\nBut when you write Python code and hit run, there's a whole system\n...\nThe interpreter is what reads and runs your code, the standard library is a big\n{ts:35} collection of tools that comes pre-installed with Python, so you don't have to build common things yourself.\n{ts:41} And beyond that, there's a massive package ecosystem where other developers have shared tools you can download and\n...\nPython is interpreted, not compiled in the traditional sense.\nWhat does that mean practically?\n...\nWhen you run a Python file, the interpreter parses your code, compiles it to bite code internally, and",
+      "title": "From Code to Execution: Python’s Complete Ecosystem Explained in 12 Minutes",
+      "url": "https://www.youtube.com/watch?v=iDwVm6r33L0"
+    },
+    {
+      "date": "2026-10-05",
+      "last_updated": "2026-10-06",
+      "snippet": "## 백발개발자의 바이브코딩\n##### Oct 05, 2026 (0:15:28)\n처음 시작하는 Python, 첫 번째 강의입니다.\n...\n오늘 배우는 것\n· Python을 실행하는 방법\n· 변수 — 값에 붙이는 이름표\n· 기본 자료형 다섯 가지 (int, float, str, bool, None)\n· 입력받아 계산하고 출력하는 프로그램\n· 오류 메시지를 읽는 법\n...\n① Python은 읽기 쉬운 문법을 목표로 만든 언어입니다.\n② 변수는 값에 붙이는 이름표이고, 자료형은 값에 있습니다.\n③ input()은 항상 문자열을 돌려주고, 오류가 나면 마지막 줄부터 읽습니다.\n...\n### Transcript\n{ts:31} accept input , calculate , and output , and how to read error messages .\n...\n{ts:38} can simply ask for the version in the terminal . On computers with multiple versions installed , typing just \" python\n{ts:44} \" might run a different version , so be sure to check once . The first execution method is interactive mode .\nType one\n{ts:51} line , press Enter , and you get the result immediately . It is called REPL because it repeats the process of\n{ts:57} reading , evaluating , printing , and looping . It is the fastest way to check syntax . The second is to save as a file\n{ts:65} and execute .\n...\nIt can be widely applied , from automating repetitive tasks to data processing , web services ,",
+      "title": "바이브코딩 기초 파이썬  — Python 첫걸음 | 실행 방법·변수·자료형·입력·오류 읽기",
+      "url": "https://www.youtube.com/watch?v=7Ae2B9pBtQg"
+    },
+    {
+      "date": "2026-10-05",
+      "last_updated": "2026-10-07",
+      "snippet": "## CoDing SeeKho\n##### Oct 05, 2026 (1:07:00)\nAaj ke LIVE session mein hum Python ko sirf programming language ke roop mein nahi, balki AI, Machine Learning, Data Science, Generative AI aur Web Development ke foundation ke roop mein samjhenge.\n🐍🔥",
+      "title": "Python for AI, ML & Data Science LIVE | Python History, AI, LLM, RAG, NLP, Agentic AI & Django",
+      "url": "https://www.youtube.com/watch?v=O3hskC0uFRI"
+    },
+    {
+      "date": "2026-10-03",
+      "last_updated": "2026-10-04",
+      "snippet": "## CodeHunt\n##### Oct 03, 2026 (0:15:25)\nIn this complete Python course, we will learn Python from absolute basics to advanced concepts with practical examples and real-world programming.\n...\nWe’ll also understand how Python fits into some of the fastest-growing areas of technology, including:\n• Artificial Intelligence (AI)\n• Machine Learning\n• Data Science\n• Web Development\n• Automation & Scripting\n• Generative AI\n• Backend Development\n• Data Analytics\n...\n### Transcript\nFirst of all , you all know what Python is , right ? It is a type of programming language . So , my question\n...\n{ts:209} programming language is Python ? This is what is explained here . So , Python is our high-level , general-purpose ,\n{ts:217} dynamically-typed , interpreted programming language . This means we have listed four features of Python\n...\n{ts:864} programming language . It is a high-level , general-purpose programming language . The code in it is very",
+      "title": "Python Full Course for Beginners in Hindi | Day-1: What is Python?",
+      "url": "https://www.youtube.com/watch?v=qoP2X84HET4"
+    },
+    {
+      "date": "2026-10-03",
+      "last_updated": "2026-10-03",
+      "snippet": "# Python\n### about #python\nPython is an interpreted programming language that is considered \"batteries-included\".\nIt was created by Guido van Rossum in 1991, and is popular for application and web development, as well as for scientific computing and data analysis.\nPython 3 is the current language version.\nPython 2 is set to be deprecated in 2020.",
+      "title": "Python",
+      "url": "https://dev.to/t/python/page/3767"
+    },
+    {
+      "date": "2026-10-03",
+      "last_updated": "2026-10-07",
+      "snippet": "# ==================================================\n### Transcript\nPython is a programming language.\n...\nWe need a way to express those instructions in a\nlanguage that a computer can process.\nThat's where programming languages come in.\nAnd Python is one \nof those languages.\nYou can think of Python as a\n{ts:236} way of communicating instructions to a computer.\n...\nFirst, Python is a programming language that\nallows us to give instructions to a computer.",
+      "title": "Python for AI | Visually Explained | Full 4.5 Hour Mega Course | Stop Learning the Wrong Way",
+      "url": "https://www.youtube.com/watch?v=u_yfIEuuk74"
+    },
+    {
+      "date": "2026-10-06",
+      "last_updated": "2026-10-09",
+      "snippet": "# Python Interview Questions for AI Engineers 2026 (60 Questions)\n## Core Python for AI work\n### 1. Which built-in data structures do you reach for in LLM application code, and why?\n**Answer:** `dict` for JSON-shaped payloads and constant-time lookups (document ID to metadata), `list` for ordered sequences such as chat messages, `set` for de-duplication and membership checks (have I already embedded this chunk hash?), and `tuple` for small immutable records or dictionary keys.\n...\n### 4. How do generators help with streaming model responses?\n**Answer:** a generator lets you transform a stream piece by piece without holding all of it.",
+      "title": "Python Interview Questions for AI Engineers 2026 (60 Q&A)",
+      "url": "https://cloudsoftsol.com/blog/python-for-ai-interview-questions/"
+    },
+    {
+      "date": "2026-10-06",
+      "last_updated": "2026-10-06",
+      "snippet": "# Python\n...\n## Overview\nThis section provides comprehensive study materials and resources.\nContent is organised to build understanding progressively, from foundational concepts to advanced applications.",
+      "title": "Python | Languages - Wyatt's Notes",
+      "url": "https://languages.wyattau.com/python/"
+    },
+    {
+      "date": "2026-10-06",
+      "last_updated": "2026-10-08",
+      "snippet": "Yes, of course Python is still a slow language.\nYou hopefully knew that when you picked Python for your project.\n...\nAs in, it is an abstraction that is meant to speed up development(and be easier to read etc) rather than be the fastest while running.\n...\nI like to say that Python is one of the fastest languages if you measure by metrics other than \"raw processing speed\".\nOne very important metric is speed of development - and due to a combination of lack of the compilation step, its dynamic nature, ecosystem of libraries and clean syntax, very few languages can match Python in that regard.",
+      "title": "How Fast is Python 3.15?",
+      "url": "https://news.ycombinator.com/item?id=49984652"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "max tokens must be between 1 and 1000000",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

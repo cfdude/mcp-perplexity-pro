@@ -1,0 +1,26 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "uppercase EN: ACCEPTED (200), the docs say lowercase only",
+  "latency_seconds": 0.256338,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "47",
+    "x-ratelimit-reset": "1791588694",
+    "x-ratelimit-used": "3",
+    "x-request-id": "45e5095b-5cb1-4c23-8a28-1709d85dd2ac"
+  },
+  "request": {
+    "query": "python",
+    "search_type": "fast",
+    "max_results": 1,
+    "search_language_filter": [
+      "EN"
+    ]
+  }
+}

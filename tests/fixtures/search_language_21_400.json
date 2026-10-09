@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Validation error: search_language_filter cannot have more than 20 languages",
+    "type": "invalid_language_code",
+    "code": 400
+  }
+}

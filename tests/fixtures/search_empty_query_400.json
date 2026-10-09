@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "query validation: query 1 length must be between 1 and 8192 characters, got 0",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

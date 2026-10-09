@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "max results must be between 1 and 20",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

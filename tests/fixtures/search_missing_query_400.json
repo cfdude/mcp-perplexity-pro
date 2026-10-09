@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "query validation: query is required",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "930710f5-957e-43fb-a0ce-0683afe2a387",
+  "results": [
+    {
+      "date": "2026-10-01",
+      "last_updated": "2026-10-07",
+      "snippet": "Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!\n| Python Insider\n# Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!\nPablo Galindo/October 1, 2026\n...\nA full sweep of Python releases is here: **Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!** One last lap around the Sun for Python 3.10, and security updates across all five series.\nGet them here:\n- Python 3.10.22\n- Python 3.11.17\n- Python 3.12.15\n- Python 3.13.16\n- Python 3.14.8\n**Python 3.10.22 is the final release of Python 3.10.** After five years, the series has reached end of life and will receive no further security updates.\n...\nPython 3.11 remains in security-fix-only mode until October 2027, as described in PEP 664.\nSecurity releases are made as needed, with no fixed cadence.\nPython 3.10.22 and 3.11.17 are **source-only**.\n...\nPython 3.12.15 is also a source-only security release, with security support continuing until October 2028.\nPython 3.13.16 is the **last full maintenance release of 3.13**; future 3.13 releases will contain security fixes only.\nPython 3.14.8 is a maintenance release, and both 3.13.16 and 3.14.8 include binary installers.",
+      "title": "Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now ...",
+      "url": "https://blog.python.org/2026/10/python-31022-31117/"
+    },
+    {
+      "last_updated": "2026-10-09",
+      "snippet": "Python Release Python 3.15.0 | Python.org\n# Python 3.15.0\n**Release date:** Oct. 9, 2026\n## This is the stable release of Python 3.15.0\nPython 3.15.0 is the newest major release of the Python programming language,\nand it contains many new features and optimisations compared to Python 3.14,\nin 5,643 commits from 1,012 contributors.",
+      "title": "Python Release Python 3.14.8 | Python.org",
+      "url": "https://www.python.org/downloads/release/python-3150/"
+    },
+    {
+      "last_updated": "2026-10-07",
+      "snippet": "Python Release Python 3.14.8 | Python.org\n# Python 3.14.8\n**Release date:** Sept. 30, 2026\n## This is the eighth maintenance release of Python 3.14\nPython 3.14.8 is an expedited security release and the eighth maintenance release of 3.14, containing around 354 bugfixes, build improvements and documentation changes from 142 contributors since 3.14.7.",
+      "title": "www.python.org › downloads › latestPython Release Python 3.14.8 | Python.org",
+      "url": "https://www.python.org/downloads/release/python-3148/"
+    }
+  ]
+}
