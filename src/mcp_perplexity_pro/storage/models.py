@@ -4,7 +4,17 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func, text
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -119,3 +129,46 @@ class ChatMessage(Base):
     model: Mapped[str | None] = mapped_column(String())
     preset: Mapped[str | None] = mapped_column(String())
     sources_json: Mapped[str | None] = mapped_column(Text())
+
+
+class ResearchJob(Base):
+    """One background research run owned by a project (agent-research spec; design D7).
+
+    An ordinary project-scoped table (``ON DELETE CASCADE``) with ``sqlite_autoincrement`` so a
+    deleted job's id is never reused. Times are OUR clock, naive UTC: the API rewrites its own
+    ``created_at`` and ``completed_at`` on every fetch, so they are not stored. ``status`` is a
+    value of the terminal vocabulary or any other status verbatim (running). ``usage_recorded``
+    is 1 once the run's usage event has been attempted. The schema is built by migration
+    ``0004``; this model must match it (a test compares the two).
+    """
+
+    __tablename__ = "research_jobs"
+    __table_args__ = (
+        Index("ix_research_jobs_project_id_id", "project_id", "id"),
+        Index("ix_research_jobs_status", "status"),
+        UniqueConstraint("response_id", name="uq_research_jobs_response_id"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    query: Mapped[str] = mapped_column(Text())
+    depth: Mapped[str] = mapped_column(String())
+    response_id: Mapped[str] = mapped_column(String())
+    status: Mapped[str] = mapped_column(String())
+    model: Mapped[str | None] = mapped_column(String())
+    started_at: Mapped[datetime] = mapped_column(DateTime())
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime())
+    cancel_requested_at: Mapped[datetime | None] = mapped_column(DateTime())
+    missing_since: Mapped[datetime | None] = mapped_column(DateTime())
+    result_text: Mapped[str | None] = mapped_column(Text())
+    sources_json: Mapped[str | None] = mapped_column(Text())
+    incomplete_reason: Mapped[str | None] = mapped_column(String())
+    error_text: Mapped[str | None] = mapped_column(Text())
+    input_tokens: Mapped[int | None] = mapped_column(Integer())
+    output_tokens: Mapped[int | None] = mapped_column(Integer())
+    total_tokens: Mapped[int | None] = mapped_column(Integer())
+    cost_nano_usd: Mapped[int | None] = mapped_column(Integer())
+    cost_source: Mapped[str | None] = mapped_column(String())
+    usage_recorded: Mapped[int] = mapped_column(Integer(), server_default=text("0"))
