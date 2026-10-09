@@ -384,7 +384,10 @@ MAX_TEXT = 512  # characters kept of an identity string (ids, model names): far 
 
 # api -> parser turning a raw usage Mapping into a Usage. Each later epic adds its own entry
 # after probing the live response; an api without one stores the mapping unpriced (source none).
-_PARSERS: dict[str, Callable[[Mapping], Usage]] = {"agent": usage_from_agent_response}
+# The entry calls through the module-level name so a test can replace the parser function itself.
+_PARSERS: dict[str, Callable[[Mapping], Usage]] = {
+    "agent": lambda usage: usage_from_agent_response(usage)
+}
 
 
 def _failure_text(exc: BaseException, secrets: Iterable[str]) -> str:

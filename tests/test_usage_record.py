@@ -377,3 +377,13 @@ async def test_only_usage_is_stored_never_output_text_or_the_prompt(storage_engi
     dump = json.dumps(await rows(storage_engine), default=str)
     assert "Python 3.14.8 is the current stable release" not in dump
     assert prompt not in dump and "snippet" not in dump and "python.org" not in dump
+
+
+async def test_a_failure_while_building_the_event_is_contained(storage_engine, caplog):
+    def broken_clock():
+        raise RuntimeError(f"clock broke {KEY}")
+
+    with caplog.at_level(logging.WARNING):
+        assert await record(storage_engine, clock=broken_clock, secrets=[KEY]) is False
+    assert await rows(storage_engine) == []
+    assert len(caplog.records) == 1 and KEY not in caplog.text
