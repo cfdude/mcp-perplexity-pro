@@ -24,6 +24,7 @@ from mcp_perplexity_pro.agent import (
     error_category,
     job_columns,
     run_costed,
+    shielded_write,
 )
 from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
@@ -64,6 +65,15 @@ def _storage_category(exc: BaseException) -> str:
 
 
 async def _store_job(
+    app: Any, project: str, response_id: str, values: dict[str, Any]
+) -> ResearchJob:
+    """Insert the job row, shielded from cancellation of the calling task: the provider has
+    already accepted the run, so a client cancel must not leave a billed run with no handle
+    (the cancel is re-raised once the write finished)."""
+    return await shielded_write(_store_job_unit(app, project, response_id, values))
+
+
+async def _store_job_unit(
     app: Any, project: str, response_id: str, values: dict[str, Any]
 ) -> ResearchJob:
     """Insert the job row, retried once. The provider has already accepted the run, so a second

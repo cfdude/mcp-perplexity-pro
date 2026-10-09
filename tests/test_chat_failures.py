@@ -2,9 +2,11 @@
 continuation is explained", "Only complete turns are stored", "A failed local write does not
 discard a billed answer")."""
 
+import asyncio
 import sqlite3
 
 import httpx2
+import pytest
 from agent_support import inline
 from chat_support import (
     A_ID,
@@ -197,3 +199,31 @@ async def test_a_chat_deleted_during_the_call_is_not_found_and_nothing_is_stored
     assert category(result) == "not_found"  # not storage_busy, not internal_error
     assert await w.count("chat_messages") == 0 and await w.count("chats") == 0
     assert await w.count("usage_events") == 2  # the call was billed and recorded
+
+
+async def test_a_client_cancel_after_a_billed_send_still_stores_the_turn(chat_world, monkeypatch):
+    """The answer is billed once the upstream call returns: a client cancel while the turn is
+    being written must not lose it (the write is shielded and finishes)."""
+    import mcp_perplexity_pro.tools.chat as chat_module
+
+    w = await chat_world()
+    in_write = asyncio.Event()
+    real = chat_module.create_chat
+
+    async def slow_create(*args, **kwargs):
+        in_write.set()
+        await asyncio.sleep(0.2)  # the client cancels the call while this is being written
+        return await real(*args, **kwargs)
+
+    monkeypatch.setattr(chat_module, "create_chat", slow_create)
+    task = asyncio.create_task(w.call(TOOL, action="send", **TEAL))
+    await asyncio.wait_for(in_write.wait(), 5)
+    assert len(w.requests) == 1  # the upstream call already returned
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    for _ in range(50):
+        if await w.count("chats"):
+            break
+        await asyncio.sleep(0.1)
+    assert await w.count("chats") == 1 and await w.count("chat_messages") == 2

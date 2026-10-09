@@ -26,6 +26,7 @@ from mcp_perplexity_pro.agent import (
     clean_text,
     digest,
     run_costed,
+    shielded_write,
 )
 from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
@@ -264,24 +265,28 @@ async def _send(
         preset=options.preset,
         sources_json=json.dumps([s.model_dump() for s in answer.sources]),
     )
+
+    async def write_turn() -> ChatSummary:
+        async with unit_of_work(app.engine) as session:
+            if chat_id is None:
+                found = await find_project(session, name)
+                if found is None:
+                    raise _not_found_project(name)
+                return await create_chat(
+                    session,
+                    found.id,
+                    scrub_secrets(clean_title, secrets),
+                    scrub_secrets(message, secrets),
+                    turn,
+                )
+            return await append_turn(
+                session, project_id, chat_id, scrub_secrets(message, secrets), turn
+            )
+
     try:
         if complete:
-            async with unit_of_work(app.engine) as session:
-                if chat_id is None:
-                    found = await find_project(session, name)
-                    if found is None:
-                        raise _not_found_project(name)
-                    saved = await create_chat(
-                        session,
-                        found.id,
-                        scrub_secrets(clean_title, secrets),
-                        scrub_secrets(message, secrets),
-                        turn,
-                    )
-                else:
-                    saved = await append_turn(
-                        session, project_id, chat_id, scrub_secrets(message, secrets), turn
-                    )
+            # Shielded: the answer is billed, so a client cancel must not lose the row.
+            saved = await shielded_write(write_turn())
     except PerplexityError as exc:
         if exc.category == "not_found":
             raise

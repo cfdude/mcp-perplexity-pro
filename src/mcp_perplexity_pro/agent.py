@@ -19,7 +19,7 @@ import json
 import logging
 import re
 import time
-from collections.abc import AsyncIterator, Iterable, Mapping
+from collections.abc import AsyncIterator, Coroutine, Iterable, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -753,6 +753,20 @@ class Observation:
     run: dict[str, Any] | None = None
     fetched: bool = False
     warnings: list[str] = field(default_factory=list)
+
+
+async def shielded_write[T](work: Coroutine[Any, Any, T]) -> T:
+    """Run a local write to completion even if the calling task is cancelled: used where the
+    provider has already acted (accepted or billed), so a client cancel must not lose the row.
+    The cancel is re-raised only after the write finished (the write's own failure is dropped
+    then; the caller is going away)."""
+    write = asyncio.ensure_future(work)
+    try:
+        return await asyncio.shield(write)
+    except asyncio.CancelledError:
+        with contextlib.suppress(Exception, asyncio.CancelledError):
+            await asyncio.shield(write)
+        raise
 
 
 async def _write_job_unit(

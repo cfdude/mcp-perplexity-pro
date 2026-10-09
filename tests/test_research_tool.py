@@ -2,6 +2,7 @@
 "Runs are background and retrievable", "Submit is not a costed call yet", "Submit that returns
 another status", "A started run is never orphaned silently")."""
 
+import asyncio
 import logging
 
 import httpx2
@@ -330,3 +331,32 @@ async def test_the_result_validates_against_the_advertised_schema(research_world
         result = await client.call_tool(TOOL, {"query": QUERY})
     jsonschema.validate(result.structured_content, tool.output_schema)
     assert request_log(w) == ["POST /v1/agent"]
+
+
+async def test_a_client_cancel_after_the_accepted_submit_still_stores_the_job_row(
+    research_world, monkeypatch
+):
+    """The provider accepted the run: a client cancel while the row is being inserted must not
+    leave a billed run with no handle (the write is shielded and finishes)."""
+    w = await research_world()
+    in_insert = asyncio.Event()
+    real = research_module.insert_job
+
+    async def slow_insert(session, project_id, values):
+        in_insert.set()
+        await asyncio.sleep(0.2)  # the client cancels the call while this is being written
+        return await real(session, project_id, values)
+
+    monkeypatch.setattr(research_module, "insert_job", slow_insert)
+    task = asyncio.create_task(w.call(TOOL, query="q"))
+    await asyncio.wait_for(in_insert.wait(), 5)
+    assert request_log(w) == ["POST /v1/agent"]  # the provider has already accepted the run
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    for _ in range(50):
+        if await w.count("research_jobs"):
+            break
+        await asyncio.sleep(0.1)
+    rows = await job_rows(w)
+    assert len(rows) == 1 and rows[0]["response_id"] == RUN_ID
