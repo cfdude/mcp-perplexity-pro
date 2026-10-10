@@ -96,7 +96,7 @@ Fixture-to-scenario map: `search_fast_single` (result shape, cost 0.001, request
 - **Search text enters `server-runtime`'s carve-out** (D4) -> a MODIFIED delta of "Secrets are never emitted"; the key is still replaced everywhere, only the list of content that may hold key-shaped examples grows.
 - **429 of the Search API is unobserved** (D8) -> generic status mapping and `Retry-After`; the provider limit seen is 50 request units per one-second window, probably counted per query for a multi-query request (`search_fast_multi_query` reads 3, see D3), so a five-query request can trip it alone only in a burst; invalid requests do not count (120 parallel 400s drew no 429).
 - **A readable-200 failure may have been billed** (D5) -> recorded `unexpected_response`, cost unknown, counted by `calls_cost_unknown`.
-- **The tool surface grows from 7 to 8** (D10) -> measured in group 3.
+- **The tool surface grows from 7 to 8** (D10) -> measured 2026-10-09 (task 3.4) the same way both times (`wc -c` on one `tools/list` POST to an ephemeral-port HTTP server with a dummy key and a temporary data directory): 40475 bytes before (commit `4cc5162`, the HEAD when group 1 started, extracted with `git archive`) and 45542 bytes after (commit `4a4dfcb`), a growth of 5067 bytes (12.5%); the `perplexity_search` entry alone is 5066 bytes of JSON. Nothing was trimmed: the figure is within the design target of about nine tools and the existing descriptions stay the lever if a later tool needs the room.
 - **`date` and `last_updated` semantics are the API's** -> returned as given; the tool does not parse or normalize them (all 114 present `date` and `last_updated` values in the 20 committed 200 responses are `YYYY-MM-DD`).
 
 ## Migration Plan
