@@ -1,7 +1,7 @@
 """Task 5.2: the recording order of every costed tool, proven per tool and not only on the helper.
 
-The four costed paths are ask, a chat send, a research submit (answered terminal, so it is a
-costed call) and a jobs observation. For each:
+The five costed paths are ask, a search, a chat send, a research submit (answered terminal, so
+it is a costed call) and a jobs observation. For each:
 
 * another connection can write while the upstream call is in flight (no write unit is open);
 * the usage event is stored after the call and BEFORE the tool's own write (the statement trace
@@ -10,7 +10,7 @@ costed call) and a jobs observation. For each:
 * a database locked past the busy timeout at recording time leaves the tool's result unchanged.
 
 Mutation check (docs/lessons/cleanup-tests-must-fail-when-cleanup-is-removed.md): moving the
-recorder inside an open write unit, in ``run_costed`` (ask, chat, research) or in
+recorder inside an open write unit, in ``costed_call`` (ask, search, chat, research) or in
 ``observe_job`` (jobs), turns these tests red.
 """
 
@@ -69,6 +69,13 @@ CASES = [
         {"query": "q"},
         completed_submit,
         "INSERT INTO research_jobs",
+    ),
+    Case(
+        "search",
+        "perplexity_search",
+        {"query": "q"},
+        lambda: respond_with("search_fast_single.json"),
+        None,
     ),
     Case(
         "jobs",

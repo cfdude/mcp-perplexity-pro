@@ -812,3 +812,41 @@ async def test_the_eight_tools_are_listed_and_each_has_an_output_schema(research
         "perplexity_usage",
     ]
     assert all(t.output_schema for t in tools)
+
+
+# --- 1b. costed_call has exactly its two callers (py-search-api design D6) ---------------------
+
+
+def costed_call_callers() -> Counter:
+    """``(file, enclosing function)`` of every call to ``costed_call(`` under ``src/``."""
+    found: Counter = Counter()
+    for path in SRC.rglob("*.py"):
+        tree = ast.parse(path.read_text())
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+                continue
+            for inner in ast.walk(node):
+                if isinstance(inner, ast.Call) and getattr(inner.func, "id", None) == "costed_call":
+                    found[(path.relative_to(SRC).as_posix(), node.name)] += 1
+    return found
+
+
+def test_costed_call_is_called_from_exactly_run_costed_and_run_search_and_defined_once():
+    # The same generic sequence for every costed call: a third caller is a third copy of the
+    # order unless it is added here on purpose. (``run_search`` and ``run_costed`` are nested
+    # callers of ``costed_call``; ``interpret`` closures inside them hold no call.)
+    assert costed_call_callers() == Counter(
+        {("agent.py", "run_costed"): 1, ("search.py", "run_search"): 1}
+    )
+    definitions = [
+        path.relative_to(SRC).as_posix()
+        for path in SRC.rglob("*.py")
+        if any(
+            isinstance(n, ast.AsyncFunctionDef) and n.name == "costed_call"
+            for n in ast.walk(ast.parse(path.read_text()))
+        )
+    ]
+    assert definitions == ["costed.py"]
+    for tool in (SRC / "tools").glob("*.py"):
+        text = tool.read_text()
+        assert "costed_call" not in text and "record_usage" not in text, tool.name
