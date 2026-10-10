@@ -1,0 +1,48 @@
+CONDUCTOR STATE — where we are and what's next
+Progress is claimed completion — ticked checkboxes, not verified delivery.
+
+NOW: `py-search-api` (openspec, epic, P1) — 0/28 stories · 1 lifecycle
+
+DEPENDENCY WARNINGS (an epic cannot be started until what it waits on moves):
+  ⚠ `routing-decisions-classifier` (P3) depends on `py-decisions-tool` (P2, planned) — the dependency is not queued
+  ⚠ `routing-decisions-classifier` (P3) depends on `routing-rules-v1` (P2, later) — the dependency is not queued
+  ⚠ `routing-escalation` (P3) depends on `routing-rules-v1` (P2, later) — the dependency is not queued
+  ⚠ `routing-eval-tuning` (P3) depends on `routing-rules-v1` (P2, later) — the dependency is not queued
+  ⚠ `routing-router-api-backend` (P3) depends on `routing-rules-v1` (P2, later) — the dependency is not queued
+
+planned: 2 — see PROJECT.md
+
+RELEASES:
+  • `release-2-0-0`: 6 epics, 0 deferred · cross-spec pass (17 specs) · fresh-context general-purpose subagents: Gate1+cross-spec review, narrow re-verification for py-search-api (2026-10-09) — Python rewrite of the Perplexity MCP server on the Agent, Search, Embeddings and Decisions APIs (Sonar is retired and returns 403) (target: 2.0.0)
+
+DISPOSITIONS (recorded outcomes):
+  • `py-agent-api` — delivered (2026-10-09) — Agent API toolset delivered: perplexity_ask, perplexity_chat, perplexity_research and perplexity_jobs with migrations 0003/0004, recorder wired at run_costed and the observation core, verified live (about $0.023, spend reconciled to the nano-USD); Gate 1, cross-spec, Gate 2, audit and docs reviews recorded
+  • `py-foundation` — delivered (2026-10-09) — Python 2.0 foundation delivered: FastMCP server, httpx2 client, SQLite/Alembic storage, perplexity_models and perplexity_projects, ruff+pytest gates, live under pm2 on 8102; Gate 2 and cross-spec review recorded
+  • `py-usage-log` — delivered (2026-10-09) — Usage log delivered: usage_events (migration 0002), best-effort recorder with pricing constants, perplexity_usage tool, retained-table convention for project delete; Gate 2, audit and docs review recorded; live-verified on the running server
+
+GATE REVIEWS:
+  • `py-agent-api` gate 1: pass (9 artifacts) · fresh-context general-purpose subagents: Gate 1 review, verification reviews, final narrow check (2026-10-09); last 3 task-text blocks fixed by the parent in 522be27 ⚠ unverifiable · gate 2: pass (f2eee11..54f7b12) · fresh-context general-purpose subagent: documentation diff f2eee11..048ca94 (one IMPORTANT, five MINOR) with the code fix 48c2484 (shielded submit insert and chat row write, red/green/mutation-checked) and doc corrections f34cb8a applied; suite 1399 passed, zero warnings
+  • `py-foundation` gate 1: pass (8 artifacts) · fresh-context general-purpose subagents: Gate 1 review, re-review, narrow verification (2026-10-09) ⚠ unverifiable · gate 2: pass (301ae30..40a5daf) · parent re-check of 301ae30..40a5daf: one commit ticking task 1.4 with CI evidence (PR #20 green on 3.12/3.14, throwaway PR #21 red); no code changed since the docs-range Gate 2 pass
+  • `py-search-api` gate 1: pass (6 artifacts) · fresh-context general-purpose subagents: Gate 1 review, narrow re-verification (2026-10-09) ⚠ unverifiable · gate 2: —
+  • `py-usage-log` gate 1: pass (6 artifacts) · fresh-context general-purpose subagents: Gate 1 review, verification review, final narrow check (2026-10-09) ⚠ unverifiable · gate 2: pass (8b35ce8..dfbfc97) · fresh-context general-purpose subagent: documentation diff 8b35ce8..1616705 (one IMPORTANT and two MINOR, all fixed in dfbfc97)
+
+EPIC LINKS:
+  • `py-agent-api` depends-on `py-foundation` — needs project scaffold, client, DB base
+  • `py-search-api` depends-on `py-foundation` — needs project scaffold, client, DB base
+  • `py-usage-log` depends-on `py-foundation` — needs project scaffold, client, DB base
+  • `py-decisions-tool` depends-on `py-foundation` — needs project scaffold, client, DB base
+  • `py-embeddings` depends-on `py-foundation` — needs project scaffold, client, DB base
+  • `routing-rules-v1` depends-on `py-agent-api` — routes between Agent API presets
+  • `routing-rules-v1` depends-on `py-usage-log` — needs cost data to tune
+  • `routing-decisions-classifier` depends-on `py-decisions-tool` — uses the decide wrapper
+  • `routing-decisions-classifier` depends-on `routing-rules-v1` — extends the rules matrix
+  • `routing-escalation` depends-on `routing-rules-v1` — escalates from a routed tier
+  • `routing-eval-tuning` depends-on `py-usage-log` — measures from usage log
+  • `routing-eval-tuning` depends-on `routing-rules-v1` — evaluates the router
+  • `routing-router-api-backend` depends-on `routing-rules-v1` — backend the router selects
+
+LIFECYCLE TASKS (pm): a task that is bookkeeping about the change's own lifecycle — above all the one that archives the change itself, which always qualifies — carries the literal `<!-- pm:lifecycle -->` on its task line. Mark it when the source is authored OR AMENDED; a source predating this capability gets the marker the first time you touch it.
+
+RULES (pm): classify detours before fixing — minimal → fix+commit then `/pm:detour --minimal`; substantial → `/pm:detour` (own proposal + PUSH). After any state change, `/pm:status`. Resume via `/pm:resume` + reconcile gate. Mirror every PUSH/POP to a one-line Honcho memory.
+
+Manage with /pm:status · /pm:next · /pm:detour · /pm:resume, or the `conductor` skill.
