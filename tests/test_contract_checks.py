@@ -33,6 +33,7 @@ from secrets_support import (
     OTHER,
     QUEUED,
     RESEARCH,
+    SEARCH,
     SHAPED,
     completed_body,
     error_body,
@@ -489,6 +490,78 @@ ROWS = [
         ),
         setup=job_one,
     ),
+    # --- search-tool: local refusals (nothing is sent) ---
+    Row("search: blank query", SEARCH, {"query": "   "}, "invalid_request"),
+    Row("search: no queries", SEARCH, {"query": []}, "invalid_request"),
+    Row("search: six queries", SEARCH, {"query": ["a"] * 6}, "invalid_request"),
+    Row("search: people", SEARCH, {"query": "q", "search_type": "people"}, "invalid_request"),
+    Row("search: max_results 21", SEARCH, {"query": "q", "max_results": 21}, "invalid_request"),
+    Row("search: max_tokens 0", SEARCH, {"query": "q", "max_tokens": 0}, "invalid_request"),
+    Row(
+        "search: mixed domains",
+        SEARCH,
+        {"query": "q", "domains": ["a.com", "-b.com"]},
+        "invalid_request",
+    ),
+    Row("search: bad date", SEARCH, {"query": "q", "after": "09/01/2026"}, "invalid_request"),
+    Row(
+        "search: recency with a date",
+        SEARCH,
+        {"query": "q", "recency": "week", "after": "2026-01-01"},
+        "invalid_request",
+    ),
+    Row(
+        "search: upper-case language",
+        SEARCH,
+        {"query": "q", "languages": ["EN"]},
+        "invalid_request",
+    ),
+    Row(
+        "search: country of three letters",
+        SEARCH,
+        {"query": "q", "country": "USA"},
+        "invalid_request",
+    ),
+    Row(
+        "search: invalid project name", SEARCH, {"query": "q", "project": "../x"}, "invalid_request"
+    ),
+    # --- search-tool: the API answers ---
+    Row(
+        "search: a recorded 400 body",
+        SEARCH,
+        {"query": "q"},
+        "invalid_request",
+        respond_with("search_bad_country_400.json", 400),
+    ),
+    Row(
+        "search: a recorded 401 body",
+        SEARCH,
+        {"query": "q"},
+        "authentication",
+        respond_with("search_unauthenticated_401.json", 401),
+    ),
+    Row(
+        "search: 429 beyond the maximum wait",
+        SEARCH,
+        {"query": "q"},
+        "rate_limited",
+        error_body(429, "slow down", "rate_limit", **{"Retry-After": "9999"}),
+    ),
+    Row("search: 503", SEARCH, {"query": "q"}, "upstream_failure", error_body(503, "down", "x")),
+    Row(
+        "search: read timeout",
+        SEARCH,
+        {"query": "q"},
+        "network_timeout",
+        raising(lambda request: httpx2.ReadTimeout("cut", request=request)),
+    ),
+    Row(
+        "search: a 200 without results",
+        SEARCH,
+        {"query": "q"},
+        "unexpected_response",
+        lambda request, n: httpx2.Response(200, json={"id": "x"}),
+    ),
 ]
 
 
@@ -695,6 +768,53 @@ async def test_key_shaped_content_is_returned_and_stored_unchanged_and_nowhere_e
     log = run.log_text()
     assert len(log) > 1000  # the DEBUG run really logged
     assert KEY not in log and not SHAPED.search(log)
+    assert KEY.encode() not in run.database_bytes()
+
+
+async def test_search_text_keeps_examples_and_never_the_configured_key(keyed):
+    """py-search-api 5.2: third-party result text is returned as received except the configured
+    key; a ``pplx-`` example and a documented model id inside it survive; the request id (an
+    upstream string) is redacted and cut; nothing key-shaped reaches the log or the database."""
+    run = await keyed()
+    body = {
+        "id": f"id-{OTHER}-" + "z" * 300,
+        "results": [
+            {
+                "title": f"About {OTHER}",
+                "url": f"https://example.com/{OTHER}",
+                "snippet": f"key {KEY}, model pplx-embed-v1-0.6b, example {OTHER}",
+                "date": "2026-10-01",
+                "last_updated": f"u {KEY}",
+            },
+            {"title": None, "url": "https://example.com/b", "snippet": 5, "date": 20261001},
+            "stray",
+        ],
+    }
+    found = await run(SEARCH, ok(body), query=f"What is {OTHER}?")
+    refused = await run(SEARCH, error_body(400, f"bad {KEY} {OTHER}"), query="q")
+
+    assert not found.is_error  # a billed 200 with odd fields succeeds
+    sc = found.structured_content
+    first, second = sc["results"]
+    assert first["title"] == f"About {OTHER}" and first["url"] == f"https://example.com/{OTHER}"
+    assert first["snippet"] == f"key [redacted], model pplx-embed-v1-0.6b, example {OTHER}"
+    assert first["last_updated"] == "u [redacted]"
+    assert (second["title"], second["snippet"], second["date"]) == ("", "", None)
+    assert OTHER not in sc["request_id"] and len(sc["request_id"]) <= 128
+    assert refused.is_error and OTHER not in refused.structured_content["message"]
+    assert KEY not in refused.structured_content["message"]
+
+    for result in run.results:
+        for path, value in walk(result.structured_content):
+            assert KEY not in value
+            if SHAPED.search(value) and not result.is_error:
+                assert path in CONTENT_RESULT_PATHS, (path, value[:80])
+    for text in run.texts():
+        assert KEY not in text
+    log = run.log_text()
+    assert KEY not in log and not SHAPED.search(log)
+    for table, column, value in await run.cells():
+        assert KEY not in value and not SHAPED.search(value), (table, column)  # stores no content
     assert KEY.encode() not in run.database_bytes()
 
 
