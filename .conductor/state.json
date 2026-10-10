@@ -279,11 +279,32 @@
       "reconcileNeeded": false,
       "parent": "python-rewrite-2-0",
       "description": "POST /search: multi-query, dates (MM/DD/YYYY), language, domain allow/deny, recency, country, max_tokens, search_type web|fast|people. Structured JSON results. Resolve page-snippets endpoint if one is documented.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "63dcb0f",
+        "9a8ce02",
+        "7cf5986",
+        "86a6502",
+        "59e1941"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T23:27:54.539Z",
+      "touchedAt": "2026-10-10T00:04:02.609Z",
       "release": "release-2-0-0",
-      "startedAt": "2026-10-09T23:27:54.538Z"
+      "startedAt": "2026-10-09T23:27:54.538Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-10T00:04:02.608Z",
+          "artifacts": [
+            "openspec/changes/py-search-api/proposal.md",
+            "openspec/changes/py-search-api/design.md",
+            "openspec/changes/py-search-api/tasks.md",
+            "openspec/changes/py-search-api/specs/search-client/spec.md",
+            "openspec/changes/py-search-api/specs/search-tool/spec.md",
+            "openspec/changes/py-search-api/specs/server-runtime/spec.md"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review, narrow re-verification (2026-10-09)"
+        }
+      }
     },
     {
       "id": "py-usage-log",
@@ -563,7 +584,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 183,
+  "revision": 190,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
@@ -575,7 +596,7 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-09T22:54:50.300Z",
+        "reviewedAt": "2026-10-10T00:04:02.446Z",
         "specs": [
           {
             "key": "py-agent-api/specs/agent-ask/spec.md",
@@ -622,6 +643,18 @@
             "sha256": "330fe948829a15cf26f7f3f8b1e50431ba2bbda7e9ab97b5a037d3ed6803a658"
           },
           {
+            "key": "py-search-api/specs/search-client/spec.md",
+            "sha256": "51ff9ea8aaa1284dcb6994e6215d59e6de1157ad39ce2280597729ad10f802e1"
+          },
+          {
+            "key": "py-search-api/specs/search-tool/spec.md",
+            "sha256": "b7567444c84c41748d9d46d7088133a171e1c11ae58f561d45ed0d15d6082fd6"
+          },
+          {
+            "key": "py-search-api/specs/server-runtime/spec.md",
+            "sha256": "220c56eaac18e2edc3a60f06a7891f4e57babb69b34495d8ef2a760547c562ac"
+          },
+          {
             "key": "py-usage-log/specs/local-storage/spec.md",
             "sha256": "a9f771b918223f5d4e65f381cb20f3d7718f43cfc449f50b92ff556b632c7c5a"
           },
@@ -634,18 +667,18 @@
             "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagent: final cross-spec review of py-agent-api (1 block + 9 polish, all fixed in f33c65d by the parent's amendment agent) (2026-10-09)",
+        "reviewer": "fresh-context general-purpose subagents: Gate1+cross-spec review, narrow re-verification for py-search-api (2026-10-09)",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-09T20:26:13.523Z",
+          "reviewedAt": "2026-10-09T22:54:50.300Z",
           "specs": [
             {
               "key": "py-agent-api/specs/agent-ask/spec.md",
-              "sha256": "84afcab103d708282e13632382211a99c61fd8f3b4ab928a43cb467c64255bc3"
+              "sha256": "e9e07e5b99a3bc281410aa5254a666b73f1430c9895f08c4264604a77e89e606"
             },
             {
               "key": "py-agent-api/specs/agent-chat/spec.md",
-              "sha256": "ded24ff2b0607d80cdc4f1a5f59fd11c1297a257b51ddc4f3d10df2b14028dfe"
+              "sha256": "cb4e760c7d446a0b593f8219d4552488c9637cd1997a2825a336ed00e40718dd"
             },
             {
               "key": "py-agent-api/specs/agent-client/spec.md",
@@ -653,15 +686,15 @@
             },
             {
               "key": "py-agent-api/specs/agent-research/spec.md",
-              "sha256": "a79b46a85c17e86095fa4e34b5dd745c99035594942761f381924f5038c70e88"
+              "sha256": "24ec257ee559595813f1832c1067c17d72585f19645d65bb15793d45d4633ce5"
             },
             {
               "key": "py-agent-api/specs/local-storage/spec.md",
-              "sha256": "7fd6b6da5e22ff07f09162b2a4d6718e2791f746b417d3384193c71ab6a4caef"
+              "sha256": "f15dc1cddb27d573ac0ce8998d4f5d9ad257c74eca10edcc2a80fb4b462cb07b"
             },
             {
               "key": "py-agent-api/specs/server-runtime/spec.md",
-              "sha256": "6d37e406315b86884d448abcbc5d8e4f75441f1517bb1919e8311e32ebd38bbc"
+              "sha256": "00b475b5aeca32de31223afc80c40dab3309e16c19f28a194ce53fe34ac93fd7"
             },
             {
               "key": "py-foundation/specs/local-storage/spec.md",
@@ -696,7 +729,7 @@
               "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagents: cross-spec review, verification reviews, final narrow checks for py-agent-api (2026-10-09); last 3 task-text blocks fixed by the parent in 522be27"
+          "reviewer": "fresh-context general-purpose subagent: final cross-spec review of py-agent-api (1 block + 9 polish, all fixed in f33c65d by the parent's amendment agent) (2026-10-09)"
         }
       }
     }
