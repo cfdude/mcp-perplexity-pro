@@ -16,15 +16,19 @@ The client SHALL provide one Search operation, `POST /search` with a JSON reques
 - **THEN** it carries the general read timeout of 60 seconds, not the longer Agent run timeout
 
 ### Requirement: Tolerant search parsing
-A search response SHALL be parsed with every unknown field retained, at the top level and inside each result. Only `results` (a list) is required; `id` is optional. A result's `title`, `url` and `snippet` default to empty text, and `date` and `last_updated` are null when absent (the API omits the key rather than sending null). A response without `results` SHALL raise `unexpected_response` naming `/search` and `results`.
+A search response SHALL be parsed with every unknown field kept, at the top level and inside each result. Only `results`, a list, is required: its items and their fields are kept as received whatever their type (a null title, a numeric date or a non-object item is not a parse failure, so a billed 200 is never lost), and `id` is optional. A response without `results`, or with `results` not a list, SHALL raise `unexpected_response` naming `/search` and `results`.
 
 #### Scenario: Dates absent
 - **WHEN** a result in the recorded response has no `date` key
-- **THEN** parsing succeeds and that result's `date` is null while its `last_updated` is kept
+- **THEN** parsing succeeds and that result is kept as received, with its `last_updated` and without a `date` key
 
 #### Scenario: Unknown fields kept
 - **WHEN** a response carries a top-level `server_time` and `usage` and a result carries an extra field
 - **THEN** parsing succeeds and every one of them is retained as received
+
+#### Scenario: Odd values kept
+- **WHEN** a response holds a result whose `title` is null and whose `date` is a number, and another item that is a string
+- **THEN** parsing succeeds and all of it is retained as received
 
 #### Scenario: Empty results
 - **WHEN** the API answers with the recorded response whose `results` is an empty list
@@ -32,6 +36,10 @@ A search response SHALL be parsed with every unknown field retained, at the top 
 
 #### Scenario: Missing results
 - **WHEN** a response body is `{"id": "x"}`
+- **THEN** the client raises `unexpected_response` naming `/search` and `results`
+
+#### Scenario: Results not a list
+- **WHEN** a response body is `{"id": "x", "results": {"a": 1}}`
 - **THEN** the client raises `unexpected_response` naming `/search` and `results`
 
 ### Requirement: Search requests are not replayed

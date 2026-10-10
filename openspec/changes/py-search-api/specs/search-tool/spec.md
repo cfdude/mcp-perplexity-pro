@@ -72,11 +72,15 @@ The server SHALL provide `perplexity_search`, a synchronous stateless tool that 
 - **THEN** each call fails with `invalid_request` naming `domains`
 
 ### Requirement: Date filters are validated locally
-`after`, `before`, `updated_after` and `updated_before` SHALL be strict `YYYY-MM-DD` calendar dates, sent as `MM/DD/YYYY` in `search_after_date_filter`, `search_before_date_filter`, `last_updated_after_filter` and `last_updated_before_filter`. `after` SHALL NOT be later than `before`, nor `updated_after` later than `updated_before`. Each failure is `invalid_request` naming the option, before any call; the API itself refuses ISO dates.
+`after`, `before`, `updated_after` and `updated_before` SHALL be strict `YYYY-MM-DD` calendar dates, sent as `MM/DD/YYYY` built from the date's own month, day and four-digit year (no locale formatter) in `search_after_date_filter`, `search_before_date_filter`, `last_updated_after_filter` and `last_updated_before_filter`. `after` SHALL NOT be later than `before`, nor `updated_after` than `updated_before`. Each failure is `invalid_request` naming the option, before any call.
 
 #### Scenario: Date conversion
 - **WHEN** a client passes `after` `2026-09-01` and `before` `2026-10-01`
 - **THEN** the request carries `search_after_date_filter` `09/01/2026` and `search_before_date_filter` `10/01/2026`
+
+#### Scenario: Early year formatted
+- **WHEN** a client passes `after` `0999-01-02`
+- **THEN** the request carries `search_after_date_filter` `01/02/0999`
 
 #### Scenario: Malformed or impossible date
 - **WHEN** a client passes `after` `09/01/2026`, `2026-13-40` or `yesterday`
@@ -117,7 +121,7 @@ The server SHALL provide `perplexity_search`, a synchronous stateless tool that 
 - **THEN** the call fails with `invalid_request` carrying the API's message
 
 ### Requirement: Content budget
-`max_tokens` (1 to 16384) caps the page content returned across all results and `max_tokens_per_page` (1 to 4096) per result; both are this server's own bounds, not provider limits, and are sent unchanged when given and omitted otherwise. When `max_tokens` is given and fewer results come back than were asked for, the result SHALL carry a warning that the budget may have dropped results, because the API drops whole results to fit it.
+`max_tokens` (1 to 16384) caps the page content returned across all results and `max_tokens_per_page` (1 to 4096) per result; both are this server's own bounds, not provider limits, and are sent unchanged when given and omitted otherwise. A value outside its bounds SHALL fail with `invalid_request` naming the option before any call.
 
 #### Scenario: Passed through
 - **WHEN** a client passes `max_tokens` 128 and `max_tokens_per_page` 64
@@ -127,23 +131,42 @@ The server SHALL provide `perplexity_search`, a synchronous stateless tool that 
 - **WHEN** a client passes `max_tokens` 0 or 16385, or `max_tokens_per_page` 4097
 - **THEN** each call fails with `invalid_request` naming the option and nothing is sent
 
+### Requirement: Budget warning
+When `max_tokens` is given and fewer results come back than `max_results` (when `max_results` is omitted: than the API's default of 10), the result SHALL carry a warning that the budget may have dropped results, because the API drops whole results to fit it. When `max_results` was omitted the warning SHALL also say the query may simply have had fewer hits, as the two causes cannot be told apart. Without `max_tokens` there is no such warning.
+
 #### Scenario: Budget drops results
 - **WHEN** a client asks for three results with `max_tokens` 1 and the API returns the recorded one-result response
 - **THEN** the result has count 1 and a warning naming `max_tokens`
 
+#### Scenario: Default count
+- **WHEN** a client passes `max_tokens` 1 with no `max_results` and the API returns four results
+- **THEN** the result carries a warning naming `max_tokens` that also says the query may have had few hits
+
+#### Scenario: No shortfall or no budget
+- **WHEN** a client asks for three results with `max_tokens` 128 and three come back, or passes no `max_tokens` and fewer come back than asked
+- **THEN** the result carries no budget warning
+
 ### Requirement: Request carries only what was asked
-The request SHALL hold `query`, `search_type` and exactly the options the caller gave, under the API's top-level field names, and nothing else; no option is ever invented, and no unknown field is sent (the API silently accepts unknown fields, so a misspelled one would otherwise do nothing and still be billed).
+The request SHALL hold `query`, `search_type` and exactly the options the caller gave, under the API's top-level field names, and nothing else: no option is invented and no unknown field is sent (the API silently accepts unknown fields, so a misspelled one would be billed and do nothing). An empty `domains` or `languages` list counts as not given and is not sent.
 
 #### Scenario: Minimal request
 - **WHEN** a client searches for `"python"` with no options
 - **THEN** the request body is `{"query": "python", "search_type": "fast"}`
 
+#### Scenario: Empty lists
+- **WHEN** a client passes `domains` `[]` and `languages` `[]`
+- **THEN** the request carries neither field
+
 #### Scenario: Recorded request shapes
-- **WHEN** the options of a recorded probe request are given to the tool
-- **THEN** the request equals that probe's request
+- **WHEN** the options of each recorded request that the tool accepts as given are passed to the tool
+- **THEN** the request equals that recorded request
+
+#### Scenario: Recorded requests that are not reproduced
+- **WHEN** the options of the six recorded requests the API accepted but this tool does not send as recorded are given (mixed domains, an upper-case language, recency with a last-updated date, a whitespace-only query, an omitted `search_type`, an unknown field)
+- **THEN** the first four fail with `invalid_request`, the omitted `search_type` is sent as `fast`, and the unknown field is not sendable at all
 
 ### Requirement: Results
-The result SHALL hold `results`, in the order the API ranks them, each with `title`, `url`, `snippet`, `date` and `last_updated` (the dates exactly as the API gives them, `YYYY-MM-DD`, or null when it gives none); `count` (the number of results); `query_count`; `search_type`; `request_id`; `latency_ms`; and the project. A response with no results SHALL be a normal result with count 0 and a warning, not an error: the request was made and is billed.
+The result SHALL hold `results`, in the order the API ranks them, each with `title`, `url`, `snippet`, `date` and `last_updated` (the dates as the API gives them, `YYYY-MM-DD`, or null when it gives none); `count` (the results kept); `query_count`; `search_type`; `request_id`; `cost_usd`; `cost_source`; `latency_ms`; `project`; and `warnings`. A response with no results SHALL be a normal result with count 0 and a warning, not an error: the request was made and is billed.
 
 #### Scenario: Fast single query
 - **WHEN** the API returns the recorded fast single-query response
@@ -157,8 +180,23 @@ The result SHALL hold `results`, in the order the API ranks them, each with `tit
 - **WHEN** the API returns the recorded response for a date range with no hits
 - **THEN** the result has count 0 and a warning, and one event is recorded
 
+### Requirement: Unusable results are dropped
+A result that is not an object, or whose `url` is missing, null, not text or empty, SHALL be dropped (a pointer to nowhere is not a result) and one warning SHALL count the drops; `count` is the number kept. A `title` or `snippet` that is not text SHALL become an empty string and a `date` or `last_updated` that is not text SHALL become null, without losing the result.
+
+#### Scenario: Result without a url
+- **WHEN** a response holds five results and one has no `url`
+- **THEN** the result holds the other four in order, count 4 and a warning that one result was dropped
+
+#### Scenario: Non-object item
+- **WHEN** a response holds a string among its results
+- **THEN** the string is dropped with the same warning and the rest are returned
+
+#### Scenario: Null and non-text fields
+- **WHEN** a result has a null `title`, a numeric `snippet` and a numeric `date`
+- **THEN** it is returned with an empty title and snippet, a null date and its url, and nothing is dropped
+
 ### Requirement: Several queries are merged
-For a list of queries the result SHALL be the API's one flat list, unchanged, with `query_count` set and a warning that the API merges the queries and does not say which query produced which result. The tool SHALL NOT invent an attribution. No result is removed or reordered by the tool.
+For a list of queries the result SHALL be the API's one flat list in the API's order, with `query_count` set and a warning that the API merges the queries and does not say which query produced which result. The tool SHALL NOT invent an attribution, add or reorder a result, and removes only a result dropped under "Unusable results are dropped".
 
 #### Scenario: Three queries
 - **WHEN** three queries are searched and the API returns the recorded merged response
@@ -169,29 +207,37 @@ For a list of queries the result SHALL be the API's one flat list, unchanged, wi
 - **THEN** the request carries both and the result is the API's list, with the warning
 
 ### Requirement: Third-party text is scrubbed
-Titles, snippets, urls and dates are third-party content and SHALL be returned as received except that the configured API key is replaced by `[redacted]`; a `pplx-` shaped example or a documented model id inside them is kept. Every other string taken from the API (the request id) SHALL have the key and key-shaped tokens removed, then be cut to 128 characters.
+Titles, snippets, urls, `date` and `last_updated` are third-party content and SHALL be returned as received except that the configured API key is replaced by `[redacted]`; a `pplx-` shaped example or a documented model id inside them is kept. Every other string taken from the API (the request id) SHALL have the key and key-shaped tokens removed, then be cut to 128 characters.
 
 #### Scenario: Key in a snippet
 - **WHEN** a snippet contains the configured key beside the text `pplx-embed-v1-0.6b` and a `pplx-` shaped example that is not the key
 - **THEN** the returned snippet holds `[redacted]` in place of the key and the other two as received
+
+#### Scenario: Key in a date field
+- **WHEN** `last_updated` or `date` contains the configured key
+- **THEN** the returned field holds `[redacted]` in its place
 
 #### Scenario: Key-shaped request id
 - **WHEN** the response `id` contains a key-shaped token
 - **THEN** the returned `request_id` and the stored event show it removed
 
 ### Requirement: Third-party text is capped
-After the key is replaced, each title SHALL be cut to 500 characters, each url to 2048, each snippet to 20000 and each date to 32, and the result SHALL carry one warning counting the fields that were cut. The caps are this server's own bound on a result's size, not provider limits.
+After the key is replaced, each title SHALL be cut to 500 characters, each url to 2048, each snippet to 20000, and each `date` and `last_updated` to 64 (the cap the Agent tool applies to a source date), and the result SHALL carry one warning counting the fields that were cut. The caps are this server's own bound on a result's size, not provider limits.
 
 #### Scenario: Oversized snippet
 - **WHEN** a snippet is 30000 characters long
 - **THEN** the returned snippet is 20000 characters and a warning says one field was cut
+
+#### Scenario: Oversized last_updated
+- **WHEN** `last_updated` is 100 characters long
+- **THEN** the returned value is 64 characters and a warning says one field was cut
 
 #### Scenario: Nothing cut
 - **WHEN** every field of the recorded fast response is within its cap
 - **THEN** the result carries no cut warning
 
 ### Requirement: Cost of a search
-The cost of a request SHALL be one billing unit at the documented price of its search type (fast $0.001, web $0.005), however many queries it holds, derived from the documented price table; the response reports no cost or usage and the tool SHALL NOT interpret a `usage` or cost field if one appears. The result carries `cost_usd` as an exact decimal string and `cost_source` `computed`.
+The cost of a request SHALL be one billing unit at the documented price of its search type (fast $0.001, web $0.005), however many queries it holds. No parser is registered for `search`, so a `usage` field, if one ever appears, is kept in the event's usage record as received but not read as a cost report; the computed cost stands until a parser is added after a probe. The result carries `cost_usd` as an exact decimal string and `cost_source` `computed`.
 
 #### Scenario: Fast single
 - **WHEN** a fast single-query search succeeds
@@ -201,9 +247,9 @@ The cost of a request SHALL be one billing unit at the documented price of its s
 - **WHEN** a web search succeeds, and separately a fast three-query search
 - **THEN** the costs are `"0.005"` and `"0.001"`
 
-#### Scenario: A reported usage field is not trusted
+#### Scenario: A usage field is kept but not a cost report
 - **WHEN** a response carries an extra `usage` object with a cost
-- **THEN** the result still has the computed cost and source `computed`
+- **THEN** the result and the event have the computed cost and source `computed`, and the event's usage record holds that object as received
 
 ### Requirement: Search is recorded
 Each search that reaches the API SHALL be recorded once as a usage event: tool `perplexity_search`, API family `search`, no model and no preset, the response id as request id, the project name, the measured latency, and the computed cost with source `computed`. A response with results or without is `ok`; a failed request carries its error category with cost 0 and source `none`; a 200 that cannot be read is `unexpected_response`.
@@ -227,6 +273,17 @@ Each search that reaches the API SHALL be recorded once as a usage event: tool `
 #### Scenario: Nothing recorded before a call
 - **WHEN** a search fails local validation
 - **THEN** no usage event and no project exist for it
+
+### Requirement: Project
+`project` SHALL be an optional project name, `default` when omitted, checked against the server's project-name rules before any upstream call. An invalid name SHALL fail with `invalid_request` before any call, project creation or usage event. A valid name that does not exist is created before the call, and the result and the event carry the name.
+
+#### Scenario: Default project
+- **WHEN** a client searches with no `project`
+- **THEN** the result and the usage event carry the project `default`
+
+#### Scenario: Invalid project name
+- **WHEN** a client passes the project `../x`
+- **THEN** the call fails with `invalid_request`, nothing is sent and no project or event is created
 
 ### Requirement: Search follows the recording order
 The search SHALL validate its arguments and the project name first, resolve the project in a unit of work that has committed before the call, make the upstream call holding no write unit, and record the event while no write unit is open. It writes nothing of its own afterwards. A project created for a failed call survives it.
