@@ -70,9 +70,13 @@ def record_usage_calls() -> Counter:
 
 def test_record_usage_is_called_from_exactly_two_functions_and_defined_once():
     calls = record_usage_calls()
-    # run_costed records a failure and a response (two calls in one function); observe_job_locked
-    # records a finished run. Nothing else, in any tool module, calls the recorder.
-    assert calls == Counter({("agent.py", "run_costed"): 2, ("agent.py", "observe_job_locked"): 1})
+    # The generic costed-call sequence lives once, in costed.costed_call (a failure and a
+    # response: two calls in one function), and agent.run_costed and the search call are its
+    # callers (py-search-api design D6). observe_job_locked records a finished background run, a
+    # different shape. Still exactly two functions; nothing in any tool module calls the recorder.
+    assert calls == Counter(
+        {("costed.py", "costed_call"): 2, ("agent.py", "observe_job_locked"): 1}
+    )
     definitions = [
         path.relative_to(SRC).as_posix()
         for path in SRC.rglob("*.py")

@@ -3,7 +3,7 @@
 * Request side (pure, no I/O): ``AskOptions`` and ``build_request`` validate every option the
   probe showed the API accepts wrongly or reports misleadingly, then build the request body.
 * Response side: ``digest`` and the upstream-text cleaner.
-* The one costed-call sequence: ``run_costed``.
+* The Agent side of the costed-call sequence: ``run_costed`` (the sequence is ``costed``).
 
 Everything that can fail on a caller's input raises ``PerplexityError("invalid_request", ...)``
 naming the option, so a tool validates first and nothing is sent, recorded or created for a bad
@@ -28,15 +28,14 @@ from typing import Annotated, Any
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
+from mcp_perplexity_pro.costed import Recording, costed_call
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
 from mcp_perplexity_pro.storage import jobs as job_store
 from mcp_perplexity_pro.storage.models import ResearchJob, UsageEvent
 from mcp_perplexity_pro.storage.projects import (
-    DEFAULT_PROJECT,
-    get_or_create_project,
-    validate_project_name,
+    DEFAULT_PROJECT,  # noqa: F401  (re-exported to the tools)
 )
 from mcp_perplexity_pro.storage.session import is_busy_error, unit_of_work
 from mcp_perplexity_pro.usage import (
@@ -530,48 +529,39 @@ async def run_costed(
 
     A background submit records only a terminal body (a queued or unknown status is returned
     unrecorded and never raised: the caller owns what a submit means). The caller's own write
-    comes after this returns. This and the job observation are the only ``record_usage`` call
-    sites.
+    comes after this returns. The sequence itself is ``costed.costed_call``; this function holds
+    the Agent rules (the interpreter above and the unexpected-status error). ``costed_call`` and
+    the job observation are the only ``record_usage`` call sites.
     """
-    name = validate_project_name(project or DEFAULT_PROJECT)
-    if resolve_project:
-        async with unit_of_work(app.engine) as session:  # short, committed before the call
-            await get_or_create_project(session, name)
     secrets = (app.settings.api_key.get_secret_value(),)
-    started = time.monotonic()
-    try:
-        run = await app.client.create_run(body, background=background)
-    except PerplexityError as exc:
-        await record_usage(
-            app.engine,
-            tool=tool,
-            api="agent",
-            status=exc.category,
-            preset=preset,
-            project=name,
-            latency_ms=_ms(started),
-            secrets=secrets,
-        )
-        raise
-    latency = _ms(started)
-    raw = run.model_dump(mode="json")
-    status = agent_response_status(raw)
-    if background and not is_terminal(raw.get("status"), raw.get("error")):
-        status = None  # a submit that has not finished: nothing to record yet
-    if status is not None:
-        await record_usage(
-            app.engine,
-            tool=tool,
-            api="agent",
+
+    def interpret(run: AgentRun) -> Recording | None:
+        raw = run.model_dump(mode="json")
+        status = agent_response_status(raw)
+        if background and not is_terminal(raw.get("status"), raw.get("error")):
+            return None  # a submit that has not finished: nothing to record yet
+        if status is None:
+            return None
+        return Recording(
             status=status,
             usage=raw.get("usage"),  # the raw mapping: the recorder parses it
             model=snapshot_model(raw, preset) if background else raw.get("model"),
             preset=preset,
             request_id=raw.get("id"),
-            project=name,
-            latency_ms=latency,
-            secrets=secrets,
         )
+
+    costed = await costed_call(
+        app,
+        tool=tool,
+        api="agent",
+        project=project,
+        preset=preset,
+        call=lambda: app.client.create_run(body, background=background),
+        record=interpret,
+        resolve_project=resolve_project,
+    )
+    run = costed.result
+    raw = run.model_dump(mode="json")
     if not background and (
         raw.get("status") not in ("completed", "incomplete") or raw.get("error") is not None
     ):
@@ -582,7 +572,9 @@ async def run_costed(
             "finished answer" + (f": {detail}" if detail else "."),
             secrets=secrets,
         )
-    return CostedRun(run=run, latency_ms=latency, project=name, event_status=status)
+    return CostedRun(
+        run=run, latency_ms=costed.latency_ms, project=costed.project, event_status=costed.status
+    )
 
 
 def _ms(started: float) -> int:
