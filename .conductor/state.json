@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "py-search-api",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -266,7 +266,7 @@
       "id": "py-search-api",
       "title": "Search API tool with full filter set",
       "priority": "P1",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -293,10 +293,16 @@
         "4a4dfcb64c562505f81f07cd7f02ebf0bac52841",
         "0482a3047eaac6b3df4b5fcb873584b09034559a",
         "3a0c51dd7020edd2b74163507e4d20b3b6fab267",
-        "587ca2c94a1b80506616b4a24f27e662ab6a0a3b"
+        "587ca2c94a1b80506616b4a24f27e662ab6a0a3b",
+        "1c5a9518f404fbe467e6ce378244d1fe5cdc6dfa",
+        "dfa625935e9862681e4b60752bab45c49d85b69b",
+        "c5e0bc0e74e7369f63f230d449169c5dce63bcec",
+        "88dd5fd0c254ff5a7929a26bf929e1caff224da5",
+        "759229dbf729d0ff3bf482de29c8830f4992945d",
+        "7f37327e2420775fbb6277f5824abaabe2f128b7"
       ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-10T00:35:25.143Z",
+      "touchedAt": "2026-10-11T17:33:34.041Z",
       "release": "release-2-0-0",
       "startedAt": "2026-10-09T23:27:54.538Z",
       "gateReview": {
@@ -312,8 +318,33 @@
             "openspec/changes/py-search-api/specs/server-runtime/spec.md"
           ],
           "reviewer": "fresh-context general-purpose subagents: Gate 1 review, narrow re-verification (2026-10-09)"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-11T17:33:28.215Z",
+          "baseSha": "88dd5fd",
+          "headSha": "7f37327",
+          "reviewer": "fresh-context general-purpose subagent: documentation diff 88dd5fd..759229d (no Critical/Important, five Minor fixed in 7f37327)",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-11T17:27:03.791Z",
+            "baseSha": "4cc5162",
+            "headSha": "88dd5fd",
+            "reviewer": "fresh-context general-purpose subagent: Gate 2 + call-site sweep 4cc5162..587ca2c; no Critical/Important; Minor 2,3 fixed in 88dd5fd, 1,4 noted"
+          }
         }
-      }
+      },
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-11T17:33:34.040Z",
+        "reason": "Search tool delivered: perplexity_search, shared costed_call, live-verified (3 billed calls, 7000000 nano-USD reconciled on the server's books; provider console not read)"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-11T17:33:34.021Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-11T17:33:34.040Z"
     },
     {
       "id": "py-usage-log",
@@ -593,7 +624,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 199,
+  "revision": 208,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
