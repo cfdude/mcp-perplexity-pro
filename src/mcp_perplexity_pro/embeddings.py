@@ -578,3 +578,80 @@ async def index(
                     complete.append(item)
             await shielded_write(_write_complete_items(app, name, complete, triple, result))
     return result
+
+
+# --- Scoring (design D9) ---------------------------------------------------------------------
+
+BLOCK_ROWS = 2048
+_POPCOUNT: Any = None
+
+
+def _popcount_table() -> Any:
+    global _POPCOUNT
+    if _POPCOUNT is None:
+        import numpy as np
+
+        _POPCOUNT = np.array([bin(i).count("1") for i in range(256)], dtype=np.uint16)
+    return _POPCOUNT
+
+
+def cosine_scores(query: bytes, matrix: Any) -> Any:
+    """Cosine similarity of ``query`` (int8 bytes) against each row of ``matrix`` (an ``N x D``
+    int8 array), read as signed integers in float32. A zero vector scores 0."""
+    import numpy as np
+
+    q = np.frombuffer(query, dtype=np.int8).astype(np.float32)
+    m = matrix.astype(np.float32)
+    dots = m @ q
+    norms = np.linalg.norm(m, axis=1) * np.linalg.norm(q)
+    scores = np.where(norms == 0, 0.0, dots / np.where(norms == 0, 1.0, norms))
+    return np.clip(scores, -1.0, 1.0)
+
+
+def hamming_scores(query: bytes, matrix: Any, dimensions: int) -> Any:
+    """``1 - hamming distance / dimensions`` of ``query`` (packed bits) against each row of
+    ``matrix`` (an ``N x dimensions/8`` uint8 array)."""
+    import numpy as np
+
+    q = np.frombuffer(query, dtype=np.uint8)
+    distances = _popcount_table()[np.bitwise_xor(matrix, q)].sum(axis=1)
+    return 1.0 - distances / float(dimensions)
+
+
+def top_k(
+    query: bytes,
+    rows: Sequence[tuple[int, bytes]],
+    *,
+    k: int,
+    encoding: str,
+    dimensions: int,
+    min_score: float | None = None,
+) -> list[tuple[int, float]]:
+    """The best ``k`` ``(chunk id, score)`` of ``rows`` (``(id, vector bytes)``), best first, ties
+    broken by ascending id. Scores in blocks of 2048 rows so memory stays small; blocking changes
+    nothing about the result. CPU-bound: call it under ``asyncio.to_thread``."""
+    import numpy as np
+
+    width = dimensions if encoding == "int8" else dimensions // 8
+    dtype = np.int8 if encoding == "int8" else np.uint8
+    best_ids: list[Any] = []
+    best_scores: list[Any] = []
+    for start in range(0, len(rows), BLOCK_ROWS):
+        block = rows[start : start + BLOCK_ROWS]
+        matrix = np.frombuffer(b"".join(v for _, v in block), dtype=dtype).reshape(-1, width)
+        scores = (
+            cosine_scores(query, matrix)
+            if encoding == "int8"
+            else hamming_scores(query, matrix, dimensions)
+        )
+        ids = np.array([i for i, _ in block], dtype=np.int64)
+        order = np.lexsort((ids, -scores))[:k]
+        best_ids.append(ids[order])
+        best_scores.append(scores[order])
+    if not best_ids:
+        return []
+    ids = np.concatenate(best_ids)
+    scores = np.concatenate(best_scores)
+    order = np.lexsort((ids, -scores))[:k]
+    out = [(int(ids[i]), float(scores[i])) for i in order]
+    return [(i, s) for i, s in out if min_score is None or s >= min_score]
