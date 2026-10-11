@@ -1,0 +1,23 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "model omitted",
+  "latency_seconds": 0.136,
+  "response_headers": {
+    "x-request-id": "fb672f60-20d9-444c-b756-51cc0eb08ed7"
+  },
+  "request": {
+    "state": "x",
+    "questions": {
+      "q": {
+        "type": "noul",
+        "instructions": "y"
+      }
+    }
+  }
+}

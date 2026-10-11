@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": null,
+    "message": "Invalid model ''. Permitted models can be found in the documentation at https://docs.perplexity.ai/docs/getting-started/models.",
+    "param": null,
+    "type": "invalid_request_error"
+  }
+}

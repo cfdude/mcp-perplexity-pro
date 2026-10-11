@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Question key cannot be empty",
+    "type": "invalid_request",
+    "code": "400"
+  }
+}

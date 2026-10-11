@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Each request needs between 1 and 128 questions",
+    "type": "invalid_request",
+    "code": "400"
+  }
+}

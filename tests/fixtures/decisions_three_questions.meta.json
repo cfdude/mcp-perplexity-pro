@@ -1,0 +1,51 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "noul, choice and score together, object state",
+  "latency_seconds": 0.272,
+  "response_headers": {
+    "x-ratelimit-limit": "10",
+    "x-ratelimit-remaining": "7",
+    "x-ratelimit-reset": "1791740313",
+    "x-ratelimit-used": "3",
+    "x-request-id": "f849d7a5-742c-48f6-9782-b73a72275759"
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": {
+      "ticket": "App crashes when exporting a PDF with more than 200 pages",
+      "customer_tier": "enterprise"
+    },
+    "questions": {
+      "urgent": {
+        "type": "noul",
+        "criteria": {
+          "true": "blocks the customer's work",
+          "false": "does not block"
+        }
+      },
+      "area": {
+        "type": "choice",
+        "criteria": {
+          "export": "file export",
+          "auth": "login",
+          "billing": null
+        }
+      },
+      "severity": {
+        "type": "score",
+        "criteria": [
+          "minor",
+          "moderate",
+          "major",
+          "critical"
+        ]
+      }
+    }
+  }
+}

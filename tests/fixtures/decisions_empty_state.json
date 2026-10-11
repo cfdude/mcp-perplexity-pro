@@ -1,0 +1,13 @@
+{
+  "model": "pplx-decider-v1.1-27b",
+  "answers": {
+    "q": {
+      "type": "noul",
+      "noul": 0.7808471323685262
+    }
+  },
+  "usage": {
+    "input_tokens": 82,
+    "output_tokens": 1
+  }
+}

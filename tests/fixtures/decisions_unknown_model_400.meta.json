@@ -1,0 +1,24 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "unknown model",
+  "latency_seconds": 0.116,
+  "response_headers": {
+    "x-request-id": "b36763ea-e137-482d-9a6b-9a328eef1061"
+  },
+  "request": {
+    "model": "pplx-decider-nope",
+    "state": "x",
+    "questions": {
+      "q": {
+        "type": "noul",
+        "instructions": "y"
+      }
+    }
+  }
+}
