@@ -1,0 +1,24 @@
+{
+  "endpoint": "/v1/embeddings",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "explicit int8, 128 dims",
+  "latency_seconds": 0.149,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "46",
+    "x-ratelimit-reset": "1791742644",
+    "x-ratelimit-used": "4",
+    "x-request-id": "32c1fe7b-2967-4d1a-ab36-363bda095fba"
+  },
+  "request": {
+    "model": "pplx-embed-v1-0.6b",
+    "input": "hello world",
+    "encoding_format": "base64_int8",
+    "dimensions": 128
+  }
+}

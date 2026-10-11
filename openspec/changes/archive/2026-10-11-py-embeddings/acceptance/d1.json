@@ -1,0 +1,30 @@
+{
+  "content": [
+    {
+      "text": "Removed 10 chunks.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "delete",
+    "project": "acceptance-embed",
+    "warnings": [],
+    "latency_ms": 2,
+    "embedded_chunks": null,
+    "embedded_items": null,
+    "skipped_items": null,
+    "remaining": null,
+    "requests": null,
+    "input_tokens": null,
+    "cost_usd": null,
+    "cost_source": null,
+    "calls_cost_unknown": null,
+    "candidates": null,
+    "hits": null,
+    "groups": null,
+    "unindexed_chat": null,
+    "unindexed_job": null,
+    "removed": 10
+  }
+}

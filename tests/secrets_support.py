@@ -33,6 +33,7 @@ RESEARCH = "perplexity_research"
 JOBS = "perplexity_jobs"
 SEARCH = "perplexity_search"
 DECIDE = "perplexity_decide"
+EMBED = "perplexity_embed"
 KEY = "pplx-" + "Zy9_" * 8  # the configured key (key-shaped, so the shape rule also sees it)
 OTHER = "pplx-" + "Qq7-" * 8  # a key-shaped example that is NOT the configured key
 SHAPED = re.compile(r"pplx-[A-Za-z0-9_-]{8,}")  # independent of the implementation's pattern

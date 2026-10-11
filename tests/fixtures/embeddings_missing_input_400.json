@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "input is required",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

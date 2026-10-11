@@ -1,0 +1,61 @@
+{
+  "content": [
+    {
+      "text": "1. [0.4620] text tasks\n   An asyncio TaskGroup starts coroutines together and cancels the rest if one of them raises an exception.\n2. [0.4043] text python\n   Python asyncio lets a program run many I/O-bound tasks concurrently with async and await instead of threads.\n3. [0.0681] text sourdough\n   Sourdough bread needs a live starter, a long slow fermentation and a very hot oven for a crisp crust.\nUsage: 6 tokens, cost 0.000000024 USD (reported), project acceptance-embed.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "search",
+    "project": "acceptance-embed",
+    "warnings": [],
+    "latency_ms": 105,
+    "embedded_chunks": null,
+    "embedded_items": null,
+    "skipped_items": null,
+    "remaining": null,
+    "requests": 1,
+    "input_tokens": 6,
+    "cost_usd": "0.000000024",
+    "cost_source": "reported",
+    "calls_cost_unknown": 0,
+    "candidates": 5,
+    "hits": [
+      {
+        "score": 0.4619726538658142,
+        "source": "text",
+        "chunk_index": 0,
+        "text": "An asyncio TaskGroup starts coroutines together and cancels the rest if one of them raises an exception.",
+        "chat_id": null,
+        "message_id": null,
+        "job_id": null,
+        "key": "tasks"
+      },
+      {
+        "score": 0.40427613258361816,
+        "source": "text",
+        "chunk_index": 0,
+        "text": "Python asyncio lets a program run many I/O-bound tasks concurrently with async and await instead of threads.",
+        "chat_id": null,
+        "message_id": null,
+        "job_id": null,
+        "key": "python"
+      },
+      {
+        "score": 0.06810659170150757,
+        "source": "text",
+        "chunk_index": 0,
+        "text": "Sourdough bread needs a live starter, a long slow fermentation and a very hot oven for a crisp crust.",
+        "chat_id": null,
+        "message_id": null,
+        "job_id": null,
+        "key": "sourdough"
+      }
+    ],
+    "groups": null,
+    "unindexed_chat": null,
+    "unindexed_job": null,
+    "removed": null
+  }
+}

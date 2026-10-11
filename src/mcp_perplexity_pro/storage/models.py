@@ -5,10 +5,12 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -172,3 +174,66 @@ class ResearchJob(Base):
     cost_nano_usd: Mapped[int | None] = mapped_column(Integer())
     cost_source: Mapped[str | None] = mapped_column(String())
     usage_recorded: Mapped[int] = mapped_column(Integer(), server_default=text("0"))
+
+
+class EmbeddingChunk(Base):
+    """One embedded chunk of text (embeddings-store spec; design D4).
+
+    Project-scoped (``ON DELETE CASCADE``) and tied to the chat message or research job it came
+    from (also ``CASCADE``), so deleting a chat, a job or a project deletes its vectors. The
+    schema is built by migration ``0005``; this model must match it (a test compares the two).
+    ``vector`` is ``int8`` bytes or packed bits, per ``encoding``; it is never returned to a caller.
+    """
+
+    __tablename__ = "embedding_chunks"
+    __table_args__ = (
+        CheckConstraint(
+            "(source = 'chat' AND chat_message_id IS NOT NULL AND research_job_id IS NULL)"
+            " OR (source = 'job' AND research_job_id IS NOT NULL AND chat_message_id IS NULL)"
+            " OR (source = 'text' AND chat_message_id IS NULL AND research_job_id IS NULL)",
+            name="ck_embedding_chunks_source_keys",
+        ),
+        UniqueConstraint(
+            "project_id",
+            "ref",
+            "chunk_index",
+            "model",
+            "dimensions",
+            "encoding",
+            name="uq_embedding_chunks_item",
+        ),
+        Index(
+            "ix_embedding_chunks_project_triple", "project_id", "model", "dimensions", "encoding"
+        ),
+        Index("ix_embedding_chunks_project_source", "project_id", "source"),
+        Index(
+            "ix_embedding_chunks_chat_message_id",
+            "chat_message_id",
+            sqlite_where=text("chat_message_id IS NOT NULL"),
+        ),
+        Index(
+            "ix_embedding_chunks_research_job_id",
+            "research_job_id",
+            sqlite_where=text("research_job_id IS NOT NULL"),
+        ),
+        {"sqlite_autoincrement": True},
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    source: Mapped[str] = mapped_column(String())  # chat | job | text
+    chat_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_messages.id", ondelete="CASCADE")
+    )
+    research_job_id: Mapped[int | None] = mapped_column(
+        ForeignKey("research_jobs.id", ondelete="CASCADE")
+    )
+    ref: Mapped[str] = mapped_column(String())  # c:<id> | j:<id> | t:<key>
+    chunk_index: Mapped[int] = mapped_column(Integer())
+    text: Mapped[str] = mapped_column(Text())
+    text_hash: Mapped[str] = mapped_column(String())
+    model: Mapped[str] = mapped_column(String())
+    dimensions: Mapped[int] = mapped_column(Integer())
+    encoding: Mapped[str] = mapped_column(String())  # int8 | binary
+    vector: Mapped[bytes] = mapped_column(LargeBinary())
+    created_at: Mapped[datetime] = mapped_column(DateTime())

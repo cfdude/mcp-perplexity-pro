@@ -12,7 +12,7 @@ now return `403 chat_completions_not_available` ("Sonar is now the Agent API"), 
 answer a single query. There was no working behavior to port, so the TypeScript code is deleted
 (git history keeps it) and the server was rebuilt in Python on the Agent API (`POST /v1/agent`).
 
-**Nine tools exist today:**
+**Ten tools exist today:**
 
 | Tool | What it does | Spends money |
 |---|---|---|
@@ -22,14 +22,14 @@ answer a single query. There was no working behavior to port, so the TypeScript 
 | `perplexity_jobs` | Manages research runs: `list`, `status`, `result`, `cancel` | no new spend; it records the finished run's |
 | `perplexity_search` | Ranked web search results as data (title, url, snippet, dates), with no model answer. Type `fast` (default, $0.001 per request) or `web` ($0.005 per request) | yes |
 | `perplexity_decide` | Typed questions about a text, answered with calibrated probabilities: a yes probability, the most probable option, or a position on an ordered rubric. One request holds up to 32 questions. About $0.02 per million input tokens, output free | yes |
+| `perplexity_embed` | Indexes saved chats, completed research reports or texts you pass as vectors in the local database, and searches them by meaning: `index`, `search`, `status`, `delete`. `index` sends the text to Perplexity. $0.004 (`pplx-embed-v1-0.6b`) or $0.03 (`pplx-embed-v1-4b`) per million tokens | `index` and `search` |
 | `perplexity_models` | Lists the models your key can use, with live prices, plus the documented Agent API presets | no |
 | `perplexity_projects` | Lists projects, or deletes one and its stored records (spend history is kept) | no |
 | `perplexity_usage` | Reports what recorded upstream calls cost, grouped by tool, API, model, project or day. Read-only | no |
 
-**The four Agent tools, `perplexity_search` and `perplexity_decide` record their usage.** Every
-costed upstream call stores one usage event (`perplexity_usage` reports them), and a background
-research run is recorded once, by the first `perplexity_jobs` call that sees it finish. The
-Embeddings tool arrives in a later release and will record its calls the same way.
+**The four Agent tools, `perplexity_search`, `perplexity_decide` and `perplexity_embed` record their
+usage.** Every costed upstream call stores one usage event (`perplexity_usage` reports them), and a
+background research run is recorded once, by the first `perplexity_jobs` call that sees it finish.
 
 **These tools can spend money, and there is no cost ceiling.** Defaults are the cheapest depths
 (`fast`; `medium` for research) and the cheaper search type (`fast`). `high` and `xhigh` exist only behind `perplexity_research`
@@ -156,8 +156,8 @@ The client launches the server, so the key goes in the client's `env` block:
 Four tools (`perplexity_ask`, `perplexity_chat`, `perplexity_research`, `perplexity_jobs`) call the
 Perplexity Agent API (`POST /v1/agent`) and spend money. The first three sections below are what
 applies to all four; each tool follows. `perplexity_search` calls the Search API (`POST /search`)
-and has its own cost table in its section, and so does `perplexity_decide` (the Decisions API,
-`POST /v1/decisions`).
+and has its own cost table in its section, and so do `perplexity_decide` (the Decisions API,
+`POST /v1/decisions`) and `perplexity_embed` (the Embeddings API, `POST /v1/embeddings`).
 
 ### Cost by depth
 
@@ -891,6 +891,230 @@ the second a state holding an `image_url` part:
 [invalid_request] state: images are not supported in this version.
 ```
 
+### `perplexity_embed`
+
+Indexes text as vectors in the local database and searches it by meaning. It calls the Embeddings
+API (`POST /v1/embeddings`) and spends money, but very little: see "Cost". One tool, four actions:
+
+| `action` | What it does | Calls the API |
+|---|---|---|
+| `index` | Embeds the project's saved chat messages (`source` `chat`), its completed research reports (`job`) or texts you pass (`text`, with `items`), and stores the vectors. Only items with no stored vector for the chosen model, size and encoding (or whose text changed) are embedded; an unchanged item spends nothing | yes, one request per batch |
+| `search` | Embeds the `query` in one request and returns the stored chunks nearest to it, best first | yes, one request |
+| `status` | Shows how many chunks are stored per source, model, size and encoding, and how many chat messages and completed jobs have no vector yet for the chosen combination | no |
+| `delete` | Removes stored vectors, optionally filtered; needs `confirm` true | no |
+
+**Privacy.** `index` sends the text of every chunk it embeds to Perplexity, so index only what you
+are willing to send there. `search` sends only the query. The configured API key is replaced by
+`[redacted]` in any text before it is chunked, sent or stored (and in a hit's text on the way out);
+a `pplx-` shaped example in a text is kept. Nothing is sent by `status` or `delete`, and nothing is
+sent for a call that is refused locally.
+
+| Argument | Type | Default | Meaning |
+|---|---|---|---|
+| `action` | string | required | `index`, `search`, `status` or `delete`; anything else is `invalid_request` |
+| `source` | `chat`, `job` or `text` | none | Required for `index`; filters `search` and `delete`. `chat`: every message with non-blank text of the project's chats, both roles. `job`: the project's research jobs with status `completed` and a non-blank result (an `incomplete` run has no answer). `text`: the `items` you pass |
+| `items` | list of objects | none | `index` of `text` only (refused with another source): 1 to 100 objects `{"key", "text"}`. A key is non-blank text of at most 128 characters, unique within the call; a text is non-blank, valid UTF-8 and at most 100000 characters. A key indexed again with new text replaces that key's chunks |
+| `query` | string | none | `search`: non-blank text of at most 4000 characters |
+| `top_k` | integer | `5` | `search`: how many hits, 1 to 20 |
+| `min_score` | number | none | `search`: only hits scoring at or above this, -1 to 1 (a negative value is meaningful for `int8` only; `binary` scores run 0 to 1) |
+| `limit` | integer | `256` | `index`: stop after the whole item that makes the count of new chunks reach this, 1 to 2048. At least one whole item is always taken, so a call may embed up to 49 chunks more than `limit` |
+| `model` | `pplx-embed-v1-0.6b` or `pplx-embed-v1-4b` | `pplx-embed-v1-0.6b` | The embedding model. On `delete`, omitted means every model. Always sent on a request |
+| `dimensions` | integer | the model's full size | Vector size, a multiple of 8: 128 to 1024 for the 0.6b model, 128 to 2560 for the 4b model. Sent only when given, so the full size (1024 or 2560) applies when omitted. On `delete`, omitted means every size |
+| `encoding` | `int8` or `binary` | `int8` | `int8` keeps one signed byte per dimension; `binary` keeps one bit per dimension, 8 times smaller than `int8` of the same size. On `delete`, omitted means both |
+| `project` | string | `default` | The project the vectors belong to; an `index` or `search` that makes a request creates it if absent |
+| `confirm` | boolean | `false` | `delete` only: must be `true`; otherwise `confirmation_required` and nothing is removed |
+
+`model`, `dimensions` and `encoding` together are the **combination** (model, size, encoding). Vectors
+of different combinations are not comparable, so a search compares only chunks stored under its own
+combination, and the same text indexed under two combinations is two separate sets of rows.
+`status` lists every stored combination.
+
+Every argument is checked before anything is sent: a bad one is an `invalid_request` error that
+names it, nothing is billed and no project is created. The refusals are an unknown `action`,
+`source`, `model` or `encoding`; a `dimensions` that is out of range for the model (for `delete`: outside 128 to 2560) or not a
+multiple of 8; `items` with the wrong shape, count, length, a repeated or blank key or a lone surrogate, or
+`items` given with a source other than `text`; a `limit` outside 1 to 2048; a blank or over-long
+`query`; a `top_k` outside 1 to 20; a `min_score` outside -1 to 1; and an `index` that would take a
+project past 20000 chunks for one combination. `delete` without `confirm` true is
+`confirmation_required`.
+
+**The store.** Vectors live in one table, `embedding_chunks` (migration `0005`; the upgrade first
+writes `backup-0004.db`, see "Data and backups"), in the same SQLite file as everything else. A chunk
+holds its text, its vector (the provider's bytes unchanged: `int8`, or packed bits for `binary`), its
+combination and a hash of its text. Every chunk belongs to a project, and a chunk of source `chat` or
+`job` also belongs to its chat message or research job, so:
+
+- deleting a chat removes the vectors of its messages, deleting a research job removes its vectors,
+  and deleting a project removes all of the project's vectors (`perplexity_projects` `delete` counts
+  the job and text chunks in `rows_removed`; the chat chunks go by the cascade of the chat delete and
+  are not counted). Nothing asks first: `status` shows what is stored.
+- a project holds at most 20000 chunks per combination (our cap, which bounds the memory a search
+  needs). An `index` that would pass it is refused before anything is sent, and says to delete
+  something.
+- `delete` filters by `source`, `model`, `dimensions` and `encoding` only. There is no delete by key:
+  to drop one text key, delete the `text` chunks and index the others again.
+
+**Chunks and batches.** A text is split into chunks of at most 4000 characters (at the last blank
+line, else line break, else space before the limit, else at the limit), and a text yields at most 50
+chunks; the rest is ignored and `index` says so in a warning. Chunks are sent in batches of at most
+64 inputs and 100000 characters in all (our caps; the API allows 512 inputs). Each batch is one
+request, and the items it completes are stored before the next batch is sent, so a failure on
+batch 3 keeps every item fully embedded in batches 1 and 2 (the error says how many chunks were
+stored first); an item that straddles a batch boundary is stored only when its last chunk has
+been embedded, so the items of a failed batch, and an item split across it, stay pending (and
+are embedded, and billed, again on the next call). Batches run one after the other, never concurrently, and two `index` calls on one project
+in one server process wait for each other, so the same pending item is not embedded twice. `limit`
+makes `index` resumable: it stops after about `limit` new chunks and reports `remaining`, the pending
+chunks it left, so call it again until `remaining` is 0.
+
+**Scoring.** For `int8` the score is the cosine similarity of the query vector and the stored vector
+read as signed 8-bit integers (a zero vector scores 0). For `binary` it is `1 - hamming / dimensions`,
+where `hamming` is the number of differing bits. The scan runs locally with numpy (a new
+dependency), in blocks, off the event loop, and compares at most 20000 chunks. A search over a
+combination with nothing stored returns no hits and a warning, makes **no request** and records no
+event. **Vectors are never returned**: no result, error, log record or usage event holds a vector,
+its base64 text or its bytes. A hit's `text` is cut to 800 characters (the text rendering shows 200).
+
+Output (`structuredContent`, with warnings and one usage line as text). Keys that do not apply to
+the action are `null`:
+
+| Key | Meaning |
+|---|---|
+| `action`, `project`, `warnings`, `latency_ms` | The action, the project used, things worth knowing, and the measured wall time (of the upstream requests for `index` and `search`, `0` when none was made; of the local call for `status` and `delete`) |
+| `embedded_chunks`, `embedded_items`, `skipped_items`, `remaining` | `index`: chunks and items stored; items skipped because they were already current or their source was deleted during the call; pending chunks left because of `limit` |
+| `requests`, `input_tokens` | `index`, `search`: upstream requests made and tokens billed |
+| `cost_usd`, `cost_source`, `calls_cost_unknown` | `index`, `search`: the exact sum of the recorded costs of this call's requests as a decimal string, where the cost came from (`reported`, `computed`, `mixed` or `none`), and how many requests had an unknown cost. A call that made no request has `null` `cost_usd` and `cost_source` |
+| `candidates`, `hits` | `search`: stored chunks compared, and the best chunks first, each with `score`, `source`, `chunk_index`, `text` and its reference: `chat_id` and `message_id`, `job_id`, or `key` (the others `null`) |
+| `groups`, `unindexed_chat`, `unindexed_job` | `status`: chunks per source, model, size and encoding; chat messages and completed jobs with text and no vector for the chosen combination (items whose text changed are not counted) |
+| `removed` | `delete`: chunks removed |
+
+**Cost.** Prices are Perplexity's documented figures (dated 2026-10-09, `PRICES_AS_OF` in
+`pricing.py`), per million input tokens, with no per-request fee:
+
+| Model | Price | Nano-USD per token |
+|---|---|---|
+| `pplx-embed-v1-0.6b` | $0.004 | 4 |
+| `pplx-embed-v1-4b` | $0.03 | 30 |
+
+Unlike Search and Decisions, the Embeddings API **reports** the cost of each response
+(`usage.cost.total_cost`, in USD), and the server records that figure (`cost_source` `reported`). The
+documented price is only a fallback: if a response reports no cost, or one in a currency other than
+USD, the cost is computed from `prompt_tokens` (`computed`), and if that is unreadable too it is
+unknown (`none`, counted in `calls_cost_unknown`), never zero. A reported cost is never replaced by a
+computed one.
+
+The live acceptance (`openspec/changes/py-embeddings/acceptance/`, 2026-10-11) made 5 billed
+requests (2 `index`, 3 `search`), no errors and no unknown cost, and every cost was `reported`.
+`perplexity_usage` for the project reported 4086 nano-USD ($0.000004086), which equals
+456 + 3420 + 36 + 24 + 150 for the five requests, from 248 tokens in all. **The provider's console was
+not read** (the manual read was waived), so the figure is the provider's own number in each
+response, not checked against what its console shows.
+
+**No request id.** The response body carries no id, so the usage event's request id is empty and two
+identical requests each record an event, which is right because each was billed. A request the API
+refused with a 4xx is recorded with cost 0 and its error category, and any other error request (a
+5xx, a timeout) is recorded the same way and may have been billed, so the usage totals stay a lower
+bound. A billed batch whose chunks then could not be stored is recorded, stays pending, and is billed
+again when indexed again.
+
+**Rate limit.** The provider's limit seen in the probe is 50 (`x-ratelimit-limit` 50; the window is
+not documented here). A 429 is retried honoring `Retry-After`, then reported as `rate_limited`; its
+body was not captured and no 429 was observed in the acceptance run.
+
+Examples, from the live acceptance run on 2026-10-11 against the project `acceptance-embed`. The
+values are as returned; the long text values are written in full where short and the layout is
+compacted. The five texts were indexed with these keys (`i1.json`, default model, default size, default
+encoding):
+
+```json
+{"name": "perplexity_embed", "arguments": {"action": "index", "source": "text", "project": "acceptance-embed", "items": [
+  {"key": "sourdough", "text": "Sourdough bread needs a live starter, a long slow fermentation and a very hot oven for a crisp crust."},
+  {"key": "baking", "text": "To bake a loaf, mix flour, water and salt, let the dough rise overnight, then bake it in a preheated Dutch oven."},
+  {"key": "python", "text": "Python asyncio lets a program run many I/O-bound tasks concurrently with async and await instead of threads."},
+  {"key": "tasks", "text": "An asyncio TaskGroup starts coroutines together and cancels the rest if one of them raises an exception."},
+  {"key": "volcano", "text": "A volcano erupts when magma rises through the crust, releasing ash, gas and lava from a vent."}]}}
+```
+
+```json
+{
+  "action": "index", "project": "acceptance-embed", "warnings": [], "latency_ms": 207,
+  "embedded_chunks": 5, "embedded_items": 5, "skipped_items": 0, "remaining": 0,
+  "requests": 1, "input_tokens": 114, "cost_usd": "0.000000456", "cost_source": "reported",
+  "calls_cost_unknown": 0, "candidates": null, "hits": null, "groups": null,
+  "unindexed_chat": null, "unindexed_job": null, "removed": null
+}
+```
+
+The text content of that result:
+
+```
+Indexed 5 chunks of 5 items (0 skipped, 0 chunks remaining) in 1 request(s).
+Usage: 114 tokens, cost 0.000000456 USD (reported), project acceptance-embed.
+```
+
+A search (`s1.json`, top 3; `chat_id`, `message_id` and `job_id` are `null` on a `text` hit and are
+left out here, and the hit texts are the full chunks):
+
+```json
+{"name": "perplexity_embed", "arguments": {"action": "search", "query": "how do I make crusty bread at home", "top_k": 3, "project": "acceptance-embed"}}
+```
+
+```json
+{
+  "action": "search", "project": "acceptance-embed", "warnings": [], "latency_ms": 1197,
+  "requests": 1, "input_tokens": 9, "cost_usd": "0.000000036", "cost_source": "reported",
+  "calls_cost_unknown": 0, "candidates": 5,
+  "hits": [
+    {"score": 0.3855651915073395, "source": "text", "chunk_index": 0, "key": "baking",
+     "text": "To bake a loaf, mix flour, water and salt, let the dough rise overnight, then bake it in a preheated Dutch oven."},
+    {"score": 0.3696805238723755, "source": "text", "chunk_index": 0, "key": "sourdough",
+     "text": "Sourdough bread needs a live starter, a long slow fermentation and a very hot oven for a crisp crust."},
+    {"score": 0.12555111944675446, "source": "text", "chunk_index": 0, "key": "volcano",
+     "text": "A volcano erupts when magma rises through the crust, releasing ash, gas and lava from a vent."}
+  ]
+}
+```
+
+The second query (`s2.json`, "running coroutines concurrently in Python", top 3) ranked `tasks`
+(0.4619726538658142), `python` (0.40427613258361816) and `sourdough` (0.06810659170150757), at 6 tokens
+and 0.000000024 USD. The bread and asyncio queries each put their two related texts first and the
+unrelated ones far below, which is the sanity check; the scores are the provider's model quality, not a
+probability.
+
+The same texts indexed again with the 4b model, 256 dimensions and `binary` (`i2.json`) cost
+0.00000342 USD for the same 114 tokens, and a search over that combination (`s3.json`, "what makes a
+volcano erupt", `model` `pplx-embed-v1-4b`, `dimensions` 256, `encoding` `binary`) scored `volcano`
+0.71875 and `python` 0.59765625 (5 tokens, 0.00000015 USD, 5 candidates; the saved file holds only
+those two hits and does not record the request's `top_k`). Indexing the same texts again under the
+same combination (`i3.json`) sends nothing:
+
+```
+Indexed 0 chunks of 0 items (5 skipped, 0 chunks remaining) in 0 request(s).
+```
+
+with `requests` 0, `latency_ms` 0 and `cost_usd` and `cost_source` `null`. `status` (`st1.json`) then
+lists the two stored combinations:
+
+```
+text: 5 chunks (pplx-embed-v1-0.6b, 1024, int8)
+text: 5 chunks (pplx-embed-v1-4b, 256, binary)
+Not indexed: 0 chat messages, 0 jobs.
+```
+
+Refusals return before any request (`x1.json`, `x2.json`), as `[invalid_request] ...` with
+`structuredContent` `{"category": "invalid_request", "message": ...}`. The first is `dimensions` 130
+for the 0.6b model, the second a blank text:
+
+```
+[invalid_request] dimensions: must be a whole number from 128 to 1024 for pplx-embed-v1-0.6b, a multiple of 8.
+[invalid_request] items: each text is non-blank and at most 100000 characters.
+```
+
+`delete` with `confirm` true and no filter (`d1.json`) returned `Removed 10 chunks.` (both
+combinations), and `status` afterwards listed no groups. After the project itself was deleted,
+`perplexity_usage` still reported the five requests' 4086 nano-USD by its name, with 5 events
+retained.
+
 ### `perplexity_models`
 
 Lists the models available to the configured key, from the live `GET /v1/models`, with prices as
@@ -955,9 +1179,9 @@ fixture) and all five presets.
 Reports what the recorded upstream Perplexity calls cost. It reads the usage events (one row per
 costed upstream call, stored by the server itself) and never writes. The four Agent tools record
 their calls (`perplexity_ask`, `perplexity_chat` send and `perplexity_research`, whose background
-runs are recorded when a `perplexity_jobs` call sees them finish), and so do `perplexity_search`
-and `perplexity_decide`; the totals are zero on a fresh install and until one of them runs. The
-Embeddings tool will record its calls the same way when it arrives.
+runs are recorded when a `perplexity_jobs` call sees them finish), and so do `perplexity_search`,
+`perplexity_decide` and `perplexity_embed`; the totals are zero on a fresh install and until one of
+them runs.
 
 | Argument | Type | Default | Meaning |
 |---|---|---|---|
@@ -1056,8 +1280,9 @@ and never creates one. Project names are case-sensitive, 1 to 64 characters of A
 
 Output: `action`; for `list`, `projects` (each with `name` and `created_at`, UTC); for `delete`,
 `project`, `rows_removed`, `rows_retained` and `running_jobs`. `rows_removed` counts rows removed
-from tables that reference the project directly (the project's chats and research jobs; the chat
-messages go by cascade and are not counted). `running_jobs` counts the project's research jobs that
+from tables that reference the project directly (the project's chats and research jobs, and its
+text and job embedding chunks; the chat messages and the chat embedding chunks go by cascade and are
+not counted). `running_jobs` counts the project's research jobs that
 had not finished: deleting the project discards their local rows, so the spend of those runs is
 never recorded while the provider keeps running and billing them. When it is above 0, the result
 (and the `confirmation_required` message before it) carries a warning; cancel them first with
@@ -1156,9 +1381,9 @@ Everything persistent lives in `PERPLEXITY_DATA_DIR` (default `~/.perplexity-pro
 
 | File | Purpose |
 |---|---|
-| `perplexity.db` | The SQLite database: projects, usage events, chats and their messages, research jobs with their queries and results (WAL mode, so `perplexity.db-wal` and `perplexity.db-shm` appear while it is open) |
+| `perplexity.db` | The SQLite database: projects, usage events, chats and their messages, research jobs with their queries and results, embedding chunks with their vectors (WAL mode, so `perplexity.db-wal` and `perplexity.db-shm` appear while it is open) |
 | `migrate.lock` | Lock file so two processes starting together cannot migrate at once |
-| `backup-<rev>.db` | Copy of the database as it was at schema revision `<rev>`, taken automatically before a migration touches a database that already has a revision (for example `backup-0001.db`, or `backup-0002.db` when a revision-0002 database starts on this release) |
+| `backup-<rev>.db` | Copy of the database as it was at schema revision `<rev>`, taken automatically before a migration touches a database that already has a revision (for example `backup-0001.db`, or `backup-0004.db` when a revision-0004 database starts on this release) |
 
 Migrations run at startup. A failed migration rolls back and the server exits non-zero without
 listening. A database that is newer than the code is refused with both versions named. The backup
@@ -1190,6 +1415,12 @@ that file holds the table and its rows: restoring it with the steps above brings
 upgrade backup of a database that was at `0002` is `backup-0002.db`, which holds none of these
 tables. A database that has just been created holds no chats or jobs, and a run that was already
 started at the provider keeps running whatever happens to its row.
+
+**Downgrading also drops embedding vectors.** Revision `0005` creates `embedding_chunks`. A downgrade
+of `0005` (migration code only) drops the table with every stored chunk and vector, and first writes
+`backup-0005.db`, which holds them. Upgrading a database that was at `0004` writes `backup-0004.db`
+first (it holds no embedding table). The source chats and research jobs are untouched by a
+downgrade, and `index` rebuilds the vectors, at the price of embedding them again.
 
 Use your own `PERPLEXITY_DATA_DIR` in the paths if you set one. Both server processes (a pm2 HTTP
 instance and a stdio instance) may share one data directory.
@@ -1248,25 +1479,31 @@ src/mcp_perplexity_pro/
   agent.py        Agent API request building and validation, response digestion, run_costed
                   and the research job observation
   costed.py       costed_call: the one costed-call sequence (project, timed call, record),
-                  shared by the Agent, Search and Decisions tools; cost_fields turns a recorded
-                  usage into the result's cost
+                  shared by the Agent, Search, Decisions and Embeddings tools; cost_fields turns a
+                  recorded usage into the result's cost
   search.py       Search API request building and validation, response digestion, run_search
   decisions.py    Decisions API request building and validation, response digestion,
                   decisions_usage (cost from input tokens), run_decide
+  embeddings.py   Embeddings API request building and validation, chunking, vector decoding,
+                  scoring (numpy), the index planner, embeddings_usage (reported cost, computed
+                  fallback), run_embed and the index, search, status and delete operations
   models/         tolerant pydantic models for API payloads (agent.py: Agent runs, search.py:
-                  Search responses, decisions.py: Decisions responses)
+                  Search responses, decisions.py: Decisions responses, embeddings.py: Embeddings
+                  responses)
   tools/          one module per tool, each with register(server): ask, chat, research, jobs,
-                  search, decide, models, projects, usage
-  usage.py        usage recorder (record_usage), money helpers, the Agent usage parser
-                  (Search and Decisions have none: their cost is computed)
+                  search, decide, embeddings, models, projects, usage
+  usage.py        usage recorder (record_usage), money helpers, the Agent and Embeddings usage
+                  parsers (Search and Decisions have none: their cost is computed)
   pricing.py      documented Perplexity prices in nano-USD, for costs the API does not report
   usage_report.py read-only spend report behind perplexity_usage
   storage/        engine, unit_of_work session, migration runner, project rules, ORM models,
-                  chats.py (chat rows and history), jobs.py (research job rows)
-  migrations/     Alembic environment and versions/NNNN_slug.py (packaged in the wheel)
+                  chats.py (chat rows and history), jobs.py (research job rows), embeddings.py
+                  (embedding chunk rows: insert, hashes, vectors for scoring, delete)
+  migrations/     Alembic environment and versions/NNNN_slug.py, 0001 to 0005 (packaged in the
+                  wheel)
   log_setup.py, redaction.py   stderr logging with secrets removed
 tests/            offline tests, fixtures/, and the live-marked capture helper
-openspec/         the spec-driven change records (py-foundation, py-usage-log, py-agent-api, py-search-api, py-decisions-tool)
+openspec/         the spec-driven change records (py-foundation, py-usage-log, py-agent-api, py-search-api, py-decisions-tool, py-embeddings)
 ```
 
 Contributor and agent guidance is in `CLAUDE.md`.

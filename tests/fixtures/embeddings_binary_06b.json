@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "embedding": "0oDUcZb0Ore0OKgd1nD95F6J91gmhHE5k7D+gKU+fFg=",
+      "index": 0,
+      "object": "embedding"
+    },
+    {
+      "embedding": "0JD9drL1C6WPMOA5F1C1rE5RcvnrT/CJGpH2saHeXFg=",
+      "index": 1,
+      "object": "embedding"
+    }
+  ],
+  "model": "pplx-embed-v1-0.6b",
+  "object": "list",
+  "usage": {
+    "cost": {
+      "currency": "USD",
+      "input_cost": 2e-08,
+      "total_cost": 2e-08
+    },
+    "prompt_tokens": 5,
+    "total_tokens": 5
+  }
+}

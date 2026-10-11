@@ -1,0 +1,51 @@
+{
+  "content": [
+    {
+      "text": "1. [0.7188] text volcano\n   A volcano erupts when magma rises through the crust, releasing ash, gas and lava from a vent.\n2. [0.5977] text python\n   Python asyncio lets a program run many I/O-bound tasks concurrently with async and await instead of threads.\nUsage: 5 tokens, cost 0.00000015 USD (reported), project acceptance-embed.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "search",
+    "project": "acceptance-embed",
+    "warnings": [],
+    "latency_ms": 179,
+    "embedded_chunks": null,
+    "embedded_items": null,
+    "skipped_items": null,
+    "remaining": null,
+    "requests": 1,
+    "input_tokens": 5,
+    "cost_usd": "0.00000015",
+    "cost_source": "reported",
+    "calls_cost_unknown": 0,
+    "candidates": 5,
+    "hits": [
+      {
+        "score": 0.71875,
+        "source": "text",
+        "chunk_index": 0,
+        "text": "A volcano erupts when magma rises through the crust, releasing ash, gas and lava from a vent.",
+        "chat_id": null,
+        "message_id": null,
+        "job_id": null,
+        "key": "volcano"
+      },
+      {
+        "score": 0.59765625,
+        "source": "text",
+        "chunk_index": 0,
+        "text": "Python asyncio lets a program run many I/O-bound tasks concurrently with async and await instead of threads.",
+        "chat_id": null,
+        "message_id": null,
+        "job_id": null,
+        "key": "python"
+      }
+    ],
+    "groups": null,
+    "unindexed_chat": null,
+    "unindexed_job": null,
+    "removed": null
+  }
+}

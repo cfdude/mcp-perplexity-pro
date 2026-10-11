@@ -1,0 +1,20 @@
+{
+  "data": [
+    {
+      "embedding": "BtcA0jwg6RW05eL97ADg0jEKBc3Lwv/33xf+sTMEENLMEQUAKtjX9hL4Cwa8Afm+EjsqW+8Q9fLzxyX/DzuhHzG+5ybV3ds6CiXg/xAUAdIUUCP0AUMQBuc7AQAI0Abe9hbr2fEM+Trszw02I/00FN1T7yfTJ/7BMeMR/uq7qvAE9vAVyAIG9fYXIxg2GSMV2Ovy8DrmLjsA4yrrEvgODhYE8vIJB90MDAwV2vT5/d3W+tff6uL8ESXk/QkRBxMG6gjIDgn+1RX38xP+vC3d8u0r6x7zLvf7M+nhDP0pFwwaAfTaEhH2FDf07TD2I0210O4PAyw2NCUV3B33Jff+AAv0Ew7q7QIIESL+DOcHGRrp/drcFBHI8QEcCO4B7hfY/gLuMtQJEesiMBMKL+cDr0YcSgn2Gc0aGgQn++E4KP3wxwMVC9km8kEbLfLyAdzu/9nQIxAeMgrvzAAVLioB7u8JLSAb+STRHPID4hQA/wDnGdYK7BkWBiH+3x3bBwgB8hks/cf+9wEZ2i/kOgP48/Ea8er5CfYAzjsuBPoDGPgmMCki/S4gIwQR1A0H1NYu5TEQ9DLx3uby+9Ye8/wuLfzjHhsyvccC89dU/Qr/CtzZ/hLQGvQDPBPyGtcA8uXcEfsLMAruD9Lq9wAU9x74FurXK9oq6fkf1iXr7Bk869oIFQ3nyQDR6zYKDCrjCwcCANcANAgLRB/oC9D9Hfba/kLWJ/vlEh4M/9MJNtkqyBX+BxAG0AEJ+v4N/v0E5OUiJx0L1f/8E//gDOkNEgzfIdn70/kQECACB0cYQ+IYHawcFTgs4xQyFQTp7vci8ij25OsQ2fAo7DPa+P/j/hMa9MrZ6RTHHgwZIC3sL/j3MyTiOTQszMoY47XETtoGGusgyBEP7+sKJPjI5w7vCM3yKfvl48fu3hfW5fbSJs+83w/fqcvhAgbzLi3hC/j5zdsbzNLxKAAE0Ccc9hTgMRC5LAH/8gT25i/lANX97PIx8hY6BclBDOj2KPMCyRwG6uTT4e0qAeAZOdwV+P1TGv4PFiL39BkaGNQf/AjkOOy7BvjuCB4d2/kF49ji1BX7x+r3NNnvPPsbBfAR/P/8BL73IQD39DgMqRkH5OAnGyno19H0JPD3OeEZBugFDjPg4PXh9y/v5v7l7xdOLg3hAAb/4esMCBbT+8obMA3EOyYv48Xp0toT+yr2ANIhKt4KzfK5IzLi4vfG48/CFgAABRUG8hDg0Q/8/Qv0HuAMFe79LPYTGBIfxuHk5B5CDCjR+vzJVvrqF+MgAxXSGRa3IugCLeUOER/AEPfSAzX+FgA+8wwFFewj/uHt9d0fEx4H4tX/E9DZ/RXkBuoALBH6M/rxFg==",
+      "index": 0,
+      "object": "embedding"
+    }
+  ],
+  "model": "pplx-embed-v1-0.6b",
+  "object": "list",
+  "usage": {
+    "cost": {
+      "currency": "USD",
+      "input_cost": 4e-09,
+      "total_cost": 4e-09
+    },
+    "prompt_tokens": 1,
+    "total_tokens": 1
+  }
+}

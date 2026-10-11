@@ -9,6 +9,7 @@ dependencies = [
     "sqlalchemy[asyncio]",
     "alembic",
     "aiosqlite",
+    "numpy>=2.3.2",
 ]
 
 [project.scripts]

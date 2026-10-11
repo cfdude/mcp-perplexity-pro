@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "dimensions must be at most 2560",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

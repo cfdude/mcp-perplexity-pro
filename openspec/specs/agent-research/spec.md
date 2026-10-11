@@ -50,7 +50,7 @@ Each started run SHALL be a row of `research_jobs` (migration `0004`, ids never 
 - **THEN** the table is created with the backup named for revision 0003, dropped on downgrade with `projects`, `chats` and `usage_events` intact, and created again
 
 #### Scenario: Live database upgrades straight to head
-- **WHEN** a revision-0002 database holding rows is upgraded with the real migrations
+- **WHEN** a revision-0002 database holding rows is upgraded with the real migrations through revision 0004
 - **THEN** it reaches revision 0004 in one run with exactly one backup, named for revision 0002, and no backup named for 0003
 
 #### Scenario: Project deletion

@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "category": "invalid_request"
+  },
+  "content": [
+    {
+      "text": "[invalid_request] dimensions: must be a whole number from 128 to 1024 for pplx-embed-v1-0.6b, a multiple of 8.",
+      "type": "text"
+    }
+  ],
+  "isError": true,
+  "structuredContent": {
+    "category": "invalid_request",
+    "message": "dimensions: must be a whole number from 128 to 1024 for pplx-embed-v1-0.6b, a multiple of 8."
+  }
+}

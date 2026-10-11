@@ -5,17 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MCP server for the Perplexity API, written in Python (FastMCP, SQLAlchemy 2.0 async, SQLite,
 Alembic). Version 2.0.0 replaced the TypeScript 1.x server, which is deleted (git history keeps
 it): Perplexity retired the Sonar endpoints (`403 chat_completions_not_available`), so there was
-nothing to port. Nine tools exist: the four Agent API tools `perplexity_ask`, `perplexity_chat`,
+nothing to port. Ten tools exist: the four Agent API tools `perplexity_ask`, `perplexity_chat`,
 `perplexity_research` and `perplexity_jobs` (they spend money), `perplexity_search` (the Search
 API, one costed request per call), `perplexity_decide` (the Decisions API, one costed request per
-call), plus `perplexity_models`, `perplexity_projects` and the read-only `perplexity_usage`. The
-Embeddings tool is the only one still to come, in a later OpenSpec change, and it must record its
-costed calls (see "How to record usage"); the Agent tools, `perplexity_search` and
-`perplexity_decide` already record theirs. Read `README.md` for the user-facing behavior and
-`openspec/changes/archive/2026-10-09-py-foundation/`,
+call), `perplexity_embed` (the Embeddings API: `index`, `search`, `status` and `delete` over a local
+vector store, one costed request per batch or search), plus `perplexity_models`,
+`perplexity_projects` and the read-only `perplexity_usage`. All four Perplexity APIs now have a
+tool, and every costed call is recorded (see "How to record usage"). Read `README.md` for the
+user-facing behavior and `openspec/changes/archive/2026-10-09-py-foundation/`,
 `openspec/changes/archive/2026-10-09-py-usage-log/`,
 `openspec/changes/archive/2026-10-09-py-agent-api/`,
-`openspec/changes/archive/2026-10-11-py-search-api/` and `openspec/changes/py-decisions-tool/`
+`openspec/changes/archive/2026-10-11-py-search-api/`,
+`openspec/changes/archive/2026-10-11-py-decisions-tool/` and `openspec/changes/py-embeddings/`
 (`design.md` especially) for why things are the way they are.
 
 ## Development Commands
@@ -59,29 +60,34 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 | `models/` | Tolerant pydantic payload models (`extra="allow"`, optional fields) |
 | `models/search.py` | `SearchResponse` (`results` as a raw list, `id` optional, `extra="allow"`): tolerant like the Agent models, so a billed response is never lost to a schema quibble; `search.digest` owns every judgment about a result |
 | `models/decisions.py` | `DecisionsResponse` (`answers` as a raw mapping, required; `model` and `usage` optional; `extra="allow"`): tolerant like the other models, so a billed response is never lost to a schema quibble; `decisions.digest` owns every judgment about an answer |
+| `models/embeddings.py` | `EmbeddingsResponse` (`data` as a raw list; `model` and `usage` optional; `extra="allow"`): tolerant like the other models; `embeddings.py` owns every judgment about a vector (strict decoding) |
 | `models/agent.py` | `AgentRun` (only `id` and `status` are required) and `CancelResponse` (`response_id` and `status` are required), `output` is `Any`, so a spend-bearing response is never lost to a schema quibble |
 | `agent.py` | The Agent toolset's shared logic: option validation and `build_request`, `digest` (answer, sources, usage summary), `run_costed` (the one costed-call sequence, below), and the research job observation (`observe_job`, `job_columns`, `JobLocks`) |
-| `costed.py` | `costed_call`, the one costed-call sequence (validate the project name, commit the project, timed call with no write unit, `record_usage`; two `record_usage(` lines), plus `Recording` (what an interpreter says about a response) and `Costed` (result, latency, project, status, recording). Used by `agent.run_costed`, `search.run_search` and `decisions.run_decide`; `cost_fields` (a recorded usage to the result's `cost_usd` and `cost_source`) lives here and is shared by the search and decide tools |
+| `costed.py` | `costed_call`, the one costed-call sequence (validate the project name, commit the project, timed call with no write unit, `record_usage`; two `record_usage(` lines), plus `Recording` (what an interpreter says about a response) and `Costed` (result, latency, project, status, recording). Used by `agent.run_costed`, `search.run_search`, `decisions.run_decide` and `embeddings.run_embed`; `cost_fields` (a recorded usage to the result's `cost_usd` and `cost_source`) lives here and is shared by the search and decide tools |
 | `search.py` | The Search toolset's logic: `SearchOptions` and `build_request` (local validation, nothing sent for a bad call; the Agent validators are imported, not copied), `digest` (total, never raises) and the output models, `search_usage` (one billing unit at the documented price of the type, source `computed`) and `run_search` (the caller of `costed_call`) |
 | `decisions.py` | The Decisions toolset's logic: `DecideOptions` and `build_request` (local validation of the state and the three question shapes, nothing sent for a bad call; the Agent validators are imported, not copied), `digest` (total, never raises) and the output models, `decisions_usage` (input tokens at the documented price, source `computed`, unknown rather than zero when the count is unreadable) and `run_decide` (the caller of `costed_call`) |
+| `embeddings.py` | The Embeddings toolset's logic: option validation and `build_request` (nothing sent for a bad call), chunking (4000 characters, at most 50 chunks per text), `decode_vector`, `plan_index` (batches of at most 64 inputs and 100000 characters), `embeddings_usage` (the cost the API reports, `computed` fallback, `none` never zero), `run_embed` (the caller of `costed_call`), `ProjectLocks` (the per-project `embed_locks`), and the `index`, `search` (numpy cosine on `int8`, Hamming on `binary`, scored in blocks under `asyncio.to_thread`), `status` and `delete` operations. numpy is imported lazily inside the scoring functions |
 | `tools/` | One module per tool, each `register(server)`; `tools/__init__.py:register_tools` calls them |
 | `tools/search.py` | `perplexity_search` (`fast`/`web`, one query or up to five merged into one list, `people` not offered). Spec: `openspec/changes/archive/2026-10-11-py-search-api/specs/search-tool/spec.md` |
 | `tools/decisions.py` | `perplexity_decide` (`noul`/`choice`/`score` questions, 1 to 32 per call, `pplx-decider-v1.1-27b` by default; images refused). Spec: `openspec/changes/py-decisions-tool/specs/decisions-tool/spec.md` |
+| `tools/embeddings.py` | `perplexity_embed` (`index`/`search`/`status`/`delete`; sources `chat`, `job`, `text`; models `pplx-embed-v1-0.6b` (default) and `pplx-embed-v1-4b`; vectors never returned; `delete` needs `confirm`). Specs: `openspec/changes/py-embeddings/specs/embeddings-tool/spec.md` and `.../embeddings-store/spec.md` |
 | `tools/ask.py`, `tools/chat.py`, `tools/research.py`, `tools/jobs.py` | `perplexity_ask` (stateless, `fast`/`low`/`medium`), `perplexity_chat` (`send`/`list`/`read`/`delete` over local history), `perplexity_research` (background submit, returns a job id), `perplexity_jobs` (`list`/`status`/`result`/`cancel`). Specs: `openspec/changes/py-agent-api/specs/` |
-| `usage.py` | The recorder `record_usage` (best effort, never raises), money helpers (`to_nano`, `format_usd`, nano-USD ints), `Usage`/`ToolCallUsage`, `usage_from_agent_response`, `computed_usage`, `agent_response_status`, and the `_PARSERS` registry (one entry per `api`) |
+| `usage.py` | The recorder `record_usage` (best effort, never raises), money helpers (`to_nano`, `format_usd`, nano-USD ints), `Usage`/`ToolCallUsage`, `usage_from_agent_response`, `usage_from_embeddings_response` (the cost the API reports, only in USD), `computed_usage`, `agent_response_status`, and the `_PARSERS` registry (one entry per `api`: `agent` and `embeddings`) |
 | `pricing.py` | Documented Perplexity prices as integer nano-USD (`PRICES_AS_OF`, `PRICES_SOURCE`) and the `*_cost_nano` helpers returning `None` when unknown; pinned to `tests/fixtures/pricing_page.json` |
 | `usage_report.py` | `usage_report`: read-only SQL aggregation behind `perplexity_usage` (totals over all matches, one grouping chosen from a fixed whitelist, bound parameters only) |
-| `storage/` | `engine.py` (data dir, engine, PRAGMAs), `session.py` (`unit_of_work`), `migrate.py` (runner), `models.py` (ORM: `Project`, `UsageEvent`, `Chat`, `ChatMessage`, `ResearchJob`), `projects.py` (name rules, get-or-create, delete, the introspection of scoped and retained tables) |
+| `storage/` | `engine.py` (data dir, engine, PRAGMAs), `session.py` (`unit_of_work`), `migrate.py` (runner), `models.py` (ORM: `Project`, `UsageEvent`, `Chat`, `ChatMessage`, `ResearchJob`, `EmbeddingChunk`), `projects.py` (name rules, get-or-create, delete, the introspection of scoped and retained tables) |
 | `storage/chats.py`, `storage/jobs.py` | Row operations for chats (create, append a turn, history, list, read, delete) and research jobs (insert, load, update, list, refresh candidates, `count_running`). They run inside the caller's unit of work and never open one; a vanished row or project is `not_found`, never `storage_busy` |
-| `migrations/` | Alembic env and `versions/NNNN_slug.py`; inside the package so the wheel ships them |
+| `storage/embeddings.py` | Row operations for `embedding_chunks` (source items, stored hashes, counts per combination, insert with `ON CONFLICT DO NOTHING ... RETURNING`, candidate ids and vectors for scoring, hit details, delete). No network; they run inside the caller's unit of work and never open one |
+| `migrations/` | Alembic env and `versions/NNNN_slug.py`, `0001` to `0005` (`0005_embedding_chunks.py` creates `embedding_chunks`); inside the package so the wheel ships them |
 | `log_setup.py`, `redaction.py` | stderr-only logging; secrets and `pplx-` tokens removed from every record |
 
 ### build_server / lifespan / AppContext
 
 `build_server(settings, http, engine)` takes its dependencies as arguments (design D2). It builds a
 `PerplexityClient` and `Catalog`, packs `settings`, `http`, `client`, `engine`, `catalog` into the
-frozen `AppContext` dataclass (also `now`, our UTC clock for research jobs, and `job_locks`, one
-in-process lock per research job), and exposes it to tools through the FastMCP lifespan, so inside
+frozen `AppContext` dataclass (also `now`, our UTC clock for research jobs, `job_locks`, one
+in-process lock per research job, and `embed_locks`, one in-process lock per project name held by
+`perplexity_embed` `index` and `delete`), and exposes it to tools through the FastMCP lifespan, so inside
 a tool it is `ctx.lifespan_context`. The server also carries `server.app` (the `AppContext`) and
 `server.in_flight` (the draining counter). Ownership rule: **the caller owns `http` and `engine`
 and closes them** (`__main__.run` does). The lifespan only exposes them, because FastMCP's
@@ -124,9 +130,11 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
    45542 bytes (+12.5%, from 40475), and the `perplexity_search` entry alone is 5066 bytes. Adding
    `perplexity_decide` (nine tools) measured 2026-10-11 the same way (at `6fe090d` against
    `1b12844`): 49539 bytes (+8.8%, from 45542), and the `perplexity_decide` entry alone is 3996
-   bytes. The design target of about nine tools is now reached, so the Embeddings tool must trim
-   existing descriptions or fold into an existing tool rather than add a tenth: prefer
-   one tool with an `action` argument over several, and trim descriptions before adding a tool.
+   bytes. Adding `perplexity_embed` (ten tools) measured 2026-10-11 the same way (at `aba65c1`
+   against `e252e8f`): 56161 bytes (+13.4%, from 49539), and the `perplexity_embed` entry alone is
+   6621 bytes. Ten tools exceed the design target of about nine by one; nothing was trimmed, and
+   the existing descriptions (`perplexity_chat` is the largest) are the lever. Prefer one tool with
+   an `action` argument over several, and trim descriptions before adding an eleventh tool.
 
 ### Error contract
 
@@ -173,6 +181,16 @@ Adding a category means updating the spec, `errors.py`, the README table and the
 - `chats` and `research_jobs` (migrations `0003`, `0004`; `chat_messages` hangs off `chats`) are
   ordinary project-scoped tables (`ON DELETE CASCADE`), so deleting a project removes them, while
   `usage_events` stays. A downgrade of either migration drops its rows (`backup-<rev>.db` has them).
+- `embedding_chunks` (migration `0005`, the vector store of `perplexity_embed`) is an ordinary
+  project-scoped table too (`ON DELETE CASCADE` to `projects`), not a retained one: it keeps nothing
+  past its project. Its two other keys, `chat_message_id` and `research_job_id`, are also
+  `ON DELETE CASCADE`, so deleting a chat or a research job removes its vectors; a check constraint
+  ties `source` (`chat`, `job`, `text`) to which key is set. Those two keys point at tables that are
+  themselves scoped (two hops from `projects`), so `delete_project` still needs no edit. It deletes
+  tables in name order, so `chats` goes first and its chunks leave by the cascade (not counted in
+  `rows_removed`) while job and text chunks are counted. Partial indexes on the two nullable keys
+  keep that cascade from scanning the table per deleted parent. A downgrade drops the table
+  (`backup-0005.db` has the vectors; the source chats and jobs are untouched).
 
 ### SQLAlchemy session convention (design D10)
 
@@ -193,7 +211,9 @@ The house convention proposed in `design.md` D10 and implemented in `storage/ses
   writes are shielded from cancellation of the calling task, each so that a client cancel cannot
   lose what the provider already did: the usage recorder (`record_usage`), the observation row
   update (`agent._write_job`), `cancel_requested_at` (`tools/jobs.py`), the research submit's job-row
-  insert (`tools/research.py`) and the chat row write after a billed send (`tools/chat.py`). Every
+  insert (`tools/research.py`), the chat row write after a billed send (`tools/chat.py`) and the
+  embedding chunk write after a billed batch (`embeddings._write_complete_items`, through
+  `agent.shielded_write`). Every
   other write is not shielded, which is right where the provider has done nothing yet. A new tool
   whose write follows a provider call that was accepted or billed must wrap that write in
   `agent.shielded_write` (it re-raises the cancel only after the write finished).
@@ -229,8 +249,8 @@ mislead; it is a pure example of the whole pattern.
 a third by inlining the sequence above:
 
 - **`costed.costed_call`** (two `record_usage(` lines, the failure and the response). It does steps
-  1 to 4 in that order and is used by `agent.run_costed`, `search.run_search` and
-  `decisions.run_decide`. **A new costed
+  1 to 4 in that order and has four callers, found with `rg "costed_call\(" src/`:
+  `agent.run_costed`, `search.run_search`, `decisions.run_decide` and `embeddings.run_embed`. **A new costed
   tool calls `costed_call` with its own `record` interpreter instead of inlining the sequence.**
   The interpreter runs after the upstream call returned, so it must never raise (`costed_call`
   records `unexpected_response` with no usage if it does). Search cost is **computed**: the response
@@ -240,6 +260,16 @@ a third by inlining the sequence above:
   no cost, so `decisions_usage` books `input_tokens` at the documented 20 nano-USD each (output is
   free), and an unreadable count is an unknown cost, never zero. `cost_fields` (in `costed.py`)
   turns the recorded usage into the result's cost and is shared by the search and decide tools.
+  Embeddings cost is **reported**: the response carries `usage.cost.total_cost` in USD, so the
+  parser registered in `_PARSERS` for `embeddings` (`usage_from_embeddings_response`) reads it
+  (source `reported`, only when the currency is `USD`), and `embeddings_usage` falls back to
+  `computed_usage` from `prompt_tokens` at the documented 4 or 30 nano-USD per token, else unknown
+  (`none`), and never replaces a reported cost. The response has no id, so the event's request id is
+  null and each request records (no dedupe). `run_embed` makes one request per batch or search, and
+  `index` records each batch before writing its chunks: that chunk write follows a billed call, so it
+  is wrapped in `agent.shielded_write`, and it runs under the per-project `embed_locks` that `index`
+  and `delete` hold (`search` and `status` take no lock). A search over a combination with nothing
+  stored makes no request and records no event.
 - **`agent.run_costed`** wraps `costed_call` with the Agent rules. It supplies steps 1
   to 4 through it: validate the project name, commit the project in a short write unit
   (`resolve_project=False` for a chat send that already found its project), the timed call with no
@@ -330,8 +360,8 @@ a third by inlining the sequence above:
 - **The TypeScript sources and their packaging and container files are deleted** on the `python-rewrite` branch. Do not
   propose converting anything back or reviving the 1.x tool names. The Sonar models and
   `/chat/completions` endpoints are retired by Perplexity and must not be called.
-- Not built yet: the Embeddings tool (the Agent, Search and Decisions tools exist and
-  record their usage), the Decisions API's image input, the Search API's `people` type and page snippets, streaming, auto-routing between depths or models and cost ceilings (there is none:
+- Not built yet: contextualized embeddings (`pplx-embed-context-*`), returning or exporting vectors,
+  an approximate-nearest-neighbour index, a delete of one text key, the Decisions API's image input, the Search API's `people` type and page snippets, streaming, auto-routing between depths or models and cost ceilings (there is none:
   `high` and `xhigh` exist only behind `perplexity_research` for that reason), pruning of chats,
   jobs or usage events, PyPI publishing (the package only has to build and run via `uvx --from .`).
 
@@ -340,7 +370,7 @@ a third by inlining the sequence above:
 - `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
   generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
   (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). The current change is
-  `py-decisions-tool` (`py-foundation`, `py-usage-log`, `py-agent-api` and `py-search-api` are archived; the last under `openspec/changes/archive/2026-10-11-py-search-api`). `docs/lessons/` holds process lessons
+  `py-embeddings` (`py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api` and `py-decisions-tool` are archived; the last under `openspec/changes/archive/2026-10-11-py-decisions-tool`). `docs/lessons/` holds process lessons
   with their enforcement points.
 - Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
   task's `tasks.md` checkbox ticked in the same commit.

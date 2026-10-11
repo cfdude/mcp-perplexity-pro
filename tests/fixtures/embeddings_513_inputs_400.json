@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "input array exceeds maximum of 512 items",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

@@ -24,6 +24,7 @@ from mcp_perplexity_pro.models import (
     AgentRun,
     CancelResponse,
     DecisionsResponse,
+    EmbeddingsResponse,
     ModelList,
     SearchResponse,
 )
@@ -307,3 +308,9 @@ class PerplexityClient:
         path = "/v1/decisions"
         data = await self.request_json("POST", path, json=body)
         return self._parse(DecisionsResponse, data, path)
+
+    async def embed(self, body: dict[str, Any]) -> EmbeddingsResponse:
+        """``POST /v1/embeddings`` (billed: never replayed after a response other than 429)."""
+        path = "/v1/embeddings"
+        data = await self.request_json("POST", path, json=body)
+        return self._parse(EmbeddingsResponse, data, path)

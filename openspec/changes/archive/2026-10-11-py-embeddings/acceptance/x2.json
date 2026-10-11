@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "category": "invalid_request"
+  },
+  "content": [
+    {
+      "text": "[invalid_request] items: each text is non-blank and at most 100000 characters.",
+      "type": "text"
+    }
+  ],
+  "isError": true,
+  "structuredContent": {
+    "category": "invalid_request",
+    "message": "items: each text is non-blank and at most 100000 characters."
+  }
+}

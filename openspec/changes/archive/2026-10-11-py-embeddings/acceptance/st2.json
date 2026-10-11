@@ -1,0 +1,30 @@
+{
+  "content": [
+    {
+      "text": "Not indexed: 0 chat messages, 0 jobs.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "status",
+    "project": "acceptance-embed",
+    "warnings": [],
+    "latency_ms": 3,
+    "embedded_chunks": null,
+    "embedded_items": null,
+    "skipped_items": null,
+    "remaining": null,
+    "requests": null,
+    "input_tokens": null,
+    "cost_usd": null,
+    "cost_source": null,
+    "calls_cost_unknown": null,
+    "candidates": null,
+    "hits": null,
+    "groups": [],
+    "unindexed_chat": 0,
+    "unindexed_job": 0,
+    "removed": null
+  }
+}

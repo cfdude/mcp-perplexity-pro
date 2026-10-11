@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "embedding": "AA4nQADvBtoSjTg4EeoLQLHkKgfUHM9Uj1IVafzuT+2XMNDA9jUrHwPqBwKgNQTl6+wRBOr4Tkhl4PudpQn2FTOsOosOKrj7SCUN9f4j/v4h8yDyYh7VALkZ9d/tNjPa19w+EtnFVeK4783GOAwj39T+NiXMWQ/m5l/Q4ybEwuY2IwTw5xnn6P75D+sC+xaf3arMoBMTIfbfDAoEJsy45vEsLpU07hkDEwcJEkHn+gP55gLkAR0RNt8W8fzk4D4y5uJC3Boe5/fwCMfv39kbHgYIF68nxAscJiUL0RcE3B4KDt0M8b4dDCwcyevmxzrbyfI2GAfkHxwJ5SoU29L/xg==",
+      "index": 0,
+      "object": "embedding"
+    },
+    {
+      "embedding": "AM9S8ACvIUoHg8C1HtdH2fglCvbi7J4ECEP2OcHV1CoGwO/f5ew13tPgxhEoLf3VR/rw+TL4Hep7FdPovBX/PCIO4qXHTeHupga77hEeJgdvOlwW6zghKNT3CicZLcLV/hVS6EMdGCnNE+3K5BPLJEAP0fGrCue6CRPxEMVHBzUJ7b3zoeMx0gLjDvXc+BXYB+kRsu3Atzb1JRLmLEzd+kUR8kkluNES+v4VM/4N3B0CGtM5/hPG99vh/h7ayfgGEfUe+wYz+fTLEtkP8uYwM+gzBQr9p8opLPb9CuYb+zYPFeX/KiIq7Oa3wgolzNb51/fd8RYSFRoJBdnzABAi5Q==",
+      "index": 1,
+      "object": "embedding"
+    }
+  ],
+  "model": "pplx-embed-v1-4b",
+  "object": "list",
+  "usage": {
+    "cost": {
+      "currency": "USD",
+      "input_cost": 3.6e-07,
+      "total_cost": 3.6e-07
+    },
+    "prompt_tokens": 12,
+    "total_tokens": 12
+  }
+}
