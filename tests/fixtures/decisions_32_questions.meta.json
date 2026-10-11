@@ -1,0 +1,152 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "32 noul questions",
+  "latency_seconds": 1.043,
+  "response_headers": {
+    "x-ratelimit-limit": "10",
+    "x-ratelimit-remaining": "8",
+    "x-ratelimit-reset": "1791740432",
+    "x-ratelimit-used": "2",
+    "x-request-id": "de8873fc-523d-4ce5-b3ff-7044bf2abb1d"
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": "The sky is blue today.",
+    "questions": {
+      "q0": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q1": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q2": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q3": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q4": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q5": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q6": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q7": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q8": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q9": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q10": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q11": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q12": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q13": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q14": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q15": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q16": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q17": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q18": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q19": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q20": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q21": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q22": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q23": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q24": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q25": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q26": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q27": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q28": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q29": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q30": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q31": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      }
+    }
+  }
+}
