@@ -191,3 +191,11 @@ def test_a_bad_option_is_invalid_request_naming_the_option(option, kwargs):
 def test_the_validators_are_imported_from_agent_not_copied():
     text = (SRC / "search.py").read_text()
     assert not re.search(r"def (_domains|_strict_date|_int_in|_bad|check_text)\b", text)
+
+
+def test_the_agent_date_filter_zero_pads_an_early_year_like_search():
+    from mcp_perplexity_pro.agent import AskOptions
+    from mcp_perplexity_pro.agent import build_request as agent_request
+
+    request = agent_request(AskOptions(after="0999-01-02"), "q", store=False)
+    assert request["tools"][0]["filters"]["search_after_date_filter"] == "01/02/0999"

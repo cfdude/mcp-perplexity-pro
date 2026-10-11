@@ -169,6 +169,11 @@ def _domains(value: list[str]) -> list[str]:
     return list(value)
 
 
+def api_date(value: date) -> str:
+    """``MM/DD/YYYY`` from the date's own fields (``strftime`` does not pad a year below 1000)."""
+    return f"{value.month:02d}/{value.day:02d}/{value.year:04d}"
+
+
 def _web_search_tool(options: AskOptions) -> dict[str, Any] | None:
     """The one ``web_search`` tool for the search options given, or None when none is."""
     filters: dict[str, Any] = {}
@@ -183,9 +188,9 @@ def _web_search_tool(options: AskOptions) -> dict[str, Any] | None:
     if after and before and after > before:
         raise _bad("after", "must not be later than before.")
     if after:
-        filters["search_after_date_filter"] = after.strftime("%m/%d/%Y")
+        filters["search_after_date_filter"] = api_date(after)
     if before:
-        filters["search_before_date_filter"] = before.strftime("%m/%d/%Y")
+        filters["search_before_date_filter"] = api_date(before)
     tool: dict[str, Any] = {"type": "web_search"}
     if options.max_results is not None:
         tool["max_results"] = _int_in("max_results", options.max_results, 1, MAX_RESULTS)

@@ -30,6 +30,7 @@ from mcp_perplexity_pro.agent import (
     _domains,
     _int_in,
     _strict_date,
+    api_date,
     check_text,
 )
 from mcp_perplexity_pro.costed import Costed, Recording, costed_call
@@ -70,11 +71,6 @@ class SearchOptions:
     updated_before: str | None = None
     languages: list[str] | None = None
     country: str | None = None
-
-
-def _api_date(value: date) -> str:
-    # explicit, not strftime: strftime does not zero-pad the year of a year before 1000
-    return f"{value.month:02d}/{value.day:02d}/{value.year:04d}"
 
 
 def _queries(query: object) -> str | list[str]:
@@ -151,7 +147,7 @@ def build_request(options: SearchOptions) -> dict[str, Any]:
         ("last_updated_before_filter", updated_before),
     ):
         if value is not None:
-            request[field] = _api_date(value)
+            request[field] = api_date(value)
     if options.languages:
         request["search_language_filter"] = _languages(options.languages)
     elif options.languages is not None:

@@ -95,3 +95,26 @@ async def test_a_failed_call_records_its_category_and_reraises(app):
     with pytest.raises(PerplexityError):
         await run(app, call, lambda _: None)
     assert [r[2] for r in await rows(app)] == ["upstream_failure"]
+
+
+async def test_an_agent_interpreter_failure_is_now_one_unexpected_response_event(app):
+    """Intended change of py-search-api 1.3 (not a regression): before the extraction an
+    exception while interpreting an Agent response escaped as an ``internal_error`` and the billed
+    run recorded nothing; now it is one ``unexpected_response`` event and that category."""
+
+    class Run:
+        def model_dump(self, **_):
+            raise RuntimeError("cannot dump")
+
+    from mcp_perplexity_pro.agent import run_costed
+
+    app.client = SimpleNamespace()
+
+    async def create_run(body, *, background):
+        return Run()
+
+    app.client.create_run = create_run
+    with pytest.raises(PerplexityError) as caught:
+        await run_costed(app, tool="t", project="alpha", body={}, preset="fast", background=False)
+    assert caught.value.category == "unexpected_response"
+    assert [r[2] for r in await rows(app)] == ["unexpected_response"]
