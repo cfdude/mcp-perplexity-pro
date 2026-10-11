@@ -317,3 +317,57 @@ async def test_the_configured_key_is_never_sent_or_stored(world):
     stored = (await chunks(app))[0][3]
     assert stored == f"use [redacted] and {example} with pplx-embed-v1-0.6b"
     assert key not in json.dumps(sent) and sent["input"] == [stored]
+
+
+async def test_the_configured_key_in_an_item_key_is_redacted_in_the_ref(world):
+    app = await world()
+    key = app.settings.api_key.get_secret_value()
+    await run(app, items=texts((f"k-{key}", "some text")))
+    refs = await rows(app, "SELECT ref FROM embedding_chunks")
+    assert refs == [("t:k-[redacted]",)]
+
+
+async def test_lone_surrogates_are_invalid_request_never_internal_errors(world):
+    app = await world()
+    for items in (texts(("a", "x\ud800")), texts(("a\udfff", "x"))):
+        with pytest.raises(PerplexityError) as caught:
+            await run(app, items=items)
+        assert caught.value.category == "invalid_request"
+    assert app.upstream.calls == 0 and await events(app) == []
+
+
+async def test_replacing_a_changed_item_near_the_cap_does_not_double_count_its_old_chunks(
+    world, monkeypatch
+):
+    monkeypatch.setattr(embeddings, "MAX_STORED_CHUNKS", 2)
+    app = await world()
+    await run(app, items=texts(("a", "one"), ("b", "two")))  # exactly at the cap
+    result = await run(app, items=texts(("a", "one changed")))  # a replace: the total stays 2
+    assert result.embedded_chunks == 1 and len(await chunks(app)) == 2
+    with pytest.raises(PerplexityError) as caught:  # a genuinely new item still passes the cap
+        await run(app, items=texts(("c", "three")))
+    assert caught.value.category == "invalid_request"
+
+
+async def test_the_default_index_request_sends_the_model_and_encoding_and_no_dimensions(world):
+    app = await world()
+    await run(app, items=texts(("a", "one")), dimensions=None)  # the model's full size (1024)
+    sent = json.loads(app.upstream_requests[0].content)
+    assert sent == {"model": M6, "input": ["one"], "encoding_format": "base64_int8"}
+    assert (await chunks(app))[0][5] == 1024
+
+
+async def test_a_later_batch_failure_keeps_the_original_errors_status_and_api_fields(world):
+    def responder(request, n):
+        if n == 2:
+            return httpx2.Response(
+                400,
+                json={"error": {"message": "bad input", "type": "invalid_request", "code": 400}},
+            )
+        return embed_response(request)
+
+    app = await world(responder)
+    with pytest.raises(PerplexityError) as caught:
+        await run(app, items=texts(*[(f"k{i:03d}", f"t{i}") for i in range(70)]))
+    assert caught.value.status == 400 and caught.value.api_type == "invalid_request"
+    assert caught.value.api_message == "bad input"

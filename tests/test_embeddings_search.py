@@ -207,7 +207,42 @@ async def test_a_query_vector_that_fails_decoding_is_unexpected_response_with_th
     assert [e[2] for e in await events(app)] == ["ok"]
 
 
-async def test_the_event_loop_stays_responsive_during_a_20000_row_search(world):
+async def test_scoring_runs_off_the_event_loop(world, monkeypatch):
+    """Mutation check: calling ``top_k`` directly instead of under ``asyncio.to_thread`` freezes the
+    ticker for the whole (deliberately slow) scoring step and turns this red."""
+    import time
+
+    from mcp_perplexity_pro import embeddings
+
+    app = await world()
+    await seed(app)
+    real = embeddings.top_k
+    ticks_during: list[int] = []
+    ticks: list[int] = []
+
+    def slow(*args, **kwargs):
+        before = len(ticks)
+        time.sleep(0.3)  # a blocking, CPU-bound stand-in for scoring 20000 rows
+        ticks_during.append(len(ticks) - before)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(embeddings, "top_k", slow)
+
+    async def ticker():
+        while True:
+            ticks.append(1)
+            await asyncio.sleep(0.005)
+
+    task = asyncio.create_task(ticker())
+    try:
+        result = await go(app)
+    finally:
+        task.cancel()
+    assert [h.key for h in result.hits][:1] == ["second"]
+    assert ticks_during and ticks_during[0] >= 10  # the loop kept running during the scoring
+
+
+async def test_a_20000_row_search_completes_with_the_right_candidates(world):
     app = await world(query_vector=SECOND.tobytes())
     pid = await add_project(app)
     rng = np.random.default_rng(1)
@@ -215,17 +250,16 @@ async def test_the_event_loop_stays_responsive_during_a_20000_row_search(world):
     batch = [chunk_row("text", f"t:{i}", data[i].tobytes()) for i in range(20_000)]
     for start in range(0, 20_000, 2000):
         await store_rows(app, pid, batch[start : start + 2000])
-    ticks = []
-
-    async def ticker():
-        while True:
-            ticks.append(1)
-            await asyncio.sleep(0.001)
-
-    task = asyncio.create_task(ticker())
-    try:
-        result = await go(app, top_k_value=5)
-    finally:
-        task.cancel()
-    assert result.candidates == 20_000 and len(result.hits) == 5 and len(ticks) > 3
+    result = await go(app, top_k_value=5)
+    assert result.candidates == 20_000 and len(result.hits) == 5
     assert json.dumps([h.score for h in result.hits])  # scores are plain floats
+
+
+async def test_a_search_request_carries_the_model_encoding_and_the_given_dimensions(world):
+    app = await world()
+    await seed(app)
+    await go(app)
+    sent = json.loads(app.upstream_requests[0].content)
+    assert sent == {
+        "model": M6, "input": ["what"], "dimensions": DIMS, "encoding_format": "base64_int8",
+    }  # fmt: skip

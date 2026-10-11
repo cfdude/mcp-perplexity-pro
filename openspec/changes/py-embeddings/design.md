@@ -61,6 +61,9 @@ Search and Decisions reused `costed.costed_call` and a computed cost. Embeddings
 - **A reported cost the parser cannot read** -> `computed`, else `none`; counted by `calls_cost_unknown`.
 - **Deleting a chat deletes its vectors silently** (D4) -> by design; `status` shows the counts. `delete_project` visits tables in introspection order, so `chats` is deleted first and its chunks go by cascade (uncounted) while job and text chunks are still present when `embedding_chunks` is deleted (counted); a test pins this outcome.
 - **A source deleted while a batch is in flight** (D7) -> written around, reported as skipped, billed once.
+- **`index` holds the project lock across all its upstream batches** (up to about 33 sequential requests at `limit` 2048): a `delete` or another `index` on the same project waits; `search` and `status` do not (D7). The lock is per process (a stdio and an HTTP server sharing one database could both embed the same pending items; the unique key prevents duplicate rows, not duplicate spend, as for `JobLocks`).
+- **A project deleted and recreated under the same name during a call** can be indistinguishable from the original (project ids are reused), so text chunks may land in the recreated project; chat and job chunks are skipped because their sources are gone (accepted).
+- **No per-key delete**: `delete` filters by source, model, size and encoding only; removing one text key means deleting the `text` chunks and re-indexing the others (accepted for v1).
 - **A 400 for a batch** -> surfaced with the stored count; the character budget prevents it for legitimate content.
 
 ## Migration Plan

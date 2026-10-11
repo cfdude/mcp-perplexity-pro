@@ -146,7 +146,7 @@ def register(server: FastMCP) -> None:
         project: Annotated[
             str | None, Field(description="Project the vectors belong to (default: default)")
         ] = None,
-        confirm: Annotated[bool, Field(description="delete: must be true")] = False,
+        confirm: Annotated[bool, Field(strict=True, description="delete: must be true")] = False,
     ) -> ToolResult:
         """Index your saved chats, completed research reports or texts as vectors and search them
         by meaning. index SENDS the text it indexes to Perplexity (search sends only the query);

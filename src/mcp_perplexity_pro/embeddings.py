@@ -127,6 +127,16 @@ def is_blank(text: object) -> bool:
     return not isinstance(text, str) or not text.strip()
 
 
+def is_encodable(text: str) -> bool:
+    """False for text UTF-8 cannot encode (a lone surrogate): it could not be hashed, stored or
+    sent, so it is refused as ``invalid_request`` instead of failing deep inside."""
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 def text_hash(chunk: str) -> str:
     return hashlib.sha256(chunk.encode("utf-8")).hexdigest()
 
@@ -365,6 +375,7 @@ class _Pending:
     chunks: list[str]
     hashes: list[str]
     replace: bool  # it has (changed) stored chunks for this triple
+    existing: int = 0  # how many chunks it has stored now (they are replaced, not added)
     chat_message_id: int | None = None
     research_job_id: int | None = None
     vectors: dict[int, bytes] = field(default_factory=dict)
@@ -389,14 +400,17 @@ def check_index_arguments(source: object, items: object, limit: object) -> list[
         if not isinstance(item, dict):
             raise _bad("items", "each item is an object with a key and a text.")
         key, body = item.get("key"), item.get("text")
-        if is_blank(key) or len(key) > MAX_KEY_CHARS:
+        if is_blank(key) or len(key) > MAX_KEY_CHARS or not is_encodable(key):
             raise _bad(
                 "items", f"each key is non-blank text of at most {MAX_KEY_CHARS} characters."
             )
         if key in seen:
             raise _bad("items", "a key is repeated in one call.")
-        if is_blank(body) or len(body) > MAX_ITEM_CHARS:
-            raise _bad("items", f"each text is non-blank and at most {MAX_ITEM_CHARS} characters.")
+        if is_blank(body) or len(body) > MAX_ITEM_CHARS or not is_encodable(body):
+            raise _bad(
+                "items",
+                f"each text is non-blank, valid UTF-8 and at most {MAX_ITEM_CHARS} characters.",
+            )
         seen.add(key)
         pairs.append((key, body))
     return pairs
@@ -413,7 +427,10 @@ def _pending_item(
         return None, cut
     if not chunks:
         return None, cut
-    return _Pending(ref, source, chunks, hashes, have is not None, **keys), cut
+    return (
+        _Pending(ref, source, chunks, hashes, have is not None, len(have or {}), **keys),
+        cut,
+    )
 
 
 async def _gather(
@@ -433,7 +450,10 @@ async def _gather(
         pending: list[_Pending] = []
         cut_items = 0
         if source == "text":
-            candidates = [(f"t:{key}", body, {}) for key, body in pairs]
+            candidates = [
+                (f"t:{scrub_secrets(key, (app.settings.api_key.get_secret_value(),))}", body, {})
+                for key, body in pairs
+            ]
         elif pid is None:
             candidates = []  # nothing of a project that does not exist can be indexed
         else:
@@ -496,7 +516,7 @@ async def _write_complete_items(
     model, dimensions, encoding = triple
     async with unit_of_work(app.engine) as session:
         project = await find_project(session, project_name)  # by NAME: it may have been recreated
-        if project is None:
+        if project is None:  # deleted while the billed call ran
             result.skipped_items += len(items)
             result.warnings.append("The project was deleted during the call; nothing was stored.")
             return
@@ -552,9 +572,12 @@ async def index(
         pending, _, stored_total = await _gather(app, name, source, pairs, triple, result)
         plan = plan_index([p.chunks for p in pending], limit)
         taken = pending[: plan.taken_items]
-        if stored_total + sum(len(p.chunks) for p in taken) > MAX_STORED_CHUNKS:
+        projected = (
+            stored_total - sum(p.existing for p in taken) + sum(len(p.chunks) for p in taken)
+        )
+        if projected > MAX_STORED_CHUNKS:
             raise _bad(
-                "limit",
+                "index",
                 f"this would pass {MAX_STORED_CHUNKS} stored chunks for this model, size and "
                 "encoding; delete some first.",
             )
@@ -569,17 +592,24 @@ async def index(
                 raise PerplexityError(
                     exc.category,
                     f"{exc} ({result.embedded_chunks} chunks were stored before this failure.)",
+                    status=exc.status,
+                    api_type=exc.api_type,
+                    api_code=exc.api_code,
+                    api_message=exc.api_message,
                 ) from exc
             result.requests += 1
             result.latency_ms += costed.latency_ms
             result.add_usage(None if costed.recording is None else costed.recording.usage)
             complete: list[_Pending] = []
+            done: set[int] = set()
             for planned, vector in zip(batch, vectors, strict=True):
                 item = taken[planned.item]
                 item.vectors[planned.chunk_index] = vector
-                if len(item.vectors) == len(item.chunks) and item not in complete:
+                if len(item.vectors) == len(item.chunks) and planned.item not in done:
+                    done.add(planned.item)
                     complete.append(item)
-            await shielded_write(_write_complete_items(app, name, complete, triple, result))
+            if complete:
+                await shielded_write(_write_complete_items(app, name, complete, triple, result))
     return result
 
 
@@ -693,7 +723,7 @@ class SearchResult:
 def check_search_arguments(
     query: object, top_k_value: object, min_score: object, source: object
 ) -> None:
-    if is_blank(query) or len(query) > MAX_QUERY_CHARS:  # type: ignore[arg-type]
+    if is_blank(query) or len(query) > MAX_QUERY_CHARS or not is_encodable(query):  # type: ignore[arg-type]
         raise _bad("query", f"must be non-blank text of at most {MAX_QUERY_CHARS} characters.")
     if (
         isinstance(top_k_value, bool)
@@ -719,7 +749,7 @@ def _hit(score: float, detail: store.Hit, secrets: tuple[str, ...]) -> SearchHit
     elif detail.source == "job":
         hit.job_id = detail.research_job_id
     else:
-        hit.key = detail.ref[2:]
+        hit.key = scrub_secrets(detail.ref[2:], secrets)
     return hit
 
 
@@ -748,11 +778,22 @@ async def search(
             if found is not None
             else []
         )
+    width = size if encoding == "int8" else size // 8
+    sound = [(i, v) for i, v in candidates if len(v) == width]
+    if len(sound) != len(candidates):
+        result.warnings.append(
+            f"{len(candidates) - len(sound)} stored chunk(s) have an unexpected vector size and "
+            "were skipped."
+        )
+    candidates = sound
     result.candidates = len(candidates)
     if not candidates:
         result.warnings.append("Nothing is indexed for this project, model, size and encoding.")
         return result
-    body = build_request(model, [query], dimensions=dimensions, encoding=encoding)
+    secrets = (app.settings.api_key.get_secret_value(),)
+    body = build_request(
+        model, [scrub_secrets(query, secrets)], dimensions=dimensions, encoding=encoding
+    )
     costed = await run_embed(app, project=name, body=body, model=model)
     (vector,) = _decode_batch(costed.result, 1, encoding, size)
     result.requests = 1
@@ -769,8 +810,7 @@ async def search(
         min_score=min_score,
     )
     async with unit_of_work(app.engine, write=False) as session:
-        details = await store.hit_details(session, [i for i, _ in best])
-    secrets = (app.settings.api_key.get_secret_value(),)
+        details = await store.hit_details(session, found.id, [i for i, _ in best]) if found else {}
     result.hits = [_hit(score, details[i], secrets) for i, score in best if i in details]
     return result
 

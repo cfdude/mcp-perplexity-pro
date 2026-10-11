@@ -265,7 +265,7 @@ async def candidate_vectors(
     return [(i, bytes(v)) for i, v in await session.execute(query.order_by(EmbeddingChunk.id))]
 
 
-async def hit_details(session: AsyncSession, ids: list[int]) -> dict[int, Hit]:
+async def hit_details(session: AsyncSession, project_id: int, ids: list[int]) -> dict[int, Hit]:
     """Text and source references of the winning chunks (``chat_id`` by a join on the message)."""
     if not ids:
         return {}
@@ -281,7 +281,7 @@ async def hit_details(session: AsyncSession, ids: list[int]) -> dict[int, Hit]:
             ChatMessage.chat_id,
         )
         .outerjoin(ChatMessage, ChatMessage.id == EmbeddingChunk.chat_message_id)
-        .where(EmbeddingChunk.id.in_(ids))
+        .where(EmbeddingChunk.id.in_(ids), EmbeddingChunk.project_id == project_id)
     )
     return {r[0]: Hit(*r) for r in rows}
 

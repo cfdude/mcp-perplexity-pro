@@ -110,6 +110,15 @@ async def test_a_repeat_index_makes_no_request_and_reports_no_cost(world):
     )
 
 
+async def test_confirm_must_be_the_boolean_true_not_a_truthy_string(world):
+    w = await world()
+    await index_texts(w)
+    for loose in ("yes", "true", 1):
+        refused = await w.call(TOOL, action="delete", confirm=loose)
+        assert refused.is_error and await w.count("embedding_chunks") == 2
+    assert (await w.call(TOOL, action="delete", confirm=True)).structured_content["removed"] == 2
+
+
 async def test_status_counts_what_is_stored_and_what_is_not_without_any_request(world):
     w = await world()
     await index_texts(w)

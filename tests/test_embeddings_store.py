@@ -199,8 +199,9 @@ async def test_candidates_select_ids_and_vectors_only_and_hits_carry_text_and_ch
         assert [
             c for c, _ in await store.candidate_vectors(session, pid, *TRIPLE, source="text")
         ] == [inserted[1]]
-        hits = await store.hit_details(session, [inserted[0], inserted[1]])
-        assert await store.hit_details(session, []) == {}
+        hits = await store.hit_details(session, pid, [inserted[0], inserted[1]])
+        assert await store.hit_details(session, pid, []) == {}
+        assert await store.hit_details(session, pid + 1, [inserted[0]]) == {}  # project-scoped
     assert hits[inserted[0]].chat_id == chat and hits[inserted[0]].text == f"text c:{message}"
     assert hits[inserted[1]].chat_id is None and hits[inserted[1]].ref == "t:a"
 
