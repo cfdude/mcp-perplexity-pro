@@ -8,17 +8,46 @@ validates first and nothing is sent, recorded or created for a bad call.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import binascii
 import hashlib
-from collections.abc import Sequence
-from dataclasses import dataclass
+import logging
+from collections.abc import AsyncIterator, Sequence
+from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from typing import Any
 
 from mcp_perplexity_pro import pricing
-from mcp_perplexity_pro.agent import _bad
+from mcp_perplexity_pro.agent import _bad, shielded_write
+from mcp_perplexity_pro.costed import Costed, Recording, costed_call
 from mcp_perplexity_pro.errors import PerplexityError
-from mcp_perplexity_pro.usage import Usage, computed_usage, usage_from_embeddings_response
+from mcp_perplexity_pro.models import EmbeddingsResponse
+from mcp_perplexity_pro.storage import embeddings as store
+from mcp_perplexity_pro.storage.embeddings import ChunkRow
+from mcp_perplexity_pro.storage.projects import (
+    DEFAULT_PROJECT,
+    find_project,
+    validate_project_name,
+)
+from mcp_perplexity_pro.storage.session import unit_of_work
+from mcp_perplexity_pro.usage import (
+    Usage,
+    computed_usage,
+    format_usd,
+    usage_from_embeddings_response,
+)
+
+logger = logging.getLogger(__name__)
+
+TOOL = "perplexity_embed"
+SOURCES = ("chat", "job", "text")
+MAX_STORED_CHUNKS = 20_000  # per project and (model, dimensions, encoding)
+DEFAULT_LIMIT = 256
+MAX_LIMIT = 2048
+MAX_TEXT_ITEMS = 100
+MAX_KEY_CHARS = 128
+MAX_ITEM_CHARS = 100_000
 
 MODELS = ("pplx-embed-v1-0.6b", "pplx-embed-v1-4b")
 DEFAULT_MODEL = MODELS[0]
@@ -233,3 +262,319 @@ def plan_index(items: Sequence[Sequence[str]], limit: int) -> IndexPlan:
         batches.append(current)
     remaining = sum(len(chunks) for chunks in items[taken:])
     return IndexPlan(batches, taken, remaining)
+
+
+# --- The one costed call (design D10, D11) ---------------------------------------------------
+
+
+async def run_embed(
+    app: Any, *, project: str | None, body: dict[str, Any], model: str
+) -> Costed[EmbeddingsResponse]:
+    """Send ``body`` and record the request (``costed.costed_call``)."""
+
+    def interpret(response: EmbeddingsResponse) -> Recording:
+        answered = response.model if isinstance(response.model, str) else None
+        return Recording(
+            status="ok",
+            usage=embeddings_usage(answered or model, response.usage),
+            model=answered,
+        )
+
+    return await costed_call(
+        app,
+        tool=TOOL,
+        api="embeddings",
+        project=project,
+        preset=None,
+        call=lambda: app.client.embed(body),
+        record=interpret,
+    )
+
+
+# --- One in-process lock per project (design D7) ---------------------------------------------
+
+
+class ProjectLocks:
+    """One ``asyncio.Lock`` per project name, created on demand and dropped when unused (the
+    ``JobLocks`` pattern). ``index`` and ``delete`` hold it so two calls on one project do not
+    embed the same pending items twice."""
+
+    def __init__(self) -> None:
+        self._held: dict[str, list[Any]] = {}
+
+    @asynccontextmanager
+    async def hold(self, name: str) -> AsyncIterator[None]:
+        entry = self._held.get(name)
+        if entry is None:
+            entry = self._held[name] = [asyncio.Lock(), 0]
+        entry[1] += 1
+        try:
+            async with entry[0]:
+                yield
+        finally:
+            entry[1] -= 1
+            if entry[1] == 0:
+                del self._held[name]
+
+
+# --- Index (design D5 to D7, D12) ------------------------------------------------------------
+
+
+@dataclass
+class IndexResult:
+    embedded_chunks: int = 0
+    embedded_items: int = 0
+    skipped_items: int = 0  # unchanged, or whose source vanished during the call
+    remaining: int = 0
+    requests: int = 0
+    input_tokens: int = 0
+    cost_nano: int = 0
+    costs_known: int = 0
+    calls_cost_unknown: int = 0
+    sources: set[str] = field(default_factory=set)
+    latency_ms: int = 0
+    warnings: list[str] = field(default_factory=list)
+
+    def add_usage(self, usage: Usage | Any) -> None:
+        if isinstance(usage, Usage):
+            if usage.input_tokens:
+                self.input_tokens += usage.input_tokens
+            if usage.cost_source != "none":
+                self.cost_nano += usage.cost_nano_usd
+                self.costs_known += 1
+                self.sources.add(usage.cost_source)
+                return
+        self.calls_cost_unknown += 1
+
+    @property
+    def cost_source(self) -> str:
+        if not self.sources:
+            return "none"
+        return next(iter(self.sources)) if len(self.sources) == 1 else "mixed"
+
+    @property
+    def cost_usd(self) -> str | None:
+        return format_usd(self.cost_nano) if self.sources else None
+
+
+@dataclass
+class _Pending:
+    ref: str
+    source: str
+    chunks: list[str]
+    hashes: list[str]
+    replace: bool  # it has (changed) stored chunks for this triple
+    chat_message_id: int | None = None
+    research_job_id: int | None = None
+    vectors: dict[int, bytes] = field(default_factory=dict)
+
+
+def check_index_arguments(source: object, items: object, limit: object) -> list[tuple[str, str]]:
+    """Validate ``source``, ``items`` and ``limit``; returns the ``(key, text)`` pairs of a
+    ``text`` source (empty for the others). Raises ``invalid_request``."""
+    if source not in SOURCES:
+        raise _bad("source", f"must be one of {', '.join(SOURCES)}.")
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MAX_LIMIT:
+        raise _bad("limit", f"must be a whole number from 1 to {MAX_LIMIT}.")
+    if source != "text":
+        if items:
+            raise _bad("items", "is only for the text source.")
+        return []
+    if not isinstance(items, list) or not 1 <= len(items) <= MAX_TEXT_ITEMS:
+        raise _bad("items", f"a text index needs 1 to {MAX_TEXT_ITEMS} items.")
+    pairs: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            raise _bad("items", "each item is an object with a key and a text.")
+        key, body = item.get("key"), item.get("text")
+        if is_blank(key) or len(key) > MAX_KEY_CHARS:
+            raise _bad(
+                "items", f"each key is non-blank text of at most {MAX_KEY_CHARS} characters."
+            )
+        if key in seen:
+            raise _bad("items", "a key is repeated in one call.")
+        if is_blank(body) or len(body) > MAX_ITEM_CHARS:
+            raise _bad("items", f"each text is non-blank and at most {MAX_ITEM_CHARS} characters.")
+        seen.add(key)
+        pairs.append((key, body))
+    return pairs
+
+
+def _pending_item(
+    ref: str, source: str, body: str, stored: dict[str, dict[int, str]], **keys: int | None
+) -> tuple[_Pending | None, bool]:
+    """``(pending or None when current, cut)`` for one item against its stored hashes."""
+    chunks, cut = chunk_text(body)
+    hashes = [text_hash(c) for c in chunks]
+    have = stored.get(ref)
+    if have is not None and have == dict(enumerate(hashes)):
+        return None, cut
+    if not chunks:
+        return None, cut
+    return _Pending(ref, source, chunks, hashes, have is not None, **keys), cut
+
+
+async def _gather(
+    app: Any,
+    project_name: str,
+    source: str,
+    pairs: list[tuple[str, str]],
+    triple: tuple[str, int, str],
+    result: IndexResult,
+) -> tuple[list[_Pending], int | None, int]:
+    """The pending items of one call: ``(pending, project_id or None, stored chunk count)``."""
+    async with unit_of_work(app.engine, write=False) as session:
+        project = await find_project(session, project_name)
+        pid = project.id if project is not None else None
+        stored = await store.stored_hashes(session, pid, *triple, source=source) if pid else {}
+        total = await store.count_for_triple(session, pid, *triple) if pid else 0
+        pending: list[_Pending] = []
+        cut_items = 0
+        if source == "text":
+            candidates = [(f"t:{key}", body, {}) for key, body in pairs]
+        elif pid is None:
+            candidates = []  # nothing of a project that does not exist can be indexed
+        else:
+            items = await store.source_items(session, pid, source)
+            candidates = [
+                (
+                    i.ref,
+                    i.text,
+                    {"chat_message_id": i.chat_message_id, "research_job_id": i.research_job_id},
+                )
+                for i in items
+                if not is_blank(i.text)
+            ]
+    for ref, body, keys in candidates:
+        item, cut = _pending_item(ref, source, body, stored, **keys)
+        cut_items += 1 if cut else 0
+        if item is None:
+            result.skipped_items += 1
+        else:
+            pending.append(item)
+    if cut_items:
+        result.warnings.append(
+            f"{cut_items} text(s) were longer than {MAX_CHUNKS_PER_TEXT} chunks; "
+            "the rest of each was not indexed."
+        )
+    return pending, pid, total
+
+
+def _decode_batch(
+    response: EmbeddingsResponse, count: int, encoding: str, dimensions: int
+) -> list[bytes]:
+    """The decoded vectors of a response, in input order. Raises ``unexpected_response`` when the
+    data does not hold exactly one valid vector per input."""
+    data = response.data
+    if len(data) != count:
+        raise PerplexityError(
+            "unexpected_response", f"The API returned {len(data)} embeddings for {count} inputs."
+        )
+    vectors: dict[int, bytes] = {}
+    for entry in data:
+        index = entry.get("index") if isinstance(entry, dict) else None
+        if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < count:
+            raise PerplexityError("unexpected_response", "An embedding has an invalid index.")
+        if index in vectors:
+            raise PerplexityError("unexpected_response", "An embedding index is repeated.")
+        vectors[index] = decode_vector(entry.get("embedding"), encoding, dimensions)
+    return [vectors[i] for i in range(count)]
+
+
+async def _write_complete_items(
+    app: Any,
+    project_name: str,
+    items: list[_Pending],
+    triple: tuple[str, int, str],
+    result: IndexResult,
+) -> None:
+    """Store the items whose chunks are all embedded, in one unit: only what still exists."""
+    model, dimensions, encoding = triple
+    async with unit_of_work(app.engine) as session:
+        project = await find_project(session, project_name)  # by NAME: it may have been recreated
+        if project is None:
+            result.skipped_items += len(items)
+            result.warnings.append("The project was deleted during the call; nothing was stored.")
+            return
+        rows: list[ChunkRow] = []
+        for item in items:
+            if item.replace:
+                await store.delete_item_chunks(session, project.id, item.ref, *triple)
+            rows += [
+                ChunkRow(
+                    source=item.source,
+                    ref=item.ref,
+                    chunk_index=i,
+                    text=item.chunks[i],
+                    text_hash=item.hashes[i],
+                    model=model,
+                    dimensions=dimensions,
+                    encoding=encoding,
+                    vector=item.vectors[i],
+                    chat_message_id=item.chat_message_id,
+                    research_job_id=item.research_job_id,
+                )
+                for i in range(len(item.chunks))
+            ]
+        inserted, gone = await store.insert_chunks(session, project.id, rows)
+    result.embedded_chunks += len(inserted)
+    result.embedded_items += len(items) - len(gone)
+    if gone:
+        result.skipped_items += len(gone)
+        result.warnings.append(
+            f"{len(gone)} item(s) were deleted during the call and were not stored."
+        )
+
+
+async def index(
+    app: Any,
+    *,
+    project: str | None,
+    source: str,
+    items: list[Any] | None,
+    model: str,
+    dimensions: int | None,
+    encoding: str,
+    limit: int,
+) -> IndexResult:
+    """Embed and store the pending items of ``source`` (design D5 to D7, D12)."""
+    check_options(model, dimensions, encoding)
+    pairs = check_index_arguments(source, items, limit)
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    size = stored_dimensions(model, dimensions)
+    triple = (model, size, encoding)
+    result = IndexResult()
+    async with app.embed_locks.hold(name):
+        pending, _, stored_total = await _gather(app, name, source, pairs, triple, result)
+        plan = plan_index([p.chunks for p in pending], limit)
+        taken = pending[: plan.taken_items]
+        if stored_total + sum(len(p.chunks) for p in taken) > MAX_STORED_CHUNKS:
+            raise _bad(
+                "limit",
+                f"this would pass {MAX_STORED_CHUNKS} stored chunks for this model, size and "
+                "encoding; delete some first.",
+            )
+        result.remaining = plan.remaining
+        for batch in plan.batches:
+            inputs = [c.text for c in batch]
+            body = build_request(model, inputs, dimensions=dimensions, encoding=encoding)
+            try:
+                costed = await run_embed(app, project=name, body=body, model=model)
+                vectors = _decode_batch(costed.result, len(inputs), encoding, size)
+            except PerplexityError as exc:
+                raise PerplexityError(
+                    exc.category,
+                    f"{exc} ({result.embedded_chunks} chunks were stored before this failure.)",
+                ) from exc
+            result.requests += 1
+            result.latency_ms += costed.latency_ms
+            result.add_usage(None if costed.recording is None else costed.recording.usage)
+            complete: list[_Pending] = []
+            for planned, vector in zip(batch, vectors, strict=True):
+                item = taken[planned.item]
+                item.vectors[planned.chunk_index] = vector
+                if len(item.vectors) == len(item.chunks) and item not in complete:
+                    complete.append(item)
+            await shielded_write(_write_complete_items(app, name, complete, triple, result))
+    return result

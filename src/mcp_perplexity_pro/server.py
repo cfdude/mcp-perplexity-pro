@@ -27,6 +27,7 @@ from starlette.responses import JSONResponse
 from mcp_perplexity_pro.agent import JobLocks
 from mcp_perplexity_pro.catalog import Catalog
 from mcp_perplexity_pro.client import PerplexityClient
+from mcp_perplexity_pro.embeddings import ProjectLocks
 from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
@@ -63,6 +64,8 @@ class AppContext:
     now: Callable[[], datetime] = utcnow
     # one in-process lock per research job (design D8)
     job_locks: JobLocks = field(default_factory=JobLocks)
+    # one in-process lock per project name for embedding index and delete (design D7)
+    embed_locks: ProjectLocks = field(default_factory=ProjectLocks)
 
 
 def error_result(category: str, message: str) -> ToolResult:
