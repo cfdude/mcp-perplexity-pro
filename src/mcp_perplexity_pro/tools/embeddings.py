@@ -141,7 +141,7 @@ def register(server: FastMCP) -> None:
         ] = None,
         encoding: Annotated[
             str | None,
-            Field(description="int8 (default) or binary (32x smaller); omitted on delete: both"),
+            Field(description="int8 (default) or binary (8x smaller); omitted on delete: both"),
         ] = None,
         project: Annotated[
             str | None, Field(description="Project the vectors belong to (default: default)")

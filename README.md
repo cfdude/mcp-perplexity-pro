@@ -931,8 +931,8 @@ combination, and the same text indexed under two combinations is two separate se
 
 Every argument is checked before anything is sent: a bad one is an `invalid_request` error that
 names it, nothing is billed and no project is created. The refusals are an unknown `action`,
-`source`, `model` or `encoding`; a `dimensions` that is out of range for the model or not a multiple
-of 8; `items` with the wrong shape, count, length, a repeated or blank key or a lone surrogate, or
+`source`, `model` or `encoding`; a `dimensions` that is out of range for the model (for `delete`: outside 128 to 2560) or not a
+multiple of 8; `items` with the wrong shape, count, length, a repeated or blank key or a lone surrogate, or
 `items` given with a source other than `text`; a `limit` outside 1 to 2048; a blank or over-long
 `query`; a `top_k` outside 1 to 20; a `min_score` outside -1 to 1; and an `index` that would take a
 project past 20000 chunks for one combination. `delete` without `confirm` true is
@@ -958,9 +958,11 @@ combination and a hash of its text. Every chunk belongs to a project, and a chun
 line, else line break, else space before the limit, else at the limit), and a text yields at most 50
 chunks; the rest is ignored and `index` says so in a warning. Chunks are sent in batches of at most
 64 inputs and 100000 characters in all (our caps; the API allows 512 inputs). Each batch is one
-request, and its chunks are stored before the next batch is sent, so a failure on batch 3 keeps
-batches 1 and 2 (the error says how many chunks were stored first) and the failed batch's items stay
-pending. Batches run one after the other, never concurrently, and two `index` calls on one project
+request, and the items it completes are stored before the next batch is sent, so a failure on
+batch 3 keeps every item fully embedded in batches 1 and 2 (the error says how many chunks were
+stored first); an item that straddles a batch boundary is stored only when its last chunk has
+been embedded, so the items of a failed batch, and an item split across it, stay pending (and
+are embedded, and billed, again on the next call). Batches run one after the other, never concurrently, and two `index` calls on one project
 in one server process wait for each other, so the same pending item is not embedded twice. `limit`
 makes `index` resumable: it stops after about `limit` new chunks and reports `remaining`, the pending
 chunks it left, so call it again until `remaining` is 0.
@@ -978,7 +980,7 @@ the action are `null`:
 
 | Key | Meaning |
 |---|---|
-| `action`, `project`, `warnings`, `latency_ms` | The action, the project used, things worth knowing, and the measured wall time of the upstream requests (`0` when none was made) |
+| `action`, `project`, `warnings`, `latency_ms` | The action, the project used, things worth knowing, and the measured wall time (of the upstream requests for `index` and `search`, `0` when none was made; of the local call for `status` and `delete`) |
 | `embedded_chunks`, `embedded_items`, `skipped_items`, `remaining` | `index`: chunks and items stored; items skipped because they were already current or their source was deleted during the call; pending chunks left because of `limit` |
 | `requests`, `input_tokens` | `index`, `search`: upstream requests made and tokens billed |
 | `cost_usd`, `cost_source`, `calls_cost_unknown` | `index`, `search`: the exact sum of the recorded costs of this call's requests as a decimal string, where the cost came from (`reported`, `computed`, `mixed` or `none`), and how many requests had an unknown cost. A call that made no request has `null` `cost_usd` and `cost_source` |
