@@ -721,7 +721,7 @@ Review intensity is a bounded dial, not a free-form call each time — set via
 | `standard` | one fresh-context reviewer per gate | the default: OpenSpec Gate 1/Gate 2, a Superpowers task review |
 | `thorough` | two independent fresh-context reviewers per gate; adjudicate any disagreement yourself | schema/migration changes, security-sensitive work, or anything explicitly flagged high-stakes |
 
-Current mode: **thorough**.
+Current mode: **standard**.
 
 ## Feedback — don't let friction stay silent
 
