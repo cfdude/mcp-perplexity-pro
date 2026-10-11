@@ -1,0 +1,12 @@
+{
+  "id": "ab58ac35-91c5-4810-9d4f-865499ae4aba",
+  "results": [
+    {
+      "date": "2026-10-02",
+      "last_updated": "2026-10-03",
+      "snippet": "you can use Python’s native packaging tools to create a *source* Distribution Package, or *sdist* for short.",
+      "title": "Overview of Python Packaging",
+      "url": "https://packaging.python.org/en/latest/overview/"
+    }
+  ]
+}

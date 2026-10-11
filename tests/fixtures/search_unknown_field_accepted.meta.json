@@ -1,0 +1,24 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "search_type fast, max_results 3, plus an unknown top-level field bogus_param (accepted)",
+  "latency_seconds": 0.2431192500225734,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "48",
+    "x-ratelimit-reset": "1791589991",
+    "x-ratelimit-used": "2",
+    "x-request-id": "fce4060d-a0c5-45a8-87c9-8ae15bac0dba"
+  },
+  "request": {
+    "query": "python asyncio taskgroup",
+    "search_type": "fast",
+    "max_results": 3,
+    "bogus_param": "x"
+  }
+}

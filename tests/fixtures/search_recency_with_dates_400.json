@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "search_recency_filter cannot be used together with search_after_date_filter or search_before_date_filter",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

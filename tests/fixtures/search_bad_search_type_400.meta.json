@@ -1,0 +1,18 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "search_type deep",
+  "latency_seconds": 0.158706,
+  "response_headers": {
+    "x-request-id": "91aba182-3ae2-490c-804f-e73e2d372909"
+  },
+  "request": {
+    "query": "python",
+    "search_type": "deep"
+  }
+}

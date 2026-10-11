@@ -1,0 +1,42 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "21 domains",
+  "latency_seconds": 0.175375,
+  "response_headers": {
+    "x-request-id": "44b7d096-f641-4e80-afe5-fd379c1b313b"
+  },
+  "request": {
+    "query": "python",
+    "search_type": "fast",
+    "max_results": 1,
+    "search_domain_filter": [
+      "a1.com",
+      "a2.com",
+      "a3.com",
+      "a4.com",
+      "a5.com",
+      "a6.com",
+      "a7.com",
+      "a8.com",
+      "a9.com",
+      "a10.com",
+      "a11.com",
+      "a12.com",
+      "a13.com",
+      "a14.com",
+      "a15.com",
+      "a16.com",
+      "a17.com",
+      "a18.com",
+      "a19.com",
+      "a20.com",
+      "a21.com"
+    ]
+  }
+}

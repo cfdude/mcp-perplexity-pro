@@ -12,7 +12,7 @@ from fixture_support import FIXTURE_DIR
 from sqlalchemy import text
 from usage_support import DbLock, Upstream
 
-from mcp_perplexity_pro import agent as agent_module
+from mcp_perplexity_pro import costed as costed_module
 from mcp_perplexity_pro.agent import run_costed
 from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.errors import PerplexityError
@@ -322,7 +322,7 @@ async def test_the_recorder_runs_with_no_write_unit_open(world, monkeypatch):
     """The ordering test: at the moment the recorder is called the write lock must be free.
     Mutation check (2.3): wrapping the recorder call in ``unit_of_work`` makes this fail."""
     app, _, settings = await world(serve("agent_fast.json"))
-    real = agent_module.record_usage
+    real = costed_module.record_usage
     seen = []
 
     async def probing(engine, **kwargs):
@@ -334,7 +334,7 @@ async def test_the_recorder_runs_with_no_write_unit_open(world, monkeypatch):
             lock.close()
         return await real(engine, **kwargs)
 
-    monkeypatch.setattr(agent_module, "record_usage", probing)
+    monkeypatch.setattr(costed_module, "record_usage", probing)
     await call(app)
     (kwargs,) = seen
     assert kwargs["secrets"] == (KEY,)

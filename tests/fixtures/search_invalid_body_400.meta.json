@@ -1,0 +1,15 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "truncated JSON body (the request field holds the raw bytes sent)",
+  "latency_seconds": 0.154737,
+  "response_headers": {
+    "x-request-id": "bbbfe00d-4691-43f7-8ba0-a6530bdfa40b"
+  },
+  "request": "{\"query\": \"python\",\n"
+}

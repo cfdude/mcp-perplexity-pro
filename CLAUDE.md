@@ -5,13 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MCP server for the Perplexity API, written in Python (FastMCP, SQLAlchemy 2.0 async, SQLite,
 Alembic). Version 2.0.0 replaced the TypeScript 1.x server, which is deleted (git history keeps
 it): Perplexity retired the Sonar endpoints (`403 chat_completions_not_available`), so there was
-nothing to port. Seven tools exist: the four Agent API tools `perplexity_ask`, `perplexity_chat`,
-`perplexity_research` and `perplexity_jobs` (they spend money), plus `perplexity_models`,
-`perplexity_projects` and the read-only `perplexity_usage`. The Search, Embeddings and Decisions
-tools come in later OpenSpec changes, and each must record its costed calls (see "How to record
-usage"); the four Agent tools already record theirs. Read `README.md` for the user-facing behavior
-and `openspec/changes/archive/2026-10-09-py-foundation/`,
-`openspec/changes/archive/2026-10-09-py-usage-log/` and `openspec/changes/py-agent-api/`
+nothing to port. Eight tools exist: the four Agent API tools `perplexity_ask`, `perplexity_chat`,
+`perplexity_research` and `perplexity_jobs` (they spend money), `perplexity_search` (the Search
+API, one costed request per call), plus `perplexity_models`, `perplexity_projects` and the read-only
+`perplexity_usage`. The Embeddings and Decisions tools come in later OpenSpec changes, and each
+must record its costed calls (see "How to record usage"); the Agent tools and `perplexity_search`
+already record theirs. Read `README.md` for the user-facing behavior and
+`openspec/changes/archive/2026-10-09-py-foundation/`,
+`openspec/changes/archive/2026-10-09-py-usage-log/`,
+`openspec/changes/archive/2026-10-09-py-agent-api/` and `openspec/changes/py-search-api/`
 (`design.md` especially) for why things are the way they are.
 
 ## Development Commands
@@ -53,9 +55,13 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 | `errors.py` | `PerplexityError` (a FastMCP `ToolError`), `CATEGORIES`, `ALL_CATEGORIES`, status-to-category mapping |
 | `catalog.py` | Model list TTL cache, stale-on-failure rule, the dated `PRESETS` table |
 | `models/` | Tolerant pydantic payload models (`extra="allow"`, optional fields) |
+| `models/search.py` | `SearchResponse` (`results` as a raw list, `id` optional, `extra="allow"`): tolerant like the Agent models, so a billed response is never lost to a schema quibble; `search.digest` owns every judgment about a result |
 | `models/agent.py` | `AgentRun` (only `id` and `status` are required) and `CancelResponse` (`response_id` and `status` are required), `output` is `Any`, so a spend-bearing response is never lost to a schema quibble |
 | `agent.py` | The Agent toolset's shared logic: option validation and `build_request`, `digest` (answer, sources, usage summary), `run_costed` (the one costed-call sequence, below), and the research job observation (`observe_job`, `job_columns`, `JobLocks`) |
+| `costed.py` | `costed_call`, the one costed-call sequence (validate the project name, commit the project, timed call with no write unit, `record_usage`; two `record_usage(` lines), plus `Recording` (what an interpreter says about a response) and `Costed` (result, latency, project, status, recording). Used by `agent.run_costed` and `search.run_search` |
+| `search.py` | The Search toolset's logic: `SearchOptions` and `build_request` (local validation, nothing sent for a bad call; the Agent validators are imported, not copied), `digest` (total, never raises) and the output models, `search_usage` (one billing unit at the documented price of the type, source `computed`) and `run_search` (the caller of `costed_call`) |
 | `tools/` | One module per tool, each `register(server)`; `tools/__init__.py:register_tools` calls them |
+| `tools/search.py` | `perplexity_search` (`fast`/`web`, one query or up to five merged into one list, `people` not offered). Spec: `openspec/changes/py-search-api/specs/search-tool/spec.md` |
 | `tools/ask.py`, `tools/chat.py`, `tools/research.py`, `tools/jobs.py` | `perplexity_ask` (stateless, `fast`/`low`/`medium`), `perplexity_chat` (`send`/`list`/`read`/`delete` over local history), `perplexity_research` (background submit, returns a job id), `perplexity_jobs` (`list`/`status`/`result`/`cancel`). Specs: `openspec/changes/py-agent-api/specs/` |
 | `usage.py` | The recorder `record_usage` (best effort, never raises), money helpers (`to_nano`, `format_usd`, nano-USD ints), `Usage`/`ToolCallUsage`, `usage_from_agent_response`, `computed_usage`, `agent_response_status`, and the `_PARSERS` registry (one entry per `api`) |
 | `pricing.py` | Documented Perplexity prices as integer nano-USD (`PRICES_AS_OF`, `PRICES_SOURCE`) and the `*_cost_nano` helpers returning `None` when unknown; pinned to `tests/fixtures/pricing_page.json` |
@@ -99,7 +105,8 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
 7. **Do not use `from __future__ import annotations` in a tool module**: FastMCP reads annotations
    at registration time and `Context` must be a real class there.
 8. A tool that makes a costed upstream call records it: follow "How to record usage" below, in
-   that order (a new Agent API tool calls `agent.run_costed`, which already is that order). A read-only tool (`perplexity_models`, `perplexity_usage`) opens
+   that order (a new Agent API tool calls `agent.run_costed`, any other costed tool calls
+   `costed.costed_call`; both already are that order). A read-only tool (`perplexity_models`, `perplexity_usage`) opens
    `unit_of_work(engine, write=False)` and never creates a project.
 9. Test it offline through `build_server` with a `MockTransport` client (see `tests/test_tool_errors.py`,
    `tests/test_projects_tool.py`). **Every tool schema costs context in every session.** Going from
@@ -108,8 +115,10 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
    most of it output-schema field descriptions. Re-measured 2026-10-09 the same way (an
    ephemeral-port HTTP server, a dummy key, a temporary data directory): 40475 bytes (about 40.5
    KB) for the same seven tools, at commit `48c2484` plus the cost-wording docstring edits of the
-   commit after it. The design target is about nine tools in all, which
-   leaves room for the Search, Embeddings and Decisions tools only if later epics stay lean: prefer
+   commit after it. Adding `perplexity_search` (eight tools) measured 2026-10-09 the same way (at commit `4a4dfcb`, not re-run since):
+   45542 bytes (+12.5%, from 40475), and the `perplexity_search` entry alone is 5066 bytes. The
+   design target is about nine tools in all, which leaves room for the Embeddings and Decisions
+   tools only if later epics stay lean: prefer
    one tool with an `action` argument over several, and trim descriptions before adding a tool.
 
 ### Error contract
@@ -204,14 +213,24 @@ order matters:
 5. Run the tool's own write unit **last**, so its rollback on failure cannot remove the event.
 
 For a failed call (a `PerplexityError`), record with `status=exc.category` and no usage, then
-re-raise. A pure example of the whole pattern is `tests/usage_support.py:costed_call`.
+re-raise. The production implementation of the whole pattern is `costed.costed_call`.
+`tests/usage_support.py::costed_call` is a test-only copy of the order, so the shared name does not
+mislead; it is a pure example of the whole pattern.
 
-**Production callers.** `record_usage` is called from exactly two places in `src/`, found with
+**Production callers.** `record_usage` is called from exactly two functions in `src/`, found with
 `rg "record_usage\(" src/` (the definition in `usage.py` aside), and a new costed tool must not add
 a third by inlining the sequence above:
 
-- **`agent.run_costed`** (two `record_usage(` lines, the failure and the response). It does steps 1
-  to 4 in that order: validate the project name, commit the project in a short write unit
+- **`costed.costed_call`** (two `record_usage(` lines, the failure and the response). It does steps
+  1 to 4 in that order and is used by `agent.run_costed` and `search.run_search`. **A new costed
+  tool calls `costed_call` with its own `record` interpreter instead of inlining the sequence.**
+  The interpreter runs after the upstream call returned, so it must never raise (`costed_call`
+  records `unexpected_response` with no usage if it does). Search cost is **computed**: the response
+  carries no usage, so `search_usage` books one unit at the documented price, and a 200 the tool
+  cannot read is recorded `unexpected_response` with an unknown cost (the usage totals stay a lower
+  bound).
+- **`agent.run_costed`** wraps `costed_call` with the Agent rules. It supplies steps 1
+  to 4 through it: validate the project name, commit the project in a short write unit
   (`resolve_project=False` for a chat send that already found its project), the timed call with no
   write unit open, then record. `perplexity_ask`, `perplexity_chat` send and the
   `perplexity_research` submit call it, and each does its own write (a chat row, a job row) after it
@@ -300,8 +319,8 @@ a third by inlining the sequence above:
 - **The TypeScript sources and their packaging and container files are deleted** on the `python-rewrite` branch. Do not
   propose converting anything back or reviving the 1.x tool names. The Sonar models and
   `/chat/completions` endpoints are retired by Perplexity and must not be called.
-- Not built yet: the Search, Embeddings and Decisions tools (the Agent tools exist and record
-  their usage), streaming, auto-routing between depths or models and cost ceilings (there is none:
+- Not built yet: the Embeddings and Decisions tools (the Agent tools and the Search tool exist and
+  record their usage), the Search API's `people` type and page snippets, streaming, auto-routing between depths or models and cost ceilings (there is none:
   `high` and `xhigh` exist only behind `perplexity_research` for that reason), pruning of chats,
   jobs or usage events, PyPI publishing (the package only has to build and run via `uvx --from .`).
 
@@ -310,7 +329,7 @@ a third by inlining the sequence above:
 - `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
   generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
   (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). The current change is
-  `py-agent-api` (`py-foundation` and `py-usage-log` are archived). `docs/lessons/` holds process lessons
+  `py-search-api` (`py-foundation`, `py-usage-log` and `py-agent-api` are archived). `docs/lessons/` holds process lessons
   with their enforcement points.
 - Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
   task's `tasks.md` checkbox ticked in the same commit.

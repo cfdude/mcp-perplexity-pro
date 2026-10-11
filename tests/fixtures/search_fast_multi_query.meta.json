@@ -1,0 +1,27 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "three queries in one request, max_results 10: results come back as ONE flat list, merged across queries, no per-query grouping or tag",
+  "latency_seconds": 0.289447,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "47",
+    "x-ratelimit-reset": "1791588654",
+    "x-ratelimit-used": "3",
+    "x-request-id": "c43bae95-b556-4b91-acd4-4060a10169db"
+  },
+  "request": {
+    "query": [
+      "rust borrow checker",
+      "golang generics",
+      "zig comptime"
+    ],
+    "search_type": "fast",
+    "max_results": 10
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "search_after_date_filter '2026-03-01' must be in MM/DD/YYYY format",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

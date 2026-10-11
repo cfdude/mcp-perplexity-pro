@@ -1,9 +1,10 @@
-"""Task 5.1: one usage event per costed call across all four tools, in one run over the real MCP
-transport (streamable HTTP on an ephemeral port).
+"""Task 5.1: one usage event per costed call across all five costed tools, in one run over the
+real MCP transport (streamable HTTP on an ephemeral port).
 
-``perplexity_ask`` once, ``perplexity_chat`` send twice, ``perplexity_research`` submit once and
-``perplexity_jobs`` observing that run completed make exactly four events. Every submit, pending
-poll, list, read, delete and models call in between makes none."""
+``perplexity_ask`` once, ``perplexity_chat`` send twice, ``perplexity_search`` twice (a fast and
+a three-query web search), ``perplexity_research`` submit once and ``perplexity_jobs`` observing
+that run completed make exactly six events. Every submit, pending poll, list, read, delete and
+models call in between makes none."""
 
 import json
 
@@ -22,6 +23,7 @@ from mcp_perplexity_pro.storage.engine import create_engine_for
 from mcp_perplexity_pro.storage.migrate import migrate
 
 ASK = "agent_fast.json"
+SEARCHES = ["search_fast_single.json", "search_web_single.json"]  # distinct ids: both are stored
 # The reported cost of each costed response, in nano-USD, written out by hand from the
 # fixtures' ``usage.cost.total_cost`` (0.00125, 0.00119, 0.0018 and 0.01599 USD); the test does
 # not compute it from the same parser the recorder uses.
@@ -29,8 +31,10 @@ EXPECTED_NANO = {
     "perplexity_ask": [1_250_000],
     "perplexity_chat": [1_190_000, 1_800_000],
     "perplexity_research": [15_990_000],
+    "perplexity_search": [1_000_000, 5_000_000],  # computed: fast $0.001, web $0.005
 }
-EXPECTED_TOTAL_NANO = 1_250_000 + 1_190_000 + 1_800_000 + 15_990_000  # 20_230_000 = 0.02023 USD
+# 20_230_000 (the four agent events) + 1_000_000 + 5_000_000 = 26_230_000 = 0.02623 USD
+EXPECTED_TOTAL_NANO = 20_230_000 + 1_000_000 + 5_000_000
 
 
 class Scripted:
@@ -40,10 +44,14 @@ class Scripted:
     def __init__(self) -> None:
         self.log: list[tuple[str, str]] = []
         self.sync_posts = 0
+        self.searches = 0
         self.polls = 0
 
     def __call__(self, request: httpx2.Request, n: int) -> httpx2.Response:
         self.log.append((request.method, request.url.path))
+        if request.url.path == "/search":
+            self.searches += 1
+            return httpx2.Response(200, json=fixture(SEARCHES[self.searches - 1]))
         if request.method == "GET" and request.url.path == "/v1/models":
             return httpx2.Response(200, json=fixture("models.json"))
         if request.method == "GET":
@@ -81,7 +89,7 @@ async def events(engine) -> list[tuple]:
         return [tuple(r) for r in rows]
 
 
-async def test_four_costed_calls_make_four_events_and_nothing_else_does(running):
+async def test_six_costed_calls_make_six_events_and_nothing_else_does(running):
     url, engine, script = running
     async with Client(url) as client:
 
@@ -99,30 +107,38 @@ async def test_four_costed_calls_make_four_events_and_nothing_else_does(running)
         chat_id = sent["chat_id"]
         await call("perplexity_chat", action="send", chat_id=chat_id, message=FOLLOW_UP)
         await settled(3, "two chat sends")
+        await call("perplexity_search", query="python asyncio taskgroup", max_results=5)
+        found = await call(
+            "perplexity_search",
+            query=["rust borrow checker", "golang generics", "zig comptime"],
+            search_type="web",
+        )
+        assert found["query_count"] == 3
+        await settled(5, "a fast and a web search")
 
         submitted = await call("perplexity_research", query="compare vector databases")
         job_id = submitted["job_id"]
         assert submitted["status"] == "queued"
-        await settled(3, "a queued submit records nothing")
+        await settled(5, "a queued submit records nothing")
 
         pending = await call("perplexity_jobs", action="status", job_id=job_id)
         assert pending["status"] == "in_progress"
-        await settled(3, "a pending poll records nothing")
+        await settled(5, "a pending poll records nothing")
 
         await call("perplexity_jobs", action="list")  # no refresh: no fetch, no event
         await call("perplexity_chat", action="list")
         await call("perplexity_chat", action="read", chat_id=chat_id)
         await call("perplexity_models")
-        await settled(3, "list, read and models record nothing")
+        await settled(5, "list, read and models record nothing")
 
         done = await call("perplexity_jobs", action="status", job_id=job_id)
         assert done["status"] == "completed"
-        await settled(4, "the observation that sees the run finish")
+        await settled(6, "the observation that sees the run finish")
 
         await call("perplexity_jobs", action="result", job_id=job_id)  # served locally
         await call("perplexity_jobs", action="list", refresh=True)  # nothing running any more
         await call("perplexity_chat", action="delete", chat_id=chat_id, confirm=True)
-        await settled(4, "result, a settled refresh and delete record nothing")
+        await settled(6, "result, a settled refresh and delete record nothing")
 
         by_api = (
             await client.call_tool("perplexity_usage", {"group_by": "api"})
@@ -136,27 +152,42 @@ async def test_four_costed_calls_make_four_events_and_nothing_else_does(running)
         ("perplexity_ask", "agent", "ok"),
         ("perplexity_chat", "agent", "ok"),
         ("perplexity_chat", "agent", "ok"),
+        ("perplexity_search", "search", "ok"),
+        ("perplexity_search", "search", "ok"),
         ("perplexity_research", "agent", "ok"),
     ]
-    assert [r[3] for r in rows] == ["fast", "fast", "fast", "medium"]
-    assert len({r[5] for r in rows}) == 4  # four distinct response ids
-    assert rows[3][5] == RUN_ID and rows[3][4] == "openai/gpt-6-luna"
-    assert all(r[7] == "reported" for r in rows)
+    agent_rows = [r for r in rows if r[1] == "agent"]
+    search_rows = [r for r in rows if r[1] == "search"]
+    assert [r[3] for r in agent_rows] == ["fast", "fast", "fast", "medium"]
+    assert all(r[3] is None and r[4] is None for r in search_rows)  # no preset, no model
+    assert len({r[5] for r in rows}) == 6  # six distinct request ids
+    assert agent_rows[3][5] == RUN_ID and agent_rows[3][4] == "openai/gpt-6-luna"
+    assert all(r[7] == "reported" for r in agent_rows)
+    assert all(r[7] == "computed" for r in search_rows)
     for tool, expected in EXPECTED_NANO.items():
         assert [r[6] for r in rows if r[0] == tool] == expected
     assert sum(r[6] for r in rows) == EXPECTED_TOTAL_NANO
 
-    (agent_group,) = by_api["groups"]  # only the Agent API family appears
-    assert agent_group["key"] == "agent" and agent_group["calls"] == 4
-    assert agent_group["cost_nano_usd"] == by_api["totals"]["cost_nano_usd"] == EXPECTED_TOTAL_NANO
-    assert by_api["totals"]["cost_usd"] == "0.02023"
+    groups = {g["key"]: g for g in by_api["groups"]}
+    assert set(groups) == {"agent", "search"}
+    assert groups["agent"]["calls"] == 4 and groups["search"]["calls"] == 2
+    assert groups["search"]["cost_nano_usd"] == 6_000_000
+    assert groups["search"]["calls_cost_computed"] == 2  # all computed, none reported
+    assert groups["search"]["calls_cost_unknown"] == 0
+    assert sum(g["cost_nano_usd"] for g in groups.values()) == EXPECTED_TOTAL_NANO
+    assert by_api["totals"]["cost_nano_usd"] == EXPECTED_TOTAL_NANO
+    assert by_api["totals"]["cost_usd"] == "0.02623"
     assert {g["key"]: g["calls"] for g in by_tool["groups"]} == {
         "perplexity_ask": 1,
         "perplexity_chat": 2,
         "perplexity_research": 1,
+        "perplexity_search": 2,
     }
     # exactly the calls that were meant to reach the API did: 3 sync POSTs, 1 submit, 2 polls,
-    # and the one catalog fetch (the cancel endpoint was never used)
+    # 2 searches and the one catalog fetch (the cancel endpoint was never used)
     assert sorted(script.log) == sorted(
-        [("POST", "/v1/agent")] * 4 + [("GET", f"/v1/agent/{RUN_ID}")] * 2 + [("GET", "/v1/models")]
+        [("POST", "/v1/agent")] * 4
+        + [("POST", "/search")] * 2
+        + [("GET", f"/v1/agent/{RUN_ID}")] * 2
+        + [("GET", "/v1/models")]
     )

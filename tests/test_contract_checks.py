@@ -1,4 +1,4 @@
-"""Task 5.3: contract checks across the seven tools.
+"""Task 5.3: contract checks across the costed tools.
 
 1. ``record_usage`` has exactly the call sites design D4 names (a mechanical sweep).
 2. Every anticipated failure the specs name surfaces as its listed category through the real
@@ -33,6 +33,7 @@ from secrets_support import (
     OTHER,
     QUEUED,
     RESEARCH,
+    SEARCH,
     SHAPED,
     completed_body,
     error_body,
@@ -70,9 +71,13 @@ def record_usage_calls() -> Counter:
 
 def test_record_usage_is_called_from_exactly_two_functions_and_defined_once():
     calls = record_usage_calls()
-    # run_costed records a failure and a response (two calls in one function); observe_job_locked
-    # records a finished run. Nothing else, in any tool module, calls the recorder.
-    assert calls == Counter({("agent.py", "run_costed"): 2, ("agent.py", "observe_job_locked"): 1})
+    # The generic costed-call sequence lives once, in costed.costed_call (a failure and a
+    # response: two calls in one function), and agent.run_costed and the search call are its
+    # callers (py-search-api design D6). observe_job_locked records a finished background run, a
+    # different shape. Still exactly two functions; nothing in any tool module calls the recorder.
+    assert calls == Counter(
+        {("costed.py", "costed_call"): 2, ("agent.py", "observe_job_locked"): 1}
+    )
     definitions = [
         path.relative_to(SRC).as_posix()
         for path in SRC.rglob("*.py")
@@ -485,6 +490,78 @@ ROWS = [
         ),
         setup=job_one,
     ),
+    # --- search-tool: local refusals (nothing is sent) ---
+    Row("search: blank query", SEARCH, {"query": "   "}, "invalid_request"),
+    Row("search: no queries", SEARCH, {"query": []}, "invalid_request"),
+    Row("search: six queries", SEARCH, {"query": ["a"] * 6}, "invalid_request"),
+    Row("search: people", SEARCH, {"query": "q", "search_type": "people"}, "invalid_request"),
+    Row("search: max_results 21", SEARCH, {"query": "q", "max_results": 21}, "invalid_request"),
+    Row("search: max_tokens 0", SEARCH, {"query": "q", "max_tokens": 0}, "invalid_request"),
+    Row(
+        "search: mixed domains",
+        SEARCH,
+        {"query": "q", "domains": ["a.com", "-b.com"]},
+        "invalid_request",
+    ),
+    Row("search: bad date", SEARCH, {"query": "q", "after": "09/01/2026"}, "invalid_request"),
+    Row(
+        "search: recency with a date",
+        SEARCH,
+        {"query": "q", "recency": "week", "after": "2026-01-01"},
+        "invalid_request",
+    ),
+    Row(
+        "search: upper-case language",
+        SEARCH,
+        {"query": "q", "languages": ["EN"]},
+        "invalid_request",
+    ),
+    Row(
+        "search: country of three letters",
+        SEARCH,
+        {"query": "q", "country": "USA"},
+        "invalid_request",
+    ),
+    Row(
+        "search: invalid project name", SEARCH, {"query": "q", "project": "../x"}, "invalid_request"
+    ),
+    # --- search-tool: the API answers ---
+    Row(
+        "search: a recorded 400 body",
+        SEARCH,
+        {"query": "q"},
+        "invalid_request",
+        respond_with("search_bad_country_400.json", 400),
+    ),
+    Row(
+        "search: a recorded 401 body",
+        SEARCH,
+        {"query": "q"},
+        "authentication",
+        respond_with("search_unauthenticated_401.json", 401),
+    ),
+    Row(
+        "search: 429 beyond the maximum wait",
+        SEARCH,
+        {"query": "q"},
+        "rate_limited",
+        error_body(429, "slow down", "rate_limit", **{"Retry-After": "9999"}),
+    ),
+    Row("search: 503", SEARCH, {"query": "q"}, "upstream_failure", error_body(503, "down", "x")),
+    Row(
+        "search: read timeout",
+        SEARCH,
+        {"query": "q"},
+        "network_timeout",
+        raising(lambda request: httpx2.ReadTimeout("cut", request=request)),
+    ),
+    Row(
+        "search: a 200 without results",
+        SEARCH,
+        {"query": "q"},
+        "unexpected_response",
+        lambda request, n: httpx2.Response(200, json={"id": "x"}),
+    ),
 ]
 
 
@@ -694,6 +771,53 @@ async def test_key_shaped_content_is_returned_and_stored_unchanged_and_nowhere_e
     assert KEY.encode() not in run.database_bytes()
 
 
+async def test_search_text_keeps_examples_and_never_the_configured_key(keyed):
+    """py-search-api 5.2: third-party result text is returned as received except the configured
+    key; a ``pplx-`` example and a documented model id inside it survive; the request id (an
+    upstream string) is redacted and cut; nothing key-shaped reaches the log or the database."""
+    run = await keyed()
+    body = {
+        "id": f"id-{OTHER}-" + "z" * 300,
+        "results": [
+            {
+                "title": f"About {OTHER}",
+                "url": f"https://example.com/{OTHER}",
+                "snippet": f"key {KEY}, model pplx-embed-v1-0.6b, example {OTHER}",
+                "date": "2026-10-01",
+                "last_updated": f"u {KEY}",
+            },
+            {"title": None, "url": "https://example.com/b", "snippet": 5, "date": 20261001},
+            "stray",
+        ],
+    }
+    found = await run(SEARCH, ok(body), query=f"What is {OTHER}?")
+    refused = await run(SEARCH, error_body(400, f"bad {KEY} {OTHER}"), query="q")
+
+    assert not found.is_error  # a billed 200 with odd fields succeeds
+    sc = found.structured_content
+    first, second = sc["results"]
+    assert first["title"] == f"About {OTHER}" and first["url"] == f"https://example.com/{OTHER}"
+    assert first["snippet"] == f"key [redacted], model pplx-embed-v1-0.6b, example {OTHER}"
+    assert first["last_updated"] == "u [redacted]"
+    assert (second["title"], second["snippet"], second["date"]) == ("", "", None)
+    assert OTHER not in sc["request_id"] and len(sc["request_id"]) <= 128
+    assert refused.is_error and OTHER not in refused.structured_content["message"]
+    assert KEY not in refused.structured_content["message"]
+
+    for result in run.results:
+        for path, value in walk(result.structured_content):
+            assert KEY not in value
+            if SHAPED.search(value) and not result.is_error:
+                assert path in CONTENT_RESULT_PATHS, (path, value[:80])
+    for text in run.texts():
+        assert KEY not in text
+    log = run.log_text()
+    assert KEY not in log and not SHAPED.search(log)
+    for table, column, value in await run.cells():
+        assert KEY not in value and not SHAPED.search(value), (table, column)  # stores no content
+    assert KEY.encode() not in run.database_bytes()
+
+
 async def test_health_carries_no_key_and_no_content(keyed):
     run = await keyed()
     await run(ASK, query=f"What is {OTHER}?")
@@ -789,8 +913,9 @@ async def test_every_upstream_string_is_redacted_then_cut_to_its_cap(keyed):
     assert "Zy9_Zy9_" not in run.log_text()
 
 
-async def test_the_seven_tools_are_listed_and_each_has_an_output_schema(research_world):
-    """The tool surface whose ``tools/list`` size design.md Risks records (3 tools before)."""
+async def test_the_eight_tools_are_listed_and_each_has_an_output_schema(research_world):
+    """The tool surface whose ``tools/list`` size design.md Risks records (3 tools at the
+    foundation, 7 before search)."""
     from fastmcp import Client
 
     w = await research_world()
@@ -803,6 +928,45 @@ async def test_the_seven_tools_are_listed_and_each_has_an_output_schema(research
         "perplexity_models",
         "perplexity_projects",
         "perplexity_research",
+        "perplexity_search",
         "perplexity_usage",
     ]
     assert all(t.output_schema for t in tools)
+
+
+# --- 1b. costed_call has exactly its two callers (py-search-api design D6) ---------------------
+
+
+def costed_call_callers() -> Counter:
+    """``(file, enclosing function)`` of every call to ``costed_call(`` under ``src/``."""
+    found: Counter = Counter()
+    for path in SRC.rglob("*.py"):
+        tree = ast.parse(path.read_text())
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+                continue
+            for inner in ast.walk(node):
+                if isinstance(inner, ast.Call) and getattr(inner.func, "id", None) == "costed_call":
+                    found[(path.relative_to(SRC).as_posix(), node.name)] += 1
+    return found
+
+
+def test_costed_call_is_called_from_exactly_run_costed_and_run_search_and_defined_once():
+    # The same generic sequence for every costed call: a third caller is a third copy of the
+    # order unless it is added here on purpose. (``run_search`` and ``run_costed`` are nested
+    # callers of ``costed_call``; ``interpret`` closures inside them hold no call.)
+    assert costed_call_callers() == Counter(
+        {("agent.py", "run_costed"): 1, ("search.py", "run_search"): 1}
+    )
+    definitions = [
+        path.relative_to(SRC).as_posix()
+        for path in SRC.rglob("*.py")
+        if any(
+            isinstance(n, ast.AsyncFunctionDef) and n.name == "costed_call"
+            for n in ast.walk(ast.parse(path.read_text()))
+        )
+    ]
+    assert definitions == ["costed.py"]
+    for tool in (SRC / "tools").glob("*.py"):
+        text = tool.read_text()
+        assert "costed_call" not in text and "record_usage" not in text, tool.name

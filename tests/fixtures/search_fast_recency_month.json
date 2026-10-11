@@ -1,0 +1,26 @@
+{
+  "id": "27def59a-0718-45ee-a88c-53ebc414d11a",
+  "results": [
+    {
+      "date": "2026-10-01",
+      "last_updated": "2026-10-07",
+      "snippet": "Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!\n| Python Insider\n# Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!\nPablo Galindo/October 1, 2026\n...\nA full sweep of Python releases is here: **Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now available!** One last lap around the Sun for Python 3.10, and security updates across all five series.\nGet them here:\n- Python 3.10.22\n- Python 3.11.17\n- Python 3.12.15\n- Python 3.13.16\n- Python 3.14.8\n**Python 3.10.22 is the final release of Python 3.10.** After five years, the series has reached end of life and will receive no further security updates.\n...\nPython 3.11 remains in security-fix-only mode until October 2027, as described in PEP 664.\nSecurity releases are made as needed, with no fixed cadence.\nPython 3.10.22 and 3.11.17 are **source-only**.\n...\nPython 3.12.15 is also a source-only security release, with security support continuing until October 2028.\nPython 3.13.16 is the **last full maintenance release of 3.13**; future 3.13 releases will contain security fixes only.\nPython 3.14.8 is a maintenance release, and both 3.13.16 and 3.14.8 include binary installers.",
+      "title": "Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now ...",
+      "url": "https://blog.python.org/2026/10/python-31022-31117/"
+    },
+    {
+      "date": "2026-10-09",
+      "last_updated": "2026-10-09",
+      "snippet": "Python 3.15 is out today as the newest annual feature release for the Python programming language.\n...\nPython 3.15 also introduces the sentinel built-in type, UTF-8 is the default encoding of Python 3.15, explicit lazy imports for faster Python script startup times, a new \"frozendict\" built-in type, and package startup configuration files.\nPython 3.15 also benefits from improved error messages, standard library enhancements, C API improvements.\n...\nDownloads and more details on today's Python 3.15 release at",
+      "title": "Python 3.15 Released With Experimental JIT Compiler Running Faster",
+      "url": "https://www.phoronix.com/news/Python-3.15-Released"
+    },
+    {
+      "date": "2026-10-09",
+      "last_updated": "2026-10-09",
+      "snippet": "Python 3.15.0 Is Out: Lazy Imports, frozendict, and Faster Speeds\n...\n## Python 3.15.0 Is Out: Lazy Imports, frozendict, and Faster Speeds\nThe final version of Python 3.15.0 has been released today, following a 17-month development cycle that produced 5,643 commits from 1,012 contributors.\n...\n### Python 3.15.0 Ships With Lazy Imports, frozendict, and a Faster Interpreter\nPython 3.15.0 is now available.\nThe core team at the Python Software Foundation confirmed the final build dropped on today, making it the latest major release in the language's history and the direct successor to 3.14.\n...\n#### Where to get it\n** Head here to download the release from python.org.\nYou find the full documentation ** here, and the dedicated \"What's New in Python 3.15\" page covers everything change-by-change.",
+      "title": "Python 3.15.0 Is Out: Lazy Imports, frozendict, and Faster Speeds",
+      "url": "https://www.linuxcompatible.org/story/python-3150-is-out-lazy-imports-frozendict-and-faster-speeds/"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "4a70359c-7dad-4312-92fc-1bd3648d4e12",
+  "results": [
+    {
+      "date": "2026-10-02",
+      "last_updated": "2026-10-03",
+      "snippet": "Packages exist to be installed (or *deployed*), so before you package anything, you’ll want to have some answers to the deployment questions below:\n...\nPython and PyPI make it easy to upload both wheels and sdists\ntogether.\nJust follow the Packaging Python Projects tutorial.",
+      "title": "Overview of Python Packaging",
+      "url": "https://packaging.python.org/en/latest/overview/"
+    },
+    {
+      "last_updated": "2026-10-06",
+      "snippet": "- Place your module in an installable package.\n- Employ version control.\n...\nmkdir example\n...\nCreate a file at `src/example/__init__.py`.\nThis is what identifies the\n...\nThe last element your package needs is a `pyproject.toml` file, placed in the\nroot directory.",
+      "title": "Packaging - Scientific Python Development Guide",
+      "url": "https://learn.scientific-python.org/development/tutorials/packaging/"
+    },
+    {
+      "date": "2026-10-02",
+      "last_updated": "2026-10-03",
+      "snippet": "- Package Formats\n...\n- Installation - Install packages in a virtual environment using pip and venv\n- Installing packages using virtualenv\n...\n- Building and Publishing - Writing your `pyproject.toml`\n- Packaging and distributing projects\n...\n- Packaging binary extensions\n- Packaging namespace packages\n- Creating and packaging command-line tools",
+      "title": "Guides - Python Packaging User Guide",
+      "url": "https://packaging.python.org/en/latest/guides/"
+    }
+  ]
+}

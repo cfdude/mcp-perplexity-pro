@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Validation error: language must be a valid ISO 639-1 code, got xx",
+    "type": "invalid_language_code",
+    "code": 400
+  }
+}

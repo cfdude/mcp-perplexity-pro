@@ -1,0 +1,27 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "allow + deny mixed: the API ACCEPTS it (200) and the result equals the allow-only response; the docs say not both",
+  "latency_seconds": 0.282376,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "47",
+    "x-ratelimit-reset": "1791588664",
+    "x-ratelimit-used": "3",
+    "x-request-id": "9ffe9916-59c2-4212-abb1-0a7de875b4f3"
+  },
+  "request": {
+    "query": "python packaging",
+    "search_type": "fast",
+    "max_results": 3,
+    "search_domain_filter": [
+      "python.org",
+      "-reddit.com"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "endpoint": "/search",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-09",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded. response_headers lists only x-request-id and x-ratelimit-* (absent on 401).",
+  "request_note": "whitespace-only query: 200 with empty results (billed), not a 400",
+  "latency_seconds": 0.144072,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "49",
+    "x-ratelimit-reset": "1791588690",
+    "x-ratelimit-used": "1",
+    "x-request-id": "08190afd-fbce-4e8d-90de-643661f37538"
+  },
+  "request": {
+    "query": "   ",
+    "search_type": "fast"
+  }
+}

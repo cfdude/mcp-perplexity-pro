@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Validation error: country must be provided as a valid 2-digit ISO country code, got USA",
+    "type": "invalid_country_code",
+    "code": 400
+  }
+}

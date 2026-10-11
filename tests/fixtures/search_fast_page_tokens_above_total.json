@@ -1,0 +1,25 @@
+{
+  "id": "b4078108-e07b-425a-b47d-a925706b8dfc",
+  "results": [
+    {
+      "date": "2026-10-02",
+      "last_updated": "2026-10-03",
+      "snippet": "These are just a few of the tools Python’s ecosystem provides\nfor distributing Python code to developers, which you can read about in",
+      "title": "Overview of Python Packaging",
+      "url": "https://packaging.python.org/en/latest/overview/"
+    },
+    {
+      "last_updated": "2026-10-06",
+      "snippet": "Create a file at `src/example/__init__.py`.\nThis is what identifies the\ndirectory as a “package” to Python.\n...\nThe last element your package needs is a `pyproject.toml` file, placed in the",
+      "title": "Packaging - Scientific Python Development Guide",
+      "url": "https://learn.scientific-python.org/development/tutorials/packaging/"
+    },
+    {
+      "date": "2026-10-02",
+      "last_updated": "2026-10-03",
+      "snippet": "# Guides ¶\n- Installation - Install packages in a virtual environment using pip and venv\n...\n- Packaging and distributing projects",
+      "title": "Guides - Python Packaging User Guide",
+      "url": "https://packaging.python.org/en/latest/guides/"
+    }
+  ]
+}
