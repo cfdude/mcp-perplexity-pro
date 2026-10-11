@@ -54,7 +54,7 @@ The Search change (`openspec/changes/archive/2026-10-11-py-search-api/`) added `
 - **32-question and 128-character-name caps are our own** (D2) -> labelled in the spec; raising them is a constant.
 - **Rate limit 10 requests per second** (probe) -> a 429 maps to `rate_limited`; one request is one unit regardless of its question count.
 - **A 504 may be HTML** (documentation) -> the existing non-JSON handling maps it to `upstream_failure`.
-- **The tool surface grows from 8 to 9** (D9) -> measured in group 3.
+- **The tool surface grows from 8 to 9** (D9) -> measured 2026-10-11 (task 3.4) the same way both times (`wc -c` on one `tools/list` POST to an ephemeral-port HTTP server with a dummy key and a temporary data directory): 45542 bytes before (commit `1b12844`, the HEAD when group 1 started, extracted with `git archive`) and 49539 bytes after (commit `6fe090d`), a growth of 3997 bytes (8.8%); the `perplexity_decide` entry alone is 3996 bytes of JSON. Nothing was trimmed; at nine tools the CLAUDE.md design target is reached, so the next tool (embeddings) must trim existing descriptions or fold into an existing tool.
 - **Image refusal is a heuristic** (D2) -> a `data:image/` prefix or an `image_url` key; an image smuggled in another shape would be sent to the API as text and billed; acceptable.
 
 ## Migration Plan

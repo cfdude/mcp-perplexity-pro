@@ -1,7 +1,7 @@
 """Task 5.2: the recording order of every costed tool, proven per tool and not only on the helper.
 
-The five costed paths are ask, a search, a chat send, a research submit (answered terminal, so
-it is a costed call) and a jobs observation. For each:
+The six costed paths are ask, a search, a decision, a chat send, a research submit (answered
+terminal, so it is a costed call) and a jobs observation. For each:
 
 * another connection can write while the upstream call is in flight (no write unit is open);
 * the usage event is stored after the call and BEFORE the tool's own write (the statement trace
@@ -54,6 +54,13 @@ CASES = [
         "perplexity_ask",
         {"query": "q"},
         lambda: respond_with("agent_fast.json"),
+        None,
+    ),
+    Case(
+        "decide",
+        "perplexity_decide",
+        {"state": "s", "questions": {"q": {"type": "noul", "instructions": "y"}}},
+        lambda: respond_with("decisions_noul.json"),
         None,
     ),
     Case(
