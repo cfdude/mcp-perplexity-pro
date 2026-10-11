@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hashlib
 from typing import Any
 
 from mcp_perplexity_pro import pricing
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.usage import Usage, computed_usage, usage_from_embeddings_response
 
+MAX_CHUNK_CHARS = 4000  # our chunk size (about 1000 tokens); the API allows 32K tokens per input
+MAX_CHUNKS_PER_TEXT = 50  # our cap: a longer text is cut, with a warning
 ENCODINGS = ("int8", "binary")
 API_ENCODING = {"int8": "base64_int8", "binary": "base64_binary"}
 
@@ -75,3 +78,45 @@ def embeddings_usage(model: object, raw: object) -> Usage:
         return computed_usage(nano, raw=parsed.raw, **facts)
     except Exception:
         return parsed
+
+
+# --- Chunking (design D3) --------------------------------------------------------------------
+
+
+def is_blank(text: object) -> bool:
+    """The one rule for "no text": not a string, or only whitespace (``index`` and ``status``)."""
+    return not isinstance(text, str) or not text.strip()
+
+
+def text_hash(chunk: str) -> str:
+    return hashlib.sha256(chunk.encode("utf-8")).hexdigest()
+
+
+def _cut_point(rest: str) -> int:
+    """Where to cut ``rest`` (longer than a chunk): the last blank line, else line break, else
+    space inside the limit, else the limit itself."""
+    for separator in ("\n\n", "\n", " "):
+        at = rest.rfind(separator, 0, MAX_CHUNK_CHARS)
+        if at > 0:
+            return at
+    return MAX_CHUNK_CHARS
+
+
+def chunk_text(text: str) -> tuple[list[str], bool]:
+    """Split ``text`` into chunks of at most 4000 characters, stripped, empty ones dropped, at
+    most 50 of them. Returns ``(chunks, cut)`` where ``cut`` says text beyond the 50th chunk was
+    ignored. Deterministic: the same text always gives the same chunks."""
+    chunks: list[str] = []
+    rest = text
+    while rest.strip():
+        if len(rest) <= MAX_CHUNK_CHARS:
+            piece, rest = rest, ""
+        else:
+            at = _cut_point(rest)
+            piece, rest = rest[:at], rest[at:]
+        piece = piece.strip()
+        if piece:
+            chunks.append(piece)
+        if len(chunks) >= MAX_CHUNKS_PER_TEXT and rest.strip():
+            return chunks, True
+    return chunks, False
