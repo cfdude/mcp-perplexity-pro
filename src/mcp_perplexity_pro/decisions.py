@@ -16,19 +16,22 @@ import copy
 import json
 import logging
 import math
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
+from mcp_perplexity_pro import pricing
 from mcp_perplexity_pro.agent import _bad
+from mcp_perplexity_pro.costed import Costed, Recording, costed_call
 from mcp_perplexity_pro.models import DecisionsResponse
 from mcp_perplexity_pro.redaction import scrub_secrets
-from mcp_perplexity_pro.usage import to_tokens
+from mcp_perplexity_pro.usage import Usage, computed_usage, to_tokens
 
 logger = logging.getLogger(__name__)
 
+TOOL = "perplexity_decide"
 MODELS = ("pplx-decider-v1.1-27b", "pplx-decider-v1-27b")
 DEFAULT_MODEL = MODELS[0]
 QUESTION_TYPES = ("noul", "choice", "score")
@@ -275,3 +278,53 @@ def digest(
             output_tokens=output_tokens,
             warnings=["The response could not be read."],
         )
+
+
+# --- Cost and the one costed call (design D4, D5) --------------------------------------------
+
+
+def decisions_usage(raw: object) -> Usage:
+    """The usage of one decision request: input tokens at the documented price (output is free,
+    there is no per-request fee), source ``computed``. Counts are read with ``usage.to_tokens``;
+    when ``input_tokens`` is not a valid count the cost is unknown (source ``none``), never zero.
+    The response's ``usage`` object is kept as ``raw``. Never raises."""
+    try:
+        mapping = raw if isinstance(raw, Mapping) else {}
+        input_tokens = to_tokens(mapping.get("input_tokens"))
+        output_tokens = to_tokens(mapping.get("output_tokens"))
+        raw_usage = dict(raw) if isinstance(raw, Mapping) else None
+        nano = None if input_tokens is None else pricing.decisions_cost_nano(input_tokens)
+        if nano is None:
+            return Usage(input_tokens=input_tokens, output_tokens=output_tokens, raw=raw_usage)
+        total = input_tokens + output_tokens if output_tokens is not None else None
+        return computed_usage(
+            nano,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total,
+            input_cost_nano=nano,
+            raw=raw_usage,
+        )
+    except Exception:
+        logger.warning("decisions usage: cost could not be computed", exc_info=True)
+        return Usage()
+
+
+async def run_decide(
+    app: Any, *, project: str | None, body: dict[str, Any]
+) -> Costed[DecisionsResponse]:
+    """Send ``body`` and record the request (``costed.costed_call``)."""
+
+    def interpret(response: DecisionsResponse) -> Recording:
+        model = response.model if isinstance(response.model, str) else None
+        return Recording(status="ok", usage=decisions_usage(response.usage), model=model)
+
+    return await costed_call(
+        app,
+        tool=TOOL,
+        api="decisions",
+        project=project,
+        preset=None,
+        call=lambda: app.client.decide(body),
+        record=interpret,
+    )

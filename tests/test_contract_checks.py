@@ -913,9 +913,9 @@ async def test_every_upstream_string_is_redacted_then_cut_to_its_cap(keyed):
     assert "Zy9_Zy9_" not in run.log_text()
 
 
-async def test_the_eight_tools_are_listed_and_each_has_an_output_schema(research_world):
+async def test_the_nine_tools_are_listed_and_each_has_an_output_schema(research_world):
     """The tool surface whose ``tools/list`` size design.md Risks records (3 tools at the
-    foundation, 7 before search)."""
+    foundation, 7 before search, 8 before decide)."""
     from fastmcp import Client
 
     w = await research_world()
@@ -924,6 +924,7 @@ async def test_the_eight_tools_are_listed_and_each_has_an_output_schema(research
     assert sorted(t.name for t in tools) == [
         "perplexity_ask",
         "perplexity_chat",
+        "perplexity_decide",
         "perplexity_jobs",
         "perplexity_models",
         "perplexity_projects",
@@ -951,12 +952,16 @@ def costed_call_callers() -> Counter:
     return found
 
 
-def test_costed_call_is_called_from_exactly_run_costed_and_run_search_and_defined_once():
+def test_costed_call_is_called_from_exactly_its_three_callers_and_defined_once():
     # The same generic sequence for every costed call: a third caller is a third copy of the
     # order unless it is added here on purpose. (``run_search`` and ``run_costed`` are nested
     # callers of ``costed_call``; ``interpret`` closures inside them hold no call.)
     assert costed_call_callers() == Counter(
-        {("agent.py", "run_costed"): 1, ("search.py", "run_search"): 1}
+        {
+            ("agent.py", "run_costed"): 1,
+            ("search.py", "run_search"): 1,
+            ("decisions.py", "run_decide"): 1,
+        }
     )
     definitions = [
         path.relative_to(SRC).as_posix()

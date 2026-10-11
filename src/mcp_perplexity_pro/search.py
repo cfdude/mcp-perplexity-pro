@@ -36,7 +36,7 @@ from mcp_perplexity_pro.agent import (
 from mcp_perplexity_pro.costed import Costed, Recording, costed_call
 from mcp_perplexity_pro.models import SearchResponse
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
-from mcp_perplexity_pro.usage import Usage, computed_usage, format_usd
+from mcp_perplexity_pro.usage import Usage, computed_usage
 
 logger = logging.getLogger(__name__)
 
@@ -305,13 +305,6 @@ def search_usage(search_type: str, raw: object = None) -> Usage:
     except Exception:
         logger.warning("search usage: cost could not be computed", exc_info=True)
         return Usage()
-
-
-def cost_fields(usage: Usage | Mapping | None) -> tuple[str | None, str]:
-    """``(cost_usd, cost_source)`` of a recorded usage, as the output carries them."""
-    if isinstance(usage, Usage) and usage.cost_source != "none":
-        return format_usd(usage.cost_nano_usd), usage.cost_source
-    return None, "none"
 
 
 async def run_search(
