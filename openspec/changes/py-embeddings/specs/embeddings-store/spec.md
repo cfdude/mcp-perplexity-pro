@@ -28,7 +28,7 @@ A chunk SHALL belong to a project (`ON DELETE CASCADE`) and, by its `source`, to
 
 #### Scenario: Project delete counts
 - **WHEN** a project holding chat, job and text chunks is deleted with `confirm`
-- **THEN** all its chunks are gone and `rows_removed` counts the chunks the delete removed directly, not those removed by cascade from chats and jobs
+- **THEN** all its chunks are gone and `rows_removed` counts the job and text chunks, which the delete removes directly; the chat chunks go by the cascade of the `chats` delete (tables are deleted in name order) and are not counted
 
 #### Scenario: Inconsistent row refused
 - **WHEN** a row has source `chat` and no message id, or source `text` and a job id

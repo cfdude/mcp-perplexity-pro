@@ -59,7 +59,7 @@ Search and Decisions reused `costed.costed_call` and a computed cost. Embeddings
 - **Ten tools** (D1) -> measured in group 4; one tool with four actions is the lean option.
 - **The 429 body and the real-world rate limit are unobserved** -> generic handling, `index` batches run one after the other, never concurrently.
 - **A reported cost the parser cannot read** -> `computed`, else `none`; counted by `calls_cost_unknown`.
-- **Deleting a chat deletes its vectors silently** (D4) -> by design; `status` shows the counts. `delete_project` visits tables in introspection order, so chat and job chunks go by cascade (uncounted) and only text chunks are counted in `rows_removed`; a test pins this.
+- **Deleting a chat deletes its vectors silently** (D4) -> by design; `status` shows the counts. `delete_project` visits tables in introspection order, so `chats` is deleted first and its chunks go by cascade (uncounted) while job and text chunks are still present when `embedding_chunks` is deleted (counted); a test pins this outcome.
 - **A source deleted while a batch is in flight** (D7) -> written around, reported as skipped, billed once.
 - **A 400 for a batch** -> surfaced with the stored count; the character budget prevents it for legitimate content.
 
