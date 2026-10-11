@@ -48,6 +48,10 @@ The server SHALL provide `perplexity_decide`, a synchronous stateless tool that 
 ### Requirement: Question shapes
 A `noul` question SHALL have `criteria` (an object whose keys are `true` and `false`) or `instructions`. A `choice` question SHALL have `criteria`, an object of 1 to 255 options (an option's description may be null). A `score` question SHALL have `criteria`, a list of 1 to 10 levels. `instructions`, when given, SHALL be text, an object or a list. Each violation SHALL fail with `invalid_request` naming the question before any call.
 
+#### Scenario: Noul criteria keys
+- **WHEN** a noul question's criteria has a key other than `true` and `false`
+- **THEN** the call fails with `invalid_request` naming that question
+
 #### Scenario: Noul without a rule
 - **WHEN** a noul question has neither criteria nor instructions
 - **THEN** the call fails with `invalid_request` naming that question
@@ -61,7 +65,7 @@ A `noul` question SHALL have `criteria` (an object whose keys are `true` and `fa
 - **THEN** each call fails with `invalid_request` naming that question
 
 #### Scenario: Recorded shapes
-- **WHEN** the options of each recorded request the tool accepts are passed to the tool
+- **WHEN** the options of the seven recorded requests the tool accepts (`decisions_noul`, `decisions_choice`, `decisions_score`, `decisions_three_questions`, `decisions_model_v1`, `decisions_11_questions`, `decisions_32_questions`) are passed to the tool
 - **THEN** the request equals that recorded request
 
 ### Requirement: Model
@@ -74,6 +78,13 @@ A `noul` question SHALL have `criteria` (an object whose keys are `true` and `fa
 #### Scenario: Older model and unknown model
 - **WHEN** a client passes `pplx-decider-v1-27b`, and separately `pplx-decider-nope`
 - **THEN** the first request carries it and the second call fails with `invalid_request` naming `model`
+
+### Requirement: Project
+`project` SHALL default to `default`, be validated by the existing project-name rules before any call, and name the project the event is recorded under. An invalid name SHALL fail with `invalid_request` before any request, project or event.
+
+#### Scenario: Default and invalid project
+- **WHEN** a client passes no `project`, and separately `../x`
+- **THEN** the first result and event carry `default` and the second call fails with `invalid_request` with no request, project or event
 
 ### Requirement: Request carries only what was asked
 The request SHALL hold `model`, `state`, `questions` and nothing else; no field is invented and no unknown field is sent (the API refuses an unknown field with a generic 400).
@@ -115,8 +126,12 @@ The cost of a request SHALL be its input tokens at the documented price ($0.02 p
 - **THEN** the result has `cost_usd` `"0.00000694"` and `cost_source` `computed`
 
 #### Scenario: Unreadable usage
-- **WHEN** a response carries no `usage`
+- **WHEN** a response carries no `usage`, or an `input_tokens` that is a boolean, negative, a float or a string
 - **THEN** the call succeeds with `cost_usd` null and `cost_source` `none`, and the event has cost 0 and source `none`
+
+#### Scenario: Output tokens missing
+- **WHEN** `usage` holds a valid `input_tokens` and no `output_tokens`
+- **THEN** the cost is computed from the input tokens, `output_tokens` is null and the call does not fail
 
 ### Requirement: Decide is recorded
 Each decision that reaches the API SHALL be recorded once as a usage event: tool `perplexity_decide`, API family `decisions`, the response `model`, no preset, no request id (the body has none), the project name, the measured latency, the token counts, and the computed cost. A failed request carries its error category with cost 0 and source `none`; a 200 that cannot be read is `unexpected_response`. Identical repeated requests each record an event.
