@@ -258,7 +258,7 @@ An invalid `json_schema` makes the API answer with the same generic `400 invalid
 for other mistakes, so the error message names the schema only as the likely cause.
 
 Example, `fast` with a domain filter. The result is from the live acceptance run on 2026-10-09
-(`openspec/changes/py-agent-api/acceptance/a1.json`), shortened to 3 of its 10 sources; nothing
+(`openspec/changes/archive/2026-10-09-py-agent-api/acceptance/a1.json`), shortened to 3 of its 10 sources; nothing
 else is edited. The acceptance files hold results, not requests, so every example call in this
 README is written to match its result (depth, project and the fields the result shows); where a
 result does not repeat the query, the query text is illustrative:
@@ -636,7 +636,7 @@ which equals 0.001 + 0.001 + 0.005. That reconciles the server's own books again
 table. **The provider's console was not read**, so the cost of one unit per request is not checked
 against what Perplexity actually billed.
 
-Two cases leave the books a lower bound. A call the API refused with a 4xx or 429 is documented as
+Two cases leave the books a lower bound (and so does any other error call, such as a 5xx or a timeout, which is recorded at cost 0 and may have been billed). A call the API refused with a 4xx or 429 is documented as
 not billed and is recorded with cost 0 and its error category. A **billed-but-unparseable 200** (a
 success the tool could not read as a search response) may have been billed: it is recorded with
 status `unexpected_response` and an unknown cost, and `perplexity_usage` counts it in

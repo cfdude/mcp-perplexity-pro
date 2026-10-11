@@ -115,7 +115,7 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
    most of it output-schema field descriptions. Re-measured 2026-10-09 the same way (an
    ephemeral-port HTTP server, a dummy key, a temporary data directory): 40475 bytes (about 40.5
    KB) for the same seven tools, at commit `48c2484` plus the cost-wording docstring edits of the
-   commit after it. Adding `perplexity_search` (eight tools) re-measured 2026-10-11 the same way:
+   commit after it. Adding `perplexity_search` (eight tools) measured 2026-10-09 the same way (at commit `4a4dfcb`, not re-run since):
    45542 bytes (+12.5%, from 40475), and the `perplexity_search` entry alone is 5066 bytes. The
    design target is about nine tools in all, which leaves room for the Embeddings and Decisions
    tools only if later epics stay lean: prefer

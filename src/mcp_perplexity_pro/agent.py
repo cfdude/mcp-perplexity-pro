@@ -798,7 +798,7 @@ async def _event_exists(app: Any, response_id: str) -> bool:
 
 async def observe_job(app: Any, *, project_id: int, project: str, job_id: int) -> Observation:
     """Observe one job: fetch it and store what it shows (design D7, D8, D9). The SECOND
-    ``record_usage`` call site (the first is ``run_costed``).
+    ``record_usage`` call site (the other is ``costed.costed_call``).
 
     Under the job's in-process lock, the stored row is RE-READ and a final one (or one whose
     usage is already recorded) is returned with no fetch. Otherwise the run is fetched once:
