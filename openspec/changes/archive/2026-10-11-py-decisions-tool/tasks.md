@@ -50,8 +50,8 @@ Existing tests that hard-code state this change moves are updated in the SAME co
 
 - [x] 8.1 Document `perplexity_decide` in `README.md` (purpose, arguments with bounds and refusals, the three question shapes, the output keys, cost from input tokens with the evidence date and that it is computed, one example call and real result from the acceptance outputs, that answers are model probabilities, that images are unsupported in v1, the rate limit seen); update the tool table, the count of tools, the layout block and every statement that lists the tools or says which tools record usage; verify the examples against the saved acceptance output
 - [x] 8.2 Update `CLAUDE.md` (module table rows for `decisions.py`, `models/decisions.py`, `tools/decisions.py`; intro; "Not built yet"; "How to record usage" production callers now naming `run_decide`; the tool-count note with the re-measured `tools/list` size; the current-change pointer) keeping the pm-managed block byte-identical, and the `CHANGELOG.md` entry under `2.0.0`; verify `rg -n "Eight tools|eight tools" README.md CLAUDE.md CHANGELOG.md` finds only intentional historical sentences and `rg -n "perplexity_decide" CLAUDE.md README.md CHANGELOG.md` shows each
-- [ ] 8.3 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
+- [x] 8.3 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 
 ## 9. Archive
 
-- [ ] 9.1 Archive the change and record the disposition (`update-epic py-decisions-tool --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->
+- [x] 9.1 Archive the change and record the disposition (`update-epic py-decisions-tool --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->

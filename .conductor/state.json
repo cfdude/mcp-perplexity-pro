@@ -477,7 +477,7 @@
       "id": "py-decisions-tool",
       "title": "Decisions API tool (decide)",
       "priority": "P2",
-      "status": "planned",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -490,9 +490,28 @@
       "reconcileNeeded": false,
       "parent": "python-rewrite-2-0",
       "description": "Thin wrapper over POST /v1/decisions (noul/choice/score questions), question-count cap, no image support in v1.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "8203c1e09767296c928fb5b54e9dabcde078bf0a",
+        "d09665964a118a12159f8bfa618dbb349a353bd6",
+        "89d88e7c43d273ffb348d56246cf41c8419a4c7f",
+        "a7fe0072fde37c8f48fc4b2330a02779e6b9bd99",
+        "1b1284409217d448b0b16e5f507018cba9d284fa",
+        "fe2b1766f6510f3a65159edd94a2758628883a31",
+        "623fd26e9918dc23d01c66d4bfebd7a710f87030",
+        "1db7fe86b24b9c8fdfcb4680caa5821b6f218b06",
+        "cd49bc9f3c1843b3a3e76cb7b84b9496f6b32751",
+        "6fe090d64d1b297b7eba9d336a9671d76ee18fe8",
+        "be530968d9b8751c3f6c255601e111aa1f947c28",
+        "fc03986eccdb6b1950f4fd703779557d0703668f",
+        "23915fff6f200029eccded6400d597bc3e8e428e",
+        "9d3e1a3eccee33a9142ac1d64df1e6a8cd98cfb3",
+        "746bd3ffe26a50d83ea5bf14557b3583e080dda5",
+        "4ff93c9e2dbc67277830110c1cb2b77c028104cc",
+        "746bd3ffe26a50d83ea5bf14557b3583e080dda5",
+        "4ff93c9e2dbc67277830110c1cb2b77c028104cc"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T18:30:33.347Z",
+      "touchedAt": "2026-10-11T18:23:10.893Z",
       "notes": [
         {
           "at": "2026-10-09T18:06:34.134Z",
@@ -500,7 +519,47 @@
           "text": "lane: openspec not superpowers (routed) — new tool surface with cost accounting; spec + gates give the durable record"
         }
       ],
-      "release": "release-2-0-0"
+      "release": "release-2-0-0",
+      "startedAt": "2026-10-11T17:39:55.153Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-11T17:52:17.821Z",
+          "artifacts": [
+            "openspec/changes/py-decisions-tool/proposal.md",
+            "openspec/changes/py-decisions-tool/design.md",
+            "openspec/changes/py-decisions-tool/tasks.md",
+            "openspec/changes/py-decisions-tool/specs/decisions-client/spec.md",
+            "openspec/changes/py-decisions-tool/specs/decisions-tool/spec.md"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review, narrow re-verification (2026-10-11)"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-11T18:23:10.039Z",
+          "baseSha": "9d3e1a3",
+          "headSha": "4ff93c9",
+          "reviewer": "fresh-context general-purpose subagent: documentation diff 9d3e1a3..746bd3f (no Critical/Important, seven Minor fixed in 4ff93c9)",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-11T18:16:43.428Z",
+            "baseSha": "1b12844",
+            "headSha": "9d3e1a3",
+            "reviewer": "fresh-context general-purpose subagent: Gate 2 + call-site sweep 1b12844..23915ff; Important I1 (NaN) and Minor M1, M3 fixed in 9d3e1a3"
+          }
+        }
+      },
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-11T18:23:10.893Z",
+        "reason": "Decisions tool delivered: perplexity_decide, shared cost_fields, live-verified (2 billed calls, 9060 nano-USD reconciled on the server's books; provider console not read)"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-11T18:23:10.873Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-11T18:23:10.893Z"
     },
     {
       "id": "routing-rules-v1",
@@ -624,7 +683,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 208,
+  "revision": 232,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
@@ -636,7 +695,7 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-10T00:04:02.446Z",
+        "reviewedAt": "2026-10-11T17:52:17.623Z",
         "specs": [
           {
             "key": "py-agent-api/specs/agent-ask/spec.md",
@@ -661,6 +720,14 @@
           {
             "key": "py-agent-api/specs/server-runtime/spec.md",
             "sha256": "00b475b5aeca32de31223afc80c40dab3309e16c19f28a194ce53fe34ac93fd7"
+          },
+          {
+            "key": "py-decisions-tool/specs/decisions-client/spec.md",
+            "sha256": "e2cfbe58a6bf86dadb9c2e72ba0d66e62fc9f0cbcec71c2318d95c048d04bf0e"
+          },
+          {
+            "key": "py-decisions-tool/specs/decisions-tool/spec.md",
+            "sha256": "e86f2b033d7cf9a0e09921e15f9f4955c8ead50f86a1500a816c8be5e900837b"
           },
           {
             "key": "py-foundation/specs/local-storage/spec.md",
@@ -707,10 +774,10 @@
             "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagents: Gate1+cross-spec review, narrow re-verification for py-search-api (2026-10-09)",
+        "reviewer": "fresh-context general-purpose subagents: Gate1+cross-spec review and narrow re-verification for py-decisions-tool (2026-10-11); one residual contradiction fixed by the parent",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-09T22:54:50.300Z",
+          "reviewedAt": "2026-10-10T00:04:02.446Z",
           "specs": [
             {
               "key": "py-agent-api/specs/agent-ask/spec.md",
@@ -757,6 +824,18 @@
               "sha256": "330fe948829a15cf26f7f3f8b1e50431ba2bbda7e9ab97b5a037d3ed6803a658"
             },
             {
+              "key": "py-search-api/specs/search-client/spec.md",
+              "sha256": "51ff9ea8aaa1284dcb6994e6215d59e6de1157ad39ce2280597729ad10f802e1"
+            },
+            {
+              "key": "py-search-api/specs/search-tool/spec.md",
+              "sha256": "b7567444c84c41748d9d46d7088133a171e1c11ae58f561d45ed0d15d6082fd6"
+            },
+            {
+              "key": "py-search-api/specs/server-runtime/spec.md",
+              "sha256": "220c56eaac18e2edc3a60f06a7891f4e57babb69b34495d8ef2a760547c562ac"
+            },
+            {
               "key": "py-usage-log/specs/local-storage/spec.md",
               "sha256": "a9f771b918223f5d4e65f381cb20f3d7718f43cfc449f50b92ff556b632c7c5a"
             },
@@ -769,7 +848,7 @@
               "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagent: final cross-spec review of py-agent-api (1 block + 9 polish, all fixed in f33c65d by the parent's amendment agent) (2026-10-09)"
+          "reviewer": "fresh-context general-purpose subagents: Gate1+cross-spec review, narrow re-verification for py-search-api (2026-10-09)"
         }
       }
     }
