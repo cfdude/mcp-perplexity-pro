@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "category": "invalid_request"
+  },
+  "content": [
+    {
+      "text": "[invalid_request] state: must not be blank.",
+      "type": "text"
+    }
+  ],
+  "isError": true,
+  "structuredContent": {
+    "category": "invalid_request",
+    "message": "state: must not be blank."
+  }
+}

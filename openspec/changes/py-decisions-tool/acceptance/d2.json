@@ -1,0 +1,40 @@
+{
+  "content": [
+    {
+      "text": "satisfaction: score 1.7023841901036052 (confidence 0.6495288146561603, probabilities {'0': 0.012135763754312684, '1': 0.299771970111492, '2': 0.661664578410473, '3': 0.026427687723722365})\n\nUsage: pplx-decider-v1-27b, 107 input tokens, cost 0.00000214 USD (computed), 245 ms, project acceptance-decide.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "answers": {
+      "satisfaction": {
+        "type": "score",
+        "noul": null,
+        "choice": null,
+        "confidence": 0.6495288146561603,
+        "probabilities": {
+          "0": 0.012135763754312684,
+          "1": 0.299771970111492,
+          "2": 0.661664578410473,
+          "3": 0.026427687723722365
+        },
+        "score": 1.7023841901036052,
+        "legend": {
+          "0": "furious",
+          "1": "unhappy",
+          "2": "okay",
+          "3": "delighted"
+        }
+      }
+    },
+    "model": "pplx-decider-v1-27b",
+    "input_tokens": 107,
+    "output_tokens": 1,
+    "cost_usd": "0.00000214",
+    "cost_source": "computed",
+    "latency_ms": 245,
+    "project": "acceptance-decide",
+    "warnings": []
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "content": [
+    {
+      "text": "urgent: noul 0.9272088398171816\narea: choice export (confidence 0.9999303770930034, probabilities {'export': 0.999953584728669, 'auth': 1.2104419072042511e-05, 'billing': 3.4310852258853485e-05})\nseverity: score 2.397694720104296 (confidence 0.572264292842776, probabilities {'0': 0.0014426776781794849, '1': 0.01213513817010492, '2': 0.5737069705209555, '3': 0.4127152136307601})\n\nUsage: pplx-decider-v1.1-27b, 346 input tokens, cost 0.00000692 USD (computed), 601 ms, project acceptance-decide.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "answers": {
+      "urgent": {
+        "type": "noul",
+        "noul": 0.9272088398171816,
+        "choice": null,
+        "confidence": null,
+        "probabilities": null,
+        "score": null,
+        "legend": null
+      },
+      "area": {
+        "type": "choice",
+        "noul": null,
+        "choice": "export",
+        "confidence": 0.9999303770930034,
+        "probabilities": {
+          "export": 0.999953584728669,
+          "auth": 0.000012104419072042511,
+          "billing": 0.000034310852258853485
+        },
+        "score": null,
+        "legend": null
+      },
+      "severity": {
+        "type": "score",
+        "noul": null,
+        "choice": null,
+        "confidence": 0.572264292842776,
+        "probabilities": {
+          "0": 0.0014426776781794849,
+          "1": 0.01213513817010492,
+          "2": 0.5737069705209555,
+          "3": 0.4127152136307601
+        },
+        "score": 2.397694720104296,
+        "legend": {
+          "0": "minor",
+          "1": "moderate",
+          "2": "major",
+          "3": "critical"
+        }
+      }
+    },
+    "model": "pplx-decider-v1.1-27b",
+    "input_tokens": 346,
+    "output_tokens": 3,
+    "cost_usd": "0.00000692",
+    "cost_source": "computed",
+    "latency_ms": 601,
+    "project": "acceptance-decide",
+    "warnings": []
+  }
+}
