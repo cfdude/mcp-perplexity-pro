@@ -13,6 +13,7 @@ from mcp_perplexity_pro.tools import (
     ask,
     chat,
     decisions,
+    embeddings,
     jobs,
     models,
     projects,
@@ -26,6 +27,7 @@ def register_tools(server: FastMCP) -> None:
     ask.register(server)
     chat.register(server)
     decisions.register(server)
+    embeddings.register(server)
     jobs.register(server)
     models.register(server)
     projects.register(server)

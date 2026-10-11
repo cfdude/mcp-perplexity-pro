@@ -1044,9 +1044,9 @@ async def test_every_upstream_string_is_redacted_then_cut_to_its_cap(keyed):
     assert "Zy9_Zy9_" not in run.log_text()
 
 
-async def test_the_nine_tools_are_listed_and_each_has_an_output_schema(research_world):
+async def test_the_ten_tools_are_listed_and_each_has_an_output_schema(research_world):
     """The tool surface whose ``tools/list`` size design.md Risks records (3 tools at the
-    foundation, 7 before search, 8 before decide)."""
+    foundation, 7 before search, 8 before decide, 9 before embed)."""
     from fastmcp import Client
 
     w = await research_world()
@@ -1056,6 +1056,7 @@ async def test_the_nine_tools_are_listed_and_each_has_an_output_schema(research_
         "perplexity_ask",
         "perplexity_chat",
         "perplexity_decide",
+        "perplexity_embed",
         "perplexity_jobs",
         "perplexity_models",
         "perplexity_projects",

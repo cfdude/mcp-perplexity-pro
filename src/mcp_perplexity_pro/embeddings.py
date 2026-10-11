@@ -771,3 +771,83 @@ async def search(
     secrets = (app.settings.api_key.get_secret_value(),)
     result.hits = [_hit(score, details[i], secrets) for i, score in best if i in details]
     return result
+
+
+# --- Status and delete (design D12) ----------------------------------------------------------
+
+
+@dataclass
+class StatusResult:
+    groups: list[tuple[str, str, int, str, int]] = field(default_factory=list)
+    unindexed_chat: int = 0
+    unindexed_job: int = 0
+
+
+async def status(
+    app: Any, *, project: str | None, model: str, dimensions: int | None, encoding: str
+) -> StatusResult:
+    """What is stored per ``(source, model, dimensions, encoding)`` and how many chat messages and
+    completed jobs have NO chunk for the call's model, size and encoding. Read-only: no request,
+    no event, no project."""
+    check_options(model, dimensions, encoding)
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    triple = (model, stored_dimensions(model, dimensions), encoding)
+    result = StatusResult()
+    async with unit_of_work(app.engine, write=False) as session:
+        found = await find_project(session, name)
+        if found is None:
+            return result
+        result.groups = await store.count_by_group(session, found.id)
+        for source in ("chat", "job"):
+            have = await store.stored_hashes(session, found.id, *triple, source=source)
+            items = await store.source_items(session, found.id, source)
+            missing = sum(1 for i in items if not is_blank(i.text) and i.ref not in have)
+            setattr(result, f"unindexed_{source}", missing)
+    return result
+
+
+async def delete(
+    app: Any,
+    *,
+    project: str | None,
+    source: str | None,
+    model: str | None,
+    dimensions: int | None,
+    encoding: str | None,
+    confirm: bool,
+) -> int:
+    """Remove the project's chunks matching the given filters (an omitted filter matches all) and
+    return how many. Needs ``confirm`` true; an unknown project removes 0 and is not created."""
+    if source is not None and source not in SOURCES:
+        raise _bad("source", f"must be one of {', '.join(SOURCES)}.")
+    if model is not None and model not in MODELS:
+        raise _bad("model", f"must be one of {', '.join(MODELS)}.")
+    if dimensions is not None and (
+        isinstance(dimensions, bool)
+        or not isinstance(dimensions, int)
+        or not MIN_DIMENSIONS <= dimensions <= max(FULL_DIMENSIONS.values())
+        or dimensions % 8
+    ):
+        raise _bad("dimensions", "must be a whole number that is a multiple of 8 from 128 to 2560.")
+    if encoding is not None and encoding not in ENCODINGS:
+        raise _bad("encoding", f"must be one of {', '.join(ENCODINGS)}.")
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    if confirm is not True:
+        raise PerplexityError(
+            "confirmation_required",
+            "Deleting stored vectors needs confirm true; they must be re-embedded (and paid for "
+            "again) to be searched.",
+        )
+    async with app.embed_locks.hold(name):
+        async with unit_of_work(app.engine) as session:
+            found = await find_project(session, name)
+            if found is None:
+                return 0
+            return await store.delete_chunks(
+                session,
+                found.id,
+                source=source,
+                model=model,
+                dimensions=dimensions,
+                encoding=encoding,
+            )
