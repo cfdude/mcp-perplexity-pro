@@ -1,0 +1,30 @@
+{
+  "content": [
+    {
+      "text": "Indexed 5 chunks of 5 items (0 skipped, 0 chunks remaining) in 1 request(s).\nUsage: 114 tokens, cost 0.000000456 USD (reported), project acceptance-embed.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "index",
+    "project": "acceptance-embed",
+    "warnings": [],
+    "latency_ms": 207,
+    "embedded_chunks": 5,
+    "embedded_items": 5,
+    "skipped_items": 0,
+    "remaining": 0,
+    "requests": 1,
+    "input_tokens": 114,
+    "cost_usd": "0.000000456",
+    "cost_source": "reported",
+    "calls_cost_unknown": 0,
+    "candidates": null,
+    "hits": null,
+    "groups": null,
+    "unindexed_chat": null,
+    "unindexed_job": null,
+    "removed": null
+  }
+}

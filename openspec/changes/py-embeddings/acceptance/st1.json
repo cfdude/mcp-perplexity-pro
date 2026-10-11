@@ -1,0 +1,45 @@
+{
+  "content": [
+    {
+      "text": "text: 5 chunks (pplx-embed-v1-0.6b, 1024, int8)\ntext: 5 chunks (pplx-embed-v1-4b, 256, binary)\nNot indexed: 0 chat messages, 0 jobs.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "status",
+    "project": "acceptance-embed",
+    "warnings": [],
+    "latency_ms": 8,
+    "embedded_chunks": null,
+    "embedded_items": null,
+    "skipped_items": null,
+    "remaining": null,
+    "requests": null,
+    "input_tokens": null,
+    "cost_usd": null,
+    "cost_source": null,
+    "calls_cost_unknown": null,
+    "candidates": null,
+    "hits": null,
+    "groups": [
+      {
+        "source": "text",
+        "model": "pplx-embed-v1-0.6b",
+        "dimensions": 1024,
+        "encoding": "int8",
+        "chunks": 5
+      },
+      {
+        "source": "text",
+        "model": "pplx-embed-v1-4b",
+        "dimensions": 256,
+        "encoding": "binary",
+        "chunks": 5
+      }
+    ],
+    "unindexed_chat": 0,
+    "unindexed_job": 0,
+    "removed": null
+  }
+}

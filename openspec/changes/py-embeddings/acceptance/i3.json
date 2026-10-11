@@ -1,0 +1,30 @@
+{
+  "content": [
+    {
+      "text": "Indexed 0 chunks of 0 items (5 skipped, 0 chunks remaining) in 0 request(s).",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "index",
+    "project": "acceptance-embed",
+    "warnings": [],
+    "latency_ms": 0,
+    "embedded_chunks": 0,
+    "embedded_items": 0,
+    "skipped_items": 5,
+    "remaining": 0,
+    "requests": 0,
+    "input_tokens": 0,
+    "cost_usd": null,
+    "cost_source": null,
+    "calls_cost_unknown": 0,
+    "candidates": null,
+    "hits": null,
+    "groups": null,
+    "unindexed_chat": null,
+    "unindexed_job": null,
+    "removed": null
+  }
+}

@@ -97,6 +97,19 @@ async def test_index_then_search_returns_the_matching_chunk_and_validates_agains
     assert not has_vector(indexed) and not has_vector(found)
 
 
+async def test_a_repeat_index_makes_no_request_and_reports_no_cost(world):
+    w = await world()
+    await index_texts(w)
+    again = await index_texts(w)
+    sc = again.structured_content
+    assert (sc["requests"], sc["skipped_items"], sc["cost_usd"], sc["cost_source"]) == (
+        0,
+        2,
+        None,
+        None,
+    )
+
+
 async def test_status_counts_what_is_stored_and_what_is_not_without_any_request(world):
     w = await world()
     await index_texts(w)

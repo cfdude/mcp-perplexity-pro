@@ -188,7 +188,7 @@ def register(server: FastMCP) -> None:
                 requests=r.requests,
                 input_tokens=r.input_tokens,
                 cost_usd=r.cost_usd,
-                cost_source=r.cost_source,
+                cost_source=r.cost_source if r.requests else None,  # no request, no cost
                 calls_cost_unknown=r.calls_cost_unknown,
             )
         elif action == "search":

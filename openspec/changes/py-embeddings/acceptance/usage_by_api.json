@@ -1,0 +1,43 @@
+{
+  "content": [
+    {
+      "text": "Usage for project acceptance-embed: 5 call(s), 0 error(s), 248 token(s), cost 0.000004086 USD (4086 nano-USD).\nThe cost is a lower bound: error calls count cost 0 and may have been billed; 0 call(s) have no known cost and 0 cost(s) were computed from documented prices.\nBy api: key | calls | errors | tokens | cost USD\nembeddings | 5 | 0 | 248 | 0.000004086",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "totals": {
+      "calls": 5,
+      "errors": 0,
+      "input_tokens": 248,
+      "output_tokens": 0,
+      "total_tokens": 248,
+      "cost_nano_usd": 4086,
+      "cost_usd": "0.000004086",
+      "calls_cost_computed": 0,
+      "calls_cost_unknown": 0
+    },
+    "group_by": "api",
+    "groups": [
+      {
+        "calls": 5,
+        "errors": 0,
+        "input_tokens": 248,
+        "output_tokens": 0,
+        "total_tokens": 248,
+        "cost_nano_usd": 4086,
+        "cost_usd": "0.000004086",
+        "calls_cost_computed": 0,
+        "calls_cost_unknown": 0,
+        "key": "embeddings"
+      }
+    ],
+    "groups_total": 1,
+    "groups_truncated": false,
+    "project": "acceptance-embed",
+    "since": null,
+    "until": null,
+    "limit": 20
+  }
+}

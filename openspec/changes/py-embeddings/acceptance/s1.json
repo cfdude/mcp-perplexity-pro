@@ -1,0 +1,61 @@
+{
+  "content": [
+    {
+      "text": "1. [0.3856] text baking\n   To bake a loaf, mix flour, water and salt, let the dough rise overnight, then bake it in a preheated Dutch oven.\n2. [0.3697] text sourdough\n   Sourdough bread needs a live starter, a long slow fermentation and a very hot oven for a crisp crust.\n3. [0.1256] text volcano\n   A volcano erupts when magma rises through the crust, releasing ash, gas and lava from a vent.\nUsage: 9 tokens, cost 0.000000036 USD (reported), project acceptance-embed.",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "action": "search",
+    "project": "acceptance-embed",
+    "warnings": [],
+    "latency_ms": 1197,
+    "embedded_chunks": null,
+    "embedded_items": null,
+    "skipped_items": null,
+    "remaining": null,
+    "requests": 1,
+    "input_tokens": 9,
+    "cost_usd": "0.000000036",
+    "cost_source": "reported",
+    "calls_cost_unknown": 0,
+    "candidates": 5,
+    "hits": [
+      {
+        "score": 0.3855651915073395,
+        "source": "text",
+        "chunk_index": 0,
+        "text": "To bake a loaf, mix flour, water and salt, let the dough rise overnight, then bake it in a preheated Dutch oven.",
+        "chat_id": null,
+        "message_id": null,
+        "job_id": null,
+        "key": "baking"
+      },
+      {
+        "score": 0.3696805238723755,
+        "source": "text",
+        "chunk_index": 0,
+        "text": "Sourdough bread needs a live starter, a long slow fermentation and a very hot oven for a crisp crust.",
+        "chat_id": null,
+        "message_id": null,
+        "job_id": null,
+        "key": "sourdough"
+      },
+      {
+        "score": 0.12555111944675446,
+        "source": "text",
+        "chunk_index": 0,
+        "text": "A volcano erupts when magma rises through the crust, releasing ash, gas and lava from a vent.",
+        "chat_id": null,
+        "message_id": null,
+        "job_id": null,
+        "key": "volcano"
+      }
+    ],
+    "groups": null,
+    "unindexed_chat": null,
+    "unindexed_job": null,
+    "removed": null
+  }
+}
