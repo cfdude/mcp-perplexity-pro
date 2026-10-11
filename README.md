@@ -749,7 +749,7 @@ choose the threshold. A `noul` of 0.93 means the model puts 93% on yes, not that
 | Argument | Type | Default | Meaning |
 |---|---|---|---|
 | `state` | string, object or list | required | What to judge: non-blank text, or a non-empty JSON object or list, at most 200000 characters serialized (our cap; the API's limit is 262144 tokens). Images are not supported in v1 and are refused (an `image_url` key or a `data:image/` string anywhere in it). NaN, Infinity and nesting too deep to serialize are refused |
-| `questions` | object | required | 1 to 32 questions (our cap; the API allows 128), by a name you choose: each name non-blank text of at most 128 characters. Each question is `{type, criteria, instructions}`; see "Question shapes" |
+| `questions` | object | required | 1 to 32 questions (our cap; the API allows 128), by a name you choose: each name non-blank text of at most 128 characters; the whole object at most 200000 characters serialized. Each question is `{type, criteria, instructions}`; see "Question shapes" |
 | `model` | `pplx-decider-v1.1-27b` or `pplx-decider-v1-27b` | `pplx-decider-v1.1-27b` | The Decisions model. Both cost the same. Always sent |
 | `project` | string | `default` | The project the call is recorded under; created if absent |
 
@@ -759,7 +759,7 @@ or list. Any other key in a question is refused.
 | `type` | `criteria` | Answer |
 |---|---|---|
 | `noul` (yes or no) | An object with the keys `true` and/or `false`, each saying what that answer means; or leave it out and give `instructions`. One of the two is required | `noul`: the probability the answer is yes, 0 to 1 |
-| `choice` | An object of 1 to 255 options: option name to a description (a value may be `null`) | `choice`: the most probable option, `confidence`, and `probabilities` for every option |
+| `choice` | An object of 1 to 255 options: option name to a description (a value may be `null`; values are not validated beyond being JSON) | `choice`: the most probable option, `confidence`, and `probabilities` for every option |
 | `score` | A list of 1 to 10 levels, in order (the index is the level number) | `score`: the probability-weighted level index, `confidence`, `probabilities` by level index, and `legend` (level index to the level's text) |
 
 Every argument is checked before anything is sent: a bad one is an `invalid_request` error that
@@ -793,26 +793,26 @@ read**, so the computed cost is not checked against what Perplexity actually bil
 
 **No request id.** The response body carries no id, so the usage event's request id is empty
 and two identical calls each record an event, which is right because each was billed. An event
-cannot be matched to the provider's own logs.
+carries no id (the response does have an `x-request-id` header, which the client logs but does not store).
 
 A call the API refused with a 4xx is recorded with cost 0 and its error category, and any other
 error call (a 5xx, a timeout) is recorded the same way and may have been billed, so the usage
 totals stay a lower bound.
 
-**Rate limit.** The provider's limit seen in the probe is 10 requests per second (`x-ratelimit-limit`
-10). It counts requests, not questions: one request holding 32 questions is one unit. A 429 is
+**Rate limit.** The provider's limit seen in the probe is 10 (`x-ratelimit-limit` 10; the one-second window
+is assumed, as for Search). It counts requests, not questions: one request holding 32 questions is one unit. A 429 is
 retried honoring `Retry-After`, then reported as `rate_limited`. No 429 from the Decisions API was
 observed in the acceptance run.
 
 Example, a support ticket as an object state, default model, three questions of the three shapes. The
 result is from the live acceptance run on 2026-10-11 (`d1.json`): the values are as returned and
-only the line layout is compacted. The call below is the request that produced it:
+only the line layout is compacted. The request below is the one that produced it (up to the wording of the criteria texts):
 
 ```json
 {"name": "perplexity_decide", "arguments": {
   "state": {"ticket": "App crashes when exporting a PDF with more than 200 pages", "customer_tier": "enterprise"},
   "questions": {
-    "urgent": {"type": "noul", "criteria": {"true": "blocks the customer work", "false": "does not block"}},
+    "urgent": {"type": "noul", "criteria": {"true": "blocks the customer's work", "false": "does not block"}},
     "area": {"type": "choice", "criteria": {"export": "file export", "auth": "login", "billing": null}},
     "severity": {"type": "score", "criteria": ["minor", "moderate", "major", "critical"]}
   },
