@@ -10,6 +10,7 @@
 
 import ast
 import json
+import re
 import sqlite3
 from collections import Counter
 from collections.abc import Awaitable, Callable
@@ -21,6 +22,7 @@ import httpx2
 import pytest
 from agent_support import World, fixture, inline, respond_with
 from chat_support import FIRST, seed_chat
+from embeddings_support import embed_response
 from research_support import COMPLETED, IN_PROGRESS, RUN_ID, Clock, routes, seed_job, serve
 from secrets_support import (
     ASK,
@@ -28,6 +30,7 @@ from secrets_support import (
     CONTENT_COLUMNS,
     CONTENT_RESULT_PATHS,
     DECIDE,
+    EMBED,
     JOBS,
     KEY,
     KEY_FREE,
@@ -130,6 +133,7 @@ class Row:
 
 
 SCHEMA = {"type": "object", "properties": {"a": {"type": "string"}}}
+EI = {"action": "index", "source": "text", "items": [{"key": "a", "text": "x"}], "dimensions": 128}
 DN = {"type": "noul", "instructions": "y"}
 DQ = {"q": DN}
 RUNNING = routes(get=[IN_PROGRESS])
@@ -647,6 +651,65 @@ ROWS = [
         "unexpected_response",
         lambda request, n: httpx2.Response(200, json={"model": "x"}),
     ),
+    # --- embeddings-tool: local refusals (nothing is sent) ---
+    Row("embed: unknown action", EMBED, {"action": "rebuild"}, "invalid_request"),
+    Row("embed: index without a source", EMBED, {"action": "index"}, "invalid_request"),
+    Row(
+        "embed: blank text", EMBED, {**EI, "items": [{"key": "a", "text": " "}]}, "invalid_request"
+    ),
+    Row("embed: bad dimensions", EMBED, {**EI, "dimensions": 130}, "invalid_request"),
+    Row("embed: bad model", EMBED, {**EI, "model": "nope"}, "invalid_request"),
+    Row("embed: bad limit", EMBED, {**EI, "limit": 0}, "invalid_request"),
+    Row("embed: blank query", EMBED, {"action": "search", "query": " "}, "invalid_request"),
+    Row(
+        "embed: top_k 21", EMBED, {"action": "search", "query": "q", "top_k": 21}, "invalid_request"
+    ),
+    Row("embed: invalid project name", EMBED, {**EI, "project": "../x"}, "invalid_request"),
+    Row("embed: delete without confirm", EMBED, {"action": "delete"}, "confirmation_required"),
+    # --- embeddings-tool: the API answers ---
+    Row(
+        "embed: a recorded 400 body",
+        EMBED,
+        EI,
+        "invalid_request",
+        respond_with("embeddings_513_inputs_400.json", 400),
+    ),
+    Row(
+        "embed: a recorded 401 body",
+        EMBED,
+        EI,
+        "authentication",
+        respond_with("embeddings_unauthenticated_401.json", 401),
+    ),
+    Row(
+        "embed: 429 beyond the maximum wait",
+        EMBED,
+        EI,
+        "rate_limited",
+        error_body(429, "slow down", "rate_limit", **{"Retry-After": "9999"}),
+    ),
+    Row("embed: 503", EMBED, EI, "upstream_failure", error_body(503, "down", "x")),
+    Row(
+        "embed: read timeout",
+        EMBED,
+        EI,
+        "network_timeout",
+        raising(lambda request: httpx2.ReadTimeout("cut", request=request)),
+    ),
+    Row(
+        "embed: a 200 without data",
+        EMBED,
+        EI,
+        "unexpected_response",
+        lambda request, n: httpx2.Response(200, json={"model": "x"}),
+    ),
+    Row(
+        "embed: a wrong-length vector",
+        EMBED,
+        EI,
+        "unexpected_response",
+        lambda request, n: embed_response(request, wrong_length=True),
+    ),
 ]
 
 
@@ -904,8 +967,15 @@ async def test_search_text_keeps_examples_and_never_the_configured_key(keyed):
 
 
 def without_model_ids(text: str) -> str:
-    """The documented decider model ids are identifiers, not key-shaped secrets."""
-    return text.replace("pplx-decider-v1.1-27b", "").replace("pplx-decider-v1-27b", "")
+    """The documented decider and embed model ids are identifiers, not key-shaped secrets."""
+    for model in (
+        "pplx-decider-v1.1-27b",
+        "pplx-decider-v1-27b",
+        "pplx-embed-v1-0.6b",
+        "pplx-embed-v1-4b",
+    ):
+        text = text.replace(model, "")
+    return text
 
 
 async def test_decision_option_text_keeps_examples_and_never_the_configured_key(keyed):
@@ -947,6 +1017,42 @@ async def test_decision_option_text_keeps_examples_and_never_the_configured_key(
         assert KEY not in value, (table, column)
         assert not SHAPED.search(without_model_ids(value)), (table, column)
     assert KEY.encode() not in run.database_bytes()
+
+
+async def test_embedded_text_never_carries_the_configured_key_and_vectors_never_leave(keyed):
+    """py-embeddings 9.2: the key is replaced before text is sent or stored; a ``pplx-`` example
+    and a documented model id are kept; no vector or base64 string reaches a result or a log."""
+    run = await keyed(lambda request, n: embed_response(request))
+    text = f"use {KEY} then {OTHER} with pplx-embed-v1-0.6b"
+    indexed = await run(
+        EMBED, action="index", source="text", items=[{"key": "k", "text": text}], dimensions=128
+    )
+    found = await run(EMBED, action="search", query="use", dimensions=128)
+    refused = await run(EMBED, error_body(400, f"bad {KEY} {OTHER}"), **EI)
+    assert not indexed.is_error and not found.is_error
+    expected = f"use [redacted] then {OTHER} with pplx-embed-v1-0.6b"
+    (hit,) = found.structured_content["hits"]
+    assert hit["text"] == expected
+    assert refused.is_error and OTHER not in refused.structured_content["message"]
+    assert KEY not in refused.structured_content["message"]
+    sent = [json.loads(r.content) for r in run.w.requests]
+    assert all(KEY not in json.dumps(b) for b in sent) and sent[0]["input"] == [expected]
+    for result in run.results:
+        assert not has_base64_vector(result)
+    for t in run.texts():
+        assert KEY not in t
+    log = run.log_text()
+    assert KEY not in log and not SHAPED.search(without_model_ids(log).replace(OTHER, ""))
+    for table, column, value in await run.cells():
+        assert KEY not in value, (table, column)
+        if (table, column) not in CONTENT_COLUMNS | {("embedding_chunks", "text")}:
+            assert not SHAPED.search(without_model_ids(value)), (table, column)
+    assert KEY.encode() not in run.database_bytes()
+
+
+def has_base64_vector(result) -> bool:
+    blob = json.dumps(result.structured_content) + " ".join(c.text for c in result.content)
+    return re.search(r"[A-Za-z0-9+/]{60,}={0,2}", blob) is not None
 
 
 async def test_health_carries_no_key_and_no_content(keyed):

@@ -186,7 +186,7 @@ Each Embeddings request that reaches the API SHALL be recorded once as a usage e
 - **THEN** the first leaves one `authentication` event with cost 0 and source `none` and the second leaves no event and no project
 
 ### Requirement: Recording order, writes and privacy
-Each batch SHALL resolve and commit its project before the upstream call, hold no write unit across the call, record the event after it, and only then write its chunks in a write that survives cancellation of the calling task. No text, query or vector SHALL reach a log record or a usage event column, and the configured API key SHALL be replaced by `[redacted]` in returned chunk text.
+Each batch SHALL resolve and commit its project before the upstream call, hold no write unit across the call, record the event after it, and only then write its chunks in a write that survives cancellation of the calling task. No text, query or vector SHALL reach a log record or a usage event column, and the configured API key SHALL be replaced by `[redacted]` in any text before it is sent, stored or returned.
 
 #### Scenario: Write after the event
 - **WHEN** an `index` batch completes
@@ -196,6 +196,6 @@ Each batch SHALL resolve and commit its project before the upstream call, hold n
 - **WHEN** the calling task is cancelled after the response returned
 - **THEN** the event and the batch's chunks are still stored
 
-#### Scenario: Key in stored text
-- **WHEN** a stored chunk contains the configured key and a `pplx-` shaped example
-- **THEN** a search hit shows `[redacted]` for the key and keeps the example
+#### Scenario: Key in indexed text
+- **WHEN** an indexed text contains the configured key and a `pplx-` shaped example
+- **THEN** the request, the stored chunk and a search hit hold `[redacted]` for the key and keep the example

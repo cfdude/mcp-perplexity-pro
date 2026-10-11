@@ -447,8 +447,10 @@ async def _gather(
                 for i in items
                 if not is_blank(i.text)
             ]
+    secrets = (app.settings.api_key.get_secret_value(),)
     for ref, body, keys in candidates:
-        item, cut = _pending_item(ref, source, body, stored, **keys)
+        # the configured key is never sent to the API nor stored, whatever the source text holds
+        item, cut = _pending_item(ref, source, scrub_secrets(body, secrets), stored, **keys)
         cut_items += 1 if cut else 0
         if item is None:
             result.skipped_items += 1

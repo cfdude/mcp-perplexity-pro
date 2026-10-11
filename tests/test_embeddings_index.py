@@ -305,3 +305,15 @@ async def test_an_unknown_project_has_nothing_to_index_for_chats_and_creates_not
     result = await run(app, source="chat", project="ghost")
     assert result.requests == 0 and result.embedded_chunks == 0
     assert await rows(app, "SELECT count(*) FROM projects") == [(0,)]
+
+
+async def test_the_configured_key_is_never_sent_or_stored(world):
+    app = await world()
+    key = app.settings.api_key.get_secret_value()
+    example = "pplx-" + "Qq7-" * 8
+    body = f"use {key} and {example} with pplx-embed-v1-0.6b"
+    await run(app, items=texts(("k", body)))
+    sent = json.loads(app.upstream_requests[0].content)
+    stored = (await chunks(app))[0][3]
+    assert stored == f"use [redacted] and {example} with pplx-embed-v1-0.6b"
+    assert key not in json.dumps(sent) and sent["input"] == [stored]

@@ -74,10 +74,18 @@ async def make_app(make_settings, responder, **settings):
     migrate(cfg)
     engine = create_engine_for(cfg)
     upstream = Upstream(responder)
-    http = httpx2.AsyncClient(transport=httpx2.MockTransport(upstream))
+    requests: list[httpx2.Request] = []
+
+    async def handler(request: httpx2.Request) -> httpx2.Response:
+        await request.aread()
+        requests.append(request)
+        return await upstream(request)
+
+    http = httpx2.AsyncClient(transport=httpx2.MockTransport(handler))
     client = PerplexityClient(cfg, http=http)
     app = SimpleNamespace(settings=cfg, client=client, engine=engine, embed_locks=ProjectLocks())
     app.upstream = upstream
+    app.upstream_requests = requests
     app.http = http
     return app
 
