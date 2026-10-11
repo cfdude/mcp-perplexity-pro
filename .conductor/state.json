@@ -455,7 +455,7 @@
       "id": "py-embeddings",
       "title": "Embeddings tool with local vector store and semantic search",
       "priority": "P2",
-      "status": "planned",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -468,10 +468,78 @@
       "reconcileNeeded": false,
       "parent": "python-rewrite-2-0",
       "description": "pplx-embed models, base64 int8/binary decode, local storage, semantic search over saved chats/reports. Never return raw vectors to the model.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "4a359adb39d15ad28817737393c1f868cf689c13",
+        "4347e7c6876af3d1f0f129ff79b7072ad46e0e24",
+        "baaa11f53ff66b41cd2f29bd0d3a2a1d50dd57c1",
+        "e252e8fd7568414b33a1aedbfc5625eb093ecb4f",
+        "55213a69d5fea1e6edd54a7d2a4183fa19dea75d",
+        "85f775facc82e3248b4eab987e6e0d4172735419",
+        "1e56f043a11d8bceb6ab06b1c67d96a62f05e340",
+        "616dcee332f19b5e17fccd858181973890e59327",
+        "c5cda6527858be9a12c2125b255c3e32d0197a8f",
+        "ffd7df8d9c692092a9db96730aeba2d5eaf7e555",
+        "65850cd4e1f62e4e416c1cd470f826e02fb6b317",
+        "c63d47fc7ffbe58bd31c8cbe49d44858cfb326f4",
+        "01fd08eec9a4dc0c82e5e048b7b1a95e7723626e",
+        "58e0585eb39a6d90a8f3565d51d03d5c844d3bf7",
+        "3041f890149b2059ea65d0d3563841aab7bb71ac",
+        "aba65c18f4e9f57d37723c64f844688685271ad4",
+        "100939f48dcadb9663d960cf406c064aa67c299f",
+        "772e858861f36c96f934be3a37e65a1bbd43f913",
+        "9b5cb7d215ee18123f1b7d0d6ee2fa092265afcb",
+        "421651bfd4691370751afbef60825076977e5bd0",
+        "380c17fdb6266481572125f755df7b9dda538087",
+        "380c17fdb6266481572125f755df7b9dda538087",
+        "380c17fdb6266481572125f755df7b9dda538087",
+        "380c17fdb6266481572125f755df7b9dda538087",
+        "a2aa972bc8e8e164aa64b7940e6839a4ea846d48"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-09T18:30:33.347Z",
-      "release": "release-2-0-0"
+      "touchedAt": "2026-10-11T19:57:34.440Z",
+      "release": "release-2-0-0",
+      "startedAt": "2026-10-11T18:28:29.569Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-11T18:48:55.435Z",
+          "artifacts": [
+            "openspec/changes/py-embeddings/proposal.md",
+            "openspec/changes/py-embeddings/design.md",
+            "openspec/changes/py-embeddings/tasks.md",
+            "openspec/changes/py-embeddings/specs/embeddings-client/spec.md",
+            "openspec/changes/py-embeddings/specs/embeddings-store/spec.md",
+            "openspec/changes/py-embeddings/specs/embeddings-tool/spec.md",
+            "openspec/changes/py-embeddings/specs/agent-research/spec.md"
+          ],
+          "reviewer": "two fresh-context general-purpose subagents (thorough mode) plus narrow re-verification (2026-10-11)"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-11T19:57:29.725Z",
+          "baseSha": "421651b",
+          "headSha": "a2aa972",
+          "reviewer": "fresh-context general-purpose subagent: documentation diff 421651b..380c17f (two Important, three Minor fixed in a2aa972)",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-11T19:55:39.175Z",
+            "baseSha": "421651b",
+            "headSha": "380c17f",
+            "reviewer": "fresh-context general-purpose subagent: documentation diff 421651b..380c17f (two Important, three Minor fixed in 380c17f)"
+          }
+        }
+      },
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-11T19:57:34.440Z",
+        "reason": "Embeddings tool delivered: perplexity_embed (index, search, status, delete), embedding_chunks store with migration 0005, reported-cost parser, numpy scoring, live-verified (5 requests, 4086 nano-USD reported and reconciled; provider console not read)"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-11T19:57:34.419Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-11T19:57:34.440Z"
     },
     {
       "id": "py-decisions-tool",
@@ -683,7 +751,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 232,
+  "revision": 266,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.41.0",
   "platform": "claude-code",
@@ -695,7 +763,7 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-11T17:52:17.623Z",
+        "reviewedAt": "2026-10-11T18:48:55.206Z",
         "specs": [
           {
             "key": "py-agent-api/specs/agent-ask/spec.md",
@@ -728,6 +796,22 @@
           {
             "key": "py-decisions-tool/specs/decisions-tool/spec.md",
             "sha256": "e86f2b033d7cf9a0e09921e15f9f4955c8ead50f86a1500a816c8be5e900837b"
+          },
+          {
+            "key": "py-embeddings/specs/agent-research/spec.md",
+            "sha256": "e6f5a562c9438294400eefdf07cac797ee3cb627c289a708cdf5898a9be5c9f3"
+          },
+          {
+            "key": "py-embeddings/specs/embeddings-client/spec.md",
+            "sha256": "b8debed175c3413af3be7c8967cd71bd402e7daa6b65a54c646d552207962193"
+          },
+          {
+            "key": "py-embeddings/specs/embeddings-store/spec.md",
+            "sha256": "ad854c59eb88f4ab21cbfe1adc47edd39fa65003648eb1161918f07a2515b2d7"
+          },
+          {
+            "key": "py-embeddings/specs/embeddings-tool/spec.md",
+            "sha256": "1a5a5a8bf23e3a6f73789be774f294421f6c9d02dadea25019482ef8ebcba87a"
           },
           {
             "key": "py-foundation/specs/local-storage/spec.md",
@@ -774,10 +858,10 @@
             "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagents: Gate1+cross-spec review and narrow re-verification for py-decisions-tool (2026-10-11); one residual contradiction fixed by the parent",
+        "reviewer": "two fresh-context general-purpose subagents (spec lens, data-model lens) plus narrow re-verification for py-embeddings (2026-10-11); residual findings fixed by the parent",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-10T00:04:02.446Z",
+          "reviewedAt": "2026-10-11T17:52:17.623Z",
           "specs": [
             {
               "key": "py-agent-api/specs/agent-ask/spec.md",
@@ -802,6 +886,14 @@
             {
               "key": "py-agent-api/specs/server-runtime/spec.md",
               "sha256": "00b475b5aeca32de31223afc80c40dab3309e16c19f28a194ce53fe34ac93fd7"
+            },
+            {
+              "key": "py-decisions-tool/specs/decisions-client/spec.md",
+              "sha256": "e2cfbe58a6bf86dadb9c2e72ba0d66e62fc9f0cbcec71c2318d95c048d04bf0e"
+            },
+            {
+              "key": "py-decisions-tool/specs/decisions-tool/spec.md",
+              "sha256": "e86f2b033d7cf9a0e09921e15f9f4955c8ead50f86a1500a816c8be5e900837b"
             },
             {
               "key": "py-foundation/specs/local-storage/spec.md",
@@ -848,9 +940,10 @@
               "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagents: Gate1+cross-spec review, narrow re-verification for py-search-api (2026-10-09)"
+          "reviewer": "fresh-context general-purpose subagents: Gate1+cross-spec review and narrow re-verification for py-decisions-tool (2026-10-11); one residual contradiction fixed by the parent"
         }
       }
     }
-  ]
+  ],
+  "reviewMode": "thorough"
 }
