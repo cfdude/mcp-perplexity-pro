@@ -23,6 +23,7 @@ from mcp_perplexity_pro.agent import _bad, shielded_write
 from mcp_perplexity_pro.costed import Costed, Recording, costed_call
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import EmbeddingsResponse
+from mcp_perplexity_pro.redaction import scrub_secrets
 from mcp_perplexity_pro.storage import embeddings as store
 from mcp_perplexity_pro.storage.embeddings import ChunkRow
 from mcp_perplexity_pro.storage.projects import (
@@ -655,3 +656,118 @@ def top_k(
     order = np.lexsort((ids, -scores))[:k]
     out = [(int(ids[i]), float(scores[i])) for i in order]
     return [(i, s) for i, s in out if min_score is None or s >= min_score]
+
+
+# --- Search (design D9) ----------------------------------------------------------------------
+
+MAX_QUERY_CHARS = 4000
+MAX_TOP_K = 20
+HIT_TEXT_CHARS = 800
+
+
+@dataclass
+class SearchHit:
+    score: float
+    source: str
+    chunk_index: int
+    text: str
+    chat_id: int | None = None
+    message_id: int | None = None
+    job_id: int | None = None
+    key: str | None = None
+
+
+@dataclass
+class SearchResult:
+    hits: list[SearchHit] = field(default_factory=list)
+    candidates: int = 0
+    requests: int = 0
+    input_tokens: int = 0
+    cost: IndexResult = field(default_factory=IndexResult)  # the cost tally of the one request
+    latency_ms: int = 0
+    warnings: list[str] = field(default_factory=list)
+
+
+def check_search_arguments(
+    query: object, top_k_value: object, min_score: object, source: object
+) -> None:
+    if is_blank(query) or len(query) > MAX_QUERY_CHARS:  # type: ignore[arg-type]
+        raise _bad("query", f"must be non-blank text of at most {MAX_QUERY_CHARS} characters.")
+    if (
+        isinstance(top_k_value, bool)
+        or not isinstance(top_k_value, int)
+        or not 1 <= top_k_value <= MAX_TOP_K
+    ):
+        raise _bad("top_k", f"must be a whole number from 1 to {MAX_TOP_K}.")
+    if min_score is not None and (
+        isinstance(min_score, bool)
+        or not isinstance(min_score, int | float)
+        or not -1.0 <= min_score <= 1.0
+    ):
+        raise _bad("min_score", "must be a number from -1 to 1.")
+    if source is not None and source not in SOURCES:
+        raise _bad("source", f"must be one of {', '.join(SOURCES)}.")
+
+
+def _hit(score: float, detail: store.Hit, secrets: tuple[str, ...]) -> SearchHit:
+    body = scrub_secrets(detail.text, secrets)[:HIT_TEXT_CHARS]
+    hit = SearchHit(score=score, source=detail.source, chunk_index=detail.chunk_index, text=body)
+    if detail.source == "chat":
+        hit.chat_id, hit.message_id = detail.chat_id, detail.chat_message_id
+    elif detail.source == "job":
+        hit.job_id = detail.research_job_id
+    else:
+        hit.key = detail.ref[2:]
+    return hit
+
+
+async def search(
+    app: Any,
+    *,
+    project: str | None,
+    query: str,
+    top_k_value: int,
+    min_score: float | None,
+    source: str | None,
+    model: str,
+    dimensions: int | None,
+    encoding: str,
+) -> SearchResult:
+    """Embed ``query`` once and rank the project's stored chunks of the same triple."""
+    check_options(model, dimensions, encoding)
+    check_search_arguments(query, top_k_value, min_score, source)
+    name = validate_project_name(project or DEFAULT_PROJECT)
+    size = stored_dimensions(model, dimensions)
+    result = SearchResult()
+    async with unit_of_work(app.engine, write=False) as session:
+        found = await find_project(session, name)
+        candidates = (
+            await store.candidate_vectors(session, found.id, model, size, encoding, source)
+            if found is not None
+            else []
+        )
+    result.candidates = len(candidates)
+    if not candidates:
+        result.warnings.append("Nothing is indexed for this project, model, size and encoding.")
+        return result
+    body = build_request(model, [query], dimensions=dimensions, encoding=encoding)
+    costed = await run_embed(app, project=name, body=body, model=model)
+    (vector,) = _decode_batch(costed.result, 1, encoding, size)
+    result.requests = 1
+    result.latency_ms = costed.latency_ms
+    result.cost.add_usage(None if costed.recording is None else costed.recording.usage)
+    result.input_tokens = result.cost.input_tokens
+    best = await asyncio.to_thread(
+        top_k,
+        vector,
+        candidates,
+        k=top_k_value,
+        encoding=encoding,
+        dimensions=size,
+        min_score=min_score,
+    )
+    async with unit_of_work(app.engine, write=False) as session:
+        details = await store.hit_details(session, [i for i, _ in best])
+    secrets = (app.settings.api_key.get_secret_value(),)
+    result.hits = [_hit(score, details[i], secrets) for i, score in best if i in details]
+    return result

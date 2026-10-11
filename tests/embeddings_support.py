@@ -152,3 +152,23 @@ async def chunks(app):
         "SELECT source, ref, chunk_index, text, model, dimensions, encoding, vector "
         "FROM embedding_chunks ORDER BY id",
     )
+
+
+def fixed_response(request: httpx2.Request, vector: bytes, *, tokens=3, total_cost=1.2e-8):
+    """A response whose single vector is exactly ``vector`` (the scripted query embedding)."""
+    body = json.loads(request.content)
+    return httpx2.Response(
+        200,
+        json={
+            "object": "list",
+            "data": [
+                {"object": "embedding", "index": 0, "embedding": base64.b64encode(vector).decode()}
+            ],
+            "model": body["model"],
+            "usage": {
+                "prompt_tokens": tokens,
+                "total_tokens": tokens,
+                "cost": {"currency": "USD", "input_cost": total_cost, "total_cost": total_cost},
+            },
+        },
+    )
