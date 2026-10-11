@@ -17,6 +17,6 @@
   },
   "request": {
     "_large_request": true,
-    "note": "100 inputs of 5000 characters (about 125k tokens) to cross the 120000-token request limit"
+    "note": "100 inputs of 5000 characters, 0.6b, 128 dims (about 83k tokens: under the 120000-token request limit, so a 200; the limit itself was not crossed)"
   }
 }

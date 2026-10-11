@@ -5,7 +5,7 @@ Defines the local store of embedding chunks: the table and its migration, how it
 ## ADDED Requirements
 
 ### Requirement: Chunk table and migration
-Migration `0005` SHALL create `embedding_chunks` with the columns of the design (`project_id`, `source`, `chat_message_id`, `research_job_id`, `ref`, `chunk_index`, `text`, `text_hash`, `model`, `dimensions`, `encoding`, `vector`, `created_at`), keep the migration conventions (working `downgrade`, backup before upgrading, refusal of a newer database), and the ORM model SHALL match the migrated schema.
+Migration `0005` SHALL create `embedding_chunks` as the design describes (named check and unique constraints, indexes including partial ones on the two source keys), keep the migration conventions (working `downgrade`, backup before upgrading, refusal of a newer database), and the ORM model SHALL match the migrated schema.
 
 #### Scenario: Upgrade and downgrade
 - **WHEN** the database is at `0004` and the server starts, and then `0005` is downgraded
@@ -13,7 +13,7 @@ Migration `0005` SHALL create `embedding_chunks` with the columns of the design 
 
 #### Scenario: Model matches schema
 - **WHEN** the ORM model and the migrated table are compared
-- **THEN** their columns, keys, indexes and constraints agree
+- **THEN** their columns, keys, indexes, named constraints and cascade rules agree
 
 ### Requirement: Rows are tied to their source
 A chunk SHALL belong to a project (`ON DELETE CASCADE`) and, by its `source`, to exactly one of a chat message (`chat`, `ON DELETE CASCADE`), a research job (`job`, `ON DELETE CASCADE`) or a caller key (`text`); the database SHALL refuse a row whose `source` and keys disagree. Deleting a chat, a job or a project SHALL delete its chunks.
@@ -21,6 +21,14 @@ A chunk SHALL belong to a project (`ON DELETE CASCADE`) and, by its `source`, to
 #### Scenario: Cascades
 - **WHEN** a chat with indexed messages is deleted, and separately a research job, and separately a project
 - **THEN** the chunks of that chat's messages, that job and that project are gone and others remain
+
+#### Scenario: Reused message id
+- **WHEN** a chat's newest message is deleted with its chat's other messages and a new message later takes that id
+- **THEN** no chunk of the old message remains to be mistaken for the new one
+
+#### Scenario: Project delete counts
+- **WHEN** a project holding chat, job and text chunks is deleted with `confirm`
+- **THEN** all its chunks are gone and `rows_removed` counts the chunks the delete removed directly, not those removed by cascade from chats and jobs
 
 #### Scenario: Inconsistent row refused
 - **WHEN** a row has source `chat` and no message id, or source `text` and a job id
@@ -34,8 +42,8 @@ A chunk SHALL be unique per `(project, ref, chunk_index, model, dimensions, enco
 - **THEN** both sets of chunks exist and neither replaces the other
 
 #### Scenario: Duplicate insert ignored
-- **WHEN** the same chunk key is inserted twice
-- **THEN** one row exists
+- **WHEN** the same chunk key is inserted twice with a conflict-ignoring insert, and separately with a plain insert
+- **THEN** one row exists and the plain insert is refused
 
 ### Requirement: Chunking
 A text SHALL be split into chunks of at most 4000 characters at the last blank line, else line break, else space before the limit, else at the limit; chunks SHALL be stripped, empty ones dropped, and at most 50 chunks kept per text with a warning. The split SHALL be deterministic.

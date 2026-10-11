@@ -33,6 +33,10 @@ An embeddings request is a billed POST. The client SHALL NOT retry it after an H
 - **WHEN** an embeddings request returns 503, and separately its read times out
 - **THEN** the client raises `upstream_failure` and `network_timeout` respectively, each after exactly one request
 
+#### Scenario: Connect failure then served
+- **WHEN** the first connection attempt fails and the second succeeds
+- **THEN** the client returns the response after two attempts
+
 #### Scenario: Rate limited then served
 - **WHEN** a request returns 429 with `Retry-After: 1` and then the recorded response
 - **THEN** the client waits at least 1 second and returns the response after two requests
