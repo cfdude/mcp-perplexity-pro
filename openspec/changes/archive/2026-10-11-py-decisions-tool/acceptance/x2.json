@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "category": "invalid_request"
+  },
+  "content": [
+    {
+      "text": "[invalid_request] state: images are not supported in this version.",
+      "type": "text"
+    }
+  ],
+  "isError": true,
+  "structuredContent": {
+    "category": "invalid_request",
+    "message": "state: images are not supported in this version."
+  }
+}

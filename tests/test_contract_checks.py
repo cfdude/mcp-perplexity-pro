@@ -27,6 +27,7 @@ from secrets_support import (
     CHAT,
     CONTENT_COLUMNS,
     CONTENT_RESULT_PATHS,
+    DECIDE,
     JOBS,
     KEY,
     KEY_FREE,
@@ -129,6 +130,8 @@ class Row:
 
 
 SCHEMA = {"type": "object", "properties": {"a": {"type": "string"}}}
+DN = {"type": "noul", "instructions": "y"}
+DQ = {"q": DN}
 RUNNING = routes(get=[IN_PROGRESS])
 BAD_400 = "agent_chat_bad_previous_response_400.json"
 
@@ -562,6 +565,88 @@ ROWS = [
         "unexpected_response",
         lambda request, n: httpx2.Response(200, json={"id": "x"}),
     ),
+    # --- decisions-tool: local refusals (nothing is sent) ---
+    Row("decide: blank state", DECIDE, {"state": "  ", "questions": DQ}, "invalid_request"),
+    Row(
+        "decide: image in state",
+        DECIDE,
+        {"state": [{"image_url": {"url": "x"}}], "questions": DQ},
+        "invalid_request",
+    ),
+    Row("decide: no questions", DECIDE, {"state": "s", "questions": {}}, "invalid_request"),
+    Row(
+        "decide: 33 questions",
+        DECIDE,
+        {"state": "s", "questions": {f"q{i}": DN for i in range(33)}},
+        "invalid_request",
+    ),
+    Row(
+        "decide: noul without a rule",
+        DECIDE,
+        {"state": "s", "questions": {"q": {"type": "noul"}}},
+        "invalid_request",
+    ),
+    Row(
+        "decide: score with 11 levels",
+        DECIDE,
+        {"state": "s", "questions": {"q": {"type": "score", "criteria": list("abcdefghijk")}}},
+        "invalid_request",
+    ),
+    Row(
+        "decide: unknown model",
+        DECIDE,
+        {"state": "s", "questions": DQ, "model": "nope"},
+        "invalid_request",
+    ),
+    Row(
+        "decide: invalid project name",
+        DECIDE,
+        {"state": "s", "questions": DQ, "project": "../x"},
+        "invalid_request",
+    ),
+    # --- decisions-tool: the API answers ---
+    Row(
+        "decide: a recorded 400 body",
+        DECIDE,
+        {"state": "s", "questions": DQ},
+        "invalid_request",
+        respond_with("decisions_129_questions_400.json", 400),
+    ),
+    Row(
+        "decide: a recorded 401 body",
+        DECIDE,
+        {"state": "s", "questions": DQ},
+        "authentication",
+        respond_with("decisions_unauthenticated_401.json", 401),
+    ),
+    Row(
+        "decide: 429 beyond the maximum wait",
+        DECIDE,
+        {"state": "s", "questions": DQ},
+        "rate_limited",
+        error_body(429, "slow down", "rate_limit", **{"Retry-After": "9999"}),
+    ),
+    Row(
+        "decide: 503",
+        DECIDE,
+        {"state": "s", "questions": DQ},
+        "upstream_failure",
+        error_body(503, "down", "x"),
+    ),
+    Row(
+        "decide: read timeout",
+        DECIDE,
+        {"state": "s", "questions": DQ},
+        "network_timeout",
+        raising(lambda request: httpx2.ReadTimeout("cut", request=request)),
+    ),
+    Row(
+        "decide: a 200 without answers",
+        DECIDE,
+        {"state": "s", "questions": DQ},
+        "unexpected_response",
+        lambda request, n: httpx2.Response(200, json={"model": "x"}),
+    ),
 ]
 
 
@@ -818,6 +903,52 @@ async def test_search_text_keeps_examples_and_never_the_configured_key(keyed):
     assert KEY.encode() not in run.database_bytes()
 
 
+def without_model_ids(text: str) -> str:
+    """The documented decider model ids are identifiers, not key-shaped secrets."""
+    return text.replace("pplx-decider-v1.1-27b", "").replace("pplx-decider-v1-27b", "")
+
+
+async def test_decision_option_text_keeps_examples_and_never_the_configured_key(keyed):
+    """py-decisions-tool 5.2: strings in an answer come from the caller's criteria; the configured
+    key is replaced, a ``pplx-`` example and a documented model id are kept; nothing key-shaped
+    reaches the log or the database (a decision stores no content)."""
+    run = await keyed()
+    body = {
+        "model": f"pplx-decider-v1.1-27b {KEY}",
+        "answers": {
+            "area": {
+                "type": "choice",
+                "choice": f"{KEY} pplx-decider-v1.1-27b {OTHER}",
+                "confidence": 0.9,
+                "probabilities": {f"{KEY} pplx-decider-v1.1-27b {OTHER}": 0.9},
+            },
+            "odd": "stray",
+        },
+        "usage": {"input_tokens": 9, "output_tokens": 1},
+    }
+    questions = {"area": {"type": "choice", "criteria": {f"{OTHER}": None}}, "odd": DN}
+    found = await run(DECIDE, ok(body), state=f"About {OTHER}", questions=questions)
+    refused = await run(DECIDE, error_body(400, f"bad {KEY} {OTHER}"), state="s", questions=DQ)
+
+    assert not found.is_error
+    sc = found.structured_content
+    expected = "[redacted] pplx-decider-v1.1-27b " + OTHER
+    assert sc["answers"]["area"]["choice"] == expected
+    assert list(sc["answers"]["area"]["probabilities"]) == [expected]
+    assert sc["model"] == "pplx-decider-v1.1-27b [redacted]"
+    assert list(sc["answers"]) == ["area"] and any("'odd'" in w for w in sc["warnings"])
+    assert refused.is_error and OTHER not in refused.structured_content["message"]
+    assert KEY not in refused.structured_content["message"]
+    for text in run.texts():
+        assert KEY not in text
+    log = run.log_text()
+    assert KEY not in log and not SHAPED.search(without_model_ids(log))
+    for table, column, value in await run.cells():
+        assert KEY not in value, (table, column)
+        assert not SHAPED.search(without_model_ids(value)), (table, column)
+    assert KEY.encode() not in run.database_bytes()
+
+
 async def test_health_carries_no_key_and_no_content(keyed):
     run = await keyed()
     await run(ASK, query=f"What is {OTHER}?")
@@ -913,9 +1044,9 @@ async def test_every_upstream_string_is_redacted_then_cut_to_its_cap(keyed):
     assert "Zy9_Zy9_" not in run.log_text()
 
 
-async def test_the_eight_tools_are_listed_and_each_has_an_output_schema(research_world):
+async def test_the_nine_tools_are_listed_and_each_has_an_output_schema(research_world):
     """The tool surface whose ``tools/list`` size design.md Risks records (3 tools at the
-    foundation, 7 before search)."""
+    foundation, 7 before search, 8 before decide)."""
     from fastmcp import Client
 
     w = await research_world()
@@ -924,6 +1055,7 @@ async def test_the_eight_tools_are_listed_and_each_has_an_output_schema(research
     assert sorted(t.name for t in tools) == [
         "perplexity_ask",
         "perplexity_chat",
+        "perplexity_decide",
         "perplexity_jobs",
         "perplexity_models",
         "perplexity_projects",
@@ -951,12 +1083,16 @@ def costed_call_callers() -> Counter:
     return found
 
 
-def test_costed_call_is_called_from_exactly_run_costed_and_run_search_and_defined_once():
+def test_costed_call_is_called_from_exactly_its_three_callers_and_defined_once():
     # The same generic sequence for every costed call: a third caller is a third copy of the
     # order unless it is added here on purpose. (``run_search`` and ``run_costed`` are nested
     # callers of ``costed_call``; ``interpret`` closures inside them hold no call.)
     assert costed_call_callers() == Counter(
-        {("agent.py", "run_costed"): 1, ("search.py", "run_search"): 1}
+        {
+            ("agent.py", "run_costed"): 1,
+            ("search.py", "run_search"): 1,
+            ("decisions.py", "run_decide"): 1,
+        }
     )
     definitions = [
         path.relative_to(SRC).as_posix()

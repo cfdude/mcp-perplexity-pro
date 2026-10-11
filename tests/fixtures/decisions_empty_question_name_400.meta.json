@@ -1,0 +1,28 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "empty question name",
+  "latency_seconds": 0.217,
+  "response_headers": {
+    "x-ratelimit-limit": "10",
+    "x-ratelimit-remaining": "5",
+    "x-ratelimit-reset": "1791740315",
+    "x-ratelimit-used": "5",
+    "x-request-id": "260ac08d-4b93-4fbe-907a-5031eb51d7bb"
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": "x",
+    "questions": {
+      "": {
+        "type": "noul",
+        "instructions": "y"
+      }
+    }
+  }
+}

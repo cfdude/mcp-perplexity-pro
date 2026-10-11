@@ -1,0 +1,28 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "one noul question, string state",
+  "latency_seconds": 0.677,
+  "response_headers": {
+    "x-ratelimit-limit": "10",
+    "x-ratelimit-remaining": "9",
+    "x-ratelimit-reset": "1791740312",
+    "x-ratelimit-used": "1",
+    "x-request-id": "fae197b5-1286-4b90-8020-b7cce7147a94"
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": "The invoice is 45 days past due and the customer has not replied to two reminders.",
+    "questions": {
+      "overdue": {
+        "type": "noul",
+        "instructions": "Is this invoice seriously overdue?"
+      }
+    }
+  }
+}

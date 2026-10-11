@@ -20,7 +20,13 @@ import httpx2
 from pydantic import BaseModel, ValidationError
 
 from mcp_perplexity_pro.errors import PerplexityError, error_from_response
-from mcp_perplexity_pro.models import AgentRun, CancelResponse, ModelList, SearchResponse
+from mcp_perplexity_pro.models import (
+    AgentRun,
+    CancelResponse,
+    DecisionsResponse,
+    ModelList,
+    SearchResponse,
+)
 from mcp_perplexity_pro.settings import Settings
 
 M = TypeVar("M", bound=BaseModel)
@@ -295,3 +301,9 @@ class PerplexityClient:
         """``POST /search`` (never replayed after a response other than 429: it is billed)."""
         path = "/search"
         return self._parse(SearchResponse, await self.request_json("POST", path, json=body), path)
+
+    async def decide(self, body: dict[str, Any]) -> DecisionsResponse:
+        """``POST /v1/decisions`` (billed: never replayed after a response other than 429)."""
+        path = "/v1/decisions"
+        data = await self.request_json("POST", path, json=body)
+        return self._parse(DecisionsResponse, data, path)

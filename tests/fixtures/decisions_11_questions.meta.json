@@ -1,0 +1,68 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "11 noul questions",
+  "latency_seconds": 0.639,
+  "response_headers": {
+    "x-ratelimit-limit": "10",
+    "x-ratelimit-remaining": "9",
+    "x-ratelimit-reset": "1791740431",
+    "x-ratelimit-used": "1",
+    "x-request-id": "c1747fac-6db5-4ef7-80da-ac60690218fe"
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": "The sky is blue today.",
+    "questions": {
+      "q0": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q1": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q2": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q3": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q4": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q5": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q6": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q7": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q8": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q9": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      },
+      "q10": {
+        "type": "noul",
+        "instructions": "Is the sky blue?"
+      }
+    }
+  }
+}

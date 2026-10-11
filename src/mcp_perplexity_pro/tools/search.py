@@ -7,12 +7,12 @@ from fastmcp.tools import ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
+from mcp_perplexity_pro.costed import cost_fields
 from mcp_perplexity_pro.search import (
     TOOL,
     SearchOptions,
     SearchOutput,
     build_request,
-    cost_fields,
     digest,
     run_search,
 )

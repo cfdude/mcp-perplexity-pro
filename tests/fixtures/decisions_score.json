@@ -1,0 +1,26 @@
+{
+  "model": "pplx-decider-v1.1-27b",
+  "answers": {
+    "satisfaction": {
+      "type": "score",
+      "score": 1.7023841901036052,
+      "confidence": 0.6495288146561603,
+      "legend": {
+        "0": "furious",
+        "1": "unhappy",
+        "2": "okay",
+        "3": "delighted"
+      },
+      "probabilities": {
+        "0": 0.012135763754312684,
+        "1": 0.299771970111492,
+        "2": 0.661664578410473,
+        "3": 0.026427687723722365
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 107,
+    "output_tokens": 1
+  }
+}

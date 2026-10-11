@@ -28,7 +28,7 @@ from mcp_perplexity_pro.storage.projects import (
     validate_project_name,
 )
 from mcp_perplexity_pro.storage.session import unit_of_work
-from mcp_perplexity_pro.usage import Usage, record_usage
+from mcp_perplexity_pro.usage import Usage, format_usd, record_usage
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +58,13 @@ class Costed[T]:
     project: str
     status: str | None
     recording: Recording | None
+
+
+def cost_fields(usage: Usage | Mapping | None) -> tuple[str | None, str]:
+    """``(cost_usd, cost_source)`` of a recorded usage, as a tool's output carries them."""
+    if isinstance(usage, Usage) and usage.cost_source != "none":
+        return format_usd(usage.cost_nano_usd), usage.cost_source
+    return None, "none"
 
 
 def _ms(started: float) -> int:

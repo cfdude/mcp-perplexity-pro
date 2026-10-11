@@ -1,0 +1,19 @@
+{
+  "model": "pplx-decider-v1.1-27b",
+  "answers": {
+    "category": {
+      "type": "choice",
+      "choice": "software",
+      "confidence": 0.5493265125099984,
+      "probabilities": {
+        "hardware": 0.2989992969189061,
+        "software": 0.699551008339999,
+        "network": 0.0014496947410949988
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 115,
+    "output_tokens": 1
+  }
+}

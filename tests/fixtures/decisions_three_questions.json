@@ -1,0 +1,40 @@
+{
+  "model": "pplx-decider-v1.1-27b",
+  "answers": {
+    "urgent": {
+      "type": "noul",
+      "noul": 0.9312401272407508
+    },
+    "area": {
+      "type": "choice",
+      "choice": "export",
+      "confidence": 0.9999303770930034,
+      "probabilities": {
+        "export": 0.999953584728669,
+        "auth": 1.2104419072042511e-05,
+        "billing": 3.4310852258853485e-05
+      }
+    },
+    "severity": {
+      "type": "score",
+      "score": 2.397694720104296,
+      "confidence": 0.572264292842776,
+      "legend": {
+        "0": "minor",
+        "1": "moderate",
+        "2": "major",
+        "3": "critical"
+      },
+      "probabilities": {
+        "0": 0.0014426776781794849,
+        "1": 0.01213513817010492,
+        "2": 0.5737069705209555,
+        "3": 0.4127152136307601
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 347,
+    "output_tokens": 3
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "one choice question",
+  "latency_seconds": 0.259,
+  "response_headers": {
+    "x-ratelimit-limit": "10",
+    "x-ratelimit-remaining": "8",
+    "x-ratelimit-reset": "1791740313",
+    "x-ratelimit-used": "2",
+    "x-request-id": "89343a51-5419-4164-bee9-542f6e7baaa8"
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": "My laptop will not boot and shows a black screen after the logo.",
+    "questions": {
+      "category": {
+        "type": "choice",
+        "criteria": {
+          "hardware": "A physical component has failed",
+          "software": "The operating system or an app is at fault",
+          "network": null
+        }
+      }
+    }
+  }
+}

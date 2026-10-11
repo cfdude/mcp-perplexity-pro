@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Each decision needs between 1 and 255 options",
+    "type": "invalid_request",
+    "code": "400"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "content": [
+    {
+      "text": "Usage for project acceptance-decide: 2 call(s), 0 error(s), 457 token(s), cost 0.00000906 USD (9060 nano-USD).\nThe cost is a lower bound: error calls count cost 0 and may have been billed; 0 call(s) have no known cost and 2 cost(s) were computed from documented prices.\nBy tool: key | calls | errors | tokens | cost USD\nperplexity_decide | 2 | 0 | 457 | 0.00000906",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "totals": {
+      "calls": 2,
+      "errors": 0,
+      "input_tokens": 453,
+      "output_tokens": 4,
+      "total_tokens": 457,
+      "cost_nano_usd": 9060,
+      "cost_usd": "0.00000906",
+      "calls_cost_computed": 2,
+      "calls_cost_unknown": 0
+    },
+    "group_by": "tool",
+    "groups": [
+      {
+        "calls": 2,
+        "errors": 0,
+        "input_tokens": 453,
+        "output_tokens": 4,
+        "total_tokens": 457,
+        "cost_nano_usd": 9060,
+        "cost_usd": "0.00000906",
+        "calls_cost_computed": 2,
+        "calls_cost_unknown": 0,
+        "key": "perplexity_decide"
+      }
+    ],
+    "groups_total": 1,
+    "groups_truncated": false,
+    "project": "acceptance-decide",
+    "since": null,
+    "until": null,
+    "limit": 20
+  }
+}

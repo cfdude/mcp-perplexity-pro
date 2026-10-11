@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Invalid API key provided. Ensure your API key is correct and active.",
+    "type": "invalid_api_key",
+    "code": 401
+  }
+}

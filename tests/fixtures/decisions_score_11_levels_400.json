@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Too many score levels. Must have at most 10 levels.",
+    "type": "invalid_request",
+    "code": "400"
+  }
+}

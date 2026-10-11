@@ -1,10 +1,10 @@
-"""Task 5.1: one usage event per costed call across all five costed tools, in one run over the
+"""Task 5.1: one usage event per costed call across all six costed tools, in one run over the
 real MCP transport (streamable HTTP on an ephemeral port).
 
 ``perplexity_ask`` once, ``perplexity_chat`` send twice, ``perplexity_search`` twice (a fast and
-a three-query web search), ``perplexity_research`` submit once and ``perplexity_jobs`` observing
-that run completed make exactly six events. Every submit, pending poll, list, read, delete and
-models call in between makes none."""
+a three-query web search), ``perplexity_decide`` once, ``perplexity_research`` submit once and
+``perplexity_jobs`` observing that run completed make exactly seven events. Every submit, pending
+poll, list, read, delete and models call in between makes none."""
 
 import json
 
@@ -13,6 +13,7 @@ import pytest
 from agent_support import fixture
 from chat_support import FIRST, FOLLOW_UP, TURN_A, TURN_B
 from fastmcp import Client
+from fixture_support import FIXTURE_DIR
 from research_support import COMPLETED, IN_PROGRESS, RUN_ID, SUBMIT
 from server_support import free_port, serving
 from sqlalchemy import text
@@ -23,6 +24,7 @@ from mcp_perplexity_pro.storage.engine import create_engine_for
 from mcp_perplexity_pro.storage.migrate import migrate
 
 ASK = "agent_fast.json"
+DECISION = "decisions_three_questions.json"
 SEARCHES = ["search_fast_single.json", "search_web_single.json"]  # distinct ids: both are stored
 # The reported cost of each costed response, in nano-USD, written out by hand from the
 # fixtures' ``usage.cost.total_cost`` (0.00125, 0.00119, 0.0018 and 0.01599 USD); the test does
@@ -32,9 +34,10 @@ EXPECTED_NANO = {
     "perplexity_chat": [1_190_000, 1_800_000],
     "perplexity_research": [15_990_000],
     "perplexity_search": [1_000_000, 5_000_000],  # computed: fast $0.001, web $0.005
+    "perplexity_decide": [6_940],  # computed: 347 input tokens at 20 nano-USD
 }
-# 20_230_000 (the four agent events) + 1_000_000 + 5_000_000 = 26_230_000 = 0.02623 USD
-EXPECTED_TOTAL_NANO = 20_230_000 + 1_000_000 + 5_000_000
+# 26_230_000 (agent and search) + 6_940 = 26_236_940 = 0.02623694 USD
+EXPECTED_TOTAL_NANO = 26_230_000 + 6_940
 
 
 class Scripted:
@@ -49,6 +52,8 @@ class Scripted:
 
     def __call__(self, request: httpx2.Request, n: int) -> httpx2.Response:
         self.log.append((request.method, request.url.path))
+        if request.url.path == "/v1/decisions":
+            return httpx2.Response(200, json=fixture(DECISION))
         if request.url.path == "/search":
             self.searches += 1
             return httpx2.Response(200, json=fixture(SEARCHES[self.searches - 1]))
@@ -89,7 +94,7 @@ async def events(engine) -> list[tuple]:
         return [tuple(r) for r in rows]
 
 
-async def test_six_costed_calls_make_six_events_and_nothing_else_does(running):
+async def test_seven_costed_calls_make_seven_events_and_nothing_else_does(running):
     url, engine, script = running
     async with Client(url) as client:
 
@@ -115,30 +120,36 @@ async def test_six_costed_calls_make_six_events_and_nothing_else_does(running):
         )
         assert found["query_count"] == 3
         await settled(5, "a fast and a web search")
+        req = json.loads((FIXTURE_DIR / "decisions_three_questions.meta.json").read_text())[
+            "request"
+        ]
+        decided = await call("perplexity_decide", state=req["state"], questions=req["questions"])
+        assert decided["input_tokens"] == 347
+        await settled(6, "a decision")
 
         submitted = await call("perplexity_research", query="compare vector databases")
         job_id = submitted["job_id"]
         assert submitted["status"] == "queued"
-        await settled(5, "a queued submit records nothing")
+        await settled(6, "a queued submit records nothing")
 
         pending = await call("perplexity_jobs", action="status", job_id=job_id)
         assert pending["status"] == "in_progress"
-        await settled(5, "a pending poll records nothing")
+        await settled(6, "a pending poll records nothing")
 
         await call("perplexity_jobs", action="list")  # no refresh: no fetch, no event
         await call("perplexity_chat", action="list")
         await call("perplexity_chat", action="read", chat_id=chat_id)
         await call("perplexity_models")
-        await settled(5, "list, read and models record nothing")
+        await settled(6, "list, read and models record nothing")
 
         done = await call("perplexity_jobs", action="status", job_id=job_id)
         assert done["status"] == "completed"
-        await settled(6, "the observation that sees the run finish")
+        await settled(7, "the observation that sees the run finish")
 
         await call("perplexity_jobs", action="result", job_id=job_id)  # served locally
         await call("perplexity_jobs", action="list", refresh=True)  # nothing running any more
         await call("perplexity_chat", action="delete", chat_id=chat_id, confirm=True)
-        await settled(6, "result, a settled refresh and delete record nothing")
+        await settled(7, "result, a settled refresh and delete record nothing")
 
         by_api = (
             await client.call_tool("perplexity_usage", {"group_by": "api"})
@@ -154,13 +165,17 @@ async def test_six_costed_calls_make_six_events_and_nothing_else_does(running):
         ("perplexity_chat", "agent", "ok"),
         ("perplexity_search", "search", "ok"),
         ("perplexity_search", "search", "ok"),
+        ("perplexity_decide", "decisions", "ok"),
         ("perplexity_research", "agent", "ok"),
     ]
     agent_rows = [r for r in rows if r[1] == "agent"]
     search_rows = [r for r in rows if r[1] == "search"]
+    (decision_row,) = [r for r in rows if r[1] == "decisions"]
     assert [r[3] for r in agent_rows] == ["fast", "fast", "fast", "medium"]
     assert all(r[3] is None and r[4] is None for r in search_rows)  # no preset, no model
-    assert len({r[5] for r in rows}) == 6  # six distinct request ids
+    assert decision_row[3] is None and decision_row[4] == "pplx-decider-v1.1-27b"
+    assert decision_row[5] is None and decision_row[7] == "computed"  # no request id
+    assert len({r[5] for r in rows if r[5]}) == 6  # six distinct request ids (decide has none)
     assert agent_rows[3][5] == RUN_ID and agent_rows[3][4] == "openai/gpt-6-luna"
     assert all(r[7] == "reported" for r in agent_rows)
     assert all(r[7] == "computed" for r in search_rows)
@@ -169,25 +184,28 @@ async def test_six_costed_calls_make_six_events_and_nothing_else_does(running):
     assert sum(r[6] for r in rows) == EXPECTED_TOTAL_NANO
 
     groups = {g["key"]: g for g in by_api["groups"]}
-    assert set(groups) == {"agent", "search"}
+    assert set(groups) == {"agent", "search", "decisions"}
+    assert groups["decisions"]["calls"] == 1 and groups["decisions"]["cost_nano_usd"] == 6_940
     assert groups["agent"]["calls"] == 4 and groups["search"]["calls"] == 2
     assert groups["search"]["cost_nano_usd"] == 6_000_000
     assert groups["search"]["calls_cost_computed"] == 2  # all computed, none reported
     assert groups["search"]["calls_cost_unknown"] == 0
     assert sum(g["cost_nano_usd"] for g in groups.values()) == EXPECTED_TOTAL_NANO
     assert by_api["totals"]["cost_nano_usd"] == EXPECTED_TOTAL_NANO
-    assert by_api["totals"]["cost_usd"] == "0.02623"
+    assert by_api["totals"]["cost_usd"] == "0.02623694"
     assert {g["key"]: g["calls"] for g in by_tool["groups"]} == {
         "perplexity_ask": 1,
         "perplexity_chat": 2,
         "perplexity_research": 1,
         "perplexity_search": 2,
+        "perplexity_decide": 1,
     }
     # exactly the calls that were meant to reach the API did: 3 sync POSTs, 1 submit, 2 polls,
     # 2 searches and the one catalog fetch (the cancel endpoint was never used)
     assert sorted(script.log) == sorted(
         [("POST", "/v1/agent")] * 4
         + [("POST", "/search")] * 2
+        + [("POST", "/v1/decisions")]
         + [("GET", f"/v1/agent/{RUN_ID}")] * 2
         + [("GET", "/v1/models")]
     )

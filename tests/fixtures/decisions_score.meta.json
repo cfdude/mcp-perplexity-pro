@@ -1,0 +1,33 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "one score question, 4 levels",
+  "latency_seconds": 0.256,
+  "response_headers": {
+    "x-ratelimit-limit": "10",
+    "x-ratelimit-remaining": "7",
+    "x-ratelimit-reset": "1791740313",
+    "x-ratelimit-used": "3",
+    "x-request-id": "4b00d759-c09f-438b-b103-d45691e75267"
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": "The package arrived two weeks late and the box was crushed, but support refunded me quickly.",
+    "questions": {
+      "satisfaction": {
+        "type": "score",
+        "criteria": [
+          "furious",
+          "unhappy",
+          "okay",
+          "delighted"
+        ]
+      }
+    }
+  }
+}
