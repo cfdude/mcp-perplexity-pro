@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import base64
 import binascii
+from typing import Any
 
+from mcp_perplexity_pro import pricing
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.usage import Usage, computed_usage, usage_from_embeddings_response
 
 ENCODINGS = ("int8", "binary")
 API_ENCODING = {"int8": "base64_int8", "binary": "base64_binary"}
@@ -46,3 +49,29 @@ def decode_vector(b64: object, encoding: str, dimensions: int) -> bytes:
     if len(raw) != expected or not raw:
         raise _unreadable(f"expected {expected} bytes, got {len(raw)}")
     return raw
+
+
+# --- Cost (design D10) -----------------------------------------------------------------------
+
+
+def embeddings_usage(model: object, raw: object) -> Usage:
+    """The usage of one embeddings request: the cost the API reports (source ``reported``);
+    else the documented price per token of the model (source ``computed``) when the model is
+    priced and ``prompt_tokens`` is a valid count; else unknown (source ``none``), never zero.
+    A reported cost is never replaced. Never raises."""
+    parsed = usage_from_embeddings_response(raw)
+    try:
+        if parsed.cost_source == "reported":
+            return parsed
+        tokens = parsed.input_tokens
+        nano = (
+            pricing.embeddings_cost_nano(model, tokens)
+            if tokens is not None and isinstance(model, str)
+            else None
+        )
+        if nano is None:
+            return parsed
+        facts: dict[str, Any] = {"input_tokens": tokens, "total_tokens": parsed.total_tokens}
+        return computed_usage(nano, raw=parsed.raw, **facts)
+    except Exception:
+        return parsed

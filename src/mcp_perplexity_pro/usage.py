@@ -363,6 +363,70 @@ def usage_from_agent_response(usage: object) -> Usage:
         return Usage()
 
 
+def _parse_embeddings(usage: Mapping) -> Usage:
+    problems: list[str] = []
+    figures: dict[str, object] = {}
+    figures.update(
+        _read_figures(usage, {"prompt_tokens": "input_tokens"}, to_tokens, "usage", problems)
+    )
+    figures.update(
+        _read_figures(usage, {"total_tokens": "total_tokens"}, to_tokens, "usage", problems)
+    )
+    cost_source: CostSource = "none"
+    cost_nano = 0
+    currency = "USD"
+    cost = usage.get("cost")
+    if cost is not None and not isinstance(cost, Mapping):
+        problems.append("cost")
+    elif isinstance(cost, Mapping):
+        reported = cost.get("currency")
+        if isinstance(reported, str):
+            currency = reported[:32]
+        elif reported is not None:
+            problems.append("cost.currency")
+        if currency != "USD":
+            problems.append("cost.currency (not USD, nothing converted)")
+        else:
+            figures.update(
+                _read_figures(cost, {"input_cost": "input_cost_nano"}, to_nano, "cost", problems)
+            )
+            total = to_nano(cost.get("total_cost"))
+            if total is not None:
+                cost_nano, cost_source = total, "reported"
+            elif cost.get("total_cost") is not None:
+                problems.append("cost.total_cost")
+    if problems:
+        logger.warning(
+            "embeddings usage: unusable figures treated as unknown: %s", "; ".join(problems)
+        )
+    return Usage(
+        cost_nano_usd=cost_nano,
+        cost_source=cost_source,
+        currency=currency,
+        raw=dict(usage),
+        **figures,
+    )
+
+
+def usage_from_embeddings_response(usage: object) -> Usage:
+    """Parse the ``usage`` object of an Embeddings API response (design D10). Never raises.
+
+    ``cost.total_cost`` (USD) is the cost when it converts (source ``reported``); a non-USD or
+    malformed figure is unknown for that figure only. ``None`` or a non-mapping is ``Usage()``.
+    The recorder runs this itself for ``api="embeddings"`` given a raw mapping.
+    """
+    if usage is None:
+        return Usage()
+    try:
+        if not isinstance(usage, Mapping):
+            logger.warning("embeddings usage: not a mapping (%s)", type(usage).__name__)
+            return Usage()
+        return _parse_embeddings(usage)
+    except Exception:  # total by contract
+        logger.warning("embeddings usage: could not be parsed", exc_info=True)
+        return Usage()
+
+
 def agent_response_status(response: object) -> str | None:
     """What a caller does with a decoded Agent API response body. Never raises.
 
@@ -400,7 +464,8 @@ MAX_TEXT = 512  # characters kept of an identity string (ids, model names): far 
 # after probing the live response; an api without one stores the mapping unpriced (source none).
 # The entry calls through the module-level name so a test can replace the parser function itself.
 _PARSERS: dict[str, Callable[[Mapping], Usage]] = {
-    "agent": lambda usage: usage_from_agent_response(usage)
+    "agent": lambda usage: usage_from_agent_response(usage),
+    "embeddings": lambda usage: usage_from_embeddings_response(usage),
 }
 
 
