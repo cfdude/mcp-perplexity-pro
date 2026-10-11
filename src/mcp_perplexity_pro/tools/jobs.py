@@ -19,7 +19,6 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.agent import (
-    DEFAULT_PROJECT,
     REFRESH_LIMIT,
     Observation,
     Source,
@@ -34,7 +33,7 @@ from mcp_perplexity_pro.agent import (
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.storage import jobs as job_store
 from mcp_perplexity_pro.storage.models import ResearchJob
-from mcp_perplexity_pro.storage.projects import find_project, validate_project_name
+from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, find_project, validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
 from mcp_perplexity_pro.usage import failure_summary
 

@@ -34,9 +34,6 @@ from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
 from mcp_perplexity_pro.storage import jobs as job_store
 from mcp_perplexity_pro.storage.models import ResearchJob, UsageEvent
-from mcp_perplexity_pro.storage.projects import (
-    DEFAULT_PROJECT,  # noqa: F401  (re-exported to the tools)
-)
 from mcp_perplexity_pro.storage.session import is_busy_error, unit_of_work
 from mcp_perplexity_pro.usage import (
     agent_response_status,

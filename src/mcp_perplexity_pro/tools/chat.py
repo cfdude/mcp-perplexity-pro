@@ -16,7 +16,6 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.agent import (
-    DEFAULT_PROJECT,
     AskOptions,
     Source,
     UsageSummary,
@@ -45,7 +44,7 @@ from mcp_perplexity_pro.storage.chats import (
     load_chat,
     read_messages,
 )
-from mcp_perplexity_pro.storage.projects import find_project, validate_project_name
+from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, find_project, validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
 from mcp_perplexity_pro.tools.ask import GENERIC_400, build_result, render_answer
 from mcp_perplexity_pro.usage import failure_summary
