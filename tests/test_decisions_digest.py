@@ -120,3 +120,20 @@ def test_unreadable_usage_gives_null_token_counts_and_partial_usage_is_kept():
 def test_digest_does_not_raise_when_every_answer_value_is_none():
     out = digest(response({"q": None}), (), question_names=["q"])
     assert out.answers == {} and len(out.warnings) == 1
+
+
+def test_a_failure_inside_the_digest_returns_the_could_not_be_read_result(monkeypatch):
+    """The outer guard: a billed call is never lost to a bug in answer reading."""
+    from mcp_perplexity_pro import decisions
+
+    def boom(raw, secrets):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr(decisions, "_answer", boom)
+    out = decisions.digest(
+        response({"q": {"type": "noul", "noul": 0.5}}, usage={"input_tokens": 9}),
+        (),
+        question_names=["q"],
+    )
+    assert out.answers == {} and out.warnings == ["The response could not be read."]
+    assert out.input_tokens == 9

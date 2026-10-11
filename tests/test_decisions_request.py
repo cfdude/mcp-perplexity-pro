@@ -125,3 +125,31 @@ def test_good_choice_and_score_shapes_are_accepted():
 def test_the_validators_are_imported_from_agent_not_copied():
     text = (SRC / "decisions.py").read_text()
     assert not re.search(r"def (_bad|_int_in|check_text)\b", text)
+
+
+def deep(depth):
+    value = "leaf"
+    for _ in range(depth):
+        value = [value]
+    return value
+
+
+@pytest.mark.parametrize(
+    ("option", "kwargs"),
+    [
+        ("state", dict(state={"a": float("nan")})),
+        ("state", dict(state=[float("inf")])),
+        ("state", dict(state=deep(100_000))),
+        ("state", dict(state=deep(500))),
+        ("questions", dict(questions={"q": {"type": "noul", "instructions": [float("nan")]}})),
+        ("questions", dict(questions={"q": {"type": "noul", "instructions": deep(100_000)}})),
+        ("questions", dict(questions={"q": {"type": "noul", "instructions": deep(500)}})),
+        ("questions", dict(questions={"q": {"type": "noul", "instructions": "x" * 200_001}})),
+    ],
+    ids=["nan", "inf", "deep-100000", "deep-500", "q-nan", "q-deep", "q-deep-500", "q-huge"],
+)
+def test_hostile_json_is_invalid_request_never_an_internal_error(option, kwargs):
+    kwargs = {"state": "s", "questions": {"q": NOUL}, **kwargs}
+    with pytest.raises(PerplexityError) as caught:
+        build_request(DecideOptions(**kwargs))
+    assert caught.value.category == "invalid_request" and str(caught.value).startswith(option)

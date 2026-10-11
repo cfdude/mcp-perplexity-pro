@@ -73,14 +73,16 @@ def _state(value: Any) -> Any:
     else:
         raise _bad("state", "must be text, an object or a list.")
     try:
-        size = len(json.dumps(value, ensure_ascii=False))
+        size = len(json.dumps(value, ensure_ascii=False, allow_nan=False))
+        if size > MAX_STATE_CHARS:
+            raise _bad("state", f"must be at most {MAX_STATE_CHARS} characters serialized.")
+        if _has_image(value):
+            raise _bad("state", "images are not supported in this version.")
+        return copy.deepcopy(value)
     except (TypeError, ValueError, RecursionError):
-        raise _bad("state", "must be plain JSON.") from None
-    if size > MAX_STATE_CHARS:
-        raise _bad("state", f"must be at most {MAX_STATE_CHARS} characters serialized.")
-    if _has_image(value):
-        raise _bad("state", "images are not supported in this version.")
-    return copy.deepcopy(value)
+        raise _bad(
+            "state", "must be plain JSON (no NaN or Infinity, not too deeply nested)."
+        ) from None
 
 
 def _instructions(label: str, value: Any) -> None:
@@ -139,13 +141,24 @@ def _questions(value: Any) -> dict[str, Any]:
         raise _bad(
             "questions", f"at most {MAX_QUESTIONS} questions are allowed (got {len(value)})."
         )
+    try:
+        size = len(json.dumps(value, ensure_ascii=False, allow_nan=False))
+    except (TypeError, ValueError, RecursionError):
+        raise _bad(
+            "questions", "must be plain JSON (no NaN or Infinity, not too deeply nested)."
+        ) from None
+    if size > MAX_STATE_CHARS:
+        raise _bad("questions", f"must be at most {MAX_STATE_CHARS} characters serialized.")
     built: dict[str, Any] = {}
     for name, question in value.items():
         if not isinstance(name, str) or not name.strip():
             raise _bad("questions", "every question name must be non-blank text.")
         if len(name) > MAX_NAME_CHARS:
             raise _bad("questions", f"a question name is at most {MAX_NAME_CHARS} characters.")
-        built[name] = _question(name, question)
+        try:
+            built[name] = _question(name, question)
+        except RecursionError:
+            raise _bad(f"questions[{name}]", "is nested too deeply.") from None
     return built
 
 
