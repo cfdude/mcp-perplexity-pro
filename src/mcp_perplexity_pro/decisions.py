@@ -3,6 +3,7 @@
 * Request side (pure, no I/O): ``DecideOptions`` and ``build_request`` validate everything the
   probe showed the API reports vaguely or bills for nothing, then build the ``POST /v1/decisions``
   body.
+* Response side: ``digest`` and the output models.
 
 Everything that can fail on a caller's input raises ``PerplexityError("invalid_request", ...)``
 naming ``state``, ``questions`` or the question, so the tool validates first and nothing is sent,
@@ -13,10 +14,20 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
+import math
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Annotated, Any
+
+from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.agent import _bad
+from mcp_perplexity_pro.models import DecisionsResponse
+from mcp_perplexity_pro.redaction import scrub_secrets
+from mcp_perplexity_pro.usage import to_tokens
+
+logger = logging.getLogger(__name__)
 
 MODELS = ("pplx-decider-v1.1-27b", "pplx-decider-v1-27b")
 DEFAULT_MODEL = MODELS[0]
@@ -145,3 +156,122 @@ def build_request(options: DecideOptions) -> dict[str, Any]:
         "state": _state(options.state),
         "questions": _questions(options.questions),
     }
+
+
+# --- Response side (design D3, D8) -----------------------------------------------------------
+
+TEXT_CAP = 500
+
+
+class DecisionAnswer(BaseModel):
+    type: Annotated[str, Field(description="noul, choice or score")]
+    noul: Annotated[float | None, Field(description="noul: probability the answer is yes")] = None
+    choice: Annotated[str | None, Field(description="choice: the most probable option")] = None
+    confidence: Annotated[
+        float | None, Field(description="choice and score: confidence from 0 to 1")
+    ] = None
+    probabilities: Annotated[
+        dict[str, float | None] | None,
+        Field(description="choice: option to probability; score: level index to probability"),
+    ] = None
+    score: Annotated[float | None, Field(description="score: probability-weighted level index")] = (
+        None
+    )
+    legend: Annotated[
+        dict[str, str] | None, Field(description="score: level index to its criteria text")
+    ] = None
+
+
+class DecideOutput(BaseModel):
+    answers: Annotated[
+        dict[str, DecisionAnswer], Field(description="One answer per question, by your names")
+    ]
+    model: Annotated[str | None, Field(description="The model that answered")] = None
+    input_tokens: Annotated[int | None, Field(description="Input tokens billed")] = None
+    output_tokens: Annotated[int | None, Field(description="Output tokens (free)")] = None
+    cost_usd: Annotated[
+        str | None, Field(description="Exact USD cost of the request, as a decimal string")
+    ] = None
+    cost_source: Annotated[str, Field(description="computed, or none when the cost is unknown")] = (
+        "none"
+    )
+    latency_ms: Annotated[int, Field(description="Measured wall time of the upstream call")] = 0
+    project: Annotated[str, Field(description="The project the call was recorded under")] = ""
+    warnings: Annotated[list[str], Field(description="Things worth knowing about this result")]
+
+
+def _num(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return None
+    return float(value) if math.isfinite(value) else None
+
+
+def _text(value: object, secrets: tuple[str, ...]) -> str | None:
+    if not isinstance(value, str):
+        return None
+    return scrub_secrets(value, secrets)[:TEXT_CAP]
+
+
+def _answer(raw: dict[str, Any], secrets: tuple[str, ...]) -> DecisionAnswer:
+    probs = raw.get("probabilities")
+    legend = raw.get("legend")
+    return DecisionAnswer(
+        type=str(raw["type"]),
+        noul=_num(raw.get("noul")),
+        choice=_text(raw.get("choice"), secrets),
+        confidence=_num(raw.get("confidence")),
+        probabilities=(
+            {(_text(k, secrets) or ""): _num(v) for k, v in probs.items() if isinstance(k, str)}
+            if isinstance(probs, dict)
+            else None
+        ),
+        score=_num(raw.get("score")),
+        legend=(
+            {
+                (_text(k, secrets) or ""): (_text(v, secrets) or "")
+                for k, v in legend.items()
+                if isinstance(k, str) and isinstance(v, str)
+            }
+            if isinstance(legend, dict)
+            else None
+        ),
+    )
+
+
+def digest(
+    response: DecisionsResponse,
+    secrets: Iterable[str] = (),
+    *,
+    question_names: Iterable[str],
+) -> DecideOutput:
+    """The tool's result for a response. Total: it never raises (the call is already billed)."""
+    secrets = tuple(secrets)
+    usage = response.usage if isinstance(response.usage, dict) else {}
+    input_tokens = to_tokens(usage.get("input_tokens"))
+    output_tokens = to_tokens(usage.get("output_tokens"))
+    model = _text(response.model, secrets)
+    try:
+        answers: dict[str, DecisionAnswer] = {}
+        warnings: list[str] = []
+        for name in question_names:
+            raw = response.answers.get(name)
+            if not isinstance(raw, dict) or raw.get("type") not in QUESTION_TYPES:
+                warnings.append(f"No readable answer for question {name!r}; it is left out.")
+                continue
+            answers[name] = _answer(raw, secrets)
+        return DecideOutput(
+            answers=answers,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            warnings=warnings,
+        )
+    except Exception:  # total by contract: a malformed body must not hide a billed call
+        logger.warning("decisions digest: response could not be read", exc_info=True)
+        return DecideOutput(
+            answers={},
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            warnings=["The response could not be read."],
+        )
