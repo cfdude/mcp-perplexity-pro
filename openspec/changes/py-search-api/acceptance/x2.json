@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "category": "invalid_request"
+  },
+  "content": [
+    {
+      "text": "[invalid_request] recency: cannot be combined with a date filter.",
+      "type": "text"
+    }
+  ],
+  "isError": true,
+  "structuredContent": {
+    "category": "invalid_request",
+    "message": "recency: cannot be combined with a date filter."
+  }
+}

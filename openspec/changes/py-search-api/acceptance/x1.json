@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "category": "invalid_request"
+  },
+  "content": [
+    {
+      "text": "[invalid_request] domains: an allowlist and a denylist (entries starting with '-') cannot be mixed; the API accepts a mixed list but its documentation calls it invalid.",
+      "type": "text"
+    }
+  ],
+  "isError": true,
+  "structuredContent": {
+    "category": "invalid_request",
+    "message": "domains: an allowlist and a denylist (entries starting with '-') cannot be mixed; the API accepts a mixed list but its documentation calls it invalid."
+  }
+}

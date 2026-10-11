@@ -1,0 +1,43 @@
+{
+  "content": [
+    {
+      "text": "Usage for project acceptance-search: 3 call(s), 0 error(s), 0 token(s), cost 0.007 USD (7000000 nano-USD).\nThe cost is a lower bound: error calls count cost 0 and may have been billed; 0 call(s) have no known cost and 3 cost(s) were computed from documented prices.\nBy api: key | calls | errors | tokens | cost USD\nsearch | 3 | 0 | 0 | 0.007",
+      "type": "text"
+    }
+  ],
+  "isError": false,
+  "structuredContent": {
+    "totals": {
+      "calls": 3,
+      "errors": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "cost_nano_usd": 7000000,
+      "cost_usd": "0.007",
+      "calls_cost_computed": 3,
+      "calls_cost_unknown": 0
+    },
+    "group_by": "api",
+    "groups": [
+      {
+        "calls": 3,
+        "errors": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_nano_usd": 7000000,
+        "cost_usd": "0.007",
+        "calls_cost_computed": 3,
+        "calls_cost_unknown": 0,
+        "key": "search"
+      }
+    ],
+    "groups_total": 1,
+    "groups_truncated": false,
+    "project": "acceptance-search",
+    "since": null,
+    "until": null,
+    "limit": 20
+  }
+}
