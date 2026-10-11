@@ -11,6 +11,8 @@ from __future__ import annotations
 import base64
 import binascii
 import hashlib
+from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from mcp_perplexity_pro import pricing
@@ -181,3 +183,53 @@ def build_request(
         request["dimensions"] = dimensions
     request["encoding_format"] = API_ENCODING[encoding]
     return request
+
+
+# --- Planning an index call (design D6) ------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class PlannedChunk:
+    item: int  # position of the chunk's item in the planner's input
+    chunk_index: int
+    text: str
+
+
+@dataclass(frozen=True)
+class IndexPlan:
+    batches: list[list[PlannedChunk]]
+    taken_items: int  # how many leading items are in the plan
+    remaining: int  # pending chunks of the items NOT taken
+
+
+def plan_index(items: Sequence[Sequence[str]], limit: int) -> IndexPlan:
+    """Plan one ``index`` call over the pending items' chunks (each item a non-empty list).
+
+    Items are taken whole, in order, and the call stops after the item that makes the running
+    chunk count reach ``limit``; at least one whole item is always taken, so a caller looping on
+    ``remaining`` always makes progress (a call may exceed ``limit`` by up to 49 chunks). The
+    taken chunks are packed in order into batches of at most 64 inputs and 100000 characters.
+    """
+    taken = 0
+    count = 0
+    for chunks in items:
+        taken += 1
+        count += len(chunks)
+        if count >= limit:
+            break
+    batches: list[list[PlannedChunk]] = []
+    current: list[PlannedChunk] = []
+    chars = 0
+    for position, chunks in enumerate(items[:taken]):
+        for chunk_index, text in enumerate(chunks):
+            if current and (
+                len(current) >= MAX_BATCH_INPUTS or chars + len(text) > MAX_BATCH_CHARS
+            ):
+                batches.append(current)
+                current, chars = [], 0
+            current.append(PlannedChunk(position, chunk_index, text))
+            chars += len(text)
+    if current:
+        batches.append(current)
+    remaining = sum(len(chunks) for chunks in items[taken:])
+    return IndexPlan(batches, taken, remaining)
