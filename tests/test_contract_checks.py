@@ -1108,3 +1108,17 @@ def test_costed_call_is_called_from_exactly_its_four_callers_and_defined_once():
     for tool in (SRC / "tools").glob("*.py"):
         text = tool.read_text()
         assert "costed_call" not in text and "record_usage" not in text, tool.name
+
+
+# --- 1c. only the storage module touches the chunk table (py-embeddings design D4) -----------
+
+
+def test_only_the_storage_module_and_the_model_touch_embedding_chunks():
+    allowed = {"storage/embeddings.py", "storage/models.py"}
+    touching = {
+        path.relative_to(SRC).as_posix()
+        for path in SRC.rglob("*.py")
+        if "migrations" not in path.parts
+        and ("embedding_chunks" in path.read_text() or "EmbeddingChunk" in path.read_text())
+    }
+    assert touching == allowed, touching

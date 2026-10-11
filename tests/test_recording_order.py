@@ -1,7 +1,7 @@
 """Task 5.2: the recording order of every costed tool, proven per tool and not only on the helper.
 
-The six costed paths are ask, a search, a decision, a chat send, a research submit (answered
-terminal, so it is a costed call) and a jobs observation. For each:
+The seven costed paths are ask, a search, a decision, an embedding index, a chat send, a
+research submit (answered terminal, so it is a costed call) and a jobs observation. For each:
 
 * another connection can write while the upstream call is in flight (no write unit is open);
 * the usage event is stored after the call and BEFORE the tool's own write (the statement trace
@@ -23,6 +23,7 @@ import httpx2
 import pytest
 from agent_support import fixture, respond_with
 from chat_support import FIRST
+from embeddings_support import embed_response
 from research_support import COMPLETED, RUN_ID, Clock, job, routes, seed_job
 from sqlalchemy import event
 from sqlalchemy.exc import OperationalError
@@ -55,6 +56,18 @@ CASES = [
         {"query": "q"},
         lambda: respond_with("agent_fast.json"),
         None,
+    ),
+    Case(
+        "embed",
+        "perplexity_embed",
+        {
+            "action": "index",
+            "source": "text",
+            "items": [{"key": "k", "text": "some text"}],
+            "dimensions": 128,
+        },
+        lambda: lambda request, n: embed_response(request),
+        "INSERT INTO embedding_chunks",
     ),
     Case(
         "decide",
@@ -182,6 +195,8 @@ async def test_a_failing_own_write_keeps_the_event(research_world, case):
     assert await w.count("usage_events") == 1  # the spend was recorded before the write failed
     if case.tool == "perplexity_chat":
         assert await w.count("chats") == 0 and await w.count("chat_messages") == 0
+    elif case.tool == "perplexity_embed":
+        assert await w.count("embedding_chunks") == 0
     elif case.tool == "perplexity_research":
         assert await w.count("research_jobs") == 0
     else:
