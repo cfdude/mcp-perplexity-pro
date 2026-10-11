@@ -1,0 +1,16 @@
+{
+  "endpoint": "/v1/embeddings",
+  "method": "POST",
+  "http_status": 401,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "bad key",
+  "latency_seconds": 0.129,
+  "response_headers": {},
+  "request": {
+    "model": "pplx-embed-v1-0.6b",
+    "input": "x"
+  }
+}

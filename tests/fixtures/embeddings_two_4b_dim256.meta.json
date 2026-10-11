@@ -1,0 +1,26 @@
+{
+  "endpoint": "/v1/embeddings",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "two inputs, 4b, 256 dims",
+  "latency_seconds": 0.148,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "48",
+    "x-ratelimit-reset": "1791742644",
+    "x-ratelimit-used": "2",
+    "x-request-id": "703f6e39-5de4-44e1-a960-51bc08cadb76"
+  },
+  "request": {
+    "model": "pplx-embed-v1-4b",
+    "input": [
+      "semantic search with local vectors",
+      "a recipe for sourdough bread"
+    ],
+    "dimensions": 256
+  }
+}

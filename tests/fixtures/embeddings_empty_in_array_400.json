@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "input[1] cannot be an empty string",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

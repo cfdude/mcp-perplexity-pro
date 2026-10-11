@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "failed to get embeddings: POST /v1/embeddings: 400 Bad Request: {\"error\":{\"message\":\"Output dimension must be a multiple of 8, got 130.\",\"type\":\"invalid_request\",\"code\":\"400\",\"model\":\"pplx-embed-v1-0.6b\"}}",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

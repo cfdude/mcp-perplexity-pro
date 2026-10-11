@@ -1,0 +1,22 @@
+{
+  "endpoint": "/v1/embeddings",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "64 inputs of 4000 characters, 0.6b, 128 dims",
+  "latency_seconds": 0.411,
+  "response_headers": {
+    "x-ratelimit-limit": "50",
+    "x-ratelimit-remaining": "49",
+    "x-ratelimit-reset": "1791743324",
+    "x-ratelimit-used": "1",
+    "x-request-id": "65103d5f-b728-4a37-ab3f-f0b6ddd2a9f6"
+  },
+  "request": {
+    "_large_request": true,
+    "note": "64 inputs of 4000 characters, 0.6b, 128 dims"
+  }
+}

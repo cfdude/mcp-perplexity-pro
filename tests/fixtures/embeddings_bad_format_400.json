@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "encoding format must be one of: base64_int8 base64_binary",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

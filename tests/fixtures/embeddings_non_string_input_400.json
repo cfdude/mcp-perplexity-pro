@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "input must be a non-empty string or array of non-empty strings",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

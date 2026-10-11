@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "model must be one of: pplx-embed-v1-0.6b pplx-embed-v1-4b",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

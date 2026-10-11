@@ -1,0 +1,17 @@
+{
+  "endpoint": "/v1/embeddings",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-10-11",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after and x-ratelimit-*.",
+  "request_note": "model omitted",
+  "latency_seconds": 0.125,
+  "response_headers": {
+    "x-request-id": "f8380c72-7b59-4152-9327-f74bb8694b60"
+  },
+  "request": {
+    "input": "x"
+  }
+}

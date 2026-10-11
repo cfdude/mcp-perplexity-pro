@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "dimensions must not exceed 1024 for model pplx-embed-v1-0.6b",
+    "type": "invalid_request",
+    "code": 400
+  }
+}
