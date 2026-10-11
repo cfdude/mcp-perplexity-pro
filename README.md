@@ -12,7 +12,7 @@ now return `403 chat_completions_not_available` ("Sonar is now the Agent API"), 
 answer a single query. There was no working behavior to port, so the TypeScript code is deleted
 (git history keeps it) and the server was rebuilt in Python on the Agent API (`POST /v1/agent`).
 
-**Eight tools exist today:**
+**Nine tools exist today:**
 
 | Tool | What it does | Spends money |
 |---|---|---|
@@ -21,14 +21,15 @@ answer a single query. There was no working behavior to port, so the TypeScript 
 | `perplexity_research` | Starts a deep research run in the background and returns a job id at once. Depth `medium` (default), `high` or `xhigh` | yes, when a call observes the run finish |
 | `perplexity_jobs` | Manages research runs: `list`, `status`, `result`, `cancel` | no new spend; it records the finished run's |
 | `perplexity_search` | Ranked web search results as data (title, url, snippet, dates), with no model answer. Type `fast` (default, $0.001 per request) or `web` ($0.005 per request) | yes |
+| `perplexity_decide` | Typed questions about a text, answered with calibrated probabilities: a yes probability, the most probable option, or a position on an ordered rubric. One request holds up to 32 questions. About $0.02 per million input tokens, output free | yes |
 | `perplexity_models` | Lists the models your key can use, with live prices, plus the documented Agent API presets | no |
 | `perplexity_projects` | Lists projects, or deletes one and its stored records (spend history is kept) | no |
 | `perplexity_usage` | Reports what recorded upstream calls cost, grouped by tool, API, model, project or day. Read-only | no |
 
-**The four Agent tools and `perplexity_search` record their usage.** Every costed upstream call
-stores one usage event (`perplexity_usage` reports them), and a background research run is recorded
-once, by the first `perplexity_jobs` call that sees it finish. The Embeddings and Decisions tools
-arrive in later releases and will each record their calls the same way.
+**The four Agent tools, `perplexity_search` and `perplexity_decide` record their usage.** Every
+costed upstream call stores one usage event (`perplexity_usage` reports them), and a background
+research run is recorded once, by the first `perplexity_jobs` call that sees it finish. The
+Embeddings tool arrives in a later release and will record its calls the same way.
 
 **These tools can spend money, and there is no cost ceiling.** Defaults are the cheapest depths
 (`fast`; `medium` for research) and the cheaper search type (`fast`). `high` and `xhigh` exist only behind `perplexity_research`
@@ -155,7 +156,8 @@ The client launches the server, so the key goes in the client's `env` block:
 Four tools (`perplexity_ask`, `perplexity_chat`, `perplexity_research`, `perplexity_jobs`) call the
 Perplexity Agent API (`POST /v1/agent`) and spend money. The first three sections below are what
 applies to all four; each tool follows. `perplexity_search` calls the Search API (`POST /search`)
-and has its own cost table in its section.
+and has its own cost table in its section, and so does `perplexity_decide` (the Decisions API,
+`POST /v1/decisions`).
 
 ### Cost by depth
 
@@ -630,7 +632,7 @@ response carries no usage or cost to report. A five-query request is still one b
 | `fast` (default) | $0.001 | Computed from the documented price. Live acceptance, 2026-10-11: two `fast` calls, 0.001 each, recorded as 1000000 nano-USD each |
 | `web` | $0.005 | Computed from the documented price. Live acceptance, 2026-10-11: one `web` call, recorded as 5000000 nano-USD |
 
-The live acceptance (`openspec/changes/py-search-api/acceptance/`) made 3 billed calls, no errors
+The live acceptance (`openspec/changes/archive/2026-10-11-py-search-api/acceptance/`) made 3 billed calls, no errors
 and no unknown cost, and `perplexity_usage` for the project reported 7000000 nano-USD ($0.007),
 which equals 0.001 + 0.001 + 0.005. That reconciles the server's own books against its own price
 table. **The provider's console was not read**, so the cost of one unit per request is not checked
@@ -649,7 +651,7 @@ count (120 parallel invalid requests drew no 429). A 429 is retried honoring `Re
 reported as `rate_limited`. No 429 from the Search API was observed.
 
 Example, `fast` with a domain filter. The result is from the live acceptance run on 2026-10-11
-(`openspec/changes/py-search-api/acceptance/a1.json`). The snippets are cut here to their first
+(`openspec/changes/archive/2026-10-11-py-search-api/acceptance/a1.json`). The snippets are cut here to their first
 line followed by `...` (the real ones are 1840, 4233 and 1466 characters); nothing else is edited:
 
 ```json
@@ -737,6 +739,158 @@ Refusals return before any request (`x1.json`, `x2.json`), as `[invalid_request]
 [invalid_request] recency: cannot be combined with a date filter.
 ```
 
+### `perplexity_decide`
+
+Typed questions about a text, answered with calibrated probabilities. It calls the Decisions API
+(`POST /v1/decisions`), one request per call however many questions it holds, and spends money. The
+answers are **model probabilities, not facts**: the tool returns a number or a distribution and you
+choose the threshold. A `noul` of 0.93 means the model puts 93% on yes, not that the answer is yes.
+
+| Argument | Type | Default | Meaning |
+|---|---|---|---|
+| `state` | string, object or list | required | What to judge: non-blank text, or a non-empty JSON object or list, at most 200000 characters serialized (our cap; the API's limit is 262144 tokens). Images are not supported in v1 and are refused (an `image_url` key or a `data:image/` string anywhere in it). NaN, Infinity and nesting too deep to serialize are refused |
+| `questions` | object | required | 1 to 32 questions (our cap; the API allows 128), by a name you choose: each name non-blank text of at most 128 characters. Each question is `{type, criteria, instructions}`; see "Question shapes" |
+| `model` | `pplx-decider-v1.1-27b` or `pplx-decider-v1-27b` | `pplx-decider-v1.1-27b` | The Decisions model. Both cost the same. Always sent |
+| `project` | string | `default` | The project the call is recorded under; created if absent |
+
+**Question shapes.** `instructions` is optional on every type: non-blank text, or a non-empty object
+or list. Any other key in a question is refused.
+
+| `type` | `criteria` | Answer |
+|---|---|---|
+| `noul` (yes or no) | An object with the keys `true` and/or `false`, each saying what that answer means; or leave it out and give `instructions`. One of the two is required | `noul`: the probability the answer is yes, 0 to 1 |
+| `choice` | An object of 1 to 255 options: option name to a description (a value may be `null`) | `choice`: the most probable option, `confidence`, and `probabilities` for every option |
+| `score` | A list of 1 to 10 levels, in order (the index is the level number) | `score`: the probability-weighted level index, `confidence`, `probabilities` by level index, and `legend` (level index to the level's text) |
+
+Every argument is checked before anything is sent: a bad one is an `invalid_request` error that
+names it, nothing is billed and no project is created.
+
+Output (`structuredContent`, with warnings, one line per question and one usage line as text):
+
+| Key | Meaning |
+|---|---|
+| `answers` | One answer per question, by your names. Each has `type` and the keys of its shape (`noul`, `choice`, `confidence`, `probabilities`, `score`, `legend`); keys that do not apply to the type are `null` |
+| `model` | The model that answered |
+| `input_tokens`, `output_tokens` | Token counts from the response; `null` when unreadable |
+| `cost_usd` | Exact USD cost of the request as a decimal string, `null` when unknown |
+| `cost_source` | `computed`, or `none` when the cost is unknown |
+| `latency_ms` | Measured wall time of the upstream call |
+| `project` | The project the call was recorded under |
+| `warnings` | Things worth knowing about this result. A question the API returned no readable answer for is left out of `answers` with a warning |
+
+Cost. The API reports no cost, so it is **computed** from Perplexity's documented price (dated
+2026-10-09, `PRICES_AS_OF` in `pricing.py`): $0.02 per million input tokens, which is 20 nano-USD
+per input token. Output tokens are free and there is no per-request fee. `cost_source` is
+`computed`. A call whose `input_tokens` cannot be read has an unknown cost (`cost_usd` `null`,
+`cost_source` `none`), not a cost of zero, and `perplexity_usage` counts it in
+`calls_cost_unknown`.
+
+The live acceptance (`openspec/changes/py-decisions-tool/acceptance/`, 2026-10-11) made 2 billed
+calls, no errors and no unknown cost, from 346 and 107 input tokens, and `perplexity_usage` for the
+project reported 9060 nano-USD ($0.00000906), which equals 346 x 20 + 107 x 20 (6920 + 2140). That
+reconciles the server's own books against its own price table. **The provider's console was not
+read**, so the computed cost is not checked against what Perplexity actually billed.
+
+**No request id.** The response body carries no id, so the usage event's request id is empty
+and two identical calls each record an event, which is right because each was billed. An event
+cannot be matched to the provider's own logs.
+
+A call the API refused with a 4xx is recorded with cost 0 and its error category, and any other
+error call (a 5xx, a timeout) is recorded the same way and may have been billed, so the usage
+totals stay a lower bound.
+
+**Rate limit.** The provider's limit seen in the probe is 10 requests per second (`x-ratelimit-limit`
+10). It counts requests, not questions: one request holding 32 questions is one unit. A 429 is
+retried honoring `Retry-After`, then reported as `rate_limited`. No 429 from the Decisions API was
+observed in the acceptance run.
+
+Example, a support ticket as an object state, default model, three questions of the three shapes. The
+result is from the live acceptance run on 2026-10-11 (`d1.json`): the values are as returned and
+only the line layout is compacted. The call below is the request that produced it:
+
+```json
+{"name": "perplexity_decide", "arguments": {
+  "state": {"ticket": "App crashes when exporting a PDF with more than 200 pages", "customer_tier": "enterprise"},
+  "questions": {
+    "urgent": {"type": "noul", "criteria": {"true": "blocks the customer work", "false": "does not block"}},
+    "area": {"type": "choice", "criteria": {"export": "file export", "auth": "login", "billing": null}},
+    "severity": {"type": "score", "criteria": ["minor", "moderate", "major", "critical"]}
+  },
+  "project": "acceptance-decide"}}
+```
+
+```json
+{
+  "answers": {
+    "urgent": {"type": "noul", "noul": 0.9272088398171816, "choice": null, "confidence": null, "probabilities": null, "score": null, "legend": null},
+    "area": {
+      "type": "choice", "noul": null, "choice": "export", "confidence": 0.9999303770930034,
+      "probabilities": {"export": 0.999953584728669, "auth": 0.000012104419072042511, "billing": 0.000034310852258853485},
+      "score": null, "legend": null
+    },
+    "severity": {
+      "type": "score", "noul": null, "choice": null, "confidence": 0.572264292842776,
+      "probabilities": {"0": 0.0014426776781794849, "1": 0.01213513817010492, "2": 0.5737069705209555, "3": 0.4127152136307601},
+      "score": 2.397694720104296,
+      "legend": {"0": "minor", "1": "moderate", "2": "major", "3": "critical"}
+    }
+  },
+  "model": "pplx-decider-v1.1-27b",
+  "input_tokens": 346,
+  "output_tokens": 3,
+  "cost_usd": "0.00000692",
+  "cost_source": "computed",
+  "latency_ms": 601,
+  "project": "acceptance-decide",
+  "warnings": []
+}
+```
+
+Read the score as a position on the rubric: 2.40 sits between `major` (2) and `critical` (3), with
+57% on `major` and 41% on `critical`. The `confidence` of a score or choice is a separate number
+from the answer.
+
+The older model on a text state (`d2.json`), one `score` question. The values are as returned,
+with the layout compacted:
+
+```json
+{"name": "perplexity_decide", "arguments": {
+  "state": "The package arrived two weeks late and the box was crushed, but support refunded me quickly.",
+  "questions": {"satisfaction": {"type": "score", "criteria": ["furious", "unhappy", "okay", "delighted"]}},
+  "model": "pplx-decider-v1-27b",
+  "project": "acceptance-decide"}}
+```
+
+```json
+{
+  "answers": {
+    "satisfaction": {
+      "type": "score", "noul": null, "choice": null, "confidence": 0.6495288146561603,
+      "probabilities": {"0": 0.012135763754312684, "1": 0.299771970111492, "2": 0.661664578410473, "3": 0.026427687723722365},
+      "score": 1.7023841901036052,
+      "legend": {"0": "furious", "1": "unhappy", "2": "okay", "3": "delighted"}
+    }
+  },
+  "model": "pplx-decider-v1-27b",
+  "input_tokens": 107,
+  "output_tokens": 1,
+  "cost_usd": "0.00000214",
+  "cost_source": "computed",
+  "latency_ms": 245,
+  "project": "acceptance-decide",
+  "warnings": []
+}
+```
+
+Refusals return before any request (`x1.json`, `x2.json`), as `[invalid_request] ...` with
+`structuredContent` `{"category": "invalid_request", "message": ...}`. The first is a blank state,
+the second a state holding an `image_url` part:
+
+```
+[invalid_request] state: must not be blank.
+[invalid_request] state: images are not supported in this version.
+```
+
 ### `perplexity_models`
 
 Lists the models available to the configured key, from the live `GET /v1/models`, with prices as
@@ -801,9 +955,9 @@ fixture) and all five presets.
 Reports what the recorded upstream Perplexity calls cost. It reads the usage events (one row per
 costed upstream call, stored by the server itself) and never writes. The four Agent tools record
 their calls (`perplexity_ask`, `perplexity_chat` send and `perplexity_research`, whose background
-runs are recorded when a `perplexity_jobs` call sees them finish), and so does `perplexity_search`;
-the totals are zero on a fresh install and until one of them runs. The Embeddings and Decisions
-tools will record theirs the same way when they arrive.
+runs are recorded when a `perplexity_jobs` call sees them finish), and so do `perplexity_search`
+and `perplexity_decide`; the totals are zero on a fresh install and until one of them runs. The
+Embeddings tool will record its calls the same way when it arrives.
 
 | Argument | Type | Default | Meaning |
 |---|---|---|---|
@@ -1094,14 +1248,17 @@ src/mcp_perplexity_pro/
   agent.py        Agent API request building and validation, response digestion, run_costed
                   and the research job observation
   costed.py       costed_call: the one costed-call sequence (project, timed call, record),
-                  shared by the Agent and Search tools
+                  shared by the Agent, Search and Decisions tools; cost_fields turns a recorded
+                  usage into the result's cost
   search.py       Search API request building and validation, response digestion, run_search
+  decisions.py    Decisions API request building and validation, response digestion,
+                  decisions_usage (cost from input tokens), run_decide
   models/         tolerant pydantic models for API payloads (agent.py: Agent runs, search.py:
-                  Search responses)
+                  Search responses, decisions.py: Decisions responses)
   tools/          one module per tool, each with register(server): ask, chat, research, jobs,
-                  search, models, projects, usage
+                  search, decide, models, projects, usage
   usage.py        usage recorder (record_usage), money helpers, the Agent usage parser
-                  (Search has none: its cost is computed)
+                  (Search and Decisions have none: their cost is computed)
   pricing.py      documented Perplexity prices in nano-USD, for costs the API does not report
   usage_report.py read-only spend report behind perplexity_usage
   storage/        engine, unit_of_work session, migration runner, project rules, ORM models,
@@ -1109,7 +1266,7 @@ src/mcp_perplexity_pro/
   migrations/     Alembic environment and versions/NNNN_slug.py (packaged in the wheel)
   log_setup.py, redaction.py   stderr logging with secrets removed
 tests/            offline tests, fixtures/, and the live-marked capture helper
-openspec/         the spec-driven change records (py-foundation, py-usage-log, py-agent-api, py-search-api)
+openspec/         the spec-driven change records (py-foundation, py-usage-log, py-agent-api, py-search-api, py-decisions-tool)
 ```
 
 Contributor and agent guidance is in `CLAUDE.md`.
