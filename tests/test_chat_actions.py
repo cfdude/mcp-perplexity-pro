@@ -32,7 +32,7 @@ async def test_the_listing_has_the_annotations_costs_and_wording_of_every_action
         tool.output_schema["properties"]["chat_id"] and "chats" in tool.output_schema["properties"]
     )
     desc = " ".join(tool.description.split())
-    for cost in ("$0.001 to $0.002", "$0.0005 to $0.004", "$0.016 to $0.017"):
+    for cost in ("$0.001 to $0.002", "$0.0005 to $0.004", "$0.016 to $0.025"):
         assert cost in desc
     assert "list, read and delete make no upstream call" in desc
     assert "local database" in desc and "only hides" in desc and "retrieval" in desc
@@ -154,7 +154,7 @@ async def test_read_returns_a_stored_sources_list_and_survives_a_damaged_one(cha
         )
     out = (await w.call(TOOL, action="read", chat_id=chat)).structured_content
     assert out["messages"][1]["sources"] == [
-        {"url": "https://a.example", "title": "A", "date": None, "id": None}
+        {"url": "https://a.example", "title": "A", "date": None, "id": None, "ids": []}
     ]
     async with w.engine.begin() as conn:
         await conn.execute(text("UPDATE chat_messages SET sources_json = 'not json'"))

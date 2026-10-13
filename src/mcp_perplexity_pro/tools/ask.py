@@ -16,6 +16,7 @@ from mcp_perplexity_pro.agent import (
     check_text,
     digest,
     run_costed,
+    source_line,
 )
 from mcp_perplexity_pro.errors import PerplexityError
 
@@ -72,10 +73,7 @@ def render_answer(result: AskResult) -> str:
     if result.sources:
         lines.append("")
         lines.append("Sources:")
-        lines.extend(
-            f"{i}. {s.title + ' - ' if s.title else ''}{s.url}"
-            for i, s in enumerate(result.sources, 1)
-        )
+        lines.extend(source_line(i, s) for i, s in enumerate(result.sources, 1))
     lines.append("")
     lines.append(render_usage(result))
     return "\n".join(lines)
@@ -176,7 +174,7 @@ def register(server: FastMCP) -> None:
 
         Approximate cost per call by depth (observed ranges; the upper figures are estimates):
         fast $0.001 to $0.002 (the default), low $0.0005 to $0.004 (up to about $0.02
-        estimated), medium $0.016 to $0.017 as a research run (up to about $0.05 estimated; a
+        estimated), medium $0.016 to $0.025 as a research run (up to about $0.05 estimated; a
         synchronous medium call was not measured). high and xhigh can cost dollars and take
         minutes (unmeasured estimates), so they exist only behind perplexity_research. Giving a
         search filter (domains, recency, after, before, country, max_results) makes the run use

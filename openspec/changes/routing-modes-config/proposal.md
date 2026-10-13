@@ -26,11 +26,12 @@ Probed live on 2026-10-13 through the running server: `perplexity/sonar` is in t
 
 ### Modified Capabilities
 
-- `agent-ask`: "Depth selects a preset" (the default no longer names `fast`) and "Explicit model" (the conflict list gains `tier`).
+- `agent-ask`: "Depth selects a preset" (the default no longer names `fast`) and "Explicit model" (conflicts owned by `routing-config`; `search` false now allowed on every model route).
+- `agent-chat`: "Send starts a chat" (the first-turn scenario no longer names preset `fast`) and "Send takes the ask options" (adds `tier`, tier per turn).
 - `server-runtime`: "Configuration from environment" (five new variables, and `dynamic` refused) and a new requirement for the server instructions.
 - `model-catalog`: a new requirement that `perplexity_models` reports the active routing.
 
-`agent-chat` has no requirement of its own for depth or model: `perplexity_chat` send shares the ask option path, and `routing-config` states that it applies to both.
+`perplexity_chat` send shares the ask option path; `routing-config` states that it applies to both.
 
 ## Impact
 

@@ -28,6 +28,7 @@ from mcp_perplexity_pro.agent import (
     observe_job,
     observe_job_locked,
     search_progress,
+    source_line,
     stored_usage,
 )
 from mcp_perplexity_pro.errors import PerplexityError
@@ -274,9 +275,7 @@ async def _result(app: Any, *, project: str | None, job_id: int | None) -> tuple
     lines.extend(f"Warning: {w}" for w in obs.warnings)
     if sources:
         lines.extend(["", "Sources:"])
-        lines.extend(
-            f"{i}. {s.title + ' - ' if s.title else ''}{s.url}" for i, s in enumerate(sources, 1)
-        )
+        lines.extend(source_line(i, s) for i, s in enumerate(sources, 1))
     if usage is not None:
         cost = (
             f"cost {usage.cost_usd} USD ({usage.cost_source})" if usage.cost_usd else "cost unknown"

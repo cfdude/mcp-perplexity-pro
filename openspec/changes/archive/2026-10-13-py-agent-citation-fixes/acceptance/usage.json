@@ -1,0 +1,26 @@
+{
+ "totals": {
+  "calls": 2,
+  "errors": 0,
+  "input_tokens": 63606,
+  "output_tokens": 3502,
+  "total_tokens": 67108,
+  "cost_nano_usd": 26920000,
+  "cost_usd": "0.02692",
+  "calls_cost_computed": 0,
+  "calls_cost_unknown": 0
+ },
+ "groups": [
+  {
+   "key": "perplexity_research",
+   "calls": 1,
+   "cost_nano_usd": 25240000
+  },
+  {
+   "key": "perplexity_ask",
+   "calls": 1,
+   "cost_nano_usd": 1680000
+  }
+ ],
+ "project": "acceptance-citations"
+}

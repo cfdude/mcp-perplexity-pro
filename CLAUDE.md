@@ -16,8 +16,8 @@ user-facing behavior and `openspec/changes/archive/2026-10-09-py-foundation/`,
 `openspec/changes/archive/2026-10-09-py-usage-log/`,
 `openspec/changes/archive/2026-10-09-py-agent-api/`,
 `openspec/changes/archive/2026-10-11-py-search-api/`,
-`openspec/changes/archive/2026-10-11-py-decisions-tool/` and `openspec/changes/py-embeddings/`
-(`design.md` especially) for why things are the way they are.
+`openspec/changes/archive/2026-10-11-py-decisions-tool/` and
+`openspec/changes/archive/2026-10-11-py-embeddings/` (`design.md` especially) for why things are the way they are.
 
 ## Development Commands
 
@@ -62,16 +62,16 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 | `models/decisions.py` | `DecisionsResponse` (`answers` as a raw mapping, required; `model` and `usage` optional; `extra="allow"`): tolerant like the other models, so a billed response is never lost to a schema quibble; `decisions.digest` owns every judgment about an answer |
 | `models/embeddings.py` | `EmbeddingsResponse` (`data` as a raw list; `model` and `usage` optional; `extra="allow"`): tolerant like the other models; `embeddings.py` owns every judgment about a vector (strict decoding) |
 | `models/agent.py` | `AgentRun` (only `id` and `status` are required) and `CancelResponse` (`response_id` and `status` are required), `output` is `Any`, so a spend-bearing response is never lost to a schema quibble |
-| `agent.py` | The Agent toolset's shared logic: option validation and `build_request`, `digest` (answer, sources, usage summary), `run_costed` (the one costed-call sequence, below), and the research job observation (`observe_job`, `job_columns`, `JobLocks`) |
+| `agent.py` | The Agent toolset's shared logic: option validation and `build_request`, `digest` (answer, sources with every result id per URL in `ids`, usage summary; `strip_trailing_markers`/`clean_markers` remove trailing citation markers from `answer_json` strings by a linear scan from the end, never a regex search, and `too_deep` refuses a value nested past `MAX_JSON_DEPTH` = 100 levels; a source keeps at most `MAX_IDS_PER_SOURCE` = 64 ids; markers are `[N]`, 1 to 999, and `[web:N]`, 0 to 999), `source_line` (the readable source list), `run_costed` (the one costed-call sequence, below), and the research job observation (`observe_job`, `job_columns`, `JobLocks`) |
 | `costed.py` | `costed_call`, the one costed-call sequence (validate the project name, commit the project, timed call with no write unit, `record_usage`; two `record_usage(` lines), plus `Recording` (what an interpreter says about a response) and `Costed` (result, latency, project, status, recording). Used by `agent.run_costed`, `search.run_search`, `decisions.run_decide` and `embeddings.run_embed`; `cost_fields` (a recorded usage to the result's `cost_usd` and `cost_source`) lives here and is shared by the search and decide tools |
 | `search.py` | The Search toolset's logic: `SearchOptions` and `build_request` (local validation, nothing sent for a bad call; the Agent validators are imported, not copied), `digest` (total, never raises) and the output models, `search_usage` (one billing unit at the documented price of the type, source `computed`) and `run_search` (the caller of `costed_call`) |
 | `decisions.py` | The Decisions toolset's logic: `DecideOptions` and `build_request` (local validation of the state and the three question shapes, nothing sent for a bad call; the Agent validators are imported, not copied), `digest` (total, never raises) and the output models, `decisions_usage` (input tokens at the documented price, source `computed`, unknown rather than zero when the count is unreadable) and `run_decide` (the caller of `costed_call`) |
 | `embeddings.py` | The Embeddings toolset's logic: option validation and `build_request` (nothing sent for a bad call), chunking (4000 characters, at most 50 chunks per text), `decode_vector`, `plan_index` (batches of at most 64 inputs and 100000 characters), `embeddings_usage` (the cost the API reports, `computed` fallback, `none` never zero), `run_embed` (the caller of `costed_call`), `ProjectLocks` (the per-project `embed_locks`), and the `index`, `search` (numpy cosine on `int8`, Hamming on `binary`, scored in blocks under `asyncio.to_thread`), `status` and `delete` operations. numpy is imported lazily inside the scoring functions |
 | `tools/` | One module per tool, each `register(server)`; `tools/__init__.py:register_tools` calls them |
 | `tools/search.py` | `perplexity_search` (`fast`/`web`, one query or up to five merged into one list, `people` not offered). Spec: `openspec/changes/archive/2026-10-11-py-search-api/specs/search-tool/spec.md` |
-| `tools/decisions.py` | `perplexity_decide` (`noul`/`choice`/`score` questions, 1 to 32 per call, `pplx-decider-v1.1-27b` by default; images refused). Spec: `openspec/changes/py-decisions-tool/specs/decisions-tool/spec.md` |
-| `tools/embeddings.py` | `perplexity_embed` (`index`/`search`/`status`/`delete`; sources `chat`, `job`, `text`; models `pplx-embed-v1-0.6b` (default) and `pplx-embed-v1-4b`; vectors never returned; `delete` needs `confirm`). Specs: `openspec/changes/py-embeddings/specs/embeddings-tool/spec.md` and `.../embeddings-store/spec.md` |
-| `tools/ask.py`, `tools/chat.py`, `tools/research.py`, `tools/jobs.py` | `perplexity_ask` (stateless, `fast`/`low`/`medium`), `perplexity_chat` (`send`/`list`/`read`/`delete` over local history), `perplexity_research` (background submit, returns a job id), `perplexity_jobs` (`list`/`status`/`result`/`cancel`). Specs: `openspec/changes/py-agent-api/specs/` |
+| `tools/decisions.py` | `perplexity_decide` (`noul`/`choice`/`score` questions, 1 to 32 per call, `pplx-decider-v1.1-27b` by default; images refused). Spec: `openspec/specs/decisions-tool/spec.md` |
+| `tools/embeddings.py` | `perplexity_embed` (`index`/`search`/`status`/`delete`; sources `chat`, `job`, `text`; models `pplx-embed-v1-0.6b` (default) and `pplx-embed-v1-4b`; vectors never returned; `delete` needs `confirm`). Specs: `openspec/specs/embeddings-tool/spec.md` and `openspec/specs/embeddings-store/spec.md` |
+| `tools/ask.py`, `tools/chat.py`, `tools/research.py`, `tools/jobs.py` | `perplexity_ask` (stateless, `fast`/`low`/`medium`), `perplexity_chat` (`send`/`list`/`read`/`delete` over local history), `perplexity_research` (background submit, returns a job id), `perplexity_jobs` (`list`/`status`/`result`/`cancel`). Specs: `openspec/specs/agent-ask/`, `agent-chat/` and `agent-research/` |
 | `usage.py` | The recorder `record_usage` (best effort, never raises), money helpers (`to_nano`, `format_usd`, nano-USD ints), `Usage`/`ToolCallUsage`, `usage_from_agent_response`, `usage_from_embeddings_response` (the cost the API reports, only in USD), `computed_usage`, `agent_response_status`, and the `_PARSERS` registry (one entry per `api`: `agent` and `embeddings`) |
 | `pricing.py` | Documented Perplexity prices as integer nano-USD (`PRICES_AS_OF`, `PRICES_SOURCE`) and the `*_cost_nano` helpers returning `None` when unknown; pinned to `tests/fixtures/pricing_page.json` |
 | `usage_report.py` | `usage_report`: read-only SQL aggregation behind `perplexity_usage` (totals over all matches, one grouping chosen from a fixed whitelist, bound parameters only) |
@@ -132,7 +132,8 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
    `1b12844`): 49539 bytes (+8.8%, from 45542), and the `perplexity_decide` entry alone is 3996
    bytes. Adding `perplexity_embed` (ten tools) measured 2026-10-11 the same way (at `aba65c1`
    against `e252e8f`): 56161 bytes (+13.4%, from 49539), and the `perplexity_embed` entry alone is
-   6621 bytes. Ten tools exceed the design target of about nine by one; nothing was trimmed, and
+   6621 bytes. The `ids` field of `Source` (py-agent-citation-fixes) then measured 56898 bytes
+   (+737, +1.3%) on 2026-10-13. Ten tools exceed the design target of about nine by one; nothing was trimmed, and
    the existing descriptions (`perplexity_chat` is the largest) are the lever. Prefer one tool with
    an `action` argument over several, and trim descriptions before adding an eleventh tool.
 
@@ -370,7 +371,7 @@ a third by inlining the sequence above:
 - `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
   generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
   (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). The current change is
-  `py-embeddings` (`py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api` and `py-decisions-tool` are archived; the last under `openspec/changes/archive/2026-10-11-py-decisions-tool`). `docs/lessons/` holds process lessons
+  `routing-modes-config` (proposed, not started; `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
   with their enforcement points.
 - Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
   task's `tasks.md` checkbox ticked in the same commit.
