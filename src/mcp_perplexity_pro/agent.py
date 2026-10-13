@@ -337,9 +337,14 @@ class Source(BaseModel):
     url: Annotated[str, Field(description="Page URL")]
     title: Annotated[str | None, Field(description="Page title when known")] = None
     date: Annotated[str | None, Field(description="Publication date when the API gave one")] = None
-    id: Annotated[
-        int | None, Field(description="The API's result id; absent for fetched pages")
-    ] = None
+    id: Annotated[int | None, Field(description="The first of ids; null for fetched pages")] = None
+    ids: Annotated[
+        list[int],
+        Field(
+            description="Every result id the API gave this URL; an answer marker [N] or "
+            "[web:N] names the source whose ids hold N"
+        ),
+    ] = Field(default_factory=list)
 
 
 class UsageSummary(BaseModel):
@@ -401,7 +406,9 @@ def _answer_text(output: object) -> str:
 
 
 def _sources(output: object, secrets: Iterable[str] = ()) -> list[Source]:
-    """Search results and fetched pages in output order, de-duplicated by exact URL."""
+    """Search results and fetched pages in output order, de-duplicated by exact URL. The first
+    row of a URL supplies its title and date; every distinct integer result id seen for the
+    URL is kept in ``ids`` (an answer marker may cite any of them)."""
     if not isinstance(output, list):
         return []
     found: dict[str, Source] = {}
@@ -416,16 +423,93 @@ def _sources(output: object, secrets: Iterable[str] = ()) -> list[Source]:
             continue
         for row in rows:
             url = row.get("url") if isinstance(row, Mapping) else None
-            if not isinstance(url, str) or not url or url in found:
+            if not isinstance(url, str) or not url:
                 continue
-            title, when, ident = row.get("title"), row.get("date"), row.get("id")
+            ident = row.get("id")
+            ident = ident if isinstance(ident, int) and not isinstance(ident, bool) else None
+            known = found.get(url)
+            if known is not None:
+                if ident is not None and ident not in known.ids:
+                    known.ids.append(ident)
+                    known.id = known.ids[0]
+                continue
+            title, when = row.get("title"), row.get("date")
             found[url] = Source(
                 url=scrub_secrets(url, secrets),
                 title=scrub_secrets(title, secrets) if isinstance(title, str) else None,
                 date=scrub_secrets(when, secrets)[:DATE_CAP] if isinstance(when, str) else None,
-                id=ident if isinstance(ident, int) and not isinstance(ident, bool) else None,
+                id=ident,
+                ids=[] if ident is None else [ident],
             )
     return list(found.values())
+
+
+def source_line(position: int, source: Source) -> str:
+    """One line of the readable source list; ``ids`` shows which markers cite the source."""
+    title = f"{source.title} - " if source.title else ""
+    ids = f" (ids {', '.join(str(i) for i in source.ids)})" if source.ids else ""
+    return f"{position}. {title}{source.url}{ids}"
+
+
+_ASCII_SPACE = " \t\r\n"
+_MARKER_WINDOW = 10  # the longest marker, "[web:999]", is 9 characters
+
+
+def _marker_start(text: str, end: int) -> int | None:
+    """Where the marker ending just before ``end`` starts, or None. A marker is ``[N]`` (ASCII
+    digits, 1 to 999, no leading zero) or ``[web:N]`` (ASCII digits, 0 to 999)."""
+    if end < 3 or text[end - 1] != "]":
+        return None
+    start = text.rfind("[", max(0, end - _MARKER_WINDOW), end - 1)
+    if start < 0:
+        return None
+    inner = text[start + 1 : end - 1]
+    digits = inner[4:] if inner.startswith("web:") else inner
+    if not (1 <= len(digits) <= 3 and digits.isascii() and digits.isdigit()):
+        return None
+    if digits is inner and digits[0] == "0":
+        return None
+    return start
+
+
+def strip_trailing_markers(text: str) -> tuple[str, int]:
+    """``text`` without a trailing run of citation markers (and the ASCII whitespace before
+    each), and how many were removed. Scans from the end, so the time is linear in the number
+    of markers removed and never a backtracking search. Unchanged when there is none."""
+    end, count = len(text), 0
+    while True:
+        probe = end
+        while probe > 0 and text[probe - 1] in _ASCII_SPACE:
+            probe -= 1
+        start = _marker_start(text, probe)
+        if start is None:
+            break
+        end, count = start, count + 1
+    if count == 0:
+        return text, 0
+    return text[:end].rstrip(_ASCII_SPACE), count
+
+
+def clean_markers(value: Any) -> tuple[Any, int]:
+    """``value`` with trailing citation markers removed from every string, walking dicts and
+    lists with an explicit stack (no recursion; keys and non-string values untouched), and the
+    total removed. Mutates containers in place: the caller owns the parsed value."""
+    total = 0
+    if isinstance(value, str):
+        return strip_trailing_markers(value)
+    stack: list[Any] = [value]
+    while stack:
+        node = stack.pop()
+        slots = node.items() if isinstance(node, dict) else enumerate(node)
+        for key, item in list(slots):
+            if isinstance(item, str):
+                cleaned, n = strip_trailing_markers(item)
+                if n:
+                    node[key] = cleaned
+                    total += n
+            elif isinstance(item, dict | list):
+                stack.append(item)
+    return value, total
 
 
 def _parse_json(text: str) -> tuple[bool, Any]:
@@ -467,6 +551,19 @@ def digest(
             answer_json = value if parsed else None
             if not parsed and status != "incomplete":
                 warnings.append("The answer is not valid JSON, so answer_json is null.")
+            if parsed:
+                try:
+                    answer_json, removed = clean_markers(answer_json)
+                except Exception:  # the cleaner must never lose a billed answer
+                    logger.warning("agent digest: marker cleaning failed", exc_info=True)
+                    answer_json = value
+                    warnings.append("Citation-marker cleaning was skipped for answer_json.")
+                else:
+                    if removed:
+                        warnings.append(
+                            f"Removed {removed} citation marker(s) from string values of "
+                            "answer_json; the answer text is unchanged."
+                        )
         model, ident = body.get("model"), body.get("id")
         return Digest(
             answer=answer,

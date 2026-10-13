@@ -154,7 +154,7 @@ async def test_read_returns_a_stored_sources_list_and_survives_a_damaged_one(cha
         )
     out = (await w.call(TOOL, action="read", chat_id=chat)).structured_content
     assert out["messages"][1]["sources"] == [
-        {"url": "https://a.example", "title": "A", "date": None, "id": None}
+        {"url": "https://a.example", "title": "A", "date": None, "id": None, "ids": []}
     ]
     async with w.engine.begin() as conn:
         await conn.execute(text("UPDATE chat_messages SET sources_json = 'not json'"))

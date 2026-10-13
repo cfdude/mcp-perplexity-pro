@@ -16,6 +16,7 @@ from mcp_perplexity_pro.agent import (
     check_text,
     digest,
     run_costed,
+    source_line,
 )
 from mcp_perplexity_pro.errors import PerplexityError
 
@@ -72,10 +73,7 @@ def render_answer(result: AskResult) -> str:
     if result.sources:
         lines.append("")
         lines.append("Sources:")
-        lines.extend(
-            f"{i}. {s.title + ' - ' if s.title else ''}{s.url}"
-            for i, s in enumerate(result.sources, 1)
-        )
+        lines.extend(source_line(i, s) for i, s in enumerate(result.sources, 1))
     lines.append("")
     lines.append(render_usage(result))
     return "\n".join(lines)
