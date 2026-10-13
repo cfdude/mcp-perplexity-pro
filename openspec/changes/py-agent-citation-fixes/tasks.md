@@ -5,7 +5,7 @@
 
 ## 2. Structured answers
 
-- [x] 2.1 RED then GREEN: a marker cleaner in `agent.py` applied by `digest` to the parsed `answer_json` (string leaves only, recursive, trailing runs only, the count in a warning, the raw answer unchanged) implemented as a scan from the end of each string with an iterative walk and a total fallback (no regex search), with every scenario of the spec including the linear-time scenario (500000 spaces and 500000 repeated markers, a time bound), the deep-nesting fallback, `[2024]`, `[0]` and `a[1,2]` kept, a value that is only markers, keys untouched and the exact warning text; mutation-check by removing the cleaner call once and by swapping in a backtracking regex once (the time test must go red)
+- [x] 2.1 RED then GREEN: a marker cleaner in `agent.py` applied by `digest` to the parsed `answer_json` (string leaves only, recursive, trailing runs only, the count in a warning, the raw answer unchanged) implemented as a scan from the end of each string with an iterative walk and a total fallback (no regex search), with every scenario of the spec including the linear-time scenario (500000 spaces and 500000 repeated markers, a time bound), the 100-level depth limit (a result that serialises, null with a warning past it), the bounded ids per URL (64, linear time), a cleaner failure part-way leaving the value uncleaned, `[2024]`, `[0]` and `a[1,2]` kept, a value that is only markers, keys untouched and the exact warning text; mutation-check by removing the cleaner call once and by swapping in a backtracking regex once (the time test must go red)
 
 ## 3. Documentation of measurements
 

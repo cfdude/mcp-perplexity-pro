@@ -1,0 +1,12 @@
+Medium research job 4, 2026-10-13 (answer markers -> source ids; sources list from perplexity_jobs result)
+cited marker [web:N] -> source whose ids hold N
+1   -> https://www.pinecone.io/pricing/              ids [1]
+34  -> https://weaviate.io/pricing                   ids [34]
+47  -> https://qdrant.tech/pricing/                  ids [47, 73]
+46  -> https://qdrant.tech/documentation/cloud-pricing-payments/  ids [46, 74]
+16  -> https://zilliz.com/pricing                    ids [16, 62]
+62  -> https://zilliz.com/pricing                    ids [16, 62]
+20  -> https://www.trychroma.com/pricing             ids [20, 61]
+18  -> https://docs.trychroma.com/cloud/pricing      ids [18, 60]
+8 of 8 cited ids resolve. Sources with two ids: 46,47,48,49,50,51,54,55 (qdrant), 16,17,18,19,20,21 (zilliz/chroma) = 14 URLs; the rest have one.
+Run: started 13:58:38Z, finished 13:59:49Z (71 s), usage 58588 in / 3398 out, cost_usd 0.02524 reported, progress searches 7 fetches 5.

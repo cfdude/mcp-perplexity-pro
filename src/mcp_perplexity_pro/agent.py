@@ -405,13 +405,19 @@ def _answer_text(output: object) -> str:
     return ""
 
 
-def _sources(output: object, secrets: Iterable[str] = ()) -> list[Source]:
+MAX_IDS_PER_SOURCE = 64
+
+
+def _sources(output: object, secrets: Iterable[str] = ()) -> tuple[list[Source], int]:
     """Search results and fetched pages in output order, de-duplicated by exact URL. The first
     row of a URL supplies its title and date; every distinct integer result id seen for the
-    URL is kept in ``ids`` (an answer marker may cite any of them)."""
+    URL is kept in ``ids`` (an answer marker may cite any of them), at most
+    ``MAX_IDS_PER_SOURCE`` of them; the second value counts the ids dropped by that cap."""
     if not isinstance(output, list):
-        return []
+        return [], 0
     found: dict[str, Source] = {}
+    seen: dict[str, set[int]] = {}
+    capped = 0
     for item in output:
         if not isinstance(item, Mapping):
             continue
@@ -429,9 +435,13 @@ def _sources(output: object, secrets: Iterable[str] = ()) -> list[Source]:
             ident = ident if isinstance(ident, int) and not isinstance(ident, bool) else None
             known = found.get(url)
             if known is not None:
-                if ident is not None and ident not in known.ids:
-                    known.ids.append(ident)
-                    known.id = known.ids[0]
+                if ident is not None and ident not in seen[url]:
+                    if len(known.ids) >= MAX_IDS_PER_SOURCE:
+                        capped += 1
+                    else:
+                        seen[url].add(ident)
+                        known.ids.append(ident)
+                        known.id = known.ids[0]
                 continue
             title, when = row.get("title"), row.get("date")
             found[url] = Source(
@@ -441,7 +451,8 @@ def _sources(output: object, secrets: Iterable[str] = ()) -> list[Source]:
                 id=ident,
                 ids=[] if ident is None else [ident],
             )
-    return list(found.values())
+            seen[url] = set() if ident is None else {ident}
+    return list(found.values()), capped
 
 
 def source_line(position: int, source: Source) -> str:
@@ -488,6 +499,23 @@ def strip_trailing_markers(text: str) -> tuple[str, int]:
     if count == 0:
         return text, 0
     return text[:end].rstrip(_ASCII_SPACE), count
+
+
+MAX_JSON_DEPTH = 100
+
+
+def too_deep(value: Any, limit: int = MAX_JSON_DEPTH) -> bool:
+    """Whether dicts and lists nest deeper than ``limit`` levels (an explicit stack, no
+    recursion). Pydantic cannot serialise much beyond 300 levels, so the digest refuses it."""
+    stack: list[tuple[Any, int]] = [(value, 1)]
+    while stack:
+        node, level = stack.pop()
+        if isinstance(node, dict | list):
+            if level > limit:
+                return True
+            children = node.values() if isinstance(node, dict) else node
+            stack.extend((child, level + 1) for child in children if isinstance(child, dict | list))
+    return False
 
 
 def clean_markers(value: Any) -> tuple[Any, int]:
@@ -551,9 +579,15 @@ def digest(
             answer_json = value if parsed else None
             if not parsed and status != "incomplete":
                 warnings.append("The answer is not valid JSON, so answer_json is null.")
-            if parsed:
+            if parsed and too_deep(answer_json):
+                answer_json = None
+                warnings.append(
+                    f"answer_json is nested deeper than {MAX_JSON_DEPTH} levels, so it is null; "
+                    "read the answer text."
+                )
+            elif parsed:
                 try:
-                    answer_json, removed = clean_markers(answer_json)
+                    answer_json, removed = clean_markers(copy.deepcopy(answer_json))
                 except Exception:  # the cleaner must never lose a billed answer
                     logger.warning("agent digest: marker cleaning failed", exc_info=True)
                     answer_json = value
@@ -564,11 +598,17 @@ def digest(
                             f"Removed {removed} citation marker(s) from string values of "
                             "answer_json; the answer text is unchanged."
                         )
+        sources, capped = _sources(body.get("output"), secrets)
+        if capped:
+            warnings.append(
+                f"{capped} result id(s) were dropped: a source keeps at most "
+                f"{MAX_IDS_PER_SOURCE} ids."
+            )
         model, ident = body.get("model"), body.get("id")
         return Digest(
             answer=answer,
             answer_json=answer_json,
-            sources=_sources(body.get("output"), secrets),
+            sources=sources,
             status=status,
             incomplete_reason=reason_text,
             warnings=warnings,

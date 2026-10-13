@@ -167,14 +167,25 @@ def test_clean_structured_answer_has_no_warning():
     assert d.answer_json == {"city": "Paris", "population": 2050000} and d.warnings == []
 
 
-def test_a_deeply_nested_value_is_still_cleaned_without_recursion():
-    depth = 900
-    raw = '{"a":' * depth + '"deep [1]"' + "}" * depth
-    d = structured(raw)
+def nested(depth: int) -> str:
+    return '{"a":' * depth + '"deep [1]"' + "}" * depth
+
+
+def test_a_value_at_the_depth_limit_is_cleaned():
+    d = structured(nested(agent.MAX_JSON_DEPTH))
     node = d.answer_json
-    for _ in range(depth):
+    for _ in range(agent.MAX_JSON_DEPTH - 1):
         node = node["a"]
-    assert node == "deep"
+    assert node == {"a": "deep"}
+
+
+@pytest.mark.parametrize("depth", [agent.MAX_JSON_DEPTH + 1, 900, 5000])
+def test_a_value_nested_beyond_the_limit_keeps_the_billed_answer_and_serialises(depth):
+    """pydantic cannot serialise ~400 levels; the digest must hand back something it can."""
+    d = structured(nested(depth))
+    assert d.answer_json is None and d.answer.startswith('{"a":')
+    assert any("nested deeper than" in w for w in d.warnings)
+    d.model_dump(mode="json")  # must not raise
 
 
 def test_a_failing_cleaner_keeps_the_answer_and_warns(monkeypatch):
@@ -191,3 +202,71 @@ def test_a_failing_cleaner_keeps_the_answer_and_warns(monkeypatch):
 def test_markers_are_not_removed_when_no_schema_was_sent():
     d = digest(inline([message("Acme [1]")]))
     assert d.answer == "Acme [1]" and d.answer_json is None and d.warnings == []
+
+
+def test_a_failure_part_way_through_leaves_the_value_uncleaned(monkeypatch):
+    real = agent.strip_trailing_markers
+    calls = {"n": 0}
+
+    def flaky(text):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise RuntimeError("boom")
+        return real(text)
+
+    monkeypatch.setattr(agent, "strip_trailing_markers", flaky)
+    d = structured('{"a":"x [1]","b":"y [2]"}')
+    assert d.answer_json == {"a": "x [1]", "b": "y [2]"}
+    assert any("cleaning was skipped" in w for w in d.warnings)
+
+
+# --- bounded ids ---------------------------------------------------------------------------------
+
+
+def test_one_url_under_many_ids_is_bounded_and_fast():
+    rows = [{"id": i, "url": "https://e.test/"} for i in range(1, 200_001)]
+    start = time.perf_counter()
+    d = digest(inline([{"type": "search_results", "results": rows}]))
+    assert time.perf_counter() - start < 2.0
+    (only,) = d.sources
+    assert only.ids == list(range(1, agent.MAX_IDS_PER_SOURCE + 1)) and only.id == 1
+    assert any("result id(s) were dropped" in w for w in d.warnings)
+
+
+# --- the readable results ----------------------------------------------------------------------
+
+
+def test_ask_render_shows_ids_beside_each_source():
+    from mcp_perplexity_pro.tools.ask import build_result, render_answer
+
+    d = digest(run_of("agent_background_cancelled"))
+    text = render_answer(build_result(d, depth=None, latency_ms=1, project="default"))
+    assert "https://crates.io/crates/rs-stats (ids 10, 71)" in text
+
+
+@pytest.mark.parametrize(
+    ("stored", "expected"),
+    [
+        (
+            '[{"url": "https://o.test/", "title": "Old", "date": null, "id": 5}]',
+            "1. Old - https://o.test/",
+        ),
+        (
+            '[{"url": "https://n.test/", "title": "New", "date": null, "id": 10, "ids": [10, 71]}]',
+            "1. New - https://n.test/ (ids 10, 71)",
+        ),
+    ],
+)
+async def test_jobs_result_renders_stored_sources_old_and_new(research_world, stored, expected):
+    from research_support import seed_job
+
+    w = await research_world()
+    jid = await seed_job(
+        w, status="completed", usage_recorded=1, result_text="the answer", sources_json=stored
+    )
+    result = await w.call("perplexity_jobs", action="result", job_id=jid)
+    assert not result.is_error
+    lines = result.content[0].text.splitlines()
+    assert expected in lines
+    (src,) = result.structured_content["sources"]
+    assert src["ids"] == ([] if "ids" not in stored else [10, 71])

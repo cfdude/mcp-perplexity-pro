@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Sources
-`sources` SHALL list the pages the run found or fetched, from its search results and fetched pages, de-duplicated by URL in first-seen order, each with `url`, `title`, `date` when known, `ids` (every distinct result `id` the API gave that URL, in first-seen order, empty when it gave none) and `id` (the first of `ids`, or null; a source stored before this change has `id` and no `ids`). Research results (`perplexity_jobs` result) and chat results share this shape and these rules. The tool SHALL NOT rewrite or annotate the answer text with source numbers: the API's `annotations` are always empty. In the recorded responses (three markers in one fixture, `[web:1]`, `[web:11]` and `[web:21]`, plus bare `[1]` and `[3]` in the fast fixtures) an inline marker `[N]` or `[web:N]` names the search result whose `id` is `N`; a fetched page has no `id`, so a marker cannot be matched to one and the tool SHALL NOT claim to. The text rendering of the sources (the readable `content` of ask and of `perplexity_jobs` result) SHALL show a source's `ids` beside its title and URL, so a text-only client can find the source a marker names; a source with no ids is rendered as before.
+`sources` SHALL list the pages the run found or fetched, from its search results and fetched pages, de-duplicated by URL in first-seen order, each with `url`, `title`, `date` when known, `ids` (every distinct result `id` the API gave that URL, in first-seen order, at most 64 of them with a warning naming how many were dropped, empty when it gave none) and `id` (the first of `ids`, or null; a source stored before this change has `id` and no `ids`). Research results (`perplexity_jobs` result) and chat results share this shape and these rules. The tool SHALL NOT rewrite or annotate the answer text with source numbers: the API's `annotations` are always empty. In the recorded responses (three markers in one fixture, `[web:1]`, `[web:11]` and `[web:21]`, plus bare `[1]` and `[3]` in the fast fixtures) an inline marker `[N]` or `[web:N]` names the search result whose `id` is `N`; a fetched page has no `id`, so a marker cannot be matched to one and the tool SHALL NOT claim to. The text rendering of the sources (the readable `content` of ask and of `perplexity_jobs` result) SHALL show a source's `ids` beside its title and URL, so a text-only client can find the source a marker names; a source with no ids is rendered as before.
 
 #### Scenario: Search sources
 - **WHEN** the API returns the recorded fast response with filters
@@ -27,6 +27,10 @@
 - **WHEN** a source has `ids` `[10, 71]`
 - **THEN** its line in the readable result shows `ids 10, 71` beside its title and URL, and a source with no ids shows no ids text
 
+#### Scenario: Ids are bounded
+- **WHEN** one URL comes back under 200000 distinct ids
+- **THEN** its `ids` holds the first 64, a warning says the rest were dropped and the digest completes in well under two seconds
+
 #### Scenario: Every cited marker has a source
 - **WHEN** the recorded completed research response cites `[web:1]`, `[web:11]` and `[web:21]`
 - **THEN** each of ids 1, 11 and 21 appears in some source's `ids`
@@ -36,7 +40,7 @@
 - **THEN** it returns them with `ids` empty and nothing fails
 
 ### Requirement: Structured output
-When `json_schema` is given (root `type` `object`), the request SHALL carry a `json_schema` response format named `answer` and no `strict` member. The result SHALL keep the API's raw JSON text as the answer and add the parsed value as `answer_json` when it parses, else null with a warning. In `answer_json`, every string value SHALL have a trailing run of citation markers removed, where a marker is exactly `[N]` (ASCII digits, 1 to 999, no leading zero) or `[web:N]` (ASCII digits, 0 to 999), each with the ASCII whitespace before it; the cleaning SHALL run in time linear in the string's length and SHALL NOT raise: if it cannot complete (for example a value nested beyond what it can walk) the uncleaned value is returned with a warning that cleaning was skipped. One warning per call SHALL read `Removed N citation marker(s) from string values of answer_json; the answer text is unchanged.` with the total N. The raw answer text, the keys, non-string values, other bracket forms (`[1,2]`, `[1-3]`, `[^1]`, `[fetch:3]`, `[2024]`) and any marker not at the end of a string SHALL be left as the API gave them; a bare marker glued to text (`x[1]`) is removed like any other. A non-object root SHALL fail with `invalid_request` before any call; a schema the API rejects SHALL surface as `invalid_request` with the API's message and a hint naming `json_schema`.
+When `json_schema` is given (root `type` `object`), the request SHALL carry a `json_schema` response format named `answer` and no `strict` member. The result SHALL keep the API's raw JSON text as the answer and add the parsed value as `answer_json` when it parses, else null with a warning. In `answer_json`, every string value SHALL have a trailing run of citation markers removed, where a marker is exactly `[N]` (ASCII digits, 1 to 999, no leading zero) or `[web:N]` (ASCII digits, 0 to 999), each with the ASCII whitespace before it; the cleaning SHALL run in time linear in the string's length, SHALL NOT raise, and SHALL NOT leave a half-cleaned value: if it fails the uncleaned value is returned with a warning that cleaning was skipped. A parsed value nested deeper than 100 levels SHALL be returned as null with a warning, because the result could not be serialised. One warning per call SHALL read `Removed N citation marker(s) from string values of answer_json; the answer text is unchanged.` with the total N. The raw answer text, the keys, non-string values, other bracket forms (`[1,2]`, `[1-3]`, `[^1]`, `[fetch:3]`, `[2024]`) and any marker not at the end of a string SHALL be left as the API gave them; a bare marker glued to text (`x[1]`) is removed like any other. A non-object root SHALL fail with `invalid_request` before any call; a schema the API rejects SHALL surface as `invalid_request` with the API's message and a hint naming `json_schema`.
 
 #### Scenario: Structured answer
 - **WHEN** a client passes a schema for `{city, population}` and the API returns the recorded structured response
@@ -63,9 +67,12 @@ When `json_schema` is given (root `type` `object`), the request SHALL carry a `j
 - **THEN** cleaning each takes well under one second and the second becomes the empty string
 
 #### Scenario: Deeply nested value
-- **WHEN** the parsed value is nested to the deepest level `json.loads` accepts
-- **THEN** the result still carries the answer, the sources and the usage, `answer_json` is the uncleaned value and a warning says cleaning was skipped
+- **WHEN** the parsed value nests deeper than 100 levels
+- **THEN** the result still carries the answer, the sources and the usage, `answer_json` is null and a warning says it is nested deeper than 100 levels (the structured result could not be serialised beyond about 300 levels)
 
+#### Scenario: A value at the limit
+- **WHEN** the parsed value nests exactly 100 levels
+- **THEN** it is cleaned as usual
 #### Scenario: Root not an object
 - **WHEN** a client passes a schema with root type `array`
 - **THEN** the call fails with `invalid_request` and no request reaches the API
