@@ -858,10 +858,11 @@
         "60f90abcba7eee39345191531f583cbb20b8c1ee",
         "271f10fd7caf0f1278d96733554e0d503d987d8d",
         "01dbab1ce7454eb23f4c78404c7d3a003631e403",
-        "565bc00a038c024bbe3292d0a7b9a139447e285b"
+        "565bc00a038c024bbe3292d0a7b9a139447e285b",
+        "556fecaabcc9bfc0b06ad3d353347f5545900d79"
       ],
       "createdAt": "2026-10-13T13:38:20.344Z",
-      "touchedAt": "2026-10-13T14:03:59.151Z",
+      "touchedAt": "2026-10-13T14:10:31.124Z",
       "startedAt": "2026-10-13T13:38:20.709Z",
       "gateReview": {
         "gate1": {
@@ -888,13 +889,20 @@
             }
           ],
           "reviewer": "fresh-context general-purpose subagent: Gate 1 review (0 Critical, 5 Important, 6 Minor, all folded in before this commit)"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-13T14:10:31.123Z",
+          "baseSha": "ebaff311720ee87644b34a00f1795d9b4c2725f5",
+          "headSha": "556fecaabcc9bfc0b06ad3d353347f5545900d79",
+          "reviewer": "fresh-context general-purpose subagent: Gate 2 over ebaff31..565bc00 (0 Critical, 3 Important, 5 Minor); Important and Minor fixed in 556feca with red/green/mutation-checked tests"
         }
       },
       "release": "release-2-0-0"
     }
   ],
   "detourStack": [],
-  "revision": 287,
+  "revision": 289,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",

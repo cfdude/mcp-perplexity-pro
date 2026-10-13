@@ -22,7 +22,7 @@
 - [x] 5.3 Attribute every commit of this change to its epic with `update-epic py-agent-citation-fixes --attribute-commit <sha>` as each lands, in landing order, ending with the last commit; never attribute the archive move, pm bookkeeping commits or an ancestor after a later commit; verify the last attributed commit is the Gate 2 head
 - [x] 5.4 Add `py-agent-citation-fixes` to `release-2-0-0` (`release release-2-0-0 --member py-agent-citation-fixes`) and review this change's one delta spec (`agent-ask`) against the main `agent-chat`, `agent-research` and `local-storage` specs and the other release specs with a fresh-context reviewer; fix BLOCKS and record `record-cross-spec-review release-2-0-0`
 - [x] 5.5 Route what the work taught: write `openspec/changes/py-agent-citation-fixes/routing.md` with exactly three lines `practice: ...`, `tooling: ...` and `process: ...` each naming the filed item or `none, because <reason naming the command or commit checked>`; the process line names the lesson that a doc claim resting on two samples of one query must say so
-- [ ] 5.6 Gate 2 implementation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then `record-gate-review py-agent-citation-fixes --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
+- [x] 5.6 Gate 2 implementation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then `record-gate-review py-agent-citation-fixes --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
 
 ## 6. Documentation (after Gate 2 is clean)
 
