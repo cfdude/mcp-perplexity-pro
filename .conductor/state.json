@@ -779,8 +779,9 @@
         "b33f5eaca5dd194bfd35858f5da2b055d34b1d50"
       ],
       "createdAt": "2026-10-13T13:17:14.209Z",
-      "touchedAt": "2026-10-13T13:38:20.710Z",
-      "startedAt": "2026-10-13T13:18:53.113Z"
+      "touchedAt": "2026-10-13T13:40:00.156Z",
+      "startedAt": "2026-10-13T13:18:53.113Z",
+      "release": "release-2-0-0"
     },
     {
       "id": "py-cli",
@@ -850,14 +851,44 @@
           "text": "lane: openspec not claude-code — changes the Sources requirement of agent-ask and stored result shape"
         }
       ],
-      "attributedCommits": [],
+      "attributedCommits": [
+        "8178dfdfce70e10850e59d1ebce2dc77586b4678"
+      ],
       "createdAt": "2026-10-13T13:38:20.344Z",
-      "touchedAt": "2026-10-13T13:38:20.710Z",
-      "startedAt": "2026-10-13T13:38:20.709Z"
+      "touchedAt": "2026-10-13T13:40:00.156Z",
+      "startedAt": "2026-10-13T13:38:20.709Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-13T13:39:55.386Z",
+          "artifacts": [
+            "openspec/changes/py-agent-citation-fixes/proposal.md",
+            "openspec/changes/py-agent-citation-fixes/design.md",
+            "openspec/changes/py-agent-citation-fixes/specs/agent-ask/spec.md",
+            "openspec/changes/py-agent-citation-fixes/tasks.md"
+          ],
+          "artifactDigests": [
+            {
+              "path": "openspec/changes/py-agent-citation-fixes/proposal.md",
+              "sha256": "591aede67555592c4868cd769ad60c466d88e1cab121780cd3ad88578cf4f15d"
+            },
+            {
+              "path": "openspec/changes/py-agent-citation-fixes/design.md",
+              "sha256": "04b28c27707c0cdd05fb5f59b921397f53656f7d958f0c12accb3995da8dbebd"
+            },
+            {
+              "path": "openspec/changes/py-agent-citation-fixes/specs/agent-ask/spec.md",
+              "sha256": "7d07c8687bcc4d8e573e15cd3b0645d89f8c77979cdef5f91736af710117ed92"
+            }
+          ],
+          "reviewer": "fresh-context general-purpose subagent: Gate 1 review (0 Critical, 5 Important, 6 Minor, all folded in before this commit)"
+        }
+      },
+      "release": "release-2-0-0"
     }
   ],
   "detourStack": [],
-  "revision": 277,
+  "revision": 280,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",

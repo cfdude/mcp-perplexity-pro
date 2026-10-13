@@ -26,7 +26,7 @@ The server SHALL read configuration from environment variables with the prefix `
 ## ADDED Requirements
 
 ### Requirement: Server instructions
-The server SHALL set the MCP `instructions` of its `initialize` result from the active configuration, and the text SHALL be a pure function of the settings (same settings, same text, no secrets, no clock).
+The server SHALL set the MCP `instructions` of its `initialize` result from the active configuration (the content is owned by `routing-config` "The instructions text"), and the text SHALL be a pure function of the settings (same settings, same text, no secrets, no clock).
 
 #### Scenario: Instructions present
 - **WHEN** a client calls `initialize`

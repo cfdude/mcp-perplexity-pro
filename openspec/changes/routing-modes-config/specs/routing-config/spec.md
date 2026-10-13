@@ -57,6 +57,10 @@ In `custom` mode the server SHALL require `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_T
 - **WHEN** the mode is `standard` and a tier variable is set
 - **THEN** the server starts, ignores it and logs one warning naming the variable
 
+#### Scenario: Unused model variable
+- **WHEN** the mode is `custom` and `PERPLEXITY_MODEL` is set
+- **THEN** the server starts, ignores it and logs one warning naming the variable
+
 ### Requirement: The tier argument
 `perplexity_ask` and `perplexity_chat` send SHALL accept `tier`, one of `light`, `standard` and `complex`, valid only in `custom` mode (and later in `dynamic`). In any other mode it SHALL fail with `invalid_request` naming `tier` and the active mode, and nothing is sent. A value outside the three SHALL fail with `invalid_request` naming `tier`. A tier call SHALL be grounded like an explicit model, and an `anthropic/` tier model gets the same default output cap as an explicit one.
 
@@ -66,45 +70,53 @@ In `custom` mode the server SHALL require `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_T
 
 #### Scenario: Tier in standard mode
 - **WHEN** an ask in `standard` mode names `tier` `light`
-- **THEN** the call fails with `invalid_request` naming `tier` and `standard`, and no request reaches the API
+- **THEN** the call fails with `invalid_request` naming `tier` and the mode `standard`, and no request reaches the API
 
 #### Scenario: Unknown tier
 - **WHEN** an ask in `custom` mode names `tier` `huge`
 - **THEN** the call fails with `invalid_request` naming `tier`
 
 ### Requirement: Resolution order
-For one call the server SHALL resolve the model in this order and report which rule applied: an explicit `model` (source `model`); an explicit `depth` (source `depth`, the preset of that name); an explicit `tier` (source `tier`); otherwise the mode's default (source `default`: the standard model, or the `standard` tier). `depth` together with `model`, `depth` together with `tier`, and `model` together with `tier` SHALL fail with `invalid_request` naming both, and nothing is sent.
+For one call the server SHALL resolve the model by the one selector the call names and report which rule applied in `selected_by`: an explicit `model` (`model`), an explicit `depth` (`depth`, the preset of that name), an explicit `tier` (`tier`), or, when the call names none, the mode's default (`default`: the model of `standard` mode, or the `standard` tier in `custom` mode).
 
 #### Scenario: Depth still selects a preset
 - **WHEN** an ask in any mode names `depth` `medium`
-- **THEN** the request names preset `medium` and no model, and the reported source is `depth`
+- **THEN** the request names preset `medium` and no model, and the reported `selected_by` is `depth`
 
 #### Scenario: Explicit model wins over the mode
 - **WHEN** an ask in `custom` mode names `model` `openai/gpt-6-luna`
-- **THEN** the request names that model and the reported source is `model`
+- **THEN** the request names that model and the reported `selected_by` is `model`
 
-#### Scenario: Conflicting selectors
-- **WHEN** an ask names `tier` and `depth`, or `tier` and `model`
-- **THEN** the call fails with `invalid_request` naming both options and no request reaches the API
 
 #### Scenario: Chat send follows the same rules
 - **WHEN** `perplexity_chat` send is called in `custom` mode with `tier` `light`
 - **THEN** the request names the `light` tier's model, and the next turn of the same chat may name a different tier
 
+### Requirement: Selectors are mutually exclusive
+`depth` together with `model`, `depth` together with `tier`, and `model` together with `tier` SHALL fail with `invalid_request` naming both options, and nothing is sent. This requirement owns those conflicts; the ask requirements refer to it.
+
+#### Scenario: Conflicting selectors
+- **WHEN** an ask names `tier` and `depth`, or `tier` and `model`
+- **THEN** the call fails with `invalid_request` naming both options and no request reaches the API
+
 ### Requirement: Every ask and chat result reports its routing
-`perplexity_ask` and `perplexity_chat` send SHALL return a `routing` object with `mode`, `tier` (null unless a tier was used or the `custom` default applied), `model` (the id requested, or null when a preset was named) and `source` (`default`, `tier`, `depth` or `model`), so the caller sees what happened to its call without having been told the configuration.
+`perplexity_ask` and `perplexity_chat` send SHALL return a `routing` object with `mode`, `tier` (null unless a tier was used or the `custom` default applied), `model` (the id requested, or null when a preset was named) and `selected_by` (`default`, `tier`, `depth` or `model`), so the caller sees what happened to its call without having been told the configuration.
+
+#### Scenario: Custom default
+- **WHEN** an ask names nothing in `custom` mode
+- **THEN** the routing is mode `custom` (the mode) and tier `standard` (the `standard` tier, not the `standard` mode), model the `standard` tier's id, `selected_by` `default`
 
 #### Scenario: Default call
 - **WHEN** an ask names nothing in `standard` mode
-- **THEN** the result's routing is mode `standard`, tier null, model `perplexity/sonar`, source `default`
+- **THEN** the result's routing is mode `standard`, tier null, model `perplexity/sonar`, `selected_by` `default`
 
 #### Scenario: Tier call
 - **WHEN** an ask in `custom` mode names `tier` `light`
-- **THEN** the routing is mode `custom`, tier `light`, the light model's id and source `tier`
+- **THEN** the routing is mode `custom`, tier `light`, the light model's id and `selected_by` `tier`
 
 #### Scenario: Depth call
 - **WHEN** an ask names `depth` `low`
-- **THEN** the routing carries source `depth` and model null
+- **THEN** the routing carries `selected_by` `depth` and model null
 
 ### Requirement: The calling agent is told the configuration
 The server SHALL give the calling agent the active mode and what it resolves to through four channels, so that a client ignoring one still learns it from another: the MCP `instructions` text, the `perplexity_ask` and `perplexity_chat` descriptions (one sentence stating the mode and the default), the `routing` field above and the `perplexity_models` section.
@@ -125,7 +137,7 @@ The MCP `instructions` SHALL be rendered at startup from the settings and state 
 - **THEN** the instructions list `light`, `standard` and `complex` with their model ids and say that `tier` selects one
 
 ### Requirement: Usage records the resolved model
-The usage event of a routed call SHALL record the model the API reports, as it does today, and SHALL NOT change the usage schema; routing adds no migration.
+The usage event of a routed call SHALL record the model the API reports, as it does today, and SHALL NOT change the usage schema; routing adds no migration. A call that ran a model route SHALL record and report preset null: no code path SHALL fall back to a default preset name.
 
 #### Scenario: Default call is recorded
 - **WHEN** an ask in `standard` mode completes

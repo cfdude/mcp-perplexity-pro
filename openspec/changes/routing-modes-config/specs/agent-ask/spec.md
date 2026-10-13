@@ -16,7 +16,7 @@
 - **THEN** the call fails with `invalid_request` naming `perplexity_research` and no request reaches the API
 
 ### Requirement: Explicit model
-An explicit `model` SHALL replace the preset: the request names the model and no preset, grounds it with the web search tool and a step budget of 3, unless `search` is false, which sends no tools. `depth` together with `model`, or `tier` together with `model`, SHALL fail with `invalid_request`, and so SHALL `search` false without `model`, because a preset always searches. `search` true is always accepted.
+An explicit `model` SHALL replace the preset: the request names the model and no preset, grounds it with the web search tool and a step budget of 3, unless `search` is false, which sends no tools. The conflicts between `depth`, `tier` and `model` are owned by `routing-config` ("Resolution order"). `search` false SHALL be accepted on any model route (the mode's default model, a tier or an explicit `model`) and SHALL fail with `invalid_request` with `depth`, because a preset always searches. `search` true is always accepted.
 
 #### Scenario: Model with search
 - **WHEN** a client asks with model `openai/gpt-6-luna`
@@ -27,8 +27,12 @@ An explicit `model` SHALL replace the preset: the request names the model and no
 - **THEN** the request carries no tools and the result's sources are empty
 
 #### Scenario: Conflicting options
-- **WHEN** a client passes `depth` `low` together with a model, `tier` together with a model, or `search` false without a model
+- **WHEN** a client passes `depth` `low` together with a model, or `search` false together with a depth
 - **THEN** the call fails with `invalid_request` and no request reaches the API
+
+#### Scenario: Search off on the default route
+- **WHEN** a client passes `search` false and no depth, tier or model in `standard` mode
+- **THEN** the request names the default model and carries no tools
 
 #### Scenario: Search true is harmless
 - **WHEN** a client passes `search` true with a depth and no model, or with a model

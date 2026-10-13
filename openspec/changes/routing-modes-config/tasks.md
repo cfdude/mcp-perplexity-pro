@@ -5,7 +5,7 @@
 
 ## 2. Request building
 
-- [ ] 2.1 RED then GREEN: `agent.build_request` and `AskOptions` take the `Route` (a preset route sends `preset`; a model route sends `model`, the web search tool, the step budget and the `anthropic/` output cap exactly as an explicit model does); the no-selector default no longer names `fast`; update `tests/test_agent_request.py`, `tests/test_agent_models.py`, `tests/test_validation_bounds.py` and the cases in `tests/test_contract_checks.py` that assume the `fast` default; verify nothing is sent for a refused selector combination
+- [ ] 2.1 RED then GREEN: delete `agent.DEFAULT_DEPTH` and the `depth or DEFAULT_DEPTH` fallbacks (`rg -n "DEFAULT_DEPTH|options.preset" src` lists every reader, including `tools/chat.py` and the chat row writes: a model route stores preset null); `agent.build_request` and `AskOptions` take the `Route` (a preset route sends `preset`; a model route sends `model`, the web search tool, the step budget and the `anthropic/` output cap exactly as an explicit model does); the no-selector default no longer names `fast`; update `tests/test_agent_request.py`, `tests/test_agent_models.py`, `tests/test_validation_bounds.py` and the cases in `tests/test_contract_checks.py` that assume the `fast` default; verify nothing is sent for a refused selector combination
 
 ## 3. Tools
 
@@ -20,7 +20,7 @@
 ## 5. Acceptance (live)
 
 - [ ] 5.1 Restart pm2 (approved by Rob on 2026-10-11 and standing) in `standard` mode and verify `GET /health`, `tools/list` still lists ten tools and its byte size (record against 56161), `initialize` carries the instructions text and `perplexity_models` shows the routing section with the standard model `known` true; save the outputs under `openspec/changes/routing-modes-config/acceptance/`
-- [ ] 5.2 Billed calls on the throwaway project `acceptance-routing` (expected cost under $0.05 in total): a default ask (confirm the result's `routing` is `standard` and the model Sonar), an ask with `depth` `fast` and one with an explicit `model`, then restart a second server instance on an ephemeral port with `PERPLEXITY_ROUTING=custom` and three tier models chosen from the live catalog and call each tier once plus one refused `tier` call against the default instance (costs nothing); reconcile `perplexity_usage` for the project to the nano-USD against the results' `cost_usd`; delete the project. The provider console is not read (waived by Rob on 2026-10-11)
+- [ ] 5.2 Billed calls on the throwaway project `acceptance-routing` (expected cost under $0.05 in total): a default ask (confirm the result's `routing` is `standard` and the model Sonar), an ask with `depth` `fast` and one with an explicit `model`, then restart a second server instance on an ephemeral port with `PERPLEXITY_ROUTING=custom` and three tier models chosen from the live catalog and call each tier once, a chat of two turns with `tier` `light` then `complex` (the model-switch probe, design D8b), one `json_schema` ask on the default Sonar route and one medium research whose answer markers are checked against `sources` ids (the citation fixes on a non-preset route), plus one refused `tier` call against the default instance (costs nothing); reconcile `perplexity_usage` for the project to the nano-USD against the results' `cost_usd`; delete the project. The provider console is not read (waived by Rob on 2026-10-11)
 
 ## 6. Gate procedure (required, per the pm conductor)
 
