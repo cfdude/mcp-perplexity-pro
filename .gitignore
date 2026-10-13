@@ -75,3 +75,10 @@ ecosystem.config.cjs
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+.conductor/write-conflicts.log.prev
+.conductor/honcho-memories.log
+.conductor/brief.txt
+.conductor/commit-observe.json*
+.conductor/session-claim.json*
+.conductor/state.json.lock*
+.conductor/state.json.tmp*
