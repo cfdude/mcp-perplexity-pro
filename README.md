@@ -208,8 +208,9 @@ URL: one page can come back under several ids in a long run) and `id` (the first
 **not** a list of what the answer cited. The API's `annotations` field was empty in every captured
 response, so the server cannot say which claim rests on which source. The inline markers in the
 answer are returned unchanged. In the captured responses a marker `[N]` or `[web:N]` names the
-search result whose id is `N` (checked on three markers in one research fixture, and the bare
-`[1]` and `[3]` of the fast fixtures), so look `N` up in each source's `ids`; the readable result
+search result whose id is `N` (checked on three markers in one research fixture, the bare `[1]` and
+`[3]` of the fast fixtures and all 8 markers of a live medium run, `acceptance/markers.txt` of
+`openspec/changes/py-agent-citation-fixes/`), so look `N` up in each source's `ids`; the readable result
 shows them as `(ids 10, 71)`. A fetched page has no id, so a marker cannot be matched to one (a
 fetch-only run cited `[web:0]`; what that numbers is unverified). A source may be unused by the
 answer, and an answer may rest on a page that is not listed.
@@ -218,9 +219,16 @@ The `fast` preset answers with more confidence than its evidence can carry (one 
 stated an acquisition as fact where the deeper research found the disclosures did not show it).
 Use `medium` or `perplexity_research` for anything that goes into a deep analysis.
 
-With `json_schema`, citation markers that end a string value (`[1][3]`) are removed from
-`answer_json` (one warning gives the count); the `answer` text keeps them, and a marker inside a
-value or any other bracket form is left alone.
+A source keeps at most 64 ids (a warning says how many were dropped). Sources saved before
+this change show no ids in the readable text, only `id`.
+
+With `json_schema`, citation markers that end a string value are removed from `answer_json`, and
+one warning gives the count; the `answer` text keeps them. A marker is `[N]` (1 to 999, no
+leading zero) or `[web:N]` (0 to 999), in ASCII digits, with any ASCII whitespace before it; a
+marker inside a value, `[0]`, `[1000]`, `[2024]` and other bracket forms (`[1,2]`, `[^1]`) are left
+alone. A parsed value nested deeper than 100 levels is returned as `answer_json: null` with a
+warning (read the `answer` text), because the structured result cannot be serialised beyond about
+300 levels.
 
 ### `perplexity_ask`
 
@@ -797,7 +805,7 @@ per input token. Output tokens are free and there is no per-request fee. `cost_s
 `cost_source` `none`), not a cost of zero, and `perplexity_usage` counts it in
 `calls_cost_unknown`.
 
-The live acceptance (`openspec/changes/py-decisions-tool/acceptance/`, 2026-10-11) made 2 billed
+The live acceptance (`openspec/changes/archive/2026-10-11-py-decisions-tool/acceptance/`, 2026-10-11) made 2 billed
 calls, no errors and no unknown cost, from 346 and 107 input tokens, and `perplexity_usage` for the
 project reported 9060 nano-USD ($0.00000906), which equals 346 x 20 + 107 x 20 (6920 + 2140). That
 reconciles the server's own books against its own price table. **The provider's console was not
@@ -1015,7 +1023,7 @@ USD, the cost is computed from `prompt_tokens` (`computed`), and if that is unre
 unknown (`none`, counted in `calls_cost_unknown`), never zero. A reported cost is never replaced by a
 computed one.
 
-The live acceptance (`openspec/changes/py-embeddings/acceptance/`, 2026-10-11) made 5 billed
+The live acceptance (`openspec/changes/archive/2026-10-11-py-embeddings/acceptance/`, 2026-10-11) made 5 billed
 requests (2 `index`, 3 `search`), no errors and no unknown cost, and every cost was `reported`.
 `perplexity_usage` for the project reported 4086 nano-USD ($0.000004086), which equals
 456 + 3420 + 36 + 24 + 150 for the five requests, from 248 tokens in all. **The provider's console was
