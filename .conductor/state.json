@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": null,
+  "active": "routing-modes-config",
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -758,7 +758,7 @@
       "id": "routing-modes-config",
       "title": "Routing modes: standard, custom tiers, dynamic switch",
       "priority": "P2",
-      "status": "queued",
+      "status": "active",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -780,7 +780,7 @@
         "e0c8a52ff9152a33062fcc9f7f3fb2382556c498"
       ],
       "createdAt": "2026-10-13T13:17:14.209Z",
-      "touchedAt": "2026-10-13T13:44:37.460Z",
+      "touchedAt": "2026-10-13T14:52:57.116Z",
       "startedAt": "2026-10-13T13:18:53.113Z",
       "release": "release-2-0-0"
     },
@@ -922,7 +922,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 296,
+  "revision": 297,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",

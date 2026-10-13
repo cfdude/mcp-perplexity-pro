@@ -76,6 +76,25 @@ In `custom` mode the server SHALL require `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_T
 - **WHEN** an ask in `custom` mode names `tier` `huge`
 - **THEN** the call fails with `invalid_request` naming `tier`
 
+### Requirement: The mode is a default, never a restriction
+The routing mode and its models SHALL only supply what a call does not choose for itself. An explicit `model` on `perplexity_ask` or `perplexity_chat` send SHALL be used exactly as given in every mode, whether or not it is the configured model, one of the tiers or listed in the live catalog, and a call that names no `model` (and no `depth` or `tier`) SHALL fall back to the mode's default. No mode SHALL refuse, rewrite or second-guess an explicit model.
+
+#### Scenario: Explicit model in standard mode
+- **WHEN** `PERPLEXITY_MODEL` is `perplexity/sonar` and an ask names `model` `anthropic/claude-opus-5-5`
+- **THEN** the request names `anthropic/claude-opus-5-5`, and the result's routing is model `anthropic/claude-opus-5-5` with `selected_by` `model`
+
+#### Scenario: Explicit model that is not a tier
+- **WHEN** the mode is `custom` and a chat send names a `model` that none of the three tiers uses
+- **THEN** the request names that model
+
+#### Scenario: Explicit model the catalog does not list
+- **WHEN** an ask names a `model` the live catalog does not list
+- **THEN** the call is sent with it and any refusal comes from the API, as an upstream error
+
+#### Scenario: No model falls back to the default
+- **WHEN** an ask or chat send names no `model`, `depth` or `tier`
+- **THEN** the request names the mode's default model
+
 ### Requirement: Resolution order
 For one call the server SHALL resolve the model by the one selector the call names and report which rule applied in `selected_by`: an explicit `model` (`model`), an explicit `depth` (`depth`, the preset of that name), an explicit `tier` (`tier`), or, when the call names none, the mode's default (`default`: the model of `standard` mode, or the `standard` tier in `custom` mode).
 
