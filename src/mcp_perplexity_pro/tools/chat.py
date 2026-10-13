@@ -517,7 +517,7 @@ def register(server: FastMCP) -> None:
 
         Approximate cost per send by depth (observed ranges; the upper figures are estimates):
         fast $0.001 to $0.002 (the default), low $0.0005 to $0.004 (up to about $0.02
-        estimated), medium $0.016 to $0.023 as a research run (up to about $0.05 estimated;
+        estimated), medium $0.016 to $0.025 as a research run (up to about $0.05 estimated;
         a synchronous medium send was not measured); high and xhigh are not available here
         (use perplexity_research). Every send is recorded as spend (see perplexity_usage).
         list, read and delete make no upstream call and cost nothing; they read or change only
