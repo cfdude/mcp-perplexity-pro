@@ -650,15 +650,15 @@
       ],
       "reconcileNeeded": false,
       "parent": "model-routing",
-      "description": "Rules-based classifier (prompt length, task type, tool needs) picking fast/low/medium/high; runs only when depth=auto.",
+      "description": "Deterministic rules classifier (prompt length, task type, tool needs): the fallback when the Decisions classifier is rate-limited or fails, and the offline option for dynamic mode.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:42.394Z"
+      "touchedAt": "2026-10-13T13:17:15.661Z"
     },
     {
       "id": "routing-decisions-classifier",
       "title": "Use Perplexity Decisions API as routing classifier",
-      "priority": "P3",
+      "priority": "P2",
       "status": "later",
       "role": "epic",
       "lane": "openspec",
@@ -672,14 +672,19 @@
           "type": "depends-on",
           "epic": "routing-rules-v1",
           "reason": "extends the rules matrix"
+        },
+        {
+          "type": "depends-on",
+          "epic": "routing-modes-config",
+          "reason": "it is the dynamic mode's classifier"
         }
       ],
       "reconcileNeeded": false,
       "parent": "model-routing",
-      "description": "Send prompt as state with choice/score questions about complexity; $0.02/1M tokens; adds one network hop and is rate-limited to 10 req/s per org.",
+      "description": "Core of dynamic mode: Perplexity Decisions API picks the tier (light/standard/complex) from the prompt; adds one network hop, about $0.02 per 1M tokens, 10 req/s per org.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:42.912Z"
+      "touchedAt": "2026-10-13T13:17:15.279Z"
     },
     {
       "id": "routing-escalation",
@@ -748,10 +753,80 @@
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
       "touchedAt": "2026-10-07T00:03:43.939Z"
+    },
+    {
+      "id": "routing-modes-config",
+      "title": "Routing modes: standard, custom tiers, dynamic switch",
+      "priority": "P2",
+      "status": "queued",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-agent-api",
+          "reason": "resolves models for ask/chat/research"
+        },
+        {
+          "type": "depends-on",
+          "epic": "py-usage-log",
+          "reason": "records the resolved model"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "Three consumer modes set by config. Standard (default): one model, default perplexity/sonar (probed live 2026-10-13: web search works, about $0.0038 per call; 'auto' is rejected by the API). Custom: user's light/standard/complex model tiers, validated against the live catalog; caller picks the tier via depth. Dynamic: opt-in, classifier picks the tier (see routing-decisions-classifier). Open design problem: how the calling agent learns the active mode (server instructions rendered from settings, resolved mode/tier/model in every result, active routing in perplexity_models). README setup section lays out the three choices.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-13T13:17:14.209Z",
+      "touchedAt": "2026-10-13T13:17:14.211Z"
+    },
+    {
+      "id": "py-cli",
+      "title": "Python CLI front end sharing the MCP core",
+      "priority": "P2",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "routing-modes-config",
+          "reason": "CLI honors the same mode config"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "Second entry point in the same package over a transport-neutral core (costed_call, storage, usage); same ~/.perplexity-pro database; --json for scripts. First cut: ask, search, embed, usage, projects. Needs the tool logic that reads ctx.lifespan_context pulled out of tools/.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-13T13:17:14.603Z",
+      "touchedAt": "2026-10-13T13:17:14.605Z"
+    },
+    {
+      "id": "pypi-publish",
+      "title": "Publish to PyPI (Trusted Publishing, tag 2.0.0)",
+      "priority": "P2",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "py-cli",
+          "reason": "install story and README depend on the CLI"
+        },
+        {
+          "type": "depends-on",
+          "epic": "routing-modes-config",
+          "reason": "setup docs cover the modes"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "Check the mcp-perplexity-pro name is free, Trusted Publishing from GitHub Actions (no stored token), tag and release 2.0.0, uvx install docs, refresh the CHANGELOG release date.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-13T13:17:14.936Z",
+      "touchedAt": "2026-10-13T13:17:14.938Z"
     }
   ],
   "detourStack": [],
-  "revision": 268,
+  "revision": 273,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
