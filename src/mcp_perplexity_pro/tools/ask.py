@@ -174,7 +174,7 @@ def register(server: FastMCP) -> None:
 
         Approximate cost per call by depth (observed ranges; the upper figures are estimates):
         fast $0.001 to $0.002 (the default), low $0.0005 to $0.004 (up to about $0.02
-        estimated), medium $0.016 to $0.017 as a research run (up to about $0.05 estimated; a
+        estimated), medium $0.016 to $0.023 as a research run (up to about $0.05 estimated; a
         synchronous medium call was not measured). high and xhigh can cost dollars and take
         minutes (unmeasured estimates), so they exist only behind perplexity_research. Giving a
         search filter (domains, recency, after, before, country, max_results) makes the run use

@@ -170,7 +170,7 @@ where the table says "not measured".
 |---|---|---|---|---|
 | `fast` (default for ask and chat) | `perplexity_ask`, `perplexity_chat` | $0.00118 to $0.00180 | Live acceptance run, 2026-10-09: $0.00143, $0.00118, $0.00158. Probe fixtures, 2026-10-09 (the eight synchronous `fast` captures in `tests/fixtures/`; a ninth, the background poll `agent_background_poll.json`, cost $0.00105): $0.00119 to $0.00180 | 1.7 to 2.6 s (acceptance) |
 | `low` | `perplexity_ask`, `perplexity_chat` | $0.00045 to $0.00386 | Acceptance, 2026-10-09: $0.00156 (one call, 3.2 s). Probe fixtures, 2026-10-09: $0.00045 (`agent_chat_depth_switch.json`, a chained chat turn) and $0.00386 (`agent_low_fetch_url.json`, a call that fetched a page). Up to about $0.02 is the probe report's range; it is not backed by a saved capture | 3.2 s (acceptance) |
-| `medium` | `perplexity_research` (background); `perplexity_ask` and `perplexity_chat` accept it too | $0.01599 to $0.01722 as a research run | Acceptance, 2026-10-09: $0.01722 (job 1, 39 s between our submit and the call that saw it finish). Probe fixture `agent_background_completed.json`, 2026-10-09: $0.01599. About $0.05 as an upper figure is the probe report's range; not backed by a saved capture. A synchronous `medium` call was not run in either | about 35 to 40 s |
+| `medium` | `perplexity_research` (background); `perplexity_ask` and `perplexity_chat` accept it too | $0.01599 to $0.023 as a research run (three runs) | Acceptance, 2026-10-09: $0.01722 (job 1, 39 s between our submit and the call that saw it finish). Probe fixture `agent_background_completed.json`, 2026-10-09: $0.01599. Reported by another project on 2026-10-13: about $0.023 and about 90 s (not saved here). Cost follows how many fetches and searches the run makes (the fixture's tool cost was $0.01352, $0.01052 of it from three `fetch_url` calls), so it depends on the question. About $0.05 as an upper figure is the probe report's range; not backed by a saved capture. A synchronous `medium` call was not run | 35 to about 90 s |
 | `high` | `perplexity_research` only | not measured | Never run. "Up to about $0.4 to $0.9, and minutes" is the probe report's and the provider's own positioning: an estimate | minutes (estimate) |
 | `xhigh` | `perplexity_research` only | not measured | Never run; more than `high` | minutes (estimate) |
 
@@ -203,12 +203,24 @@ provider. This server also keeps the query and the result in its own local datab
 ### Sources are not citations
 
 `sources` lists the pages the run found or fetched, de-duplicated by URL, in order of first use,
-each with `url`, `title`, `date` (when the page has one) and `id`. It is **not** a list of what
-the answer cited. The API's `annotations` field was empty in every captured response, so nothing
-ties a claim to a source: the inline markers in the answer (`[1]`, `[web:0]`, markdown links) are
-returned unchanged and are **not** mapped to `sources` entries (the markers are not numbered like
-the `id`s, and nothing documents the mapping). A source may be unused by the answer, and an answer
-may rest on a page that is not listed.
+each with `url`, `title`, `date` (when the page has one), `ids` (every result id the API gave that
+URL: one page can come back under several ids in a long run) and `id` (the first of them). It is
+**not** a list of what the answer cited. The API's `annotations` field was empty in every captured
+response, so the server cannot say which claim rests on which source. The inline markers in the
+answer are returned unchanged. In the captured responses a marker `[N]` or `[web:N]` names the
+search result whose id is `N` (checked on three markers in one research fixture, and the bare
+`[1]` and `[3]` of the fast fixtures), so look `N` up in each source's `ids`; the readable result
+shows them as `(ids 10, 71)`. A fetched page has no id, so a marker cannot be matched to one (a
+fetch-only run cited `[web:0]`; what that numbers is unverified). A source may be unused by the
+answer, and an answer may rest on a page that is not listed.
+
+The `fast` preset answers with more confidence than its evidence can carry (one report: it
+stated an acquisition as fact where the deeper research found the disclosures did not show it).
+Use `medium` or `perplexity_research` for anything that goes into a deep analysis.
+
+With `json_schema`, citation markers that end a string value (`[1][3]`) are removed from
+`answer_json` (one warning gives the count); the `answer` text keeps them, and a marker inside a
+value or any other bracket form is left alone.
 
 ### `perplexity_ask`
 
@@ -274,9 +286,9 @@ result does not repeat the query, the query text is illustrative:
   "answer": "The latest stable Python release is **Python 3.15.0**, released October 9, 2026.[1]",
   "answer_json": null,
   "sources": [
-    {"url": "https://www.python.org/downloads/release/python-3150/", "title": "Python Release Python 3.14.8 | Python.org", "date": null, "id": 1},
-    {"url": "https://www.python.org/doc/versions/", "title": "Python documentation by version", "date": "2016-03-13", "id": 2},
-    {"url": "https://devguide.python.org/versions/", "title": "Status of Python versions", "date": "2026-05-27", "id": 3}
+    {"url": "https://www.python.org/downloads/release/python-3150/", "title": "Python Release Python 3.14.8 | Python.org", "date": null, "id": 1, "ids": [1]},
+    {"url": "https://www.python.org/doc/versions/", "title": "Python documentation by version", "date": "2016-03-13", "id": 2, "ids": [2]},
+    {"url": "https://devguide.python.org/versions/", "title": "Status of Python versions", "date": "2026-05-27", "id": 3, "ids": [3]}
   ],
   "status": "completed",
   "incomplete_reason": null,
@@ -372,8 +384,8 @@ Turn 2 answers from turn 1 through the stored response id (`"continuation": "cha
   "continuation": "new",
   "answer": "OK",
   "sources": [
-    {"url": "https://sharpe.co.za/tools/code-word-generator/", "title": "Code Word Generator: a private phrase your family can say ...", "date": null, "id": 1},
-    {"url": "https://militaryalphabet.net/", "title": "Military Alphabet - NATO Phonetic Alphabet - Communication", "date": "2025-05-05", "id": 2}
+    {"url": "https://sharpe.co.za/tools/code-word-generator/", "title": "Code Word Generator: a private phrase your family can say ...", "date": null, "id": 1, "ids": [1]},
+    {"url": "https://militaryalphabet.net/", "title": "Military Alphabet - NATO Phonetic Alphabet - Communication", "date": "2025-05-05", "id": 2, "ids": [2]}
   ],
   "status": "completed",
   "model": "openai/gpt-6-luna",
@@ -509,8 +521,8 @@ sources." A cancelled run reports no usage; it was recorded with an unknown cost
   "job": {"job_id": 1, "response_id": "resp_f607dfc5-a69a-44cd-9e45-43cb0587af76", "depth": "medium", "status": "completed", "query_excerpt": "Compare the pricing models of Pinecone, Weaviate Cloud and Qdrant Cloud using current official pricing pages. Short tabl", "model": "openai/gpt-6-luna", "started_at": "2026-10-09T21:51:17.475891Z", "finished_at": "2026-10-09T21:51:56.461160Z", "cancel_requested_at": null, "usage_recorded": true},
   "answer": "| Provider | Pricing model |\n|---|---|\n| **Pinecone** | **Starter:** free with usage limits. **Builder:** $20/month flat, with included usage limits. **Standard...",
   "sources": [
-    {"url": "https://www.pinecone.io/pricing/", "title": "Pricing - Pinecone", "date": null, "id": 21},
-    {"url": "https://www.pinecone.io/pricing/estimate/", "title": "Pricing", "date": null, "id": 22}
+    {"url": "https://www.pinecone.io/pricing/", "title": "Pricing - Pinecone", "date": null, "id": 21, "ids": [21]},
+    {"url": "https://www.pinecone.io/pricing/estimate/", "title": "Pricing", "date": null, "id": 22, "ids": [22]}
   ],
   "usage": {"input_tokens": 25474, "output_tokens": 974, "total_tokens": 26448, "cost_usd": "0.01722", "cost_source": "reported"}
 }

@@ -9,7 +9,7 @@
 
 ## 3. Documentation of measurements
 
-- [ ] 3.1 Correct `README.md` (the marker numbering paragraph, the medium row of the cost table, the `fast` confidence note), the ask, chat and research tool descriptions (`tools/ask.py`, `tools/chat.py`, `tools/research.py`: the medium range and the markers sentence) and add the correction note to the archived `py-agent-api` design only as a dated errata line; verify with `rg -n "not numbered like" README.md src` returning nothing (the main spec's 'unverified' wording is replaced by the delta at archive)
+- [x] 3.1 Correct `README.md` (the marker numbering paragraph, the medium row of the cost table, the `fast` confidence note), the ask, chat and research tool descriptions (`tools/ask.py`, `tools/chat.py`, `tools/research.py`: the medium range and the markers sentence) and add the correction note to the archived `py-agent-api` design only as a dated errata line; verify with `rg -n "not numbered like" README.md src` returning nothing (the main spec's 'unverified' wording is replaced by the delta at archive)
 
 ## 4. Acceptance (live)
 
