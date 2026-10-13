@@ -112,11 +112,15 @@ For one call the server SHALL resolve the model by the one selector the call nam
 - **THEN** the request names the `light` tier's model, and the next turn of the same chat may name a different tier
 
 ### Requirement: Selectors are mutually exclusive
-`depth` together with `model`, `depth` together with `tier`, and `model` together with `tier` SHALL fail with `invalid_request` naming both options, and nothing is sent. This requirement owns those conflicts; the ask requirements refer to it.
+`depth` together with `model`, `depth` together with `tier`, and `model` together with `tier` SHALL fail with `invalid_request`, and nothing is sent. The message is written for the calling agent: it names both options given, says each picks the model on its own so the two cannot be combined, and tells the agent what to do (pass only one, or none to use the mode's default). This requirement owns those conflicts; the ask requirements refer to it.
 
 #### Scenario: Conflicting selectors
 - **WHEN** an ask names `tier` and `depth`, or `tier` and `model`
 - **THEN** the call fails with `invalid_request` naming both options and no request reaches the API
+
+#### Scenario: The refusal tells the agent how to fix the call
+- **WHEN** an ask names `tier` `light` and `model` `openai/gpt-6-luna`
+- **THEN** the message names `tier` and `model`, says they cannot be used together because each selects the model, and says to pass one of them or neither
 
 ### Requirement: Every ask and chat result reports its routing
 `perplexity_ask` and `perplexity_chat` send SHALL return a `routing` object with `mode`, `tier` (null unless a tier was used or the `custom` default applied), `model` (the id requested, or null when a preset was named) and `selected_by` (`default`, `tier`, `depth` or `model`), so the caller sees what happened to its call without having been told the configuration.
