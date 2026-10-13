@@ -26,7 +26,7 @@
 
 ## 6. Documentation (after Gate 2 is clean)
 
-- [ ] 6.1 `CLAUDE.md` (the `agent.py` module row mentions `ids` and the marker cleaner; the current-change pointer) keeping the pm-managed block byte-identical; `CHANGELOG.md` entry under `2.0.0`; record Gate 2 again over the docs range after a fresh-context check of the documentation diff
+- [x] 6.1 `CLAUDE.md` (the `agent.py` module row mentions `ids` and the marker cleaner; the current-change pointer) keeping the pm-managed block byte-identical; `CHANGELOG.md` entry under `2.0.0`; record Gate 2 again over the docs range after a fresh-context check of the documentation diff
 
 ## 7. Archive
 
