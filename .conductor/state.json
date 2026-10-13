@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": null,
+  "active": "routing-modes-config",
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -758,7 +758,7 @@
       "id": "routing-modes-config",
       "title": "Routing modes: standard, custom tiers, dynamic switch",
       "priority": "P2",
-      "status": "queued",
+      "status": "active",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -775,9 +775,12 @@
       ],
       "reconcileNeeded": false,
       "description": "Three consumer modes set by config. Standard (default): one model, default perplexity/sonar (probed live 2026-10-13: web search works, about $0.0038 per call; 'auto' is rejected by the API). Custom: user's light/standard/complex model tiers, validated against the live catalog; caller picks the tier via depth. Dynamic: opt-in, classifier picks the tier (see routing-decisions-classifier). Open design problem: how the calling agent learns the active mode (server instructions rendered from settings, resolved mode/tier/model in every result, active routing in perplexity_models). README setup section lays out the three choices.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "b33f5eaca5dd194bfd35858f5da2b055d34b1d50"
+      ],
       "createdAt": "2026-10-13T13:17:14.209Z",
-      "touchedAt": "2026-10-13T13:17:14.211Z"
+      "touchedAt": "2026-10-13T13:24:09.150Z",
+      "startedAt": "2026-10-13T13:18:53.113Z"
     },
     {
       "id": "py-cli",
@@ -826,7 +829,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 273,
+  "revision": 275,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
