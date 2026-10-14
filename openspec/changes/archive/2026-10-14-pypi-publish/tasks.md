@@ -30,7 +30,7 @@
 
 - [x] 6.1 Rob confirms the license (MIT, carried over from the 1.x declaration), creates the GitHub environments `pypi` (with himself as required reviewer) and `testpypi`, and configures the pending Trusted Publishers on pypi.org and on test.pypi.org (repository `cfdude/mcp-perplexity-pro`, workflow `release.yml`, those environment names; `docs/releasing.md` has the exact steps). The build work of groups 1 to 5 is merged to `main` first, because GitHub lists a dispatchable workflow only from the default branch
 - [x] 6.2 TestPyPI rehearsal: run the release workflow manually (`gh workflow run release.yml`; it uploads `<version>.dev<run>`), then verify with `uvx --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --from mcp-perplexity-pro mcp-perplexity-pro --version` and `perplexity-pro help ask`; record the outputs under `acceptance/`
-- [ ] 6.3 Release: a commit on `main` that only sets the `[2.0.0]` date in `CHANGELOG.md` and the license year (lifecycle bookkeeping after Gate 2: it and the tag are not attributed to this epic), tag `v2.0.0`, push the tag, approve the `pypi` environment, watch the workflow, then verify `uvx mcp-perplexity-pro --version` from PyPI and record it under `acceptance/`
+- [x] 6.3 Release: a commit on `main` that only sets the `[2.0.0]` date in `CHANGELOG.md` and the license year (lifecycle bookkeeping after Gate 2: it and the tag are not attributed to this epic), tag `v2.0.0`, push the tag, approve the `pypi` environment, watch the workflow, then verify `uvx mcp-perplexity-pro --version` from PyPI and record it under `acceptance/`
 
 ## 7. Archive
 

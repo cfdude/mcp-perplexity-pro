@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "pypi-publish",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -924,7 +924,7 @@
       "id": "pypi-publish",
       "title": "Publish to PyPI (Trusted Publishing, tag 2.0.0)",
       "priority": "P2",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -953,7 +953,7 @@
         "c2e44bd13bf66295da0fefb06da2561b3cdfcf62"
       ],
       "createdAt": "2026-10-13T13:17:14.936Z",
-      "touchedAt": "2026-10-14T06:25:55.641Z",
+      "touchedAt": "2026-10-14T22:15:02.713Z",
       "startedAt": "2026-10-14T05:55:26.081Z",
       "release": "release-2-0-0",
       "gateReview": {
@@ -984,7 +984,17 @@
           "headSha": "c2e44bd13bf66295da0fefb06da2561b3cdfcf62",
           "reviewer": "fresh-context general-purpose subagent over 062667e..a2538ae, implementation and documentation (0 Critical, 0 Important, 5 Minor; the environment deployment-rule note folded into this head); suite 2509 passed, build tests 7 passed"
         }
-      }
+      },
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-14T22:15:02.712Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-14T22:15:02.686Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-14T22:15:02.712Z"
     },
     {
       "id": "py-agent-citation-fixes",
@@ -1163,7 +1173,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 384,
+  "revision": 385,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
