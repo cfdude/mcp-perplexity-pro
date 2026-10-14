@@ -109,6 +109,7 @@ async def test_initialize_over_http_lists_registered_tools(make_server):
         "perplexity_chat",
         "perplexity_decide",
         "perplexity_embed",
+        "perplexity_help",
         "perplexity_jobs",
         "perplexity_models",
         "perplexity_projects",
@@ -239,6 +240,7 @@ async def test_initialize_carries_the_routing_instructions(make_server):
 
     text, cfg = await instructions()
     assert text == instructions_text(cfg) and "standard" in text and "perplexity/sonar" in text
+    assert "perplexity_help" in text
     assert cfg.api_key.get_secret_value() not in text
     again, _ = await instructions()
     assert again == text  # identical bytes for equal settings

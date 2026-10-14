@@ -30,6 +30,7 @@ from mcp_perplexity_pro.agent import (
 )
 from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.help_text import POINTER
 from mcp_perplexity_pro.redaction import scrub_secrets
 from mcp_perplexity_pro.routing import description_sentence, resolve
 from mcp_perplexity_pro.settings import Settings
@@ -569,7 +570,7 @@ def register(server: FastMCP, settings: Settings) -> None:
     server.tool(
         name=TOOL,
         description=(
-            f"{inspect.cleandoc(perplexity_chat.__doc__)}\n\n{description_sentence(settings)}"
+            f"{inspect.cleandoc(perplexity_chat.__doc__)}\n\n{description_sentence(settings)}{POINTER}"
         ),
         output_schema=ChatResult.model_json_schema(),
         annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True),

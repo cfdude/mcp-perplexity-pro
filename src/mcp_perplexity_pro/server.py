@@ -29,6 +29,7 @@ from mcp_perplexity_pro.catalog import Catalog
 from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.embeddings import ProjectLocks
 from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
+from mcp_perplexity_pro.help_text import TOOLS
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.routing import instructions_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
@@ -86,6 +87,54 @@ def error_result(category: str, message: str) -> ToolResult:
     )
 
 
+def with_help_hint(category: str, message: str, context: Any) -> str:
+    """Name the help call for the tool, on an ``invalid_request`` from a tool that has a help
+    entry (help-tool: not on other categories, not on help's own errors, not on a tool help
+    does not know, because the call it would name would fail)."""
+    tool = getattr(getattr(context, "message", None), "name", None)
+    if category != "invalid_request" or tool == "perplexity_help" or tool not in TOOLS:
+        return message
+    return (
+        f'{message} Call perplexity_help with action "tool" and name "{tool}" '
+        "for its arguments and examples."
+    )
+
+
+def strip_titles(node: Any) -> Any:
+    """A JSON Schema without the ``title`` annotations pydantic writes on every node (they repeat
+    the property name and cost bytes in every ``tools/list``). A property that is itself named
+    ``title`` is data, not an annotation, and stays."""
+    if isinstance(node, dict):
+        out: dict[str, Any] = {}
+        for key, value in node.items():
+            if key in ("properties", "$defs") and isinstance(value, dict):
+                out[key] = {name: strip_titles(sub) for name, sub in value.items()}
+            elif key == "title" and isinstance(value, str):
+                continue
+            elif key in ("default", "enum", "const", "examples"):
+                out[key] = value  # data, not schema: a "title" inside it stays
+            else:
+                out[key] = strip_titles(value)
+        return out
+    if isinstance(node, list):
+        return [strip_titles(item) for item in node]
+    return node
+
+
+class CompactSchemasMiddleware(Middleware):
+    """Send every tool's input and output schema without ``title`` annotations."""
+
+    async def on_list_tools(self, context: Any, call_next: Any) -> Any:
+        tools = await call_next(context)
+        compact = []
+        for tool in tools:
+            update: dict[str, Any] = {"parameters": strip_titles(tool.parameters)}
+            if tool.output_schema is not None:
+                update["output_schema"] = strip_titles(tool.output_schema)
+            compact.append(tool.model_copy(update=update))
+        return compact
+
+
 class InFlightMiddleware(Middleware):
     """Counts running tool calls; once draining, refuses new ones."""
 
@@ -136,7 +185,8 @@ class ErrorContractMiddleware(Middleware):
         except PerplexityError as exc:
             # PerplexityError already redacts what it was built with; this covers a message
             # that gained text afterwards, or a subclass that skipped its own redaction.
-            return error_result(exc.category, redact_text(str(exc), self._secrets))
+            message = redact_text(str(exc), self._secrets)
+            return error_result(exc.category, with_help_hint(exc.category, message, context))
         except Exception as exc:
             return self._classify(context, exc)
 
@@ -146,7 +196,10 @@ class ErrorContractMiddleware(Middleware):
             busy = storage_busy_error()
             return error_result(busy.category, str(busy))
         if isinstance(exc, ValidationError):  # FastMCP's: arguments failed schema validation
-            return error_result("invalid_request", redact_text(str(exc), self._secrets))
+            message = redact_text(str(exc), self._secrets)
+            return error_result(
+                "invalid_request", with_help_hint("invalid_request", message, context)
+            )
         if isinstance(exc, NotFoundError):
             return error_result("not_found", redact_text(str(exc), self._secrets))
         name = getattr(getattr(context, "message", None), "name", "?")
@@ -205,7 +258,11 @@ def build_server(
         lifespan=app_lifespan,
         instructions=instructions_text(settings),
         mask_error_details=True,
-        middleware=[in_flight, ErrorContractMiddleware((settings.api_key.get_secret_value(),))],
+        middleware=[
+            in_flight,
+            CompactSchemasMiddleware(),
+            ErrorContractMiddleware((settings.api_key.get_secret_value(),)),
+        ],
     )
 
     @server.custom_route("/health", methods=["GET"])

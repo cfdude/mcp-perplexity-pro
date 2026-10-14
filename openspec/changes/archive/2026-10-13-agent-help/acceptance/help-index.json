@@ -1,0 +1,25 @@
+{
+  "action": "index",
+  "name": null,
+  "text": "# perplexity-pro 2.0.0\nWeb-grounded answers, search, decisions and embeddings; every costed call is recorded.\nRouting: standard, default model perplexity/sonar.\n\n## Pick a tool\n- A quick grounded fact: perplexity_ask\n- A report that takes minutes: perplexity_research, then perplexity_jobs\n- Links and snippets, no answer: perplexity_search\n- A follow-up conversation: perplexity_chat\n- Classify a text: perplexity_decide\n\n## Tools\n- perplexity_ask: billed\n- perplexity_chat: billed\n- perplexity_decide: billed\n- perplexity_embed: billed\n- perplexity_help: free\n- perplexity_jobs: free\n- perplexity_models: free\n- perplexity_projects: free\n- perplexity_research: billed, async\n- perplexity_search: billed\n- perplexity_usage: free\n\n## Topics\nrouting, costs, citations, errors, projects\n\nMore: perplexity_help action=\"tool\" name=\"<tool>\", or action=\"topic\" name=\"<topic>\".\n",
+  "tools": [
+    "perplexity_ask",
+    "perplexity_chat",
+    "perplexity_decide",
+    "perplexity_embed",
+    "perplexity_help",
+    "perplexity_jobs",
+    "perplexity_models",
+    "perplexity_projects",
+    "perplexity_research",
+    "perplexity_search",
+    "perplexity_usage"
+  ],
+  "topics": [
+    "routing",
+    "costs",
+    "citations",
+    "errors",
+    "projects"
+  ]
+}

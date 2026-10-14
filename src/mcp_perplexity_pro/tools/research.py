@@ -145,7 +145,8 @@ def register(server: FastMCP) -> None:
 
         Research runs are stored by the provider (store is true, because a background run that
         is not stored cannot be retrieved), so the query and result stay retrievable there. The
-        query and the result are also kept in this server's local database."""
+        query and the result are also kept in this server's local database.
+        Details: call perplexity_help."""
         request = build_research_request(depth, query, instructions)  # everything local first
         app = ctx.lifespan_context
         started = app.now()

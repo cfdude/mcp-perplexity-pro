@@ -1,0 +1,25 @@
+{
+  "action": "tool",
+  "name": "perplexity_search",
+  "text": "# perplexity_search\nRanked web results as data (title, url, snippet, date). No model answer.\n\nFlags: billed.\nCost: $0.001 per fast request, $0.005 per web request, however many queries it merges.\n\n## Example\n{\"name\": \"perplexity_search\", \"arguments\": {\"query\": \"python packaging guide\", \"search_type\": \"fast\", \"max_results\": 3}}\n\n## Arguments\n- query (string or list of string, required) - One query, or a list of 1 to 5 (each at most 8192 characters)\n- project (string or null, optional) - Project to record the call under (default: default)\n- search_type (string, optional) - fast (default, $0.001 per request) or web ($0.005 per request)\n- max_results (integer or null, optional) - Total results across all queries, 1 to 20 (default: the API's 10)\n- max_tokens (integer or null, optional) - Cap on page text across all results, 1 to 16384; can drop results\n- max_tokens_per_page (integer or null, optional) - Cap on page text per result, 1 to 4096\n- domains (list of string or null, optional) - At most 20 domains: all allowed (python.org) or all denied with a '-' prefix (-reddit.com); not mixed\n- recency (string or null, optional) - hour, day, week, month or year; not with a date option\n- after (string or null, optional) - Published on or after this date (YYYY-MM-DD)\n- before (string or null, optional) - Published on or before this date (YYYY-MM-DD)\n- updated_after (string or null, optional) - Last updated on or after this date (YYYY-MM-DD)\n- updated_before (string or null, optional) - Last updated on or before this date (YYYY-MM-DD)\n- languages (list of string or null, optional) - At most 20 two-letter lowercase ISO 639-1 codes, e.g. en\n- country (string or null, optional) - Two-letter country code to localize the search, e.g. US\n\n## Result keys\n- always: results, count, cost_usd, search_type\n\n## Errors\n- invalid_request: Up to five queries; filters are checked before any call.\n",
+  "tools": [
+    "perplexity_ask",
+    "perplexity_chat",
+    "perplexity_decide",
+    "perplexity_embed",
+    "perplexity_help",
+    "perplexity_jobs",
+    "perplexity_models",
+    "perplexity_projects",
+    "perplexity_research",
+    "perplexity_search",
+    "perplexity_usage"
+  ],
+  "topics": [
+    "routing",
+    "costs",
+    "citations",
+    "errors",
+    "projects"
+  ]
+}
