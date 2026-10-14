@@ -233,8 +233,8 @@ no usage event, no project). It has three actions:
 An unknown name fails with `invalid_request` listing the valid names. Every `invalid_request` from
 a tool ends with the call that shows that tool's arguments, for example `... Call perplexity_help
 with action "tool" and name "perplexity_ask" for its arguments and examples.`, and the server's MCP
-`instructions` name the help tool. The text comes from one module (`help_text.py`) that the planned
-CLI will reuse for `--help`. The help costs figures are the ones in this README (a test checks that
+`instructions` name the help tool. The text comes from one module (`help_text.py`) that `perplexity-pro help`
+reuses for `--help`. The help costs figures are the ones in this README (a test checks that
 each `$N.NN` figure in help appears here). Live record:
 `openspec/changes/archive/2026-10-13-agent-help/acceptance/`.
 
@@ -1660,7 +1660,7 @@ src/mcp_perplexity_pro/
                   recorded usage into the result's cost
   routing.py      which model answers an ask or chat: the routing mode, resolve() for the three
                   selectors, the instructions and description text (pure)
-  help_text.py    the curated help behind perplexity_help (pure, no FastMCP; the planned CLI reuses it)
+  help_text.py    the curated help behind perplexity_help (pure, no FastMCP; `perplexity-pro help` reuses it)
   search.py       Search API request building and validation, response digestion, run_search
   decisions.py    Decisions API request building and validation, response digestion,
                   decisions_usage (cost from input tokens), run_decide
