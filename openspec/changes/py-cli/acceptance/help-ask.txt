@@ -1,0 +1,34 @@
+# perplexity_ask
+One web-grounded question, answered now, with its sources. No memory.
+
+Flags: billed.
+Cost: Default model perplexity/sonar: $0.00336 in one sample. depth fast: $0.00118 to $0.00180 over four observations, about 2 s. Every call is recorded as spend.
+
+## Example
+perplexity-pro ask 'What is the latest stable Python release?' --depth fast
+
+## Arguments
+- query (string, required) - The question (at most 20000 characters)
+- project (string or null, optional) - Project to record the call under (default: default)
+- depth (string or null, optional) - fast, low or medium; selects a search preset. high and xhigh are refused: use perplexity_research. Cannot be combined with tier or model
+- model (string or null, optional) - An explicit model id, e.g. openai/gpt-6-luna, instead of a depth. It searches with the web search tool and 3 steps unless search is false
+- tier (string or null, optional) - light, standard or complex: custom routing mode only. Cannot be combined with depth or model
+- search (boolean or null, optional) - false answers from the model alone (not with depth: a depth always searches). true is accepted and changes nothing
+- domains (list of string or null, optional) - At most 20 domains to search: all allowed (python.org) or all denied with a '-' prefix (-reddit.com); not mixed
+- recency (string or null, optional) - hour, day, week, month or year
+- after (string or null, optional) - Only results published after this date (YYYY-MM-DD)
+- before (string or null, optional) - Only results published before this date (YYYY-MM-DD)
+- country (string or null, optional) - Two-letter country code to localize the search, e.g. US
+- max_results (integer or null, optional) - Search results to retrieve, 1 to 50
+- instructions (string or null, optional) - System-style instructions, at most 10000 characters
+- max_output_tokens (integer or null, optional) - Cap on answer tokens, 1 to 64000
+- json_schema (object or null, optional) - A JSON Schema (root type object) for a structured answer
+
+## Result keys
+- always: answer, sources, routing, usage, model, depth
+
+## Errors
+- invalid_request: Pass only one of depth, tier and model; depth is fast, low or medium (high and xhigh belong to perplexity_research).
+- authentication: The API key is wrong; the server must be restarted with a valid one.
+
+Routing: standard, default model perplexity/sonar.

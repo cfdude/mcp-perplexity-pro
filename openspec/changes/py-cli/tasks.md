@@ -20,7 +20,7 @@
 
 ## 5. Acceptance (live)
 
-- [ ] 5.1 With the real key (no pm2 change needed: the CLI runs on its own): `uv run perplexity-pro --help`, `help`, `help ask`, `models --json | jq`, one `ask` with a throwaway project (about $0.003) in text and one in `--json`, one refused call, then `usage --project <p>` reconciled to the nano-USD against the `--json` result's cost, and delete the project; save the outputs under `openspec/changes/py-cli/acceptance/`; expected spend under $0.01
+- [x] 5.1 With the real key (no pm2 change needed: the CLI runs on its own): `uv run perplexity-pro --help`, `help`, `help ask`, `models --json | jq`, one `ask` with a throwaway project (about $0.003) in text and one in `--json`, one refused call, then `usage --project <p>` reconciled to the nano-USD against the `--json` result's cost, and delete the project; save the outputs under `openspec/changes/py-cli/acceptance/`; expected spend under $0.01
 
 ## 6. Gate procedure (required, per the pm conductor)
 
