@@ -33,7 +33,7 @@
 ## 7. Documentation (after Gate 2 is clean)
 
 - [x] 7.1 README: a "Getting help" section (the `perplexity_help` actions with an example call and an excerpt of the index, the error hint, that the same text will back the CLI's `--help`), the tool table gains `perplexity_help`, tool counts become eleven; `CLAUDE.md` (module table gains `help_text.py` and `tools/help.py`, the tool-count note with the re-measured `tools/list` size, the current-change pointer) keeping the pm-managed block byte-identical; `CHANGELOG.md` entry under `2.0.0`; verify every example against the acceptance output; reword the "four channels" sentence in the README only if help is presented as a channel (it is a pointer, see the `routing-config` delta)
-- [ ] 7.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
+- [x] 7.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 
 ## 8. Archive
 

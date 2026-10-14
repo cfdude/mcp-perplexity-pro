@@ -175,7 +175,7 @@ no usage event, no project). It has three actions:
 
 | Action | Name | Returns |
 |---|---|---|
-| `index` (default) | none | A page of about 900 bytes: a table that maps a need to a tool, one line per tool saying whether it is free, billed or asynchronous, the topic names and the active routing mode |
+| `index` (default) | none | A page of about 900 bytes: a list that maps a need to a tool, one line per tool saying whether it is free, billed or asynchronous, the topic names and the active routing mode |
 | `tool` | a tool name | What the tool is for, whether a call is billed, asynchronous or can delete data, its cost, one example call, its arguments (read from the tool's own schema, so they cannot drift), the result keys per action and the errors with their fixes |
 | `topic` | `routing`, `costs`, `citations`, `errors` or `projects` | One short topic page, at most 3000 bytes |
 
@@ -188,9 +188,8 @@ a tool ends with the call that shows that tool's arguments, for example `... Cal
 with action "tool" and name "perplexity_ask" for its arguments and examples.`, and the server's MCP
 `instructions` name the help tool. The text comes from one module (`help_text.py`) that the planned
 CLI will reuse for `--help`. The help costs figures are the ones in this README (a test checks that
-each dollar figure in help appears here). Live record:
-`openspec/changes/archive/2026-10-14-agent-help/acceptance/` (the archive directory carries the date
-of the archive command).
+each `$N.NN` figure in help appears here). Live record:
+`openspec/changes/archive/<date>-agent-help/acceptance/`.
 
 ## Client configuration
 
@@ -1611,6 +1610,9 @@ src/mcp_perplexity_pro/
   costed.py       costed_call: the one costed-call sequence (project, timed call, record),
                   shared by the Agent, Search, Decisions and Embeddings tools; cost_fields turns a
                   recorded usage into the result's cost
+  routing.py      which model answers an ask or chat: the routing mode, resolve() for the three
+                  selectors, the instructions and description text (pure)
+  help_text.py    the curated help behind perplexity_help (pure, no FastMCP; the planned CLI reuses it)
   search.py       Search API request building and validation, response digestion, run_search
   decisions.py    Decisions API request building and validation, response digestion,
                   decisions_usage (cost from input tokens), run_decide
@@ -1621,7 +1623,7 @@ src/mcp_perplexity_pro/
                   Search responses, decisions.py: Decisions responses, embeddings.py: Embeddings
                   responses)
   tools/          one module per tool, each with register(server): ask, chat, research, jobs,
-                  search, decide, embeddings, models, projects, usage
+                  search, decide, embed, models, projects, usage, help
   usage.py        usage recorder (record_usage), money helpers, the Agent and Embeddings usage
                   parsers (Search and Decisions have none: their cost is computed)
   pricing.py      documented Perplexity prices in nano-USD, for costs the API does not report
@@ -1633,7 +1635,7 @@ src/mcp_perplexity_pro/
                   wheel)
   log_setup.py, redaction.py   stderr logging with secrets removed
 tests/            offline tests, fixtures/, and the live-marked capture helper
-openspec/         the spec-driven change records (py-foundation, py-usage-log, py-agent-api, py-search-api, py-decisions-tool, py-embeddings)
+openspec/         the spec-driven change records (`openspec/changes/archive/` holds every delivered change)
 ```
 
 Contributor and agent guidance is in `CLAUDE.md`.
