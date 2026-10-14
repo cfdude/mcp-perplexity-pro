@@ -1007,10 +1007,11 @@
       "reconcileNeeded": false,
       "description": "New tool perplexity_help with actions index (llms.txt-style markdown listing tools and topics), tool (one tool's arguments, examples, errors) and topic (routing, costs, citations, errors). One source generates the help text, the CLI --help and help <topic>; lets tool descriptions be trimmed to pay back the eleventh tool's size.",
       "attributedCommits": [
-        "8b970612b9e160ab25e5e5bdb3250c7a76be8470"
+        "8b970612b9e160ab25e5e5bdb3250c7a76be8470",
+        "cfc29ff91142f4d8b8aaf3b581f20686d7b6638d"
       ],
       "createdAt": "2026-10-14T02:25:51.014Z",
-      "touchedAt": "2026-10-14T04:01:21.377Z",
+      "touchedAt": "2026-10-14T04:07:47.079Z",
       "notes": [
         {
           "at": "2026-10-14T02:27:24.904Z",
@@ -1019,11 +1020,23 @@
         }
       ],
       "startedAt": "2026-10-14T03:58:19.331Z",
-      "release": "release-2-0-0"
+      "release": "release-2-0-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-14T04:07:47.076Z",
+          "baseSha": "6ad0f45c11012ee82bbfb93eceb727122393299c",
+          "headSha": "cfc29ff91142f4d8b8aaf3b581f20686d7b6638d",
+          "artifacts": [
+            "openspec/changes/agent-help"
+          ],
+          "reviewer": "fresh-context general-purpose subagent: Gate 1 (7 Important, 7 Minor) and cross-spec (3 blocks); all Important and blocks fixed in this head"
+        }
+      }
     }
   ],
   "detourStack": [],
-  "revision": 328,
+  "revision": 331,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
@@ -1035,8 +1048,20 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-14T02:47:22.795Z",
+        "reviewedAt": "2026-10-14T04:07:47.551Z",
         "specs": [
+          {
+            "key": "agent-help/specs/help-tool/spec.md",
+            "sha256": "306f83aa37bbcb7293fc422686327ab2d1b854bdffa6b2532b83858d56ec5bd9"
+          },
+          {
+            "key": "agent-help/specs/routing-config/spec.md",
+            "sha256": "285462c352485673d24249da3a3aa4425d4fc197f8912709bf8bbe230797380c"
+          },
+          {
+            "key": "agent-help/specs/server-runtime/spec.md",
+            "sha256": "3c672eb923e5d37e3f319b4052924ae4e54ccc10d09644f300c032ea09a01ca1"
+          },
           {
             "key": "py-agent-api/specs/agent-ask/spec.md",
             "sha256": "e9e07e5b99a3bc281410aa5254a666b73f1430c9895f08c4264604a77e89e606"
@@ -1147,17 +1172,17 @@
           },
           {
             "key": "routing-modes-config/specs/routing-config/spec.md",
-            "sha256": "294d69378e479ea622fa72184f9af9d063cd318787141871bf0e3f5fcdd8e66f"
+            "sha256": "e8ff7f0dd611b131ee8ee766d8ff40658d714d566d917898d89b43411578497f"
           },
           {
             "key": "routing-modes-config/specs/server-runtime/spec.md",
             "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagent over routing-modes-config vs main specs (1 BLOCK, 8 POLISH; BLOCK and actionable POLISH fixed in e913422; remaining POLISH declined: main-spec fixture wording 'recorded fast response' names a fixture)",
+        "reviewer": "fresh-context general-purpose subagent over agent-help vs main specs (3 BLOCKS fixed: instructions delta added, help not a fifth channel, costs forms stated; POLISH declined: pre-existing difference between the main specs' rounded cost ranges and the code's, owned by their changes)",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-13T13:44:31.527Z",
+          "reviewedAt": "2026-10-14T02:47:22.795Z",
           "specs": [
             {
               "key": "py-agent-api/specs/agent-ask/spec.md",
@@ -1185,7 +1210,7 @@
             },
             {
               "key": "py-agent-citation-fixes/specs/agent-ask/spec.md",
-              "sha256": "1a6ccddf5c901a252671de47df49ee96c303465deb7467124d206b6ff0a6668c"
+              "sha256": "775709681cc235f68c98e04739f4c18e89e3e5fb9a1e780d6475d25992850c1d"
             },
             {
               "key": "py-decisions-tool/specs/decisions-client/spec.md",
@@ -1257,11 +1282,11 @@
             },
             {
               "key": "routing-modes-config/specs/agent-ask/spec.md",
-              "sha256": "5729e7a6c43ac4b02f592a767d47950378130ac04b78fd024f609069f5483b36"
+              "sha256": "386d0eb113c90def8c399e23353804355a8e749fc9f865b357ee361aff3d948d"
             },
             {
               "key": "routing-modes-config/specs/agent-chat/spec.md",
-              "sha256": "ee00132f55543976867f86ce56f2ddc13ce869c695d8acc07d5725578d900893"
+              "sha256": "7b657929c3b53bb87c1d487d706c81ad2342a0694150104543ee45fb40365772"
             },
             {
               "key": "routing-modes-config/specs/model-catalog/spec.md",
@@ -1269,14 +1294,14 @@
             },
             {
               "key": "routing-modes-config/specs/routing-config/spec.md",
-              "sha256": "a142c3a1687d2ba07b4b55a8c8ce5e16fd8cbc98c07af86f5300a959992e91a9"
+              "sha256": "294d69378e479ea622fa72184f9af9d063cd318787141871bf0e3f5fcdd8e66f"
             },
             {
               "key": "routing-modes-config/specs/server-runtime/spec.md",
               "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagent over routing-modes-config and py-agent-citation-fixes vs main specs (5 BLOCKS and 11 POLISH; all BLOCKS and the actionable POLISH fixed in e0c8a52ff9152a33062fcc9f7f3fb2382556c498)"
+          "reviewer": "fresh-context general-purpose subagent over routing-modes-config vs main specs (1 BLOCK, 8 POLISH; BLOCK and actionable POLISH fixed in e913422; remaining POLISH declined: main-spec fixture wording 'recorded fast response' names a fixture)"
         }
       }
     }

@@ -1,6 +1,6 @@
 ## 0. Before apply
 
-- [ ] 0.1 Record Gate 1 (`record-gate-review agent-help --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/agent-help`) after a fresh-context review of the artifacts, and add `agent-help` to `release-2-0-0` (`release release-2-0-0 --member agent-help`) with a fresh-context cross-spec review of `help-tool` and the `server-runtime` delta against the main specs and the other release specs (`record-cross-spec-review release-2-0-0`); ORDER: before group 1 and again after any amendment
+- [x] 0.1 Record Gate 1 (`record-gate-review agent-help --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/agent-help`) after a fresh-context review of the artifacts, and add `agent-help` to `release-2-0-0` (`release release-2-0-0 --member agent-help`) with a fresh-context cross-spec review of `help-tool` and the `server-runtime` delta against the main specs and the other release specs (`record-cross-spec-review release-2-0-0`); ORDER: before group 1 and again after any amendment
 
 ## 1. Help text
 
