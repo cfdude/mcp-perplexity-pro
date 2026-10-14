@@ -16,7 +16,7 @@ answer a single query. There was no working behavior to port, so the TypeScript 
 
 | Tool | What it does | Spends money |
 |---|---|---|
-| `perplexity_ask` | One web-grounded question, answered synchronously with its sources. Depth `fast` (default), `low` or `medium` | yes |
+| `perplexity_ask` | One web-grounded question, answered synchronously with its sources. The routing mode picks the model (default `perplexity/sonar`); or a depth (`fast`, `low`, `medium`), a `tier` or a `model` | yes |
 | `perplexity_chat` | A multi-turn conversation kept in the local database: `send`, `list`, `read`, `delete` | `send` only |
 | `perplexity_research` | Starts a deep research run in the background and returns a job id at once. Depth `medium` (default), `high` or `xhigh` | yes, when a call observes the run finish |
 | `perplexity_jobs` | Manages research runs: `list`, `status`, `result`, `cancel` | no new spend; it records the finished run's |
@@ -108,9 +108,61 @@ value. No `.env` file is read.
 | `PERPLEXITY_CATALOG_TTL` | `3600` | Seconds the model list is cached |
 | `PERPLEXITY_CATALOG_MAX_STALE` | `86400` | Oldest cached model list, in seconds, that may be returned when the live request fails |
 | `PERPLEXITY_DB_BUSY_TIMEOUT` | `5` | Seconds a write waits for the database lock before failing with `storage_busy` |
+| `PERPLEXITY_ROUTING` | `standard` | `standard`, `custom` or `dynamic` (reserved: refused at startup), case-insensitive. See "Choosing how models are picked" |
+| `PERPLEXITY_MODEL` | `perplexity/sonar` | `standard` mode: the model a call that names nothing uses |
+| `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD`, `PERPLEXITY_TIER_COMPLEX` | none | `custom` mode: the three tier models, all required there |
 
 Variables starting with `FASTMCP_` belong to FastMCP and are not used for this server's own
 settings.
+
+## Choosing how models are picked
+
+`perplexity_ask` and `perplexity_chat` (send) need a model. The **routing mode** says which one runs
+when a call names nothing; it is a **default, never a restriction**. A call can always name its own
+`model` (used exactly as given, in every mode, even if it is not in the catalog), a `depth` (a
+Perplexity preset) or, in `custom` mode, a `tier`. Name only one of the three per call; two of them
+fail with an `invalid_request` that says so. `perplexity_research` is not affected: its depths are
+presets with their own runtime.
+
+There are three modes, set with `PERPLEXITY_ROUTING`:
+
+| Mode | What it does | Set up |
+|---|---|---|
+| `standard` (default) | Every call that names nothing uses one model, `perplexity/sonar` unless you change it. A base Sonar model line is the default because the line always exists, while a preset's model behind `fast` moves (it was `openai/gpt-6-luna` on 2026-10-06) | Nothing. To use another model: `PERPLEXITY_MODEL=anthropic/claude-sonnet-5-5` |
+| `custom` | Three tiers you choose: `light` (light or agent-execution work), `standard` (everyday work, what a call with no selector uses) and `complex` (work that needs deeper reasoning). The agent picks one with `tier` | `PERPLEXITY_ROUTING=custom` plus all three `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX`, each a model id. A missing tier stops startup and names it |
+| `dynamic` | Not available yet. It is reserved for a classifier built on Perplexity's Decisions API (`perplexity_decide`) that would pick a model per prompt to save cost; startup refuses it with a message saying so, and never falls back to `standard` silently | none |
+
+Example `custom` setup (in the pm2 `env` block or the shell):
+
+```bash
+PERPLEXITY_ROUTING=custom
+PERPLEXITY_TIER_LIGHT=openai/gpt-6-luna
+PERPLEXITY_TIER_STANDARD=perplexity/sonar
+PERPLEXITY_TIER_COMPLEX=anthropic/claude-sonnet-5-5
+```
+
+A model id is 1 to 200 characters from letters, digits and `. _ : / @ + -`. A variable the active
+mode does not use (a tier in `standard` mode, `PERPLEXITY_MODEL` in `custom` mode) is ignored with
+one startup warning. To go back, unset the variables: the defaults are `standard` and
+`perplexity/sonar`. `auto` is not a model: the API refuses it, so "auto" would have to be something
+this server implements, which is what `dynamic` is for.
+
+**What the default costs.** `perplexity/sonar` with web search cost $0.00336 for one question, $0.00371
+for a `json_schema` question and $0.00379 in the first probe; the `fast` preset cost $0.00124 for the
+same question as the first (acceptance, `openspec/changes/routing-modes-config/acceptance/`). That is
+one question each (about 2.7 times `fast` in that pair), so read it as a rough guide: the web search
+tool's pages count as input tokens, which is where most of a Sonar call's cost sits. To keep the
+old cheap default, pass `depth: "fast"` on a call or set `PERPLEXITY_MODEL` to another id.
+`perplexity_usage` shows what you really spent.
+
+**How the calling agent learns the setup.** An agent sees only tools, so the server tells it four
+ways and any one is enough: the MCP `instructions` text (some clients show it, some drop it), one
+sentence in the `perplexity_ask` and `perplexity_chat` descriptions, the `routing` object in every
+ask and chat result (`mode`, `tier`, `model` and `selected_by`: `default`, `tier`, `depth` or
+`model`, which also shows when an agent overrode the default), and the `routing` section of
+`perplexity_models`, which marks each configured id `known` when the live list has it. A model the
+list does not have is still sent as configured, because the list can lag a new model and the API
+reports a typo on the first call.
 
 ## Client configuration
 
@@ -161,14 +213,16 @@ and has its own cost table in its section, and so do `perplexity_decide` (the De
 
 ### Cost by depth
 
-A depth is an Agent API preset: a bundle of model, search tools and step budget. You choose it;
-nothing is routed automatically and there is **no spending cap**. Costs are the exact figures the
+A depth is an Agent API preset: a bundle of model, search tools and step budget. You or the
+calling agent choose it (a call that names no depth, tier or model uses the routing mode's default
+model, see "Choosing how models are picked", which costs differently from the table) and there is
+**no spending cap**. Costs are the exact figures the
 API reported in its responses (`usage.cost_usd`, `cost_source: "reported"`), not estimates, except
 where the table says "not measured".
 
 | Depth | Where it is available | Observed cost per call | Evidence | Observed time |
 |---|---|---|---|---|
-| `fast` (default for ask and chat) | `perplexity_ask`, `perplexity_chat` | $0.00118 to $0.00180 | Live acceptance run, 2026-10-09: $0.00143, $0.00118, $0.00158. Probe fixtures, 2026-10-09 (the eight synchronous `fast` captures in `tests/fixtures/`; a ninth, the background poll `agent_background_poll.json`, cost $0.00105): $0.00119 to $0.00180 | 1.7 to 2.6 s (acceptance) |
+| `fast` | `perplexity_ask`, `perplexity_chat` | $0.00118 to $0.00180 | Live acceptance run, 2026-10-09: $0.00143, $0.00118, $0.00158. Probe fixtures, 2026-10-09 (the eight synchronous `fast` captures in `tests/fixtures/`; a ninth, the background poll `agent_background_poll.json`, cost $0.00105): $0.00119 to $0.00180 | 1.7 to 2.6 s (acceptance) |
 | `low` | `perplexity_ask`, `perplexity_chat` | $0.00045 to $0.00386 | Acceptance, 2026-10-09: $0.00156 (one call, 3.2 s). Probe fixtures, 2026-10-09: $0.00045 (`agent_chat_depth_switch.json`, a chained chat turn) and $0.00386 (`agent_low_fetch_url.json`, a call that fetched a page). Up to about $0.02 is the probe report's range; it is not backed by a saved capture | 3.2 s (acceptance) |
 | `medium` | `perplexity_research` (background); `perplexity_ask` and `perplexity_chat` accept it too | $0.01599 to $0.02524 as a research run (three of ours and one reported) | Acceptance, 2026-10-09: $0.01722 (job 1, 39 s between our submit and the call that saw it finish). Probe fixture `agent_background_completed.json`, 2026-10-09: $0.01599. Acceptance, 2026-10-13 (`openspec/changes/py-agent-citation-fixes/acceptance/`): $0.02524 and 71 s on a five-vendor pricing question. Reported by another project the same day: about $0.023 and about 90 s (not saved here). Cost follows how many fetches and searches the run makes (the fixture's tool cost was $0.01352, $0.01052 of it from three `fetch_url` calls), so it depends on the question. About $0.05 as an upper figure is the probe report's range; not backed by a saved capture. A synchronous `medium` call was not run | 39 to about 90 s (39 s and 71 s measured by us) |
 | `high` | `perplexity_research` only | not measured | Never run. "Up to about $0.4 to $0.9, and minutes" is the probe report's and the provider's own positioning: an estimate | minutes (estimate) |
@@ -240,9 +294,10 @@ run. A `completed` or `incomplete` run returns a result; any other status is an
 |---|---|---|---|
 | `query` | string | required | The question, not blank, at most 20000 characters |
 | `project` | string | `default` | The project the call is recorded under; created if absent |
-| `depth` | `fast`, `low` or `medium` | `fast` | The preset. `high` and `xhigh` are refused (see "Cost by depth"). Cannot be combined with `model` |
-| `model` | string | none | An explicit model id (for example `openai/gpt-6-luna`) instead of a depth. It searches with the web search tool and a 3-step budget unless `search` is false. An Anthropic id gets `max_output_tokens` 4096 unless you set one |
-| `search` | boolean | none | `false` answers from the model alone and needs `model` (a depth always searches). `true` is accepted and changes nothing |
+| `depth` | `fast`, `low` or `medium` | none | The preset. `high` and `xhigh` are refused (see "Cost by depth"). Cannot be combined with `tier` or `model` |
+| `tier` | `light`, `standard` or `complex` | none | `custom` routing mode only (refused in `standard` mode, naming the mode). Cannot be combined with `depth` or `model` |
+| `model` | string | none | An explicit model id (for example `openai/gpt-6-luna`), used exactly as given in every mode. A call that names no `depth`, `tier` or `model` uses the routing mode's default model. It searches with the web search tool and a 3-step budget unless `search` is false. An Anthropic id gets `max_output_tokens` 4096 unless you set one |
+| `search` | boolean | none | `false` answers from the model alone and is refused with `depth` (a depth always searches). `true` is accepted and changes nothing |
 | `domains` | list of strings | none | At most 20 domains to search: all allowed (`python.org`) or all denied with a `-` prefix (`-reddit.com`). Mixing the two is refused |
 | `recency` | `hour`, `day`, `week`, `month` or `year` | none | Only recent results |
 | `after`, `before` | string `YYYY-MM-DD` | none | Only results published after or before this date. A malformed date is refused locally |
@@ -269,7 +324,8 @@ Output (`structuredContent`, with the answer, a numbered source list and one usa
 | `incomplete_reason` | Why an incomplete run stopped, for example `max_output_tokens`; otherwise `null` |
 | `warnings` | Things worth knowing about this result |
 | `model` | The model that answered |
-| `depth` | The preset used; `null` when `model` was given |
+| `depth` | The preset used; `null` when a model ran (the default route, a tier or `model`) |
+| `routing` | How the model was picked: `mode`, `tier` (or `null`), `model` (the id requested, `null` for a preset) and `selected_by` (`default`, `tier`, `depth` or `model`) |
 | `response_id` | The API's response id |
 | `usage` | `input_tokens`, `output_tokens`, `total_tokens`, `cost_usd` (an exact decimal string, `null` when unknown) and `cost_source` (`reported`, `computed` or `none`) |
 | `latency_ms` | Measured wall time of the upstream call |
@@ -279,7 +335,7 @@ An `incomplete` answer is a result with a warning, not an error: the run happene
 An invalid `json_schema` makes the API answer with the same generic `400 invalid request` it gives
 for other mistakes, so the error message names the schema only as the likely cause.
 
-Example, `fast` with a domain filter. The result is from the live acceptance run on 2026-10-09
+Example, `fast` with a domain filter. The result is from the live acceptance run on 2026-10-09 (it predates the `routing` field; a current result also carries `"routing": {"mode": "standard", "tier": null, "model": null, "selected_by": "depth"}`)
 (`openspec/changes/archive/2026-10-09-py-agent-api/acceptance/a1.json`), shortened to 3 of its 10 sources; nothing
 else is edited. The acceptance files hold results, not requests, so every example call in this
 README is written to match its result (depth, project and the fields the result shows); where a
@@ -329,6 +385,31 @@ sources and cost more than `fast`):
 }
 ```
 
+A call that names nothing, from the live acceptance of the routing change (2026-10-13, standard
+mode; keys shortened to the ones that differ, the answer cut to its first sentence; raw output in
+`openspec/changes/routing-modes-config/acceptance/billed-calls.json`):
+
+```json
+{"name": "perplexity_ask", "arguments": {"query": "What is the latest stable Python 3 release? One sentence with a source.", "project": "acceptance-routing"}}
+```
+
+```json
+{
+  "answer": "The latest stable release is **Python 3.15.0** ([Python.org](https://www.python.org/downloads/source/)). ...",
+  "status": "completed",
+  "model": "perplexity/sonar",
+  "depth": null,
+  "routing": {"mode": "standard", "tier": null, "model": "perplexity/sonar", "selected_by": "default"},
+  "usage": {"input_tokens": 2571, "output_tokens": 88, "total_tokens": 2659, "cost_usd": "0.00336", "cost_source": "reported"}
+}
+```
+
+A conflicting call (here a `custom` server) fails without sending anything:
+
+```text
+[invalid_request] tier and model: `tier` and `model` cannot be combined: each one selects the model on its own. Pass one of them, or neither to use this server's default (the standard tier (perplexity/sonar)).
+```
+
 ### `perplexity_chat`
 
 A multi-turn conversation kept in the local database, with four actions. The messages are stored in
@@ -344,7 +425,7 @@ by-id action in an absent project is `not_found`; `list` in one is empty).
 | `chat_id` | integer | none | `send`: continue this chat; omit it to start a new one. `read` and `delete`: the chat |
 | `project` | string | `default` | The project the chat belongs to |
 | `replay` | boolean | `false` | `send` with `chat_id`: resend the stored history instead of continuing from the previous response (see below) |
-| `depth`, `model`, `search`, `domains`, `recency`, `after`, `before`, `country`, `max_results`, `instructions`, `max_output_tokens` | as in `perplexity_ask` | as there | `send` only. `depth` may change on every turn; `high` and `xhigh` are refused. There is no `json_schema` |
+| `depth`, `tier`, `model`, `search`, `domains`, `recency`, `after`, `before`, `country`, `max_results`, `instructions`, `max_output_tokens` | as in `perplexity_ask` | as there | `send` only. `depth` and `tier` may change on every turn (a chained send may switch model: probed 2026-10-13); `high` and `xhigh` are refused. There is no `json_schema` |
 | `limit` | integer | 20 (`list`), 50 (`read`) | `list`: chats to return, 1 to 100, newest first. `read`: the last N messages, 1 to 200 |
 | `confirm` | boolean | `false` | `delete` needs `true`; removing a chat cannot be undone |
 
@@ -1153,6 +1234,7 @@ Output (`structuredContent`, with the same data rendered as text):
 | `providers` | Every provider in the live list, ignoring the filter, so a typo in `provider` shows the real names |
 | `stale` | `true` when the live request failed and an older cached list is shown instead |
 | `age_seconds` | Seconds since the list was fetched live |
+| `routing` | The active routing mode and the configured model or tiers (`name`, `id`, `known`: whether the live list has the id; an id that is not listed is still used). Configuration, not live data, and present whatever `provider` says |
 | `presets` | The Agent API preset names (`fast`, `low`, `medium`, `high`, `xhigh`) and the model each maps to, with `source: "documentation"` and `as_of` (the recording date). Presets are copied from Perplexity's documentation, not live data, and the model behind a name can change |
 
 A failed refresh serves the cached list (`stale: true`) only for `rate_limited`, `upstream_failure`

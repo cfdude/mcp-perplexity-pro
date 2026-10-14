@@ -52,7 +52,8 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 |---|---|
 | `__main__.py` | Entry point (`main`, `bootstrap`, `run`). Startup order: settings, then data dir and migrations, then upstream client, then listen. Own `uvicorn.Server` subclass for HTTP, own signal handling for stdio |
 | `cli.py` | `--transport stdio\|http`, `--version`; parsed before settings so `--help` needs no key |
-| `settings.py` | `Settings` (pydantic-settings, prefix `PERPLEXITY_`), `load_settings()` raising `SettingsError` that names each bad variable |
+| `settings.py` | `Settings` (pydantic-settings, prefix `PERPLEXITY_`), `load_settings()` raising `SettingsError` that names each bad variable; the routing fields (`routing`, `model`, `tier_light`, `tier_standard`, `tier_complex`) with their cross-field check, `ignored_routing_vars()` for the startup warning |
+| `routing.py` | Pure and network-free: `Route`, `resolve(settings, depth=, tier=, model=)` (the one place the three selectors are checked and a default is chosen; an explicit `model` is always verbatim), `description_sentence` (ask and chat descriptions) and `instructions_text` (the MCP `instructions`); owns `ASK_DEPTHS` and `LONG_DEPTHS` |
 | `server.py` | `build_server(settings, http, engine)`, `AppContext`, `/health`, the two middlewares, `error_result()` |
 | `client.py` | `PerplexityClient`: the one httpx2 client, retry loop, typed errors, redacted logging. Agent helpers `create_run` (a synchronous run gets `PERPLEXITY_AGENT_READ_TIMEOUT`), `get_run`, `cancel_run` |
 | `errors.py` | `PerplexityError` (a FastMCP `ToolError`), `CATEGORIES`, `ALL_CATEGORIES`, status-to-category mapping |
@@ -71,7 +72,7 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 | `tools/search.py` | `perplexity_search` (`fast`/`web`, one query or up to five merged into one list, `people` not offered). Spec: `openspec/changes/archive/2026-10-11-py-search-api/specs/search-tool/spec.md` |
 | `tools/decisions.py` | `perplexity_decide` (`noul`/`choice`/`score` questions, 1 to 32 per call, `pplx-decider-v1.1-27b` by default; images refused). Spec: `openspec/specs/decisions-tool/spec.md` |
 | `tools/embeddings.py` | `perplexity_embed` (`index`/`search`/`status`/`delete`; sources `chat`, `job`, `text`; models `pplx-embed-v1-0.6b` (default) and `pplx-embed-v1-4b`; vectors never returned; `delete` needs `confirm`). Specs: `openspec/specs/embeddings-tool/spec.md` and `openspec/specs/embeddings-store/spec.md` |
-| `tools/ask.py`, `tools/chat.py`, `tools/research.py`, `tools/jobs.py` | `perplexity_ask` (stateless, `fast`/`low`/`medium`), `perplexity_chat` (`send`/`list`/`read`/`delete` over local history), `perplexity_research` (background submit, returns a job id), `perplexity_jobs` (`list`/`status`/`result`/`cancel`). Specs: `openspec/specs/agent-ask/`, `agent-chat/` and `agent-research/` |
+| `tools/ask.py`, `tools/chat.py`, `tools/research.py`, `tools/jobs.py` | `perplexity_ask` (stateless; the routing mode picks the model, or `depth` `fast`/`low`/`medium`, `tier` or `model`), `perplexity_chat` (`send`/`list`/`read`/`delete` over local history), `perplexity_research` (background submit, returns a job id), `perplexity_jobs` (`list`/`status`/`result`/`cancel`). Specs: `openspec/specs/agent-ask/`, `agent-chat/` and `agent-research/` |
 | `usage.py` | The recorder `record_usage` (best effort, never raises), money helpers (`to_nano`, `format_usd`, nano-USD ints), `Usage`/`ToolCallUsage`, `usage_from_agent_response`, `usage_from_embeddings_response` (the cost the API reports, only in USD), `computed_usage`, `agent_response_status`, and the `_PARSERS` registry (one entry per `api`: `agent` and `embeddings`) |
 | `pricing.py` | Documented Perplexity prices as integer nano-USD (`PRICES_AS_OF`, `PRICES_SOURCE`) and the `*_cost_nano` helpers returning `None` when unknown; pinned to `tests/fixtures/pricing_page.json` |
 | `usage_report.py` | `usage_report`: read-only SQL aggregation behind `perplexity_usage` (totals over all matches, one grouping chosen from a fixed whitelist, bound parameters only) |
@@ -133,7 +134,7 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
    bytes. Adding `perplexity_embed` (ten tools) measured 2026-10-11 the same way (at `aba65c1`
    against `e252e8f`): 56161 bytes (+13.4%, from 49539), and the `perplexity_embed` entry alone is
    6621 bytes. The `ids` field of `Source` (py-agent-citation-fixes) then measured 56898 bytes
-   (+737, +1.3%) on 2026-10-13. Ten tools exceed the design target of about nine by one; nothing was trimmed, and
+   (+737, +1.3%) on 2026-10-13. The routing modes (the `tier` argument and `routing` result field on ask and chat, the `perplexity_models` routing section, the mode sentence in two descriptions) then measured 59779 bytes (+2881, +5.1%, the same way, live server, 2026-10-13; over the 3% the design aimed for, and the `agent-help` epic trims descriptions). Ten tools exceed the design target of about nine by one; nothing was trimmed, and
    the existing descriptions (`perplexity_chat` is the largest) are the lever. Prefer one tool with
    an `action` argument over several, and trim descriptions before adding an eleventh tool.
 
@@ -341,7 +342,7 @@ a third by inlining the sequence above:
 - Environment variables, prefix `PERPLEXITY_` (table in `README.md`; defined once in
   `settings.py`): `API_KEY` (required), `HOST` (127.0.0.1), `PORT` (8102), `BASE_URL`, `DATA_DIR`,
   `LOG_LEVEL`, `CONNECT_TIMEOUT`, `READ_TIMEOUT`, `AGENT_READ_TIMEOUT` (120 s, a synchronous Agent run only), `MAX_ATTEMPTS`, `MAX_RETRY_WAIT`, `CATALOG_TTL`,
-  `CATALOG_MAX_STALE`, `DB_BUSY_TIMEOUT`. No `.env` file is read. Never use the `FASTMCP_` prefix
+  `CATALOG_MAX_STALE`, `DB_BUSY_TIMEOUT`, `ROUTING` (`standard` default, `custom`; `dynamic` is reserved and refused), `MODEL` (`perplexity/sonar`) and `TIER_LIGHT|STANDARD|COMPLEX`. No `.env` file is read. Never use the `FASTMCP_` prefix
   for our own settings (FastMCP reads it).
 - **Never print, log, commit or paste the API key.** It is a `SecretStr`; logs go through the
   redacting handler to stderr only (stdout is the protocol in stdio mode).
@@ -362,7 +363,7 @@ a third by inlining the sequence above:
   propose converting anything back or reviving the 1.x tool names. The Sonar models and
   `/chat/completions` endpoints are retired by Perplexity and must not be called.
 - Not built yet: contextualized embeddings (`pplx-embed-context-*`), returning or exporting vectors,
-  an approximate-nearest-neighbour index, a delete of one text key, the Decisions API's image input, the Search API's `people` type and page snippets, streaming, auto-routing between depths or models and cost ceilings (there is none:
+  an approximate-nearest-neighbour index, a delete of one text key, the Decisions API's image input, the Search API's `people` type and page snippets, streaming, the dynamic routing mode (a Decisions-API classifier; `PERPLEXITY_ROUTING=dynamic` is reserved and refused at startup), routing rules, escalation and cost ceilings (there is none:
   `high` and `xhigh` exist only behind `perplexity_research` for that reason), pruning of chats,
   jobs or usage events, PyPI publishing (the package only has to build and run via `uvx --from .`).
 
@@ -370,8 +371,7 @@ a third by inlining the sequence above:
 
 - `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
   generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
-  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). The current change is
-  `routing-modes-config` (proposed, not started; `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
+  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). There is no change in flight (`routing-modes-config`, `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are all archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
   with their enforcement points.
 - Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
   task's `tasks.md` checkbox ticked in the same commit.
