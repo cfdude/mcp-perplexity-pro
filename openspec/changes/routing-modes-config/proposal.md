@@ -12,7 +12,7 @@ Probed live on 2026-10-13 through the running server: `perplexity/sonar` is in t
 - `standard`: one model, `PERPLEXITY_MODEL`, default `perplexity/sonar`. A call with no depth, tier or model uses it, grounded with the web search tool.
 - `custom`: three tiers, `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX`, all required in this mode (no hidden defaults). A call names a tier with a new `tier` argument; with none it uses the `standard` tier.
 - The mode is a **default**, never a restriction: an explicit `model` on a call is used exactly as given in every mode (it is the override), and a call that names none falls back to the mode's default. `depth` (the Perplexity presets) stays available the same way. `tier` is refused outside `custom`.
-- Tell the calling agent what is configured, through four channels that each work when another is ignored: the MCP server `instructions` rendered from the settings at startup, the `ask` and `chat` tool descriptions, a `routing` object in every ask and chat result (mode, tier, model, why), and an active-routing section in `perplexity_models`.
+- Tell the calling agent what is configured, through four channels that each work when another is ignored: the MCP server `instructions` rendered from the settings at startup, the `ask` and `chat` tool descriptions, a `routing` object in every ask and chat result (mode, tier, model, `selected_by`), and an active-routing section in `perplexity_models`.
 - Show whether each configured model id is in the live catalog (`known` in `perplexity_models`) without making startup or any call depend on the network or on the answer.
 - Document the three choices in the README setup: the recommended base-Sonar default and why, how dynamic will use Perplexity Decide to choose per prompt, and how to configure custom tiers.
 - **BREAKING (inside 2.0.0, unreleased):** the default for a call with no depth changes from the `fast` preset to `perplexity/sonar` with web search.
@@ -26,8 +26,8 @@ Probed live on 2026-10-13 through the running server: `perplexity/sonar` is in t
 
 ### Modified Capabilities
 
-- `agent-ask`: "Depth selects a preset" (the default no longer names `fast`) and "Explicit model" (conflicts owned by `routing-config`; `search` false now allowed on every model route).
-- `agent-chat`: "Send starts a chat" (the first-turn scenario no longer names preset `fast`) and "Send takes the ask options" (adds `tier`, tier per turn).
+- `agent-ask`: "Ask tool" (description states the mode and default model), "Depth selects a preset" (the default no longer names `fast`) and "Explicit model" (conflicts owned by `routing-config`; `search` false now allowed on every model route).
+- `agent-chat`: "Chat tool" (same description rule), "Send starts a chat" (the first-turn scenario no longer names preset `fast`) and "Send takes the ask options" (adds `tier`, tier per turn).
 - `server-runtime`: "Configuration from environment" (five new variables, and `dynamic` refused) and a new requirement for the server instructions.
 - `model-catalog`: a new requirement that `perplexity_models` reports the active routing.
 

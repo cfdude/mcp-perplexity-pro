@@ -9,7 +9,7 @@ The server SHALL read `PERPLEXITY_ROUTING` (case-insensitive), one of `standard`
 
 #### Scenario: Unknown mode
 - **WHEN** the server starts with `PERPLEXITY_ROUTING=auto`
-- **THEN** startup fails naming `PERPLEXITY_ROUTING`, the value `auto` and the accepted values `standard`, `custom` and `dynamic`
+- **THEN** startup fails naming `PERPLEXITY_ROUTING`, the value `auto` and the accepted values `standard` and `custom`, and says `dynamic` is reserved and not available yet
 
 #### Scenario: Research is unaffected
 - **WHEN** `perplexity_research` is called in `custom` mode
@@ -66,7 +66,7 @@ In `custom` mode the server SHALL require `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_T
 - **THEN** the server starts, ignores it and logs one warning naming the variable
 
 ### Requirement: The tier argument
-`perplexity_ask` and `perplexity_chat` send SHALL accept `tier`, one of `light`, `standard` and `complex`, valid only in `custom` mode (and later in `dynamic`). In any other mode it SHALL fail with `invalid_request` naming `tier` and the active mode, and nothing is sent. A value outside the three SHALL fail with `invalid_request` naming `tier`. A tier call SHALL be grounded like an explicit model, and an `anthropic/` tier model gets the same default output cap as an explicit one.
+`perplexity_ask` and `perplexity_chat` send SHALL accept `tier`, one of `light`, `standard` and `complex`, valid only in `custom` mode (and later in `dynamic`). In any other mode it SHALL fail with `invalid_request` naming `tier` and the active mode, and nothing is sent. A value outside the three SHALL fail with `invalid_request` naming `tier`.
 
 #### Scenario: Tier in custom mode
 - **WHEN** an ask in `custom` mode names `tier` `complex`
@@ -79,6 +79,17 @@ In `custom` mode the server SHALL require `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_T
 #### Scenario: Unknown tier
 - **WHEN** an ask in `custom` mode names `tier` `huge`
 - **THEN** the call fails with `invalid_request` naming `tier`
+
+### Requirement: A routed call is shaped like an explicit model call
+A call resolved to a model by the mode's default or by `tier` SHALL be shaped exactly as an explicit `model` call is: the web search tool, the step budget, `search` false allowed and the `anthropic/` default output cap. `agent-ask` owns those rules; this requirement only says they apply to routed calls.
+
+#### Scenario: Default route is shaped like an explicit model
+- **WHEN** an ask names nothing in `standard` mode
+- **THEN** the request carries the web search tool and the step budget of an explicit-model request
+
+#### Scenario: Anthropic tier gets the output cap
+- **WHEN** an ask in `custom` mode resolves to a tier model whose id starts with `anthropic/`
+- **THEN** the request carries the same default output cap as an explicit `anthropic/` model
 
 ### Requirement: The mode is a default, never a restriction
 The routing mode and its models SHALL only supply what a call does not choose for itself. An explicit `model` on `perplexity_ask` or `perplexity_chat` send SHALL be used exactly as given in every mode, whether or not it is the configured model, one of the tiers or listed in the live catalog, and a call that names no `model` (and no `depth` or `tier`) SHALL fall back to the mode's default. No mode SHALL refuse, rewrite or second-guess an explicit model.
