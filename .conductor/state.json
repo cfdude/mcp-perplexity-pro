@@ -865,9 +865,11 @@
       ],
       "reconcileNeeded": false,
       "description": "Second entry point in the same package over a transport-neutral core (costed_call, storage, usage); same ~/.perplexity-pro database; --json for scripts. First cut: ask, search, embed, usage, projects. Needs the tool logic that reads ctx.lifespan_context pulled out of tools/.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "96fb8720a91f9880963615ad8f9ed148d1f3ce05"
+      ],
       "createdAt": "2026-10-13T13:17:14.603Z",
-      "touchedAt": "2026-10-14T04:49:47.666Z",
+      "touchedAt": "2026-10-14T04:52:29.259Z",
       "startedAt": "2026-10-14T04:49:46.597Z",
       "release": "release-2-0-0"
     },
@@ -1073,7 +1075,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 349,
+  "revision": 350,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
