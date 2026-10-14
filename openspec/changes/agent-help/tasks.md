@@ -20,7 +20,7 @@
 
 ## 5. Acceptance (live)
 
-- [ ] 5.1 Restart pm2 from the ecosystem file (`pm2 restart ecosystem.config.cjs --update-env`, never by name with `--update-env`: docs/lessons/restart-pm2-from-the-ecosystem-file.md) and make one authenticated call before counting the restart as verified; call `perplexity_help` for the index, one tool and one topic, and one deliberately invalid `perplexity_ask` call to read the hint; verify `tools/list` lists eleven tools and its byte size; confirm `perplexity_usage` shows no new event from the help calls; save the outputs under `openspec/changes/agent-help/acceptance/`; no spend
+- [x] 5.1 Restart pm2 from the ecosystem file (`pm2 restart ecosystem.config.cjs --update-env`, never by name with `--update-env`: docs/lessons/restart-pm2-from-the-ecosystem-file.md) and make one authenticated call before counting the restart as verified; call `perplexity_help` for the index, one tool and one topic, and one deliberately invalid `perplexity_ask` call to read the hint; verify `tools/list` lists eleven tools and its byte size; confirm `perplexity_usage` shows no new event from the help calls; save the outputs under `openspec/changes/agent-help/acceptance/`; no spend
 
 ## 6. Gate procedure (required, per the pm conductor)
 

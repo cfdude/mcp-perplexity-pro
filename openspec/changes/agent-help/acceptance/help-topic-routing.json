@@ -1,0 +1,25 @@
+{
+  "action": "topic",
+  "name": "routing",
+  "text": "# Routing\nMode standard. A call that names nothing uses perplexity/sonar with web search. tier works only in custom mode.\nThe mode is only a default. An explicit model is always used exactly as given, in every mode. depth (fast, low, medium) picks a Perplexity preset instead. depth, tier and model cannot be combined: pass one, or none for the default. perplexity_research is not routed: it always runs a preset.\nEvery ask and chat result has routing: mode, tier, model and selected_by (default, tier, depth or model).\n",
+  "tools": [
+    "perplexity_ask",
+    "perplexity_chat",
+    "perplexity_decide",
+    "perplexity_embed",
+    "perplexity_help",
+    "perplexity_jobs",
+    "perplexity_models",
+    "perplexity_projects",
+    "perplexity_research",
+    "perplexity_search",
+    "perplexity_usage"
+  ],
+  "topics": [
+    "routing",
+    "costs",
+    "citations",
+    "errors",
+    "projects"
+  ]
+}

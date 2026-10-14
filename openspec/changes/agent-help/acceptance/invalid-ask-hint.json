@@ -1,0 +1,4 @@
+{
+  "category": "invalid_request",
+  "message": "depth: must be one of fast, low, medium. Call perplexity_help with action \"tool\" and name \"perplexity_ask\" for its arguments and examples."
+}
