@@ -9,7 +9,7 @@ An agent that meets this server has ten tools, about 60 KB of schema and nothing
 - Add one tool, `perplexity_help`, with actions `index` (the default: an llms.txt-style markdown page with a decision table, every tool in one line and the topic list), `tool` (one tool: what it is for, billed or async or destructive flags, arguments generated from the live tool schema so they cannot drift, costs and latency, one example call, the result keys, the errors it raises and their fixes) and `topic` (`routing`, `costs`, `citations`, `errors`, `projects`). It is read-only, costs nothing, calls no API and records no usage.
 - Keep the help text in one module (`help_text.py`) whose pure functions render the index, a tool and a topic. The MCP tool uses them now and the CLI's `--help` and `help <topic>` will use them (`py-cli`).
 - Make errors self-teaching: an `invalid_request` from any tool other than help gets a trailing sentence naming the exact `perplexity_help` call that shows that tool's arguments. The category and the rest of the message do not change.
-- Pay back the eleventh tool: trim the prose in the descriptions of the largest tools (`perplexity_chat`, `perplexity_jobs`, `perplexity_ask`, `perplexity_research`, `perplexity_embed`) down to what the specs require plus a pointer to help, and move the rest into help topics. Target: `tools/list` no larger than the 59779 bytes measured after the routing change, with the help tool included.
+- Pay back the eleventh tool: trim the descriptions and the input and output schema field descriptions of the largest tools (`perplexity_chat`, `perplexity_jobs`, `perplexity_ask`, `perplexity_research`, `perplexity_embed`) down to what the specs require plus a pointer to help, and move the rest into help topics. Budget, pinned by a test: `tools/list` no larger than the 59779 bytes measured after the routing change, with the help tool included.
 - Out of scope: the CLI itself (`py-cli`), an MCP resource or prompt for help (many clients never show them to the agent), generated per-tool pages on disk, translations.
 
 ## Capabilities
@@ -20,7 +20,8 @@ An agent that meets this server has ten tools, about 60 KB of schema and nothing
 
 ### Modified Capabilities
 
-- `server-runtime`: a new requirement that an `invalid_request` from a tool names the help call for that tool.
+- `server-runtime`: a new requirement that an `invalid_request` from a tool with a help entry names the help call for that tool.
+- `routing-config`: "The instructions text" also names `perplexity_help`, and help is stated not to be a fifth channel of the configuration.
 
 ## Impact
 

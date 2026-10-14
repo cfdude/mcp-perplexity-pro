@@ -1006,9 +1006,11 @@
       ],
       "reconcileNeeded": false,
       "description": "New tool perplexity_help with actions index (llms.txt-style markdown listing tools and topics), tool (one tool's arguments, examples, errors) and topic (routing, costs, citations, errors). One source generates the help text, the CLI --help and help <topic>; lets tool descriptions be trimmed to pay back the eleventh tool's size.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "8b970612b9e160ab25e5e5bdb3250c7a76be8470"
+      ],
       "createdAt": "2026-10-14T02:25:51.014Z",
-      "touchedAt": "2026-10-14T03:59:48.002Z",
+      "touchedAt": "2026-10-14T04:01:21.377Z",
       "notes": [
         {
           "at": "2026-10-14T02:27:24.904Z",
@@ -1021,7 +1023,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 327,
+  "revision": 328,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
