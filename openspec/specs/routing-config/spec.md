@@ -177,7 +177,7 @@ The server SHALL give the calling agent the active mode and what it resolves to 
 - **THEN** the tool descriptions and the first result's `routing` still show the mode and the model used
 
 ### Requirement: The instructions text
-The MCP `instructions` SHALL be rendered at startup from the settings and state the mode, the standard model or the three tiers with their model ids, when to pass `tier`, `depth` or `model`, and that depth `high` and `xhigh` belong to `perplexity_research`. The text SHALL contain no secret and SHALL be identical for the life of the process.
+The MCP `instructions` SHALL be rendered at startup from the settings and state the mode, the standard model or the three tiers with their model ids, when to pass `tier`, `depth` or `model`, that depth `high` and `xhigh` belong to `perplexity_research`, and that `perplexity_help` explains the tools. The text SHALL contain no secret and SHALL be identical for the life of the process. `perplexity_help` repeats the routing mode but is a pointer and a topic, not a fifth channel of "The calling agent is told the configuration".
 
 #### Scenario: Standard instructions
 - **WHEN** a client initializes against a `standard` server
@@ -186,6 +186,10 @@ The MCP `instructions` SHALL be rendered at startup from the settings and state 
 #### Scenario: Custom instructions
 - **WHEN** a client initializes against a `custom` server
 - **THEN** the instructions list `light`, `standard` and `complex` with their model ids and say that `tier` selects one
+
+#### Scenario: Instructions point to help
+- **WHEN** a client initializes against any server
+- **THEN** the instructions name `perplexity_help`
 
 ### Requirement: Usage records the resolved model
 The usage event of a routed call SHALL record the model the API reports, as it does today, and SHALL NOT change the usage schema; routing adds no migration. A call that ran a model route SHALL record and report preset null: no code path SHALL fall back to a default preset name.

@@ -189,7 +189,7 @@ with action "tool" and name "perplexity_ask" for its arguments and examples.`, a
 `instructions` name the help tool. The text comes from one module (`help_text.py`) that the planned
 CLI will reuse for `--help`. The help costs figures are the ones in this README (a test checks that
 each `$N.NN` figure in help appears here). Live record:
-`openspec/changes/archive/<date>-agent-help/acceptance/`.
+`openspec/changes/archive/2026-10-13-agent-help/acceptance/`.
 
 ## Client configuration
 

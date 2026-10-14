@@ -37,4 +37,4 @@
 
 ## 8. Archive
 
-- [ ] 8.1 Archive the change and record the disposition (`update-epic agent-help --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->
+- [x] 8.1 Archive the change and record the disposition (`update-epic agent-help --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->

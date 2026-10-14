@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "agent-help",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -989,7 +989,7 @@
       "id": "agent-help",
       "title": "perplexity_help tool (index/tool/topic, llms.txt-style markdown) and CLI --help from one source",
       "priority": "P2",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -1022,7 +1022,7 @@
         "f914ec4bfaf4d900b1ba2c1cd82848a2c0b24703"
       ],
       "createdAt": "2026-10-14T02:25:51.014Z",
-      "touchedAt": "2026-10-14T04:39:28.348Z",
+      "touchedAt": "2026-10-14T04:41:20.594Z",
       "notes": [
         {
           "at": "2026-10-14T02:27:24.904Z",
@@ -1057,11 +1057,16 @@
             "reviewer": "fresh-context general-purpose subagent over ad16882..5071a24 (0 Critical, 0 Important, 7 Minor, fixed in the next commits); suite 2438 passed"
           }
         }
+      },
+      "disposition": {
+        "outcome": "unknown",
+        "recordedAt": "2026-10-14T04:41:20.593Z",
+        "recordedBy": "archive-drift-heal"
       }
     }
   ],
   "detourStack": [],
-  "revision": 344,
+  "revision": 345,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
