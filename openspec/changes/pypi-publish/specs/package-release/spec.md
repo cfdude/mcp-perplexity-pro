@@ -36,12 +36,8 @@ The README SHALL NOT contain a Markdown link whose target is not an absolute `ht
 - **WHEN** a reader looks for how to install from PyPI
 - **THEN** the README shows `uvx mcp-perplexity-pro`, `uvx --from mcp-perplexity-pro perplexity-pro`, `uv tool install` and `pipx install`
 
-### Requirement: The release workflow publishes safely
-`.github/workflows/release.yml` SHALL run on a pushed tag `v*` and on manual dispatch, build the distributions, run the lint, test and `build`-marker suites, refuse a tag that is not `v` plus the package version, run `twine check`, install the built wheel into a clean environment and run both commands, and only then publish with Trusted Publishing: no token or password, `id-token: write` granted only to the two publish jobs, each in a named environment (`pypi` for a tag, with required reviewers; `testpypi` for dispatch). A manual dispatch SHALL publish a computed development version, never the release version. Actions SHALL be pinned to a major version, except `pypa/gh-action-pypi-publish`, which SHALL use its documented `release/v1` ref.
-
-#### Scenario: Workflow shape
-- **WHEN** the workflow file is parsed
-- **THEN** there are no `secrets.` references and no `password` input, `id-token: write` appears only in the publish jobs, each of which has an `environment` and `needs` the build job
+### Requirement: The release workflow checks before it publishes
+`.github/workflows/release.yml` SHALL run on a pushed tag `v*` and on manual dispatch, build the distributions, run the lint, test and `build`-marker suites, refuse a tag that is not `v` plus the package version, run `twine check`, install the built wheel into a clean environment and run both commands, and only then publish. A manual dispatch SHALL publish a computed development version, never the release version.
 
 #### Scenario: Tag must equal the version
 - **WHEN** a tag `v2.0.1` is pushed while `pyproject.toml` says `2.0.0`
@@ -50,6 +46,13 @@ The README SHALL NOT contain a Markdown link whose target is not an absolute `ht
 #### Scenario: Dispatch goes to TestPyPI
 - **WHEN** the workflow is run manually
 - **THEN** only the TestPyPI job publishes, and the uploaded version is `<version>.dev<run>`, not the release version
+
+### Requirement: The release workflow publishes without a stored credential
+Publishing SHALL use Trusted Publishing: no token or password, `id-token: write` granted only to the two publish jobs, each in a named environment (`pypi` for a tag, with required reviewers; `testpypi` for dispatch). Actions SHALL be pinned to a major version, except `pypa/gh-action-pypi-publish`, which SHALL use its documented `release/v1` ref.
+
+#### Scenario: Workflow shape
+- **WHEN** the workflow file is parsed
+- **THEN** there are no `secrets.` references and no `password` input, `id-token: write` appears only in the publish jobs, each of which has an `environment` and `needs` the build job
 
 ### Requirement: The release procedure is written down
 `docs/releasing.md` SHALL list the one-time setup (the GitHub environments `pypi`, with required reviewers, and `testpypi`; the pending Trusted Publishers on pypi.org and test.pypi.org) with the exact repository, workflow and environment names, the checklist before a tag (suite green, changelog date, license confirmed, TestPyPI rehearsal verified with `uvx --index-url`), the tag command, and how to yank a bad release.
