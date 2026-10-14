@@ -33,7 +33,7 @@
 - [x] 6.2 Verify against each task's commit, not the working tree: for every task above run `git show --stat <sha>` and assert each file the task claims to change appears in that commit
 - [ ] 6.3 Attribute every commit of this change to its epic with `update-epic routing-modes-config --attribute-commit <sha>` as each lands, in landing order, ending with the last commit; never attribute the archive move, the pm bookkeeping commits or an ancestor after a later commit; verify the last attributed commit is the Gate 2 head
 - [x] 6.4 Route what the work taught: practices, tooling friction and process lessons, each named as one of those three kinds; write `openspec/changes/routing-modes-config/routing.md` with exactly three lines `practice: ...`, `tooling: ...` and `process: ...`, each naming the filed item or reading `none, because <reason that names the command or commit checked>`
-- [ ] 6.5 Gate 2 implementation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then `record-gate-review routing-modes-config --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
+- [x] 6.5 Gate 2 implementation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then `record-gate-review routing-modes-config --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
 
 ## 7. Documentation (after Gate 2 is clean)
 
