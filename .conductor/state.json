@@ -880,7 +880,7 @@
         "153061004dff161f68a07bb7d9d3df90111d2f2e"
       ],
       "createdAt": "2026-10-13T13:17:14.603Z",
-      "touchedAt": "2026-10-14T05:46:31.436Z",
+      "touchedAt": "2026-10-14T05:48:53.766Z",
       "startedAt": "2026-10-14T04:49:46.597Z",
       "release": "release-2-0-0",
       "gateReview": {
@@ -910,10 +910,15 @@
         }
       },
       "disposition": {
-        "outcome": "unknown",
-        "recordedAt": "2026-10-14T05:46:31.435Z",
-        "recordedBy": "archive-drift-heal"
-      }
+        "outcome": "delivered",
+        "recordedAt": "2026-10-14T05:48:53.764Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-14T05:48:53.735Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-14T05:48:53.764Z"
     },
     {
       "id": "pypi-publish",
@@ -1117,7 +1122,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 366,
+  "revision": 367,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
