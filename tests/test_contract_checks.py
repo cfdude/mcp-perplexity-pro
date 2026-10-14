@@ -1166,6 +1166,7 @@ async def test_the_ten_tools_are_listed_and_each_has_an_output_schema(research_w
         "perplexity_chat",
         "perplexity_decide",
         "perplexity_embed",
+        "perplexity_help",
         "perplexity_jobs",
         "perplexity_models",
         "perplexity_projects",

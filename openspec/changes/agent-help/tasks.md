@@ -8,7 +8,7 @@
 
 ## 2. The tool
 
-- [ ] 2.1 RED then GREEN: `tools/help.py` with `perplexity_help` (actions `index`, `tool`, `topic`; `tool` reads the arguments and result keys from the registered tool's schemas at call time; unknown or missing `name` refused with `invalid_request` listing valid names; read-only annotations; no usage, no project), registered in `tools/__init__.py`; tests `tests/test_help_tool.py` through `build_server`: each action, an argument added to a stub tool appears in its help, refusals, zero usage events and zero projects, annotations and output schema; update the tool-name lists in `tests/test_server.py` and `tests/test_contract_checks.py` to eleven
+- [x] 2.1 RED then GREEN: `tools/help.py` with `perplexity_help` (actions `index`, `tool`, `topic`; `tool` reads the arguments and result keys from the registered tool's schemas at call time; unknown or missing `name` refused with `invalid_request` listing valid names; read-only annotations; no usage, no project), registered in `tools/__init__.py`; tests `tests/test_help_tool.py` through `build_server`: each action, an argument added to a stub tool appears in its help, refusals, zero usage events and zero projects, annotations and output schema; update the tool-name lists in `tests/test_server.py` and `tests/test_contract_checks.py` to eleven
 
 ## 3. Errors point to help
 

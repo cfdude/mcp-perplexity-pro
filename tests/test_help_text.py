@@ -34,7 +34,12 @@ async def tools(make_settings):
     async with Client(build_server(settings, http, engine)) as client:
         listed = await client.list_tools()
     data = {
-        t.name: (t.input_schema, t.output_schema or {}, t.annotations.model_dump()) for t in listed
+        t.name: (
+            t.input_schema,
+            t.output_schema or {},
+            t.annotations.model_dump(by_alias=True, exclude_none=True),
+        )
+        for t in listed
     }
     await http.aclose()
     await engine.dispose()
