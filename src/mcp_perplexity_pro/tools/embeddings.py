@@ -155,7 +155,8 @@ def register(server: FastMCP) -> None:
         recorded; see perplexity_usage). An unchanged item is never embedded twice; index stops
         after about `limit` new chunks and reports `remaining`, so call it again until 0. status
         shows what is stored and what is not; delete removes vectors (confirm true). Deleting a
-        chat or a project removes its vectors."""
+        chat or a project removes its vectors.
+        Details: call perplexity_help."""
         app = ctx.lifespan_context
         if action not in ACTIONS:
             raise PerplexityError(

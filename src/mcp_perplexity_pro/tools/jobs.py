@@ -499,7 +499,8 @@ def register(server: FastMCP) -> None:
         with refresh true settles up to 10 running jobs, and a run nobody observes is never
         recorded. A run the provider no longer knows becomes lost after a second not-found at
         least 10 minutes after submit, and its spend cannot be recorded. Actions never create a
-        project: list in an absent project is empty, the others fail with not_found."""
+        project: list in an absent project is empty, the others fail with not_found.
+        Details: call perplexity_help."""
         if action not in ACTIONS:
             raise _bad("action", f"must be one of {', '.join(ACTIONS)}.")
         app = ctx.lifespan_context

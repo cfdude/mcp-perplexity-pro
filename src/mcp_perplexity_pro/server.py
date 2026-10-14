@@ -100,6 +100,39 @@ def with_help_hint(category: str, message: str, context: Any) -> str:
     )
 
 
+def strip_titles(node: Any) -> Any:
+    """A JSON Schema without the ``title`` annotations pydantic writes on every node (they repeat
+    the property name and cost bytes in every ``tools/list``). A property that is itself named
+    ``title`` is data, not an annotation, and stays."""
+    if isinstance(node, dict):
+        out: dict[str, Any] = {}
+        for key, value in node.items():
+            if key in ("properties", "$defs") and isinstance(value, dict):
+                out[key] = {name: strip_titles(sub) for name, sub in value.items()}
+            elif key == "title" and isinstance(value, str):
+                continue
+            else:
+                out[key] = strip_titles(value)
+        return out
+    if isinstance(node, list):
+        return [strip_titles(item) for item in node]
+    return node
+
+
+class CompactSchemasMiddleware(Middleware):
+    """Send every tool's input and output schema without ``title`` annotations."""
+
+    async def on_list_tools(self, context: Any, call_next: Any) -> Any:
+        tools = await call_next(context)
+        compact = []
+        for tool in tools:
+            update: dict[str, Any] = {"parameters": strip_titles(tool.parameters)}
+            if tool.output_schema is not None:
+                update["output_schema"] = strip_titles(tool.output_schema)
+            compact.append(tool.model_copy(update=update))
+        return compact
+
+
 class InFlightMiddleware(Middleware):
     """Counts running tool calls; once draining, refuses new ones."""
 
@@ -223,7 +256,11 @@ def build_server(
         lifespan=app_lifespan,
         instructions=instructions_text(settings),
         mask_error_details=True,
-        middleware=[in_flight, ErrorContractMiddleware((settings.api_key.get_secret_value(),))],
+        middleware=[
+            in_flight,
+            CompactSchemasMiddleware(),
+            ErrorContractMiddleware((settings.api_key.get_secret_value(),)),
+        ],
     )
 
     @server.custom_route("/health", methods=["GET"])

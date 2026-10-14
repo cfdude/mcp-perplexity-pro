@@ -94,7 +94,7 @@ The descriptions of `perplexity_ask`, `perplexity_chat`, `perplexity_research`, 
 - **THEN** the per-depth costs, the retention wording and the no-upstream-call statements that other specs require are still present
 
 ### Requirement: The tools list has a size budget
-The `tools/list` response with the help tool included SHALL be no larger than 59779 bytes, the size measured after the routing modes, and a test SHALL fail above that budget. The levers are the descriptions and the input and output schema field descriptions of the largest tools.
+The `tools/list` response with the help tool included SHALL be no larger than 59779 bytes, the size measured after the routing modes, and a test SHALL fail above that budget. The levers are the closing pointers, shorter descriptions and the removal of the `title` annotations pydantic writes on every schema node.
 
 #### Scenario: The budget holds
 - **WHEN** the server is built and its tools listed

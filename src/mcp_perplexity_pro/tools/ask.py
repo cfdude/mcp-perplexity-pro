@@ -20,6 +20,7 @@ from mcp_perplexity_pro.agent import (
     source_line,
 )
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.help_text import POINTER
 from mcp_perplexity_pro.routing import Route, description_sentence, resolve
 from mcp_perplexity_pro.settings import Settings
 
@@ -249,7 +250,7 @@ def register(server: FastMCP, settings: Settings) -> None:
 
     server.tool(
         name=TOOL,
-        description=f"{inspect.cleandoc(perplexity_ask.__doc__)}\n\n{description_sentence(settings)}",
+        description=f"{inspect.cleandoc(perplexity_ask.__doc__)}\n\n{description_sentence(settings)}{POINTER}",
         output_schema=AskResult.model_json_schema(),
         annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True),
     )(perplexity_ask)

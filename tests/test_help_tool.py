@@ -110,3 +110,40 @@ async def test_help_costs_nothing_and_leaves_no_trace(world):
     await w.call(TOOL, action="topic", name="errors")
     assert w.bodies() == [] and await w.events() == []
     assert await w.count("projects") == 0
+
+
+async def test_the_five_largest_descriptions_end_with_the_pointer(world):
+    w = await world()
+    async with Client(w.server) as client:
+        tools = {t.name: t for t in await client.list_tools()}
+    for name in (
+        "perplexity_ask",
+        "perplexity_chat",
+        "perplexity_research",
+        "perplexity_jobs",
+        "perplexity_embed",
+    ):
+        assert tools[name].description.rstrip().endswith("call perplexity_help."), name
+
+
+async def test_titles_are_not_sent_but_a_property_named_title_stays(world):
+    w = await world()
+    async with Client(w.server) as client:
+        tools = {t.name: t for t in await client.list_tools()}
+    ask = tools["perplexity_ask"]
+    assert all("title" not in spec for spec in ask.input_schema["properties"].values())
+    chat = tools["perplexity_chat"]
+    assert "title" in chat.input_schema["properties"]  # the argument named title
+
+    def property_names(node):
+        if isinstance(node, dict):
+            if isinstance(node.get("properties"), dict):
+                yield from node["properties"]
+            for value in node.values():
+                yield from property_names(value)
+        elif isinstance(node, list):
+            for item in node:
+                yield from property_names(item)
+
+    assert "title" in set(property_names(chat.output_schema))  # the chat's own title field
+    assert all("title" not in v for v in chat.output_schema["properties"].values())

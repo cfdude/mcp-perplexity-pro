@@ -14,6 +14,9 @@ from typing import Any, TypedDict
 
 from mcp_perplexity_pro.settings import Settings
 
+# The closing sentence of the largest tool descriptions (agent-help).
+POINTER = " Details: call perplexity_help."
+
 TOPICS = ("routing", "costs", "citations", "errors", "projects")
 
 
