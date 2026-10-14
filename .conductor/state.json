@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": null,
+  "active": "pypi-publish",
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -924,7 +924,7 @@
       "id": "pypi-publish",
       "title": "Publish to PyPI (Trusted Publishing, tag 2.0.0)",
       "priority": "P2",
-      "status": "later",
+      "status": "active",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -943,7 +943,9 @@
       "description": "Check the mcp-perplexity-pro name is free, Trusted Publishing from GitHub Actions (no stored token), tag and release 2.0.0, uvx install docs, refresh the CHANGELOG release date.",
       "attributedCommits": [],
       "createdAt": "2026-10-13T13:17:14.936Z",
-      "touchedAt": "2026-10-13T13:17:14.938Z"
+      "touchedAt": "2026-10-14T05:55:27.163Z",
+      "startedAt": "2026-10-14T05:55:26.081Z",
+      "release": "release-2-0-0"
     },
     {
       "id": "py-agent-citation-fixes",
@@ -1122,7 +1124,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 367,
+  "revision": 370,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
