@@ -6,11 +6,11 @@ Defines `perplexity_chat`, the multi-turn conversation tool: a chat is kept in t
 ## Requirements
 
 ### Requirement: Chat tool
-The server SHALL provide `perplexity_chat` with actions `send`, `list`, `read` and `delete`, each scoped to a `project` (default `default`). It SHALL advertise an output schema, `readOnlyHint` false, `destructiveHint` true and `openWorldHint` true. Its description SHALL state the per-depth costs of a send (fast about $0.001 to $0.002, low about $0.004 to $0.02, medium about $0.016 to $0.05) and that `list`, `read` and `delete` make no upstream call.
+The server SHALL provide `perplexity_chat` with actions `send`, `list`, `read` and `delete`, each scoped to a `project` (default `default`). It SHALL advertise an output schema, `readOnlyHint` false, `destructiveHint` true and `openWorldHint` true. Its description SHALL state the per-depth costs of a send (fast about $0.001 to $0.002, low about $0.004 to $0.02, medium about $0.016 to $0.05), the active routing mode and the model a send with no selector uses, say that the default model's cost differs from the per-depth figures, and say that `list`, `read` and `delete` make no upstream call.
 
 #### Scenario: Tool listing
 - **WHEN** a client lists the tools
-- **THEN** `perplexity_chat` is present with typed parameters, an output schema, the three annotations above and the three costs in its description
+- **THEN** `perplexity_chat` is present with typed parameters, an output schema, the three annotations above, the three costs, the mode and the default model in its description
 
 #### Scenario: Unknown action
 - **WHEN** a client calls the tool with action `rename`
@@ -62,7 +62,7 @@ A `send` without `chat_id` SHALL require `title` (1 to 120 characters after trim
 
 #### Scenario: First turn request shape
 - **WHEN** a first send at the default depth reaches the API
-- **THEN** the request has preset `fast`, the message as its string `input`, `store` false and no `previous_response_id`
+- **THEN** the request names the routing mode's default model and no preset (in `standard` mode with defaults, `perplexity/sonar`), carries the message as its string `input`, `store` false and no `previous_response_id`
 
 #### Scenario: Missing, blank or long title
 - **WHEN** a client sends without `chat_id` and with no `title`, a title of spaces, or a title of 121 characters
@@ -107,11 +107,15 @@ A response id that is not `resp_`-shaped SHALL be stored as none. A chained `sen
 - **THEN** it goes ahead with the stored history as input
 
 ### Requirement: Send takes the ask options
-`send` SHALL accept the ask tool's `depth` (`fast`, `low` or `medium`), `model`, `search`, search filters, `instructions` and `max_output_tokens` and apply the ask tool's rules and limits for them, except that it takes no `json_schema`. Each send may choose them anew.
+`send` SHALL accept the ask tool's `depth` (`fast`, `low` or `medium`), `tier`, `model`, `search`, search filters, `instructions` and `max_output_tokens` and apply the ask tool's rules and limits for them, except that it takes no `json_schema`. Each send may choose them anew, the model or tier included; the routing rules of `routing-config` apply to a send exactly as to an ask, and a send's result and stored message record the preset only when a preset ran (null for a model route).
 
 #### Scenario: Depth per turn
 - **WHEN** a first turn is sent at depth `fast` and the next at depth `low`
 - **THEN** the second request names preset `low` while chaining from the first response
+
+#### Scenario: Tier per turn
+- **WHEN** a first turn is sent with `tier` `light` and the next with `tier` `complex` in `custom` mode
+- **THEN** the second request names the `complex` tier's model while chaining from the first response
 
 #### Scenario: Schema refused
 - **WHEN** a client passes `json_schema` to a send

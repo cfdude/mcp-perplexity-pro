@@ -150,7 +150,7 @@ one startup warning. To go back, unset the variables: the defaults are `standard
 this server implements, which is what `dynamic` is for.
 
 **What the default costs.** `perplexity/sonar` with web search cost $0.00336 for one question, $0.00371
-for a `json_schema` question (acceptance, `openspec/changes/routing-modes-config/acceptance/`) and
+for a `json_schema` question (acceptance, `openspec/changes/archive/2026-10-13-routing-modes-config/acceptance/`) and
 $0.00379 in the first probe (`design.md`, 2026-10-13); the `fast` preset cost $0.00124 for the same
 question as the first acceptance call (the acceptance files keep results, not query text). That is
 one question each (about 2.7 times `fast` in that pair), so read it as a rough guide: the web search
@@ -390,7 +390,7 @@ sources and cost more than `fast`):
 
 A call that names nothing, from the live acceptance of the routing change (2026-10-13, standard
 mode; the request line is reconstructed from the answer, since the acceptance files hold results; keys shortened to the ones that differ, the answer cut to its first sentence; raw output in
-`openspec/changes/routing-modes-config/acceptance/billed-calls.json`):
+`openspec/changes/archive/2026-10-13-routing-modes-config/acceptance/billed-calls.json`):
 
 ```json
 {"name": "perplexity_ask", "arguments": {"query": "What is the latest stable Python 3 release? One sentence with a source.", "project": "acceptance-routing"}}
