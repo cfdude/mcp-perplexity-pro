@@ -24,7 +24,7 @@ The server SHALL read `PERPLEXITY_ROUTING` (case-insensitive), one of `standard`
 
 
 ### Requirement: Standard mode uses one configurable model
-In `standard` mode the server SHALL use `PERPLEXITY_MODEL`, default `perplexity/sonar`, for any call that names no `depth`, `tier` or `model`. The model id SHALL be a string of 1 to 200 characters drawn from letters, digits and `.` `_` `:` `/` `@` `+` `-` (it is written into the instructions text the agent reads, so no whitespace, control, invisible or Markdown characters); anything else fails startup naming `PERPLEXITY_MODEL`. A variable the active mode does not use SHALL be ignored, not validated.
+In `standard` mode the server SHALL use `PERPLEXITY_MODEL`, default `perplexity/sonar`, for any call that names no `depth`, `tier` or `model`.
 
 #### Scenario: Default model
 - **WHEN** an ask names no depth, tier or model in `standard` mode with `PERPLEXITY_MODEL` unset
@@ -33,6 +33,9 @@ In `standard` mode the server SHALL use `PERPLEXITY_MODEL`, default `perplexity/
 #### Scenario: Configured model
 - **WHEN** `PERPLEXITY_MODEL` is `anthropic/claude-sonnet-5-5` and an ask names nothing
 - **THEN** the request names that model
+
+### Requirement: Model ids are plain and unused variables are ignored
+Each configured model id (`PERPLEXITY_MODEL` and the three tier variables) SHALL be a string of 1 to 200 characters drawn from letters, digits and `.` `_` `:` `/` `@` `+` `-`, because it is written into the instructions text the agent reads (no whitespace, control, invisible or Markdown characters); anything else fails startup naming the variable. A variable the active mode does not use SHALL be ignored and not validated.
 
 #### Scenario: Blank model
 - **WHEN** `PERPLEXITY_MODEL` is set to an empty string, to 300 characters or to a value containing a newline or a zero-width space
