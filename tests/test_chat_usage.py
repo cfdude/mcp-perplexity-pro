@@ -44,7 +44,7 @@ async def test_a_first_send_and_a_follow_up_are_two_ok_events_and_the_other_acti
     chat_world,
 ):
     w = await chat_world()
-    await w.call(TOOL, action="send", message=FIRST, title="t", project="alpha")
+    await w.call(TOOL, action="send", message=FIRST, title="t", project="alpha", depth="fast")
     await w.call(TOOL, action="send", chat_id=1, message=FOLLOW_UP, project="alpha", depth="low")
     events = await w.events()
     assert [(e[0], e[1], e[2]) for e in events] == [(TOOL, "agent", "ok")] * 2

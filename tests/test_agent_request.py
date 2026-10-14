@@ -5,8 +5,9 @@ import json
 
 import pytest
 from fixture_support import FIXTURE_DIR
+from routing_support import ask_options
 
-from mcp_perplexity_pro.agent import AskOptions, build_request
+from mcp_perplexity_pro.agent import build_request
 from mcp_perplexity_pro.errors import PerplexityError
 
 MODEL = "openai/gpt-6-luna"
@@ -28,7 +29,7 @@ def expected_from_sidecar(name, *, store):
 
 
 SIDECAR_CASES = {
-    "agent_fast_filters": AskOptions(
+    "agent_fast_filters": ask_options(
         depth="fast",
         domains=["python.org"],
         recency="month",
@@ -36,12 +37,12 @@ SIDECAR_CASES = {
         instructions="Answer tersely. Cite sources.",
         max_output_tokens=400,
     ),
-    "agent_fast_deny_after": AskOptions(
+    "agent_fast_deny_after": ask_options(
         depth="fast", domains=["-reddit.com", "-wikipedia.org"], after="2026-09-15", max_results=5
     ),
-    "agent_model_without_tools": AskOptions(model=MODEL, search=False),
-    "agent_incomplete_truncated": AskOptions(model=MODEL, search=False, max_output_tokens=16),
-    "agent_structured_output": AskOptions(
+    "agent_model_without_tools": ask_options(model=MODEL, search=False),
+    "agent_incomplete_truncated": ask_options(model=MODEL, search=False, max_output_tokens=16),
+    "agent_structured_output": ask_options(
         depth="fast",
         json_schema=sidecar_request("agent_structured_output")["response_format"]["json_schema"][
             "schema"
@@ -72,7 +73,9 @@ def test_the_structured_case_really_differs_from_the_probe_only_by_schema_name()
 
 def test_background_research_shape_equals_the_medium_submit_sidecar_plus_store_true():
     request = sidecar_request("agent_background_submit_medium")
-    built = build_request(AskOptions(depth="medium"), request["input"], store=True, background=True)
+    built = build_request(
+        ask_options(depth="medium"), request["input"], store=True, background=True
+    )
     assert built == {**request, "store": True}
 
 
@@ -81,19 +84,26 @@ def test_background_research_shape_equals_the_medium_submit_sidecar_plus_store_t
 
 
 def test_inline_preset_low_without_filters_has_no_tools():  # no sidecar
-    assert build_request(AskOptions(depth="low"), "q", store=False) == {
+    assert build_request(ask_options(depth="low"), "q", store=False) == {
         "preset": "low",
         "input": "q",
         "store": False,
     }
 
 
-def test_inline_default_depth_is_fast():  # no sidecar
-    assert build_request(AskOptions(), "q", store=False)["preset"] == "fast"
+def test_inline_no_selector_names_the_default_model_and_no_preset():  # no sidecar
+    body = build_request(ask_options(), "q", store=False)
+    assert body["model"] == "perplexity/sonar" and "preset" not in body
+    assert body["tools"] == [{"type": "web_search"}] and body["max_steps"] == 3
+
+
+def test_inline_search_false_is_allowed_on_the_default_route():
+    body = build_request(ask_options(search=False), "q", store=False)
+    assert body["model"] == "perplexity/sonar" and "tools" not in body
 
 
 def test_inline_explicit_model_with_search_has_one_web_search_tool_and_three_steps():  # no sidecar
-    assert build_request(AskOptions(model=MODEL), "q", store=False) == {
+    assert build_request(ask_options(model=MODEL), "q", store=False) == {
         "model": MODEL,
         "input": "q",
         "store": False,
@@ -103,34 +113,34 @@ def test_inline_explicit_model_with_search_has_one_web_search_tool_and_three_ste
 
 
 def test_inline_explicit_model_with_filters_keeps_the_filters_and_three_steps():  # no sidecar
-    built = build_request(AskOptions(model=MODEL, recency="week"), "q", store=False)
+    built = build_request(ask_options(model=MODEL, recency="week"), "q", store=False)
     assert built["tools"] == [{"type": "web_search", "filters": {"search_recency_filter": "week"}}]
     assert built["max_steps"] == 3 and "preset" not in built
 
 
 def test_inline_search_true_is_the_same_as_no_search_option():  # no sidecar
     for kwargs in ({"depth": "low"}, {"model": MODEL}):
-        plain = build_request(AskOptions(**kwargs), "q", store=False)
-        assert build_request(AskOptions(search=True, **kwargs), "q", store=False) == plain
+        plain = build_request(ask_options(**kwargs), "q", store=False)
+        assert build_request(ask_options(search=True, **kwargs), "q", store=False) == plain
 
 
 def test_inline_anthropic_model_gets_the_default_cap_4096():  # no sidecar
-    built = build_request(AskOptions(model="anthropic/claude-haiku-4-5"), "q", store=False)
+    built = build_request(ask_options(model="anthropic/claude-haiku-4-5"), "q", store=False)
     assert built["max_output_tokens"] == 4096
 
 
 def test_inline_anthropic_explicit_cap_200_is_kept():  # no sidecar
-    options = AskOptions(model="anthropic/claude-haiku-4-5", max_output_tokens=200)
+    options = ask_options(model="anthropic/claude-haiku-4-5", max_output_tokens=200)
     assert build_request(options, "q", store=False)["max_output_tokens"] == 200
 
 
 def test_inline_a_non_anthropic_model_gets_no_default_cap():  # no sidecar
-    assert "max_output_tokens" not in build_request(AskOptions(model=MODEL), "q", store=False)
+    assert "max_output_tokens" not in build_request(ask_options(model=MODEL), "q", store=False)
 
 
 def test_inline_before_date_is_converted_and_filters_sit_beside_max_results():  # no sidecar
     built = build_request(
-        AskOptions(
+        ask_options(
             depth="low", before="2026-10-01", after="2026-10-01", max_results=50, country="de"
         ),
         "q",
@@ -151,14 +161,14 @@ def test_inline_before_date_is_converted_and_filters_sit_beside_max_results():  
 
 def test_inline_replay_list_input_and_previous_response_id_are_passed_through():  # no sidecar
     items = [{"type": "message", "role": "user", "content": "hi"}]
-    built = build_request(AskOptions(), items, store=False, previous_response_id="resp_abc")
+    built = build_request(ask_options(), items, store=False, previous_response_id="resp_abc")
     assert built["input"] == items and built["previous_response_id"] == "resp_abc"
     assert "background" not in built
 
 
 def test_the_schema_and_options_are_not_aliased_into_the_request():
     schema = {"type": "object", "properties": {"a": {"type": "string"}}}
-    options = AskOptions(json_schema=schema, domains=["a.com"])
+    options = ask_options(json_schema=schema, domains=["a.com"])
     built = build_request(options, "q", store=False)
     built["response_format"]["json_schema"]["schema"]["properties"]["a"]["type"] = "x"
     built["tools"][0]["filters"]["search_domain_filter"].append("b.com")
@@ -168,18 +178,18 @@ def test_the_schema_and_options_are_not_aliased_into_the_request():
 def test_the_schema_cap_counts_characters_not_json_escapes():
     # 15000 non-ASCII characters serialize to ~90000 with ensure_ascii escapes but are 15000 chars
     schema = {"type": "object", "description": "é" * 15000}
-    built = build_request(AskOptions(json_schema=schema), "q", store=False)
+    built = build_request(ask_options(json_schema=schema), "q", store=False)
     assert built["response_format"]["json_schema"]["schema"] == schema
     too_long = {"type": "object", "description": "é" * 20000}  # over the cap once serialized
     with pytest.raises(PerplexityError) as info:
-        build_request(AskOptions(json_schema=too_long), "q", store=False)
+        build_request(ask_options(json_schema=too_long), "q", store=False)
     assert info.value.category == "invalid_request" and "json_schema" in str(info.value)
 
 
 def test_max_steps_is_never_taken_from_the_caller():
-    assert not hasattr(AskOptions(), "max_steps")
+    assert not hasattr(ask_options(), "max_steps")
     assert "max_steps" not in build_request(
-        AskOptions(depth="low", max_results=3), "q", store=False
+        ask_options(depth="low", max_results=3), "q", store=False
     )
 
 
@@ -193,7 +203,7 @@ REFUSALS = {
     "unknown depth": ({"depth": "turbo"}, "depth"),
     # Explicit model
     "depth with model": ({"depth": "low", "model": MODEL}, "depth"),
-    "search false without model": ({"search": False}, "search"),
+    "search false with depth": ({"depth": "low", "search": False}, "search"),
     "blank model": ({"model": "  "}, "model"),
     # Domain filters
     "mixed domains": ({"domains": ["python.org", "-reddit.com"]}, "domains"),
@@ -241,7 +251,7 @@ REFUSALS = {
 def test_each_refusal_is_invalid_request_naming_the_option(case):
     kwargs, named = REFUSALS[case]
     with pytest.raises(PerplexityError) as info:
-        build_request(AskOptions(**kwargs), "q", store=False)
+        build_request(ask_options(**kwargs), "q", store=False)
     assert info.value.category == "invalid_request"
     assert named in str(info.value)
 
@@ -250,11 +260,11 @@ def test_high_and_xhigh_never_reach_a_request_through_any_option_combination():
     for depth in ("high", "xhigh"):
         for extra in ({}, {"domains": ["a.com"]}, {"max_output_tokens": 10}):
             with pytest.raises(PerplexityError):
-                build_request(AskOptions(depth=depth, **extra), "q", store=False)
+                build_request(ask_options(depth=depth, **extra), "q", store=False)
 
 
 def test_boundaries_that_are_allowed():
-    ok = AskOptions(
+    ok = ask_options(
         depth="medium",
         domains=[f"d{i}.com" for i in range(20)],
         instructions="x" * 10000,
@@ -269,7 +279,7 @@ def test_boundaries_that_are_allowed():
 @pytest.mark.parametrize("bad", ["", "   ", None, 5, [], {}])
 def test_input_must_be_a_non_blank_string_or_a_replay_list(bad):
     with pytest.raises(PerplexityError) as info:
-        build_request(AskOptions(), bad, store=False)
+        build_request(ask_options(), bad, store=False)
     assert info.value.category == "invalid_request" and "input" in str(info.value)
 
 
@@ -283,10 +293,10 @@ def test_validation_makes_no_network_or_filesystem_contact(monkeypatch):
     monkeypatch.setattr(socket, "getaddrinfo", boom)
     for kwargs, _ in REFUSALS.values():
         with pytest.raises(PerplexityError):
-            build_request(AskOptions(**kwargs), "q", store=False)
+            build_request(ask_options(**kwargs), "q", store=False)
 
 
 def test_blank_instructions_are_the_same_as_none_and_instructions_pass_through_unchanged():
-    assert "instructions" not in build_request(AskOptions(instructions="  "), "q", store=False)
-    built = build_request(AskOptions(instructions="Answer tersely."), "q", store=False)
+    assert "instructions" not in build_request(ask_options(instructions="  "), "q", store=False)
+    built = build_request(ask_options(instructions="Answer tersely."), "q", store=False)
     assert built["instructions"] == "Answer tersely."

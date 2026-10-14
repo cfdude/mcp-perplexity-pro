@@ -32,7 +32,7 @@ from mcp_perplexity_pro.costed import Recording, costed_call
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
-from mcp_perplexity_pro.routing import ASK_DEPTHS, LONG_DEPTHS
+from mcp_perplexity_pro.routing import Route
 from mcp_perplexity_pro.storage import jobs as job_store
 from mcp_perplexity_pro.storage.models import ResearchJob, UsageEvent
 from mcp_perplexity_pro.storage.session import is_busy_error, unit_of_work
@@ -46,7 +46,6 @@ from mcp_perplexity_pro.usage import (
 logger = logging.getLogger(__name__)
 
 # Depths a caller of ask or chat may pick; high and xhigh belong to perplexity_research (D2).
-DEFAULT_DEPTH = "fast"
 RECENCIES = ("hour", "day", "week", "month", "year")
 
 # This server's own sanity caps (chosen, not provider limits).
@@ -107,11 +106,10 @@ def check_text(name: str, value: object, limit: int = MAX_TEXT_CHARS) -> str:
 
 @dataclass(frozen=True)
 class AskOptions:
-    """The typed options of ask, shared by chat send (design D2). ``depth`` is None when not
-    given: the default is ``fast`` unless a ``model`` replaces the preset."""
+    """The typed options of ask, shared by chat send (design D2). ``route`` is what the routing
+    mode resolved the call to (a preset, or a model); it is the only source of either."""
 
-    depth: str | None = None
-    model: str | None = None
+    route: Route
     search: bool | None = None
     domains: list[str] | None = None
     recency: str | None = None
@@ -125,10 +123,13 @@ class AskOptions:
 
     @property
     def preset(self) -> str | None:
-        """The preset the request names, or None when an explicit model replaces it."""
-        if self.model is not None:
-            return None
-        return self.depth or DEFAULT_DEPTH
+        """The preset the request names, or None when the route names a model."""
+        return self.route.preset
+
+    @property
+    def model(self) -> str | None:
+        """The model the request names, or None when the route names a preset."""
+        return self.route.model
 
 
 def _int_in(option: str, value: object, low: int, high: int) -> int:
@@ -223,22 +224,13 @@ def build_request(
     if not valid_input:
         raise _bad("input", "must be a non-blank string (or a non-empty list of messages).")
 
-    if options.depth in LONG_DEPTHS:
-        raise _bad(
-            "depth",
-            f"{options.depth!r} can last minutes and cost dollars: use perplexity_research.",
-        )
-    if options.depth is not None and options.depth not in ASK_DEPTHS:
-        raise _bad("depth", f"must be one of {', '.join(ASK_DEPTHS)}.")
     if options.model is not None:
         if not isinstance(options.model, str) or not options.model.strip():
             raise _bad("model", "must be a non-empty model id.")
         if len(options.model) > MODEL_CAP:
             raise _bad("model", f"must be at most {MODEL_CAP} characters.")
-        if options.depth is not None:
-            raise _bad("depth", "cannot be combined with model: the model replaces the preset.")
     elif options.search is False:
-        raise _bad("search", "false needs an explicit model: a preset always searches.")
+        raise _bad("search", "false cannot be combined with depth: a preset always searches.")
 
     search_options = {
         "domains": options.domains,
@@ -260,7 +252,7 @@ def build_request(
     if options.model is not None:
         request["model"] = options.model
     else:
-        request["preset"] = options.depth or DEFAULT_DEPTH
+        request["preset"] = options.preset
     request["input"] = copy.deepcopy(input)
     if options.instructions is not None:
         if not isinstance(options.instructions, str):

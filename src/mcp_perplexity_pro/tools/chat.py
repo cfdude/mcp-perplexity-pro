@@ -30,6 +30,7 @@ from mcp_perplexity_pro.agent import (
 from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.redaction import scrub_secrets
+from mcp_perplexity_pro.routing import resolve
 from mcp_perplexity_pro.storage.chats import (
     AssistantTurn,
     ChatSummary,
@@ -529,19 +530,6 @@ def register(server: FastMCP) -> None:
         the previous response, send again with replay true to resend the stored history."""
         if action not in ACTIONS:
             raise _bad("action", f"must be one of {', '.join(ACTIONS)}.")
-        options = AskOptions(
-            depth=depth,
-            model=model,
-            search=search,
-            domains=domains,
-            recency=recency,
-            after=after,
-            before=before,
-            country=country,
-            max_results=max_results,
-            instructions=instructions,
-            max_output_tokens=max_output_tokens,
-        )
         app = ctx.lifespan_context
         if action == "list":
             result, text = await _list(app, project=project, limit=limit)
@@ -550,6 +538,18 @@ def register(server: FastMCP) -> None:
         elif action == "delete":
             result, text = await _delete(app, project=project, chat_id=chat_id, confirm=confirm)
         else:
+            options = AskOptions(
+                route=resolve(app.settings, depth=depth, model=model),
+                search=search,
+                domains=domains,
+                recency=recency,
+                after=after,
+                before=before,
+                country=country,
+                max_results=max_results,
+                instructions=instructions,
+                max_output_tokens=max_output_tokens,
+            )
             result, text = await _send(
                 app,
                 project=project,

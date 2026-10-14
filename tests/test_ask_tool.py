@@ -102,7 +102,7 @@ async def test_the_result_validates_against_the_advertised_schema(world):
 
 async def test_the_completed_answer_sources_model_depth_and_status(world):
     w = await world(respond_with("agent_fast_filters.json"))
-    result = await w.call(TOOL, query="What is new?")
+    result = await w.call(TOOL, query="What is new?", depth="fast")
     out = result.structured_content
     raw = fixture("agent_fast_filters.json")
     final = [i for i in raw["output"] if i["type"] == "message"][-1]["content"][-1]["text"]
@@ -138,7 +138,7 @@ async def test_a_query_of_exactly_20000_characters_is_sent(world):
 
 async def test_default_depth_sends_preset_fast_and_store_false(world):
     w = await world()
-    await w.call(TOOL, query="q")
+    await w.call(TOOL, query="q", depth="fast")
     assert w.bodies() == [{"preset": "fast", "input": "q", "store": False}]
 
 
@@ -183,8 +183,8 @@ async def test_a_model_without_search_sends_no_tools_and_has_no_sources(world):
 
 @pytest.mark.parametrize(
     "arguments",
-    [{"depth": "low", "model": "openai/gpt-6-luna"}, {"search": False}],
-    ids=["depth with model", "search false without model"],
+    [{"depth": "low", "model": "openai/gpt-6-luna"}, {"depth": "low", "search": False}],
+    ids=["depth with model", "search false with depth"],
 )
 async def test_conflicting_options_are_refused(world, arguments):
     w = await world()
@@ -255,6 +255,7 @@ async def test_filters_are_sent_as_the_web_search_tools_options(world):
     await w.call(
         TOOL,
         query="What is new in the latest Python release? Two sentences.",
+        depth="fast",
         domains=["python.org"],
         recency="month",
         country="US",
@@ -376,7 +377,7 @@ async def test_a_key_shaped_example_in_the_answer_is_returned_as_received(world)
 
 async def test_a_successful_ask_is_one_ok_event_and_an_incomplete_one_is_unexpected(world):
     w = await world(respond_with("agent_fast.json"))
-    await w.call(TOOL, query="q", project="alpha")
+    await w.call(TOOL, query="q", project="alpha", depth="fast")
     raw = fixture("agent_fast.json")
     assert await w.events() == [
         (TOOL, "agent", "ok", "fast", raw["model"], raw["id"], "alpha", 1_250_000, "reported")

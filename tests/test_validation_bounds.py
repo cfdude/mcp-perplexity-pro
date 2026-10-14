@@ -18,8 +18,9 @@ from chat_support import (
     variant,
 )
 from research_support import RUN_ID, SUBMIT, routes
+from routing_support import ask_options
 
-from mcp_perplexity_pro.agent import AskOptions, build_request, digest
+from mcp_perplexity_pro.agent import build_request, digest
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import AgentRun
 
@@ -29,7 +30,7 @@ BIG = 2**63
 
 def refused(**kw):
     with pytest.raises(PerplexityError) as caught:
-        build_request(AskOptions(**kw), "q", store=False)
+        build_request(ask_options(**kw), "q", store=False)
     assert caught.value.category == "invalid_request"
     return str(caught.value)
 
@@ -127,20 +128,20 @@ async def test_an_out_of_range_id_in_an_absent_project_is_invalid_request_and_cr
 
 def test_a_model_over_200_characters_is_refused_and_200_is_accepted():
     assert "model" in refused(model="m" * 201)
-    assert build_request(AskOptions(model="m" * 200), "q", store=False)["model"] == "m" * 200
+    assert build_request(ask_options(model="m" * 200), "q", store=False)["model"] == "m" * 200
 
 
 def test_a_domain_over_253_characters_is_refused_without_echoing_it():
     text = refused(domains=["d" * 254])
     assert "domains" in text and "d" * 60 not in text
-    assert build_request(AskOptions(domains=["d" * 253]), "q", store=False)
+    assert build_request(ask_options(domains=["d" * 253]), "q", store=False)
 
 
 def test_a_json_schema_over_20000_serialized_characters_is_refused():
     big = {"type": "object", "properties": {"p": {"description": "x" * 20000}}}
     assert "json_schema" in refused(json_schema=big)
     small = {"type": "object", "properties": {"p": {"description": "x" * 1000}}}
-    assert build_request(AskOptions(json_schema=small), "q", store=False)["response_format"]
+    assert build_request(ask_options(json_schema=small), "q", store=False)["response_format"]
 
 
 def test_an_offending_date_or_domain_is_echoed_truncated_and_redacted():

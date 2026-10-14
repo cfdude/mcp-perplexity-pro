@@ -19,6 +19,7 @@ from mcp_perplexity_pro.agent import (
     source_line,
 )
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.routing import resolve
 
 TOOL = "perplexity_ask"
 GENERIC_400 = "invalid request"  # the API's body for several unrelated mistakes (design D6)
@@ -185,9 +186,9 @@ def register(server: FastMCP) -> None:
         control. Sources are what the run touched, not a citation of each claim. Every call that
         reaches the API is recorded as spend (see perplexity_usage)."""
         check_text("query", query)
+        app = ctx.lifespan_context
         options = AskOptions(
-            depth=depth,
-            model=model,
+            route=resolve(app.settings, depth=depth, model=model),
             search=search,
             domains=domains,
             recency=recency,
@@ -200,7 +201,6 @@ def register(server: FastMCP) -> None:
             json_schema=json_schema,
         )
         request = build_request(options, query, store=False)
-        app = ctx.lifespan_context
         try:
             costed = await run_costed(
                 app,
