@@ -489,6 +489,8 @@ def main(argv: list[str] | None = None, *, http: Any = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     tools = schema_source()
     ns, arguments = parse_command(argv, tools)
+    if ns.command == "serve":
+        return serve(ns.transport)
     try:
         if arguments is not None:
             return asyncio.run(run_tool(ns.tool, arguments, ns.as_json, http))
@@ -502,6 +504,15 @@ def main(argv: list[str] | None = None, *, http: Any = None) -> int:
         # the reader went away (``| head``): leave quietly and keep Python from complaining
         os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
         return 0
+
+
+def serve(transport: str) -> int:
+    """``perplexity-pro serve``: the MCP server, exactly as ``mcp-perplexity-pro`` runs it."""
+    from mcp_perplexity_pro.__main__ import bootstrap, run
+
+    server, settings = bootstrap()
+    run(server, settings, transport=transport)
+    return 0
 
 
 def cli() -> None:

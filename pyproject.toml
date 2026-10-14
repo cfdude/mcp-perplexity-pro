@@ -14,6 +14,7 @@ dependencies = [
 
 [project.scripts]
 mcp-perplexity-pro = "mcp_perplexity_pro.__main__:main"
+perplexity-pro = "mcp_perplexity_pro.command:cli"
 
 [dependency-groups]
 dev = [

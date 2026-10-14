@@ -16,7 +16,7 @@
 
 ## 4. Serve and packaging
 
-- [ ] 4.1 RED then GREEN: `perplexity-pro serve [--transport stdio|http]` runs the server through the existing `run()`; `[project.scripts]` gains `perplexity-pro` next to the unchanged `mcp-perplexity-pro`; tests: `serve --transport http` on an ephemeral port answers `/health` (subprocess), the old command still does, a new `tests/test_entry_points_build.py` (the `build` marker) sees both entry points in the wheel metadata, and the `quality-gates` self-contained-package scenario is checked for both commands
+- [x] 4.1 RED then GREEN: `perplexity-pro serve [--transport stdio|http]` runs the server through the existing `run()`; `[project.scripts]` gains `perplexity-pro` next to the unchanged `mcp-perplexity-pro`; tests: `serve --transport http` on an ephemeral port answers `/health` (subprocess), the old command still does, `tests/test_command_serve.py` (its `build` test) sees both entry points in the wheel metadata, and the `quality-gates` self-contained-package scenario is checked for both commands
 
 ## 5. Acceptance (live)
 
