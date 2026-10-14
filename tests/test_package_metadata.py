@@ -76,3 +76,37 @@ def test_every_markdown_link_in_the_readme_is_absolute_or_an_anchor():
     targets = re.findall(r"\]\(([^)\s]+)", text)
     bad = [t for t in targets if not t.startswith(("http://", "https://", "mailto:", "#"))]
     assert not bad, bad
+
+
+def test_the_readme_documents_every_install_path_from_pypi():
+    text = (ROOT / "README.md").read_text()
+    for needle in (
+        "uvx mcp-perplexity-pro",
+        "uvx --from mcp-perplexity-pro perplexity-pro",
+        "uv tool install mcp-perplexity-pro",
+        "pipx install mcp-perplexity-pro",
+        '"command": "uvx"',
+    ):
+        assert needle in text, needle
+    # the command-line name is only ever shown through --from (the name is not registered)
+    assert not re.search(r"uvx perplexity-pro", text)
+
+
+def test_the_release_guide_names_the_workflow_and_environments_the_workflow_uses():
+    import yaml
+
+    guide = (ROOT / "docs/releasing.md").read_text()
+    workflow = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text())
+    assert "release.yml" in guide and (ROOT / ".github/workflows/release.yml").exists()
+    environments = {job["environment"] for job in workflow["jobs"].values() if "environment" in job}
+    assert environments == {"pypi", "testpypi"}
+    for name in environments:
+        assert f"environment `{name}`" in guide or f"`{name}`" in guide, name
+    for heading in (
+        "One-time setup",
+        "Checklist before a tag",
+        "Rehearse on TestPyPI",
+        "If a release is bad",
+    ):
+        assert heading in guide, heading
+    assert "Yank" in guide or "yank" in guide

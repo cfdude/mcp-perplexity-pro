@@ -12,7 +12,7 @@
 
 ## 3. Documentation
 
-- [ ] 3.1 README: install and run from PyPI (`uvx mcp-perplexity-pro`, `uvx --from mcp-perplexity-pro perplexity-pro ...`, `uv tool install`, `pipx install`, an MCP client configuration using `uvx`, still showing the checkout path for developers); `docs/releasing.md` (design D8 setup with exact names, checklist, tag command, yank); CHANGELOG note that 2.0.0 is a Python package and that the 1.x npm package is not updated; `CLAUDE.md` (the non-goal "PyPI publishing" line, the module/ops notes, the current-change pointer) keeping the pm-managed block byte-identical; verify the commands in the README against a clean-environment run of the built wheel
+- [x] 3.1 README: install and run from PyPI (`uvx mcp-perplexity-pro`, `uvx --from mcp-perplexity-pro perplexity-pro ...`, `uv tool install`, `pipx install`, an MCP client configuration using `uvx`, still showing the checkout path for developers); `docs/releasing.md` (design D8 setup with exact names, checklist, tag command, yank); CHANGELOG note that 2.0.0 is a Python package and that the 1.x npm package is not updated; `CLAUDE.md` (the non-goal "PyPI publishing" line, the module/ops notes, the current-change pointer) keeping the pm-managed block byte-identical; verify the commands in the README against a clean-environment run of the built wheel
 
 ## 4. Acceptance (offline and local)
 
