@@ -1,0 +1,3 @@
+practice: none, because no gate or discipline beyond the existing two gates and the cross-spec review was adopted (checked `tasks.md` 5.1 to 5.5 against the gate procedure in `CLAUDE.md`).
+tooling: none, because nothing was routed around in pm for this change; the friction met earlier in this epic series is already filed as pm issue 241 and `.conductor/feedback/2026-10-13-*.md` (checked `git log -- .conductor/feedback`).
+process: `docs/lessons/a-gate-record-follows-a-verified-commit.md` (a failed validation skipped the commit but a following `;` still recorded Gate 1 against the previous commit).
