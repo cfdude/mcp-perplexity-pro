@@ -24,7 +24,7 @@
 - [x] 5.2 Verify against each task's commit, not the working tree: for every task above run `git show --stat <sha>` and assert each file the task claims to change appears in that commit
 - [x] 5.3 Attribute every commit of this change to its epic with `update-epic pypi-publish --attribute-commit <sha>` as each lands, in landing order; never attribute the archive move, the pm bookkeeping commits or an ancestor after a later commit; verify the last attributed commit is the Gate 2 head
 - [x] 5.4 Route what the work taught: practices, tooling friction and process lessons, each named as one of those three kinds; write `openspec/changes/pypi-publish/routing.md` with exactly three lines `practice: ...`, `tooling: ...` and `process: ...`, each naming the filed item or reading `none, because <reason that names the command or commit checked>`
-- [ ] 5.5 Gate 2 implementation and documentation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then `record-gate-review pypi-publish --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
+- [x] 5.5 Gate 2 implementation and documentation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then `record-gate-review pypi-publish --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
 
 ## 6. Owner gates (not done by the build; the change stays open until they are)
 

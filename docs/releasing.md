@@ -8,7 +8,10 @@ that workflow file in this repository (OpenID Connect), so no token or password 
 ## One-time setup (the owner does this; nothing in the repository can)
 
 1. **GitHub environments.** In the repository settings create two environments:
-   - `pypi`, with yourself as a required reviewer (a tag push then waits for your approval).
+   - `pypi`, with yourself as a required reviewer (a tag push then waits for your approval) and a
+     deployment rule that restricts it to tags matching `v*` (the pending publisher binds the
+     repository, workflow file and environment, but not the branch or tag, so without the rule a
+     branch whose workflow names this environment could ask for the upload).
    - `testpypi`, no reviewers needed.
    A missing environment is created unprotected on first use, so create them first.
 2. **A pending Trusted Publisher on pypi.org.** Sign in, open *Your projects, Publishing*, add a
