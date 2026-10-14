@@ -867,10 +867,20 @@
       "description": "Second entry point in the same package over a transport-neutral core (costed_call, storage, usage); same ~/.perplexity-pro database; --json for scripts. First cut: ask, search, embed, usage, projects. Needs the tool logic that reads ctx.lifespan_context pulled out of tools/.",
       "attributedCommits": [
         "96fb8720a91f9880963615ad8f9ed148d1f3ce05",
-        "c38d87b4768562fb9470105f15fb6693c9139ca4"
+        "c38d87b4768562fb9470105f15fb6693c9139ca4",
+        "ab0cd1b3a20c4a3c90b29c6cae6247b9f0910ed9",
+        "dac603fed838c3961727e5ef86458c9763168e73",
+        "157e73c723e8314753800be6192aa6cbb1535619",
+        "d769c2db886eaf98c0680c8a3a7820f62bde8d63",
+        "9860c2e0c7a782912bae8cafdc15b1c05025d1eb",
+        "027933795646f6ce37f18d00b567d18ca48dd847",
+        "cbce774b670799008c284f996e1583b4cf6a3921",
+        "ed1de71735811411d71ef29bce048cb2e61a9d62",
+        "8c55c97a73dce0970fffeccc08ded6030843fbaf",
+        "153061004dff161f68a07bb7d9d3df90111d2f2e"
       ],
       "createdAt": "2026-10-13T13:17:14.603Z",
-      "touchedAt": "2026-10-14T04:58:27.877Z",
+      "touchedAt": "2026-10-14T05:44:29.711Z",
       "startedAt": "2026-10-14T04:49:46.597Z",
       "release": "release-2-0-0",
       "gateReview": {
@@ -883,6 +893,20 @@
             "openspec/changes/py-cli"
           ],
           "reviewer": "fresh-context general-purpose subagent: Gate 1 (8 Important, minors) and cross-spec (3 Important); all Important folded in this head"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-14T05:44:29.709Z",
+          "baseSha": "ab0cd1b3a20c4a3c90b29c6cae6247b9f0910ed9",
+          "headSha": "153061004dff161f68a07bb7d9d3df90111d2f2e",
+          "reviewer": "fresh-context general-purpose subagents: implementation ab0cd1b..cbce774 (0 Critical, 3 Important, 4 Minor, fixed in ed1de71) and documentation diff ed1de71..8c55c97 (1 Important, 2 Minor, fixed in this head); suite 2488 passed",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-14T05:38:54.015Z",
+            "baseSha": "ab0cd1b3a20c4a3c90b29c6cae6247b9f0910ed9",
+            "headSha": "ed1de71735811411d71ef29bce048cb2e61a9d62",
+            "reviewer": "fresh-context general-purpose subagent over ab0cd1b..cbce774 (0 Critical, 3 Important, 4 Minor; all fixed in this head: startup cost, build-test claim, SIGINT test robustness); suite 2488 passed"
+          }
         }
       }
     },
@@ -1088,7 +1112,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 353,
+  "revision": 365,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
