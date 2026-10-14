@@ -1,0 +1,92 @@
+name: Release
+
+# A pushed tag v<version> publishes to PyPI; a manual run publishes a .dev version to TestPyPI.
+# Publishing uses Trusted Publishing (OpenID Connect): no token or password exists anywhere.
+# One-time setup and the release checklist: docs/releasing.md
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install dependencies from the lockfile
+        run: uv sync --locked --python 3.12
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format check
+        run: uv run ruff format --check .
+      - name: Test
+        run: uv run pytest
+      - name: Build tests
+        run: uv run pytest -m build
+      - name: The tag must equal the package version
+        if: github.event_name == 'push'
+        run: |
+          version="$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")"
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "tag ${GITHUB_REF_NAME} is not v${version}" >&2
+            exit 1
+          fi
+      - name: Use a development version for a rehearsal
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python3 - <<'PY'
+          import os, re, pathlib
+          path = pathlib.Path("pyproject.toml")
+          text = path.read_text()
+          version = re.search(r'^version = "(.*)"$', text, flags=re.MULTILINE).group(1)
+          dev = f"{version}.dev{os.environ['GITHUB_RUN_NUMBER']}"
+          path.write_text(re.sub(r'^version = ".*"$', f'version = "{dev}"', text, count=1, flags=re.MULTILINE))
+          PY
+      - name: Build the source distribution and the wheel
+        run: uv build
+      - name: Check the package metadata
+        run: uvx twine@7.0.0 check dist/*.whl dist/*.tar.gz
+      - name: Install the wheel in a clean environment and run both commands
+        run: |
+          uv run --isolated --no-project --with dist/*.whl mcp-perplexity-pro --version
+          uv run --isolated --no-project --with dist/*.whl perplexity-pro help ask
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish-pypi:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-testpypi:
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/

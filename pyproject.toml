@@ -41,6 +41,7 @@ dev = [
     "ruff",
     "pre-commit",
     "jsonschema>=4.26.0",
+    "pyyaml>=6.0.3",
 ]
 
 [build-system]
