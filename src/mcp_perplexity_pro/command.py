@@ -293,10 +293,16 @@ class UsageError(Exception):
     """A value the CLI refuses locally (exit 2, naming the flag)."""
 
 
+_stdin_used: list[bool] = []  # standard input is read at most once per command
+
+
 def _load(raw: str, flag: str) -> Any:
     """A JSON value from a string, ``@path`` or ``-`` (standard input)."""
     text = raw
     if raw == "-":
+        if _stdin_used:
+            raise UsageError(f"{flag}: standard input can be read once; only one value may be -")
+        _stdin_used.append(True)
         text = sys.stdin.read()
     elif raw.startswith("@"):
         try:
@@ -330,11 +336,13 @@ def collect_arguments(tool: ToolSpec, ns: argparse.Namespace) -> dict[str, Any]:
     positionals on top, omitted parameters absent. Raises ``UsageError`` for a still-missing
     required parameter or a bad JSON value."""
     arguments: dict[str, Any] = {}
+    _stdin_used.clear()
     if ns.args_json is not None:
         merged = _load(ns.args_json, "--args-json")
         if not isinstance(merged, dict):
             raise UsageError("--args-json: must be a JSON object")
-        arguments.update(merged)
+        # a JSON null means "not given" (an omitted parameter is never sent as null)
+        arguments.update({k: v for k, v in merged.items() if v is not None})
     for name, spec in tool.properties.items():
         value = getattr(ns, name, None)
         if name in ns.positional:
@@ -420,7 +428,7 @@ def run_help(words: list[str], tools: list[ToolSpec]) -> int:
             example="perplexity-pro help",
         )
     else:
-        valid = ", ".join(sorted(by_name) + list(help_text.TOPICS))
+        valid = ", ".join(sorted(set(by_name) | set(help_text.TOPICS)))
         print(f"perplexity-pro: no help for {name!r}; try one of: {valid}", file=sys.stderr)
         return 1
     print(text, end="")
@@ -487,17 +495,28 @@ async def run_tool(
 def main(argv: list[str] | None = None, *, http: Any = None) -> int:
     """The ``perplexity-pro`` command; returns the exit status."""
     argv = list(sys.argv[1:] if argv is None else argv)
+    # Two commands never need the tool schemas, and reading them costs about a second (the real
+    # server is built to read them): --version, and serve, which builds its own server.
+    if argv == ["--version"]:
+        print(version("mcp-perplexity-pro"))
+        return 0
+    if argv and argv[0] == "serve":
+        mini = argparse.ArgumentParser(
+            prog="perplexity-pro serve", description="Run the MCP server.", allow_abbrev=False
+        )
+        mini.add_argument(
+            "--transport",
+            choices=("stdio", "http"),
+            default="stdio",
+            help="how to serve MCP: over stdin/stdout, or Streamable HTTP at /mcp",
+        )
+        return serve(mini.parse_args(argv[1:]).transport)
     tools = schema_source()
     ns, arguments = parse_command(argv, tools)
-    if ns.command == "serve":
-        return serve(ns.transport)
     try:
         if arguments is not None:
             return asyncio.run(run_tool(ns.tool, arguments, ns.as_json, http))
-        if ns.command == "help":
-            return run_help(ns.name, tools)
-        sys.stderr.write(f"perplexity-pro {ns.command}: not available yet\n")
-        return 2
+        return run_help(ns.name, tools)  # the only command without arguments
     except KeyboardInterrupt:
         return 130
     except BrokenPipeError:

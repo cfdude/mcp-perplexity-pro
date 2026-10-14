@@ -184,9 +184,15 @@ def test_every_real_parameter_has_a_flag_or_is_positional(tools):
     for t in tools:
         if t.name == "perplexity_help":
             continue
-        text = choices[t.command].format_help()
+        sub = choices[t.command]
+        dests = {a.dest for a in sub._actions}
+        flags = {opt for a in sub._actions for opt in a.option_strings}
         for name in t.properties:
-            assert command.flag_name(name) in text or name in ("action", "query"), (t.name, name)
+            positional = name in ("action", "query") and name in t.required
+            assert (name in dests) if positional else (command.flag_name(name) in flags), (
+                t.name,
+                name,
+            )
 
 
 def test_building_the_parser_needs_no_key_no_network_no_files(tmp_path):
@@ -217,3 +223,16 @@ def test_an_invalid_environment_still_builds_the_parser(monkeypatch):
 
 
 _ = socket  # the guard in conftest forbids connections during these tests
+
+
+def test_a_json_null_in_args_json_counts_as_not_given(tools, capsys):
+    assert "query" in refused(tools, capsys, "ask", "--args-json", '{"query": null}')
+    assert parse(tools, "search", "q", "--args-json", '{"search_type": null}')[1] == {"query": "q"}
+
+
+def test_standard_input_can_be_read_only_once(tools, capsys, monkeypatch):
+    import io
+
+    monkeypatch.setattr(sys, "stdin", io.StringIO('{"query": "q"}'))
+    err = refused(tools, capsys, "ask", "--args-json", "-", "--json-schema", "-")
+    assert "--json-schema" in err and "once" in err

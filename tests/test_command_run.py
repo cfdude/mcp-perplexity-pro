@@ -75,7 +75,8 @@ def test_a_tool_error_prints_category_and_the_cli_help_sentence_and_exits_1(env,
     assert out.err.startswith("[invalid_request] depth:")
     assert out.err.rstrip().endswith("Run perplexity-pro help ask for its arguments and examples.")
     assert "perplexity_help" not in out.err
-    assert up.requests == [] and not (env / "perplexity.db").exists() or events(env) == []
+    assert up.requests == []
+    assert not (env / "perplexity.db").exists() or events(env) == []
 
 
 def test_an_upstream_failure_keeps_its_category_without_a_hint(env, capsys):
@@ -178,7 +179,7 @@ def test_ctrl_c_during_a_call_exits_130_without_a_traceback(tmp_path):
     class Slow(http.server.BaseHTTPRequestHandler):
         def do_POST(self):  # noqa: N802 - the stdlib's name
             arrived.set()
-            threading.Event().wait(30)
+            threading.Event().wait(120)  # longer than the test waits for the process
 
         def log_message(self, *args):
             pass
@@ -203,9 +204,42 @@ def test_ctrl_c_during_a_call_exits_130_without_a_traceback(tmp_path):
     try:
         assert arrived.wait(30), "the call never reached the upstream"
         proc.send_signal(signal.SIGINT)
-        out, err = proc.communicate(timeout=30)
+        out, err = proc.communicate(timeout=60)
     finally:
         proc.kill()
         server.shutdown()
     assert proc.returncode == 130, (out, err)
     assert "Traceback" not in err and out == ""
+
+
+def test_an_interrupt_during_the_call_still_closes_the_client_and_engine(env, monkeypatch):
+    import fastmcp
+
+    import mcp_perplexity_pro.__main__ as entry
+
+    closed = []
+    real = entry.close_resources
+
+    async def spy(server):
+        closed.append(True)
+        await real(server)
+
+    async def interrupted(self, *args, **kwargs):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(entry, "close_resources", spy)
+    monkeypatch.setattr(fastmcp.Client, "call_tool", interrupted)
+    assert main(["ask", "q"], http=Upstream().client()) == 130
+    assert closed == [True]
+
+
+def test_version_and_serve_help_do_not_build_the_schemas(monkeypatch, capsys):
+    def boom():
+        raise AssertionError("the schemas were built")
+
+    monkeypatch.setattr(command, "schema_source", boom)
+    assert main(["--version"]) == 0
+    assert capsys.readouterr().out.strip()
+    with pytest.raises(SystemExit) as info:
+        main(["serve", "--help"])
+    assert info.value.code == 0 and "--transport" in capsys.readouterr().out
