@@ -1008,10 +1008,21 @@
       "description": "New tool perplexity_help with actions index (llms.txt-style markdown listing tools and topics), tool (one tool's arguments, examples, errors) and topic (routing, costs, citations, errors). One source generates the help text, the CLI --help and help <topic>; lets tool descriptions be trimmed to pay back the eleventh tool's size.",
       "attributedCommits": [
         "8b970612b9e160ab25e5e5bdb3250c7a76be8470",
-        "cfc29ff91142f4d8b8aaf3b581f20686d7b6638d"
+        "cfc29ff91142f4d8b8aaf3b581f20686d7b6638d",
+        "ad16882b1ba90fb894b3577af4ef299c850c3be7",
+        "b48984d0c4314e126e617a74814305c7dc1d787b",
+        "3678b20b6a040a8bd6a32861e79e5feb09258ef1",
+        "bf55a946ffc6ce31c0fd1788f0a5b363c6536882",
+        "1954b1b680deaef33b9d3cb9efb266a0e2b4f0c6",
+        "06f075ea1b713367ef99ac2fa2d5ba118aca3212",
+        "5071a24eddb847e6415f6e29960fa8d0ecc21c8b",
+        "a564823c8f33b70f07fe7ac31e75aa56cf2b9b0d",
+        "8d3ff43c32c6f496d37fd50c142cf1fe85f6a008",
+        "7a20337fb0011bd07db773afdd3600bce11b8282",
+        "f914ec4bfaf4d900b1ba2c1cd82848a2c0b24703"
       ],
       "createdAt": "2026-10-14T02:25:51.014Z",
-      "touchedAt": "2026-10-14T04:07:47.079Z",
+      "touchedAt": "2026-10-14T04:39:28.348Z",
       "notes": [
         {
           "at": "2026-10-14T02:27:24.904Z",
@@ -1031,12 +1042,26 @@
             "openspec/changes/agent-help"
           ],
           "reviewer": "fresh-context general-purpose subagent: Gate 1 (7 Important, 7 Minor) and cross-spec (3 blocks); all Important and blocks fixed in this head"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-14T04:39:28.346Z",
+          "baseSha": "ad16882b1ba90fb894b3577af4ef299c850c3be7",
+          "headSha": "f914ec4bfaf4d900b1ba2c1cd82848a2c0b24703",
+          "reviewer": "fresh-context general-purpose subagents: implementation ad16882..5071a24 (0 Critical, 0 Important, 7 Minor, fixed) and documentation diff 8d3ff43..7a20337 (1 Important, 5 Minor, fixed in this head); suite 2438 passed",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-14T04:33:53.722Z",
+            "baseSha": "ad16882b1ba90fb894b3577af4ef299c850c3be7",
+            "headSha": "8d3ff43c32c6f496d37fd50c142cf1fe85f6a008",
+            "reviewer": "fresh-context general-purpose subagent over ad16882..5071a24 (0 Critical, 0 Important, 7 Minor, fixed in the next commits); suite 2438 passed"
+          }
         }
       }
     }
   ],
   "detourStack": [],
-  "revision": 331,
+  "revision": 344,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
