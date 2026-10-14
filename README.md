@@ -31,8 +31,10 @@ answer a single query. There was no working behavior to port, so the TypeScript 
 usage.** Every costed upstream call stores one usage event (`perplexity_usage` reports them), and a
 background research run is recorded once, by the first `perplexity_jobs` call that sees it finish.
 
-**These tools can spend money, and there is no cost ceiling.** Defaults are the cheapest depths
-(`fast`; `medium` for research) and the cheaper search type (`fast`). `high` and `xhigh` exist only behind `perplexity_research`
+**These tools can spend money, and there is no cost ceiling.** A nameless ask or chat uses the routing
+default, `perplexity/sonar`, which cost more than the `fast` depth in the one pair measured (see
+"Choosing how models are picked"); research defaults to `medium` and search to its cheaper type
+(`fast`). `high` and `xhigh` exist only behind `perplexity_research`
 because a single run can cost dollars (see "Cost by depth").
 
 The old tool names (`ask_perplexity`, `chat_perplexity` and the rest) are gone and are not coming
@@ -148,8 +150,9 @@ one startup warning. To go back, unset the variables: the defaults are `standard
 this server implements, which is what `dynamic` is for.
 
 **What the default costs.** `perplexity/sonar` with web search cost $0.00336 for one question, $0.00371
-for a `json_schema` question and $0.00379 in the first probe; the `fast` preset cost $0.00124 for the
-same question as the first (acceptance, `openspec/changes/routing-modes-config/acceptance/`). That is
+for a `json_schema` question (acceptance, `openspec/changes/routing-modes-config/acceptance/`) and
+$0.00379 in the first probe (`design.md`, 2026-10-13); the `fast` preset cost $0.00124 for the same
+question as the first acceptance call (the acceptance files keep results, not query text). That is
 one question each (about 2.7 times `fast` in that pair), so read it as a rough guide: the web search
 tool's pages count as input tokens, which is where most of a Sonar call's cost sits. To keep the
 old cheap default, pass `depth: "fast"` on a call or set `PERPLEXITY_MODEL` to another id.
@@ -386,7 +389,7 @@ sources and cost more than `fast`):
 ```
 
 A call that names nothing, from the live acceptance of the routing change (2026-10-13, standard
-mode; keys shortened to the ones that differ, the answer cut to its first sentence; raw output in
+mode; the request line is reconstructed from the answer, since the acceptance files hold results; keys shortened to the ones that differ, the answer cut to its first sentence; raw output in
 `openspec/changes/routing-modes-config/acceptance/billed-calls.json`):
 
 ```json

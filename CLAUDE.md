@@ -371,7 +371,7 @@ a third by inlining the sequence above:
 
 - `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
   generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
-  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). There is no change in flight (`routing-modes-config`, `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are all archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
+  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). There is no change in flight (`routing-modes-config` is archived by its last task, `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are all archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
   with their enforcement points.
 - Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
   task's `tasks.md` checkbox ticked in the same commit.

@@ -39,7 +39,7 @@
 
 - [x] 7.1 README: a "Choosing how models are picked" section laying out the three choices: standard (default; why a base Sonar model line is the recommended default, with the measured cost and the one-line way to pick another model or a preset), dynamic (what it will do with Perplexity Decide to pick the model per prompt and save cost; stated as not available yet and refused at startup), and custom (the three tiers, the three variables, an example, how the calling agent selects a tier); the full variable table, the `tier` argument, the `routing` result field, how an agent learns the configuration (the four channels and their limits), that `perplexity_research` is unaffected and that `auto` is not an API model; verify every example against the acceptance output
 - [x] 7.2 `CLAUDE.md` (module table gains `routing.py`, the settings list, the tool-count note with the re-measured `tools/list` size, the current-change pointer) keeping the pm-managed block byte-identical (the `agent-help` epic also changes descriptions and adds a tool: whichever lands second re-measures `tools/list` and re-pins the schema tests); `CHANGELOG.md` entry under `2.0.0` (routing modes, the default change); `ecosystem.example.cjs` gains the commented optional variables and `tests/test_ecosystem_example.py` still passes
-- [ ] 7.3 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
+- [x] 7.3 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 
 ## 8. Archive
 
