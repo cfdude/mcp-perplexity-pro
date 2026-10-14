@@ -942,22 +942,47 @@
       "reconcileNeeded": false,
       "description": "Check the mcp-perplexity-pro name is free, Trusted Publishing from GitHub Actions (no stored token), tag and release 2.0.0, uvx install docs, refresh the CHANGELOG release date.",
       "attributedCommits": [
-        "5c778c83f941c6548d52496fff8605ed006de1df"
+        "5c778c83f941c6548d52496fff8605ed006de1df",
+        "c8b4d3c0f945aed01a5b2fd0066ac43afcc74985",
+        "062667e3d7a33e7fdd27980fd0ddcb0957f8a580",
+        "bcdaa2be59dcff330d1a894942d6bfd042adff04",
+        "6fff1dcafe3cb029da94c47702a27174f890c568",
+        "791be269d11fbc2d15d2c50ee346b1cddf067f1a",
+        "18faad12dc32c82621f975ef120d14d7fb712148",
+        "a2538ae864e04a1ef51355b65881e13180faf424",
+        "c2e44bd13bf66295da0fefb06da2561b3cdfcf62"
       ],
       "createdAt": "2026-10-13T13:17:14.936Z",
-      "touchedAt": "2026-10-14T06:02:35.829Z",
+      "touchedAt": "2026-10-14T06:25:55.641Z",
       "startedAt": "2026-10-14T05:55:26.081Z",
       "release": "release-2-0-0",
       "gateReview": {
         "gate1": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-14T06:02:35.827Z",
+          "reviewedAt": "2026-10-14T06:07:45.268Z",
           "baseSha": "b965f71f1d59bd6fc1c1d64786c9e281a5d99fa0",
-          "headSha": "5c778c83f941c6548d52496fff8605ed006de1df",
+          "headSha": "062667e3d7a33e7fdd27980fd0ddcb0957f8a580",
           "artifacts": [
             "openspec/changes/pypi-publish"
           ],
-          "reviewer": "fresh-context general-purpose subagent: Gate 1 (1 Critical, 9 Important) and cross-spec (pass, polish); all folded in this head"
+          "reviewer": "fresh-context general-purpose subagent: Gate 1 (1 Critical, 9 Important) and cross-spec (pass, polish); all folded in this head",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-14T06:02:35.827Z",
+            "baseSha": "b965f71f1d59bd6fc1c1d64786c9e281a5d99fa0",
+            "headSha": "5c778c83f941c6548d52496fff8605ed006de1df",
+            "artifacts": [
+              "openspec/changes/pypi-publish"
+            ],
+            "reviewer": "fresh-context general-purpose subagent: Gate 1 (1 Critical, 9 Important) and cross-spec (pass, polish); all folded in this head"
+          }
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-14T06:25:55.640Z",
+          "baseSha": "062667e3d7a33e7fdd27980fd0ddcb0957f8a580",
+          "headSha": "c2e44bd13bf66295da0fefb06da2561b3cdfcf62",
+          "reviewer": "fresh-context general-purpose subagent over 062667e..a2538ae, implementation and documentation (0 Critical, 0 Important, 5 Minor; the environment deployment-rule note folded into this head); suite 2509 passed, build tests 7 passed"
         }
       }
     },
@@ -1138,7 +1163,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 373,
+  "revision": 384,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
@@ -1150,7 +1175,7 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-14T06:02:36.363Z",
+        "reviewedAt": "2026-10-14T06:08:10.385Z",
         "specs": [
           {
             "key": "agent-help/specs/help-tool/spec.md",
@@ -1270,7 +1295,7 @@
           },
           {
             "key": "pypi-publish/specs/package-release/spec.md",
-            "sha256": "c29d9d5129adfcc66a7ba47a348a9f8d8b446c65ba920098bc5956abddd5d87e"
+            "sha256": "7c570ed4dd31f192896a438559ec9e1335de03985afbc9085d83f41d71b50918"
           },
           {
             "key": "routing-modes-config/specs/agent-ask/spec.md",
@@ -1293,10 +1318,10 @@
             "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagent over pypi-publish vs main specs (no blocks; polish: command-count wording stated as equivalent forms)",
+        "reviewer": "fresh-context general-purpose subagent over pypi-publish vs main specs (no blocks; polish folded); the spec set was amended after the review only by splitting one requirement",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-14T04:58:28.369Z",
+          "reviewedAt": "2026-10-14T06:02:36.363Z",
           "specs": [
             {
               "key": "agent-help/specs/help-tool/spec.md",
@@ -1340,7 +1365,7 @@
             },
             {
               "key": "py-cli/specs/cli/spec.md",
-              "sha256": "9197aa80b1408b648ce28943b8790d1101bcda6331656651b841594b4e3f45b8"
+              "sha256": "9de448f24236477a8c2d15c52514b4a8f9687fdb2c15a630499dab0f465b9329"
             },
             {
               "key": "py-cli/specs/help-tool/spec.md",
@@ -1415,6 +1440,10 @@
               "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
             },
             {
+              "key": "pypi-publish/specs/package-release/spec.md",
+              "sha256": "c29d9d5129adfcc66a7ba47a348a9f8d8b446c65ba920098bc5956abddd5d87e"
+            },
+            {
               "key": "routing-modes-config/specs/agent-ask/spec.md",
               "sha256": "386d0eb113c90def8c399e23353804355a8e749fc9f865b357ee361aff3d948d"
             },
@@ -1435,7 +1464,7 @@
               "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagent over py-cli vs main specs (3 Important: help sentence ownership, help-tool style delta added, startup failure exit codes stated; minors folded or declined)"
+          "reviewer": "fresh-context general-purpose subagent over pypi-publish vs main specs (no blocks; polish: command-count wording stated as equivalent forms)"
         }
       }
     }
