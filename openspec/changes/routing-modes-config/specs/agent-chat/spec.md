@@ -1,5 +1,16 @@
 ## MODIFIED Requirements
 
+### Requirement: Chat tool
+The server SHALL provide `perplexity_chat` with actions `send`, `list`, `read` and `delete`, each scoped to a `project` (default `default`). It SHALL advertise an output schema, `readOnlyHint` false, `destructiveHint` true and `openWorldHint` true. Its description SHALL state the per-depth costs of a send (fast about $0.001 to $0.002, low about $0.004 to $0.02, medium about $0.016 to $0.05), the active routing mode and the model a send with no selector uses, say that the default model's cost differs from the per-depth figures, and say that `list`, `read` and `delete` make no upstream call.
+
+#### Scenario: Tool listing
+- **WHEN** a client lists the tools
+- **THEN** `perplexity_chat` is present with typed parameters, an output schema, the three annotations above, the three costs, the mode and the default model in its description
+
+#### Scenario: Unknown action
+- **WHEN** a client calls the tool with action `rename`
+- **THEN** the call fails with `invalid_request` naming `action`
+
 ### Requirement: Send starts a chat
 A `send` without `chat_id` SHALL require `title` (1 to 120 characters after trimming) and a `message` that is not blank and has at most 20000 characters, and SHALL create the chat only after the upstream call has succeeded, storing the chat and both messages in one unit of work, so a failed first send leaves no chat. The result's top-level `chat_id` is the new chat's id and its `continuation` is `new`; a chained send reports `chained` and a replay `replay`.
 

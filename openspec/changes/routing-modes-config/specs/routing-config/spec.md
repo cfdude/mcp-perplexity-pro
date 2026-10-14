@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Routing mode
-The server SHALL read `PERPLEXITY_ROUTING`, one of `standard` (the default), `custom` and `dynamic`, and apply it to `perplexity_ask` and to `perplexity_chat` send. `perplexity_research` SHALL be unchanged in every mode, because its depths are presets and not models. An unknown value SHALL fail startup naming the variable and the three accepted values.
+The server SHALL read `PERPLEXITY_ROUTING` (case-insensitive), one of `standard` (the default), `custom` and `dynamic`, and apply it to `perplexity_ask` and to `perplexity_chat` send. `perplexity_research` SHALL be unchanged in every mode, because its depths are presets and not models. An unknown value SHALL fail startup naming the variable and the three accepted values.
 
 #### Scenario: Default mode
 - **WHEN** the server starts with only the API key set
@@ -24,7 +24,7 @@ The server SHALL read `PERPLEXITY_ROUTING`, one of `standard` (the default), `cu
 
 
 ### Requirement: Standard mode uses one configurable model
-In `standard` mode the server SHALL use `PERPLEXITY_MODEL`, default `perplexity/sonar`, for any call that names no `depth`, `tier` or `model`. The model id SHALL be a non-blank string of at most 200 characters; anything else fails startup naming `PERPLEXITY_MODEL`.
+In `standard` mode the server SHALL use `PERPLEXITY_MODEL`, default `perplexity/sonar`, for any call that names no `depth`, `tier` or `model`. The model id SHALL be a string of 1 to 200 characters with no whitespace or control characters (it is written into the instructions text the agent reads); anything else fails startup naming `PERPLEXITY_MODEL`. A variable the active mode does not use SHALL be ignored, not validated.
 
 #### Scenario: Default model
 - **WHEN** an ask names no depth, tier or model in `standard` mode with `PERPLEXITY_MODEL` unset
@@ -35,7 +35,7 @@ In `standard` mode the server SHALL use `PERPLEXITY_MODEL`, default `perplexity/
 - **THEN** the request names that model
 
 #### Scenario: Blank model
-- **WHEN** `PERPLEXITY_MODEL` is set to an empty string or to 300 characters
+- **WHEN** `PERPLEXITY_MODEL` is set to an empty string, to 300 characters or to a value containing a newline
 - **THEN** startup fails naming `PERPLEXITY_MODEL`
 
 ### Requirement: Custom mode has three required tiers
@@ -56,6 +56,10 @@ In `custom` mode the server SHALL require `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_T
 #### Scenario: Unused tier variables
 - **WHEN** the mode is `standard` and a tier variable is set
 - **THEN** the server starts, ignores it and logs one warning naming the variable
+
+#### Scenario: Unused variable is not validated
+- **WHEN** the mode is `standard` and `PERPLEXITY_TIER_LIGHT` is set to an empty string
+- **THEN** the server starts and logs one warning naming the variable
 
 #### Scenario: Unused model variable
 - **WHEN** the mode is `custom` and `PERPLEXITY_MODEL` is set
@@ -110,6 +114,13 @@ For one call the server SHALL resolve the model by the one selector the call nam
 #### Scenario: Chat send follows the same rules
 - **WHEN** `perplexity_chat` send is called in `custom` mode with `tier` `light`
 - **THEN** the request names the `light` tier's model, and the next turn of the same chat may name a different tier
+
+### Requirement: Refusal order
+A call that breaks more than one routing rule SHALL be refused with the first of these that applies: a conflict between selectors, then `tier` outside `custom`, then an unknown `tier`, then `depth` `high` or `xhigh`, so the message an agent reads is deterministic.
+
+#### Scenario: Two rules broken at once
+- **WHEN** an ask in `standard` mode names `tier` `light` and `depth` `low`
+- **THEN** the call fails with the selector-conflict message naming `tier` and `depth`, not the message about `tier` outside `custom`
 
 ### Requirement: Selectors are mutually exclusive
 `depth` together with `model`, `depth` together with `tier`, and `model` together with `tier` SHALL fail with `invalid_request`, and nothing is sent. The message is written for the calling agent: it names both options given, says each picks the model on its own so the two cannot be combined, and tells the agent what to do (pass only one, or none to use the mode's default). This requirement owns those conflicts; the ask requirements refer to it.
