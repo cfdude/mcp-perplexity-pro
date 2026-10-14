@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "py-cli",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -848,7 +848,7 @@
       "id": "py-cli",
       "title": "Python CLI front end sharing the MCP core",
       "priority": "P2",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -880,7 +880,7 @@
         "153061004dff161f68a07bb7d9d3df90111d2f2e"
       ],
       "createdAt": "2026-10-13T13:17:14.603Z",
-      "touchedAt": "2026-10-14T05:44:29.711Z",
+      "touchedAt": "2026-10-14T05:46:31.436Z",
       "startedAt": "2026-10-14T04:49:46.597Z",
       "release": "release-2-0-0",
       "gateReview": {
@@ -908,6 +908,11 @@
             "reviewer": "fresh-context general-purpose subagent over ab0cd1b..cbce774 (0 Critical, 3 Important, 4 Minor; all fixed in this head: startup cost, build-test claim, SIGINT test robustness); suite 2488 passed"
           }
         }
+      },
+      "disposition": {
+        "outcome": "unknown",
+        "recordedAt": "2026-10-14T05:46:31.435Z",
+        "recordedBy": "archive-drift-heal"
       }
     },
     {
@@ -1112,7 +1117,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 365,
+  "revision": 366,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
