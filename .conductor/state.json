@@ -1022,7 +1022,7 @@
         "f914ec4bfaf4d900b1ba2c1cd82848a2c0b24703"
       ],
       "createdAt": "2026-10-14T02:25:51.014Z",
-      "touchedAt": "2026-10-14T04:41:20.594Z",
+      "touchedAt": "2026-10-14T04:43:21.730Z",
       "notes": [
         {
           "at": "2026-10-14T02:27:24.904Z",
@@ -1059,14 +1059,19 @@
         }
       },
       "disposition": {
-        "outcome": "unknown",
-        "recordedAt": "2026-10-14T04:41:20.593Z",
-        "recordedBy": "archive-drift-heal"
-      }
+        "outcome": "delivered",
+        "recordedAt": "2026-10-14T04:43:21.729Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-14T04:43:21.701Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-14T04:43:21.729Z"
     }
   ],
   "detourStack": [],
-  "revision": 345,
+  "revision": 346,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
