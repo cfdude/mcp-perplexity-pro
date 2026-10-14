@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": null,
+  "active": "agent-help",
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -14,7 +14,14 @@
       "description": "Parent release epic. Full rewrite in Python (uv, src/ layout, FastMCP, pydantic, SQLAlchemy+Alembic, pytest, ruff pre-commit). Moves off deprecated Sonar (support ended 2026-09-27) to the Agent API; adds Search, Embeddings, Decisions. Clean slate, no data import.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:33.185Z"
+      "touchedAt": "2026-10-14T03:58:18.467Z",
+      "notes": [
+        {
+          "at": "2026-10-14T03:58:18.466Z",
+          "actor": "agent",
+          "text": "Archive after pypi-publish ships (Rob, 2026-10-13: accept the tools/list growth; archive the umbrella after pypi-publish)."
+        }
+      ]
     },
     {
       "id": "model-routing",
@@ -982,7 +989,7 @@
       "id": "agent-help",
       "title": "perplexity_help tool (index/tool/topic, llms.txt-style markdown) and CLI --help from one source",
       "priority": "P2",
-      "status": "later",
+      "status": "active",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -1001,18 +1008,20 @@
       "description": "New tool perplexity_help with actions index (llms.txt-style markdown listing tools and topics), tool (one tool's arguments, examples, errors) and topic (routing, costs, citations, errors). One source generates the help text, the CLI --help and help <topic>; lets tool descriptions be trimmed to pay back the eleventh tool's size.",
       "attributedCommits": [],
       "createdAt": "2026-10-14T02:25:51.014Z",
-      "touchedAt": "2026-10-14T02:27:24.905Z",
+      "touchedAt": "2026-10-14T03:59:48.002Z",
       "notes": [
         {
           "at": "2026-10-14T02:27:24.904Z",
           "actor": "agent",
           "text": "Design inputs from the agent's view (2026-10-13): help must be cheap (index under ~1 KB, one call to the right answer), a decision table 'if you want X use tool Y with Z', copy-paste example calls per tool, cost and latency per call, error-to-fix table, no-surprises list (what is billed, what is async), every error message points at the help topic. Index first, details on demand; same text feeds CLI --help."
         }
-      ]
+      ],
+      "startedAt": "2026-10-14T03:58:19.331Z",
+      "release": "release-2-0-0"
     }
   ],
   "detourStack": [],
-  "revision": 323,
+  "revision": 327,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
