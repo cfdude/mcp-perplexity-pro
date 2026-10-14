@@ -1,0 +1,403 @@
+{
+ "default_ask": {
+  "routing": {
+   "mode": "standard",
+   "tier": null,
+   "model": "perplexity/sonar",
+   "selected_by": "default"
+  },
+  "model": "perplexity/sonar",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 2571,
+   "output_tokens": 88,
+   "total_tokens": 2659,
+   "cost_usd": "0.00336",
+   "cost_source": "reported"
+  },
+  "continuation": null,
+  "chat_id": null,
+  "answer_json": null,
+  "answer": "The latest stable release is **Python 3.15.0** ([Python.org](https://www.python.org/downloads/source/)).",
+  "source_ids": [
+   [
+    1
+   ],
+   [
+    2
+   ],
+   [
+    3
+   ],
+   [
+    4
+   ],
+   [
+    5
+   ],
+   [
+    6
+   ]
+  ]
+ },
+ "depth_fast": {
+  "routing": {
+   "mode": "standard",
+   "tier": null,
+   "model": null,
+   "selected_by": "depth"
+  },
+  "model": "openai/gpt-6-luna",
+  "depth": "fast",
+  "status": "completed",
+  "usage": {
+   "input_tokens": 3366,
+   "output_tokens": 32,
+   "total_tokens": 3398,
+   "cost_usd": "0.00124",
+   "cost_source": "reported"
+  },
+  "continuation": null,
+  "chat_id": null,
+  "answer_json": null,
+  "answer": "Python 3.15.0, released October 9, 2026, is the latest stable Python 3 release.[1]",
+  "source_ids": [
+   [
+    1
+   ],
+   [
+    2
+   ],
+   [
+    3
+   ],
+   [
+    4
+   ],
+   [
+    5
+   ],
+   [
+    6
+   ]
+  ]
+ },
+ "explicit_model": {
+  "routing": {
+   "mode": "standard",
+   "tier": null,
+   "model": "openai/gpt-6-luna",
+   "selected_by": "model"
+  },
+  "model": "openai/gpt-6-luna",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 3873,
+   "output_tokens": 144,
+   "total_tokens": 4017,
+   "cost_usd": "0.00304",
+   "cost_source": "reported"
+  },
+  "continuation": null,
+  "chat_id": null,
+  "answer_json": null,
+  "answer": "The latest stable Python 3 release is **Python 3.15.0**, released October 9, 2026 ([Python.org](https://www.python.org/downloads/source/)).",
+  "source_ids": [
+   [
+    1
+   ],
+   [
+    2
+   ],
+   [
+    3
+   ],
+   [
+    4
+   ],
+   [
+    5
+   ],
+   [
+    6
+   ]
+  ]
+ },
+ "json_schema_on_sonar": {
+  "routing": {
+   "mode": "standard",
+   "tier": null,
+   "model": "perplexity/sonar",
+   "selected_by": "default"
+  },
+  "model": "perplexity/sonar",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 4134,
+   "output_tokens": 69,
+   "total_tokens": 4203,
+   "cost_usd": "0.00371",
+   "cost_source": "reported"
+  },
+  "continuation": null,
+  "chat_id": null,
+  "answer_json": {
+   "city": "Paris",
+   "population": 2047602
+  },
+  "answer": "{\"city\":\"Paris\",\"population\":2047602}",
+  "source_ids": [
+   [
+    1
+   ],
+   [
+    2
+   ],
+   [
+    3
+   ],
+   [
+    4
+   ],
+   [
+    5
+   ],
+   [
+    6
+   ]
+  ]
+ },
+ "refused_tier_default_instance": {
+  "error": "invalid_request",
+  "message": "tier: only works when the server runs in custom routing mode; this one runs in standard mode. Omit `tier` (the default is perplexity/sonar), or pass `depth` or `model`."
+ },
+ "refused_conflict": {
+  "error": "invalid_request",
+  "message": "depth and model: `depth` and `model` cannot be combined: each one selects the model on its own. Pass one of them, or neither to use this server's default (perplexity/sonar)."
+ },
+ "main_usage": {
+  "totals": {
+   "calls": 4,
+   "errors": 0,
+   "input_tokens": 13944,
+   "output_tokens": 333,
+   "total_tokens": 14277,
+   "cost_nano_usd": 11350000,
+   "cost_usd": "0.01135",
+   "calls_cost_computed": 0,
+   "calls_cost_unknown": 0
+  },
+  "group_by": "tool",
+  "groups": [
+   {
+    "calls": 4,
+    "errors": 0,
+    "input_tokens": 13944,
+    "output_tokens": 333,
+    "total_tokens": 14277,
+    "cost_nano_usd": 11350000,
+    "cost_usd": "0.01135",
+    "calls_cost_computed": 0,
+    "calls_cost_unknown": 0,
+    "key": "perplexity_ask"
+   }
+  ],
+  "groups_total": 1,
+  "groups_truncated": false,
+  "project": "acceptance-routing",
+  "since": null,
+  "until": null,
+  "limit": 20
+ },
+ "custom_tier_light": {
+  "routing": {
+   "mode": "custom",
+   "tier": "light",
+   "model": "openai/gpt-6-luna",
+   "selected_by": "tier"
+  },
+  "model": "openai/gpt-6-luna",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 484,
+   "output_tokens": 5,
+   "total_tokens": 489,
+   "cost_usd": "0.00005",
+   "cost_source": "reported"
+  },
+  "continuation": null,
+  "chat_id": null,
+  "answer_json": null,
+  "answer": "Tokyo",
+  "source_ids": []
+ },
+ "custom_tier_standard": {
+  "routing": {
+   "mode": "custom",
+   "tier": "standard",
+   "model": "perplexity/sonar",
+   "selected_by": "tier"
+  },
+  "model": "perplexity/sonar",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 484,
+   "output_tokens": 5,
+   "total_tokens": 489,
+   "cost_usd": "0.00013",
+   "cost_source": "reported"
+  },
+  "continuation": null,
+  "chat_id": null,
+  "answer_json": null,
+  "answer": "Tokyo",
+  "source_ids": []
+ },
+ "custom_tier_complex": {
+  "routing": {
+   "mode": "custom",
+   "tier": "complex",
+   "model": "anthropic/claude-sonnet-5-5",
+   "selected_by": "tier"
+  },
+  "model": "anthropic/claude-sonnet-5-5",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 1158,
+   "output_tokens": 7,
+   "total_tokens": 1165,
+   "cost_usd": "0.00297",
+   "cost_source": "reported"
+  },
+  "continuation": null,
+  "chat_id": null,
+  "answer_json": null,
+  "answer": "Tokyo",
+  "source_ids": []
+ },
+ "custom_default": {
+  "routing": {
+   "mode": "custom",
+   "tier": "standard",
+   "model": "perplexity/sonar",
+   "selected_by": "default"
+  },
+  "model": "perplexity/sonar",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 484,
+   "output_tokens": 5,
+   "total_tokens": 489,
+   "cost_usd": "0.00013",
+   "cost_source": "reported"
+  },
+  "continuation": null,
+  "chat_id": null,
+  "answer_json": null,
+  "answer": "Tokyo",
+  "source_ids": []
+ },
+ "chat_turn1_light": {
+  "routing": {
+   "mode": "custom",
+   "tier": "light",
+   "model": "openai/gpt-6-luna",
+   "selected_by": "tier"
+  },
+  "model": "openai/gpt-6-luna",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 484,
+   "output_tokens": 5,
+   "total_tokens": 489,
+   "cost_usd": "0.00005",
+   "cost_source": "reported"
+  },
+  "continuation": "new",
+  "chat_id": 1,
+  "answer_json": null,
+  "answer": "Madrid",
+  "source_ids": []
+ },
+ "chat_turn2_complex": {
+  "routing": {
+   "mode": "custom",
+   "tier": "complex",
+   "model": "anthropic/claude-sonnet-5-5",
+   "selected_by": "tier"
+  },
+  "model": "anthropic/claude-sonnet-5-5",
+  "depth": null,
+  "status": "completed",
+  "usage": {
+   "input_tokens": 1198,
+   "output_tokens": 7,
+   "total_tokens": 1205,
+   "cost_usd": "0.00307",
+   "cost_source": "reported"
+  },
+  "continuation": "chained",
+  "chat_id": 1,
+  "answer_json": null,
+  "answer": "Lisbon",
+  "source_ids": []
+ },
+ "custom_refused_conflict": {
+  "error": "invalid_request",
+  "message": "tier and model: `tier` and `model` cannot be combined: each one selects the model on its own. Pass one of them, or neither to use this server's default (the standard tier (perplexity/sonar))."
+ },
+ "custom_usage": {
+  "totals": {
+   "calls": 6,
+   "errors": 0,
+   "input_tokens": 4292,
+   "output_tokens": 34,
+   "total_tokens": 4326,
+   "cost_nano_usd": 6400000,
+   "cost_usd": "0.0064",
+   "calls_cost_computed": 0,
+   "calls_cost_unknown": 0
+  },
+  "group_by": "tool",
+  "groups": [
+   {
+    "calls": 4,
+    "errors": 0,
+    "input_tokens": 2610,
+    "output_tokens": 22,
+    "total_tokens": 2632,
+    "cost_nano_usd": 3280000,
+    "cost_usd": "0.00328",
+    "calls_cost_computed": 0,
+    "calls_cost_unknown": 0,
+    "key": "perplexity_ask"
+   },
+   {
+    "calls": 2,
+    "errors": 0,
+    "input_tokens": 1682,
+    "output_tokens": 12,
+    "total_tokens": 1694,
+    "cost_nano_usd": 3120000,
+    "cost_usd": "0.00312",
+    "calls_cost_computed": 0,
+    "calls_cost_unknown": 0,
+    "key": "perplexity_chat"
+   }
+  ],
+  "groups_total": 2,
+  "groups_truncated": false,
+  "project": "acceptance-routing",
+  "since": null,
+  "until": null,
+  "limit": 20
+ }
+}
