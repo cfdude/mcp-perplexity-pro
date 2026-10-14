@@ -1,5 +1,16 @@
 ## MODIFIED Requirements
 
+### Requirement: Ask tool
+The server SHALL provide `perplexity_ask`, a stateless synchronous tool that answers one `query` with web-grounded search. Its description SHALL state approximate costs per depth (fast about $0.001 to $0.002, low about $0.004 to $0.02, medium about $0.016 to $0.05), the active routing mode and the model a call with no selector uses, say that the default model's cost differs from the per-depth figures (the README and `perplexity_usage` give it), and say that it never waits for a background run. It SHALL advertise an output schema, `readOnlyHint` false, `destructiveHint` false and `openWorldHint` true.
+
+#### Scenario: Tool listing
+- **WHEN** a client lists the tools
+- **THEN** `perplexity_ask` is present with typed parameters, an output schema, and a description naming the three costs, the mode and the default model
+
+#### Scenario: Result validates
+- **WHEN** an ask succeeds
+- **THEN** its structured content validates against the advertised output schema and its text content carries the answer
+
 ### Requirement: Depth selects a preset
 `depth` SHALL be `fast`, `low` or `medium` and selects the API preset of that name. A call that names no depth, tier or model SHALL NOT default to a preset: the routing mode supplies the model (see `routing-config`). `high` and `xhigh` SHALL be refused with `invalid_request` pointing to `perplexity_research`, because a run at those depths can last minutes and cost dollars.
 
@@ -27,7 +38,7 @@ An explicit `model` SHALL replace the preset: the request names the model and no
 - **THEN** the request carries no tools and the result's sources are empty
 
 #### Scenario: Conflicting options
-- **WHEN** a client passes `depth` `low` together with a model, or `search` false together with a depth
+- **WHEN** a client passes `search` false together with a depth (a depth with a model is owned by `routing-config`, "Selectors are mutually exclusive")
 - **THEN** the call fails with `invalid_request` and no request reaches the API
 
 #### Scenario: Search off on the default route

@@ -62,7 +62,7 @@ async def test_the_listing_has_schema_annotations_and_the_honest_storage_wording
 
 async def test_a_first_turn_creates_the_chat_with_both_messages(chat_world):
     w = await chat_world()
-    out = await first_turn(w)
+    out = await first_turn(w, depth="fast")
     assert out["chat_id"] == 1 and out["continuation"] == "new" and out["action"] == "send"
     assert out["chat"]["title"] == "Teal notes" and out["chat"]["message_count"] == 2
     assert (out["answer"], out["status"], out["depth"]) == ("OK", "completed", "fast")
@@ -73,9 +73,26 @@ async def test_a_first_turn_creates_the_chat_with_both_messages(chat_world):
     assert event[:3] == (TOOL, "agent", "ok")
 
 
-async def test_the_first_turn_request_has_preset_fast_string_input_and_store_false(chat_world):
+async def test_the_first_turn_request_names_the_default_model_string_input_and_store_false(
+    chat_world,
+):
     w = await chat_world()
-    await first_turn(w)
+    out = await first_turn(w)
+    assert w.bodies() == [
+        {
+            "model": "perplexity/sonar",
+            "input": FIRST,
+            "tools": [{"type": "web_search"}],
+            "max_steps": 3,
+            "store": False,
+        }
+    ]
+    assert out["depth"] is None and out["model"]
+
+
+async def test_a_depth_first_turn_still_names_the_preset(chat_world):
+    w = await chat_world()
+    await first_turn(w, depth="fast")
     assert w.bodies() == [{"preset": "fast", "input": FIRST, "store": False}]
 
 
@@ -130,8 +147,8 @@ async def test_a_failed_first_turn_leaves_no_chat(chat_world):
 
 async def test_the_second_turn_chains_from_the_first_response(chat_world):
     w = await chat_world()
-    await first_turn(w)
-    result = await w.call(TOOL, action="send", chat_id=1, message=FOLLOW_UP)
+    await first_turn(w, depth="fast")
+    result = await w.call(TOOL, action="send", chat_id=1, message=FOLLOW_UP, depth="fast")
     out = result.structured_content
     assert out["continuation"] == "chained" and out["chat_id"] == 1
     assert w.bodies()[1] == {

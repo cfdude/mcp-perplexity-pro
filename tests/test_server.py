@@ -224,3 +224,25 @@ def test_stdio_stdout_is_only_protocol_and_logs_go_to_stderr(tmp_path):
     for level_line in ("debug", "info", "warning", "error", "critical"):
         assert f"fixture-{level_line}-line" in stderr
     assert "fixture-" not in rest and "fixture-" not in json.dumps(reply)
+
+
+async def test_initialize_carries_the_routing_instructions(make_server):
+    from mcp_perplexity_pro.routing import instructions_text
+
+    async def instructions(**settings):
+        server, cfg = await make_server(port=free_port(), **settings)
+        async with serving(server, cfg):
+            async with httpx2.AsyncClient() as client:
+                url = f"http://127.0.0.1:{cfg.port}/mcp"
+                init = await rpc(client, url, "initialize", _initialize_params())
+        return init["result"]["instructions"], cfg
+
+    text, cfg = await instructions()
+    assert text == instructions_text(cfg) and "standard" in text and "perplexity/sonar" in text
+    assert cfg.api_key.get_secret_value() not in text
+    again, _ = await instructions()
+    assert again == text  # identical bytes for equal settings
+    custom, _ = await instructions(
+        routing="custom", tier_light="x/l", tier_standard="x/s", tier_complex="x/c"
+    )
+    assert "x/l" in custom and "x/c" in custom

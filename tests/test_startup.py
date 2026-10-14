@@ -94,6 +94,20 @@ def test_non_loopback_host_warns_that_endpoints_are_unauthenticated(tmp_path, ho
     assert "WARNING" in warning[0] and host in warning[0]
 
 
+def test_dynamic_routing_is_refused_before_anything_is_created(tmp_path):
+    result = run_main(tmp_path, "--transport", "stdio", PERPLEXITY_ROUTING="dynamic", stdin="")
+    assert result.returncode != 0
+    assert "PERPLEXITY_ROUTING" in result.stderr and "not available" in result.stderr
+    assert not (tmp_path / "data").exists()
+
+
+def test_an_unused_routing_variable_logs_one_warning_naming_it(tmp_path):
+    result = run_main(tmp_path, "--transport", "stdio", PERPLEXITY_TIER_LIGHT="x/y", stdin="")
+    assert result.returncode == 0, result.stderr
+    lines = [ln for ln in result.stderr.splitlines() if "PERPLEXITY_TIER_LIGHT" in ln]
+    assert len(lines) == 1 and "WARNING" in lines[0] and "x/y" not in lines[0]
+
+
 @pytest.fixture
 def restore_logging():
     root = logging.getLogger()

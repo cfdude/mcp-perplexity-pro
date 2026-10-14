@@ -215,7 +215,7 @@ async def test_nine_costed_calls_make_nine_events_and_nothing_else_does(running)
     search_rows = [r for r in rows if r[1] == "search"]
     (decision_row,) = [r for r in rows if r[1] == "decisions"]
     embed_rows = [r for r in rows if r[1] == "embeddings"]
-    assert [r[3] for r in agent_rows] == ["fast", "fast", "fast", "medium"]
+    assert [r[3] for r in agent_rows] == [None, None, None, "medium"]
     assert all(r[3] is None and r[4] is None for r in search_rows)  # no preset, no model
     assert decision_row[3] is None and decision_row[4] == "pplx-decider-v1.1-27b"
     assert decision_row[5] is None and decision_row[7] == "computed"  # no request id

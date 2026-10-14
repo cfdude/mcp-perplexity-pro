@@ -1,0 +1,13 @@
+{
+  "routing": {
+    "mode": "standard",
+    "models": [
+      {
+        "name": "model",
+        "id": "perplexity/sonar",
+        "known": true
+      }
+    ]
+  },
+  "stale": false
+}

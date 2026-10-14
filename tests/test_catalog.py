@@ -369,3 +369,71 @@ def test_default_clock_is_wall_clock_so_the_cache_ages_while_the_machine_sleeps(
 
     assert inspect.signature(Catalog.__init__).parameters["clock"].default is time.time
     assert inspect.signature(build_server).parameters["clock"].default is time.time
+
+
+# --- Requirement: Active routing is reported (routing-modes-config 3.2) --------------------
+
+
+async def routing_of(make_settings, upstream, clock, **settings):
+    cfg = make_settings(max_attempts=1, **settings)
+    migrate(cfg)
+    engine = create_engine_for(cfg)
+    http = httpx2.AsyncClient(transport=httpx2.MockTransport(upstream))
+    try:
+        result = await call(build_server(cfg, http, engine, clock=clock), **{})
+        return result
+    finally:
+        await http.aclose()
+        await engine.dispose()
+
+
+async def test_the_standard_routing_section_marks_the_configured_model_known(
+    make_settings, upstream, clock
+):
+    listed = FIXTURE["data"][0]["id"]
+    result = await routing_of(make_settings, upstream, clock, model=listed)
+    section = result.structured_content["routing"]
+    assert section["mode"] == "standard"
+    assert section["models"] == [{"name": "model", "id": listed, "known": True}]
+
+
+async def test_a_model_the_catalog_does_not_list_is_known_false_and_still_reported(
+    make_settings, upstream, clock
+):
+    result = await routing_of(make_settings, upstream, clock, model="vendor/not-listed")
+    (entry,) = result.structured_content["routing"]["models"]
+    assert entry == {"name": "model", "id": "vendor/not-listed", "known": False}
+
+
+async def test_the_custom_routing_section_lists_three_tiers(make_settings, upstream, clock):
+    listed = FIXTURE["data"][0]["id"]
+    result = await routing_of(
+        make_settings,
+        upstream,
+        clock,
+        routing="custom",
+        tier_light=listed,
+        tier_standard="vendor/a",
+        tier_complex="vendor/b",
+    )
+    section = result.structured_content["routing"]
+    assert section["mode"] == "custom"
+    assert [(m["name"], m["known"]) for m in section["models"]] == [
+        ("light", True),
+        ("standard", False),
+        ("complex", False),
+    ]
+
+
+async def test_the_routing_section_ignores_the_provider_filter(server):
+    result = await call(server, provider="google")
+    assert result.structured_content["routing"]["mode"] == "standard"
+
+
+async def test_a_stale_cache_still_builds_the_routing_section(server, upstream, clock):
+    await call(server)
+    upstream.status, upstream.body = 500, ERROR_500
+    clock.advance(7200)
+    result = await call(server)
+    assert result.structured_content["stale"] is True
+    assert result.structured_content["routing"]["mode"] == "standard"

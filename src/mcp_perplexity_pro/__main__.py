@@ -64,6 +64,13 @@ def bootstrap() -> tuple[FastMCP, Settings]:
             settings.host,
         )
 
+    for name in settings.ignored_routing_vars():
+        logger.warning(
+            "%s is set but PERPLEXITY_ROUTING=%s does not use it; it is ignored",
+            name,
+            settings.routing,
+        )
+
     # 2. Data directory and migrations. A failure aborts before anything listens.
     try:
         migrate(settings)

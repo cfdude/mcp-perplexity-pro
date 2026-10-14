@@ -181,3 +181,91 @@ def test_agent_read_timeout_rejects_bad_values_naming_variable_and_value(
 def test_agent_read_timeout_override_is_a_float(key_env, monkeypatch):
     monkeypatch.setenv("PERPLEXITY_AGENT_READ_TIMEOUT", "240")
     assert load_settings().agent_read_timeout == 240.0
+
+
+# --- routing (routing-modes-config, task 1.1) -----------------------------------------------
+
+
+def routing_error(monkeypatch, **env):
+    for name, value in env.items():
+        monkeypatch.setenv(f"PERPLEXITY_{name}", value)
+    with pytest.raises(SettingsError) as info:
+        load_settings()
+    return str(info.value)
+
+
+def test_routing_defaults(key_env):
+    s = load_settings()
+    assert (s.routing, s.model) == ("standard", "perplexity/sonar")
+    assert (s.tier_light, s.tier_standard, s.tier_complex) == (None, None, None)
+    assert s.ignored_routing_vars() == []
+
+
+def test_routing_mode_is_case_insensitive(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "CuStOm")
+    for tier in ("LIGHT", "STANDARD", "COMPLEX"):
+        monkeypatch.setenv(f"PERPLEXITY_TIER_{tier}", f"x/{tier.lower()}")
+    assert load_settings().routing == "custom"
+
+
+def test_unknown_mode_names_the_variable_the_value_and_the_choices(key_env, monkeypatch):
+    text = routing_error(monkeypatch, ROUTING="auto")
+    assert "PERPLEXITY_ROUTING" in text and "'auto'" in text
+    assert "standard" in text and "custom" in text and "dynamic" in text
+    assert "PERPLEXITY_?" not in text and KEY not in text
+
+
+def test_dynamic_is_reserved_and_refused_at_startup(key_env, monkeypatch):
+    text = routing_error(monkeypatch, ROUTING="dynamic")
+    assert "PERPLEXITY_ROUTING" in text and "not available" in text
+
+
+def test_custom_names_every_missing_tier_in_one_message(key_env, monkeypatch):
+    text = routing_error(monkeypatch, ROUTING="custom", TIER_STANDARD="x/s")
+    assert "PERPLEXITY_TIER_LIGHT" in text and "PERPLEXITY_TIER_COMPLEX" in text
+    assert "PERPLEXITY_TIER_STANDARD" not in text
+    assert KEY not in text and "PERPLEXITY_?" not in text
+
+
+def test_custom_with_three_tiers_starts(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "custom")
+    for tier in ("LIGHT", "STANDARD", "COMPLEX"):
+        monkeypatch.setenv(f"PERPLEXITY_TIER_{tier}", f"x/{tier.lower()}")
+    s = load_settings()
+    assert (s.tier_light, s.tier_standard, s.tier_complex) == ("x/light", "x/standard", "x/complex")
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "",
+        "a" * 201,
+        "two words",
+        "line\nbreak",
+        "tab\there",
+        "bell\x07",
+        "zero\u200bwidth",
+        "`tick`",
+    ],
+)
+def test_a_bad_model_id_is_refused_naming_the_variable(key_env, monkeypatch, bad):
+    assert "PERPLEXITY_MODEL" in routing_error(monkeypatch, MODEL=bad)
+
+
+def test_a_bad_tier_id_is_refused_in_custom_mode(key_env, monkeypatch):
+    text = routing_error(
+        monkeypatch, ROUTING="custom", TIER_LIGHT="bad id", TIER_STANDARD="x/s", TIER_COMPLEX="x/c"
+    )
+    assert "PERPLEXITY_TIER_LIGHT" in text
+
+
+def test_unused_variables_are_ignored_not_validated_and_reported(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_TIER_LIGHT", "")  # empty counts as set
+    s = load_settings()
+    assert s.ignored_routing_vars() == ["PERPLEXITY_TIER_LIGHT"]
+    monkeypatch.delenv("PERPLEXITY_TIER_LIGHT")
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "custom")
+    monkeypatch.setenv("PERPLEXITY_MODEL", "")
+    for tier in ("LIGHT", "STANDARD", "COMPLEX"):
+        monkeypatch.setenv(f"PERPLEXITY_TIER_{tier}", f"x/{tier.lower()}")
+    assert load_settings().ignored_routing_vars() == ["PERPLEXITY_MODEL"]

@@ -5,6 +5,7 @@ the upstream call through ``agent.run_costed`` (project committed first, no writ
 across the call, usage recorded), and only then writes the chat in one short unit of work.
 """
 
+import inspect
 import json
 import logging
 from datetime import UTC, datetime
@@ -30,6 +31,8 @@ from mcp_perplexity_pro.agent import (
 from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.redaction import scrub_secrets
+from mcp_perplexity_pro.routing import description_sentence, resolve
+from mcp_perplexity_pro.settings import Settings
 from mcp_perplexity_pro.storage.chats import (
     AssistantTurn,
     ChatSummary,
@@ -46,7 +49,7 @@ from mcp_perplexity_pro.storage.chats import (
 )
 from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, find_project, validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
-from mcp_perplexity_pro.tools.ask import GENERIC_400, build_result, render_answer
+from mcp_perplexity_pro.tools.ask import GENERIC_400, Routing, build_result, render_answer
 from mcp_perplexity_pro.usage import failure_summary
 
 logger = logging.getLogger(__name__)
@@ -122,6 +125,7 @@ class ChatResult(BaseModel):
     response_id: Annotated[str | None, Field(description="send: the API's response id")] = None
     usage: Annotated[UsageSummary | None, Field(description="send: tokens and cost")] = None
     latency_ms: Annotated[int | None, Field(description="send: upstream call wall time")] = None
+    routing: Annotated[Routing | None, Field(description="send: how the model was picked")] = None
 
 
 def _utc(value: datetime) -> datetime:
@@ -298,7 +302,7 @@ async def _send(
 
     answer.warnings.extend(warnings)  # the readable text and the structured result agree
     ask = build_result(
-        answer, depth=options.preset, latency_ms=costed.latency_ms, project=costed.project
+        answer, route=options.route, latency_ms=costed.latency_ms, project=costed.project
     )
     result = ChatResult(
         action="send",
@@ -434,12 +438,7 @@ def _not_saved(category: str) -> str:
     )
 
 
-def register(server: FastMCP) -> None:
-    @server.tool(
-        name=TOOL,
-        output_schema=ChatResult.model_json_schema(),
-        annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True),
-    )
+def register(server: FastMCP, settings: Settings) -> None:
     async def perplexity_chat(
         ctx: Context,
         action: Annotated[str, Field(description="send, list, read or delete")],
@@ -466,14 +465,21 @@ def register(server: FastMCP) -> None:
         ] = False,
         depth: Annotated[
             str | None,
-            Field(description="send: fast (default), low or medium; may change on every turn"),
+            Field(description="send: fast, low or medium; may change on every turn"),
+        ] = None,
+        tier: Annotated[
+            str | None,
+            Field(
+                description="send: light, standard or complex (custom mode); may change per turn"
+            ),
         ] = None,
         model: Annotated[
             str | None,
             Field(description="send: an explicit model id instead of a depth (see perplexity_ask)"),
         ] = None,
         search: Annotated[
-            bool | None, Field(description="send: false answers from the model alone (needs model)")
+            bool | None,
+            Field(description="send: false answers from the model alone (not with depth)"),
         ] = None,
         domains: Annotated[
             list[str] | None,
@@ -516,7 +522,7 @@ def register(server: FastMCP) -> None:
         Actions: send (starts a chat when chat_id is omitted), list, read and delete.
 
         Approximate cost per send by depth (observed ranges; the upper figures are estimates):
-        fast $0.001 to $0.002 (the default), low $0.0005 to $0.004 (up to about $0.02
+        fast $0.001 to $0.002, low $0.0005 to $0.004 (up to about $0.02
         estimated), medium $0.016 to $0.025 as a research run (up to about $0.05 estimated;
         a synchronous medium send was not measured); high and xhigh are not available here
         (use perplexity_research). Every send is recorded as spend (see perplexity_usage).
@@ -529,19 +535,6 @@ def register(server: FastMCP) -> None:
         the previous response, send again with replay true to resend the stored history."""
         if action not in ACTIONS:
             raise _bad("action", f"must be one of {', '.join(ACTIONS)}.")
-        options = AskOptions(
-            depth=depth,
-            model=model,
-            search=search,
-            domains=domains,
-            recency=recency,
-            after=after,
-            before=before,
-            country=country,
-            max_results=max_results,
-            instructions=instructions,
-            max_output_tokens=max_output_tokens,
-        )
         app = ctx.lifespan_context
         if action == "list":
             result, text = await _list(app, project=project, limit=limit)
@@ -550,6 +543,18 @@ def register(server: FastMCP) -> None:
         elif action == "delete":
             result, text = await _delete(app, project=project, chat_id=chat_id, confirm=confirm)
         else:
+            options = AskOptions(
+                route=resolve(app.settings, depth=depth, tier=tier, model=model),
+                search=search,
+                domains=domains,
+                recency=recency,
+                after=after,
+                before=before,
+                country=country,
+                max_results=max_results,
+                instructions=instructions,
+                max_output_tokens=max_output_tokens,
+            )
             result, text = await _send(
                 app,
                 project=project,
@@ -560,3 +565,12 @@ def register(server: FastMCP) -> None:
                 options=options,
             )
         return ToolResult(content=text, structured_content=result.model_dump(mode="json"))
+
+    server.tool(
+        name=TOOL,
+        description=(
+            f"{inspect.cleandoc(perplexity_chat.__doc__)}\n\n{description_sentence(settings)}"
+        ),
+        output_schema=ChatResult.model_json_schema(),
+        annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True),
+    )(perplexity_chat)

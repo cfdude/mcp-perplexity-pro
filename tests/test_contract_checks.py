@@ -151,7 +151,10 @@ ROWS = [
         "invalid_request",
     ),
     Row(
-        "ask: search false without a model", ASK, {"query": "q", "search": False}, "invalid_request"
+        "ask: search false with a depth",
+        ASK,
+        {"query": "q", "depth": "low", "search": False},
+        "invalid_request",
     ),
     Row(
         "ask: mixed domain list",

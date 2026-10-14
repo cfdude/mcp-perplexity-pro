@@ -1,0 +1,3 @@
+practice: none, because no gate or discipline beyond the existing two gates and the cross-spec review was adopted (checked `tasks.md` 6.1 to 6.5 against the gate procedure in `CLAUDE.md`).
+tooling: none, because the friction met in this epic's lifetime (state.json conflicts on rebase, the auto-detour on own commits) is already filed as pm issue 241 and `.conductor/feedback/2026-10-13-*.md`; nothing new was routed around (checked `git log -- .conductor/feedback`).
+process: `docs/lessons/restart-pm2-from-the-ecosystem-file.md` (a `pm2 restart --update-env` took the shell's API key and every call answered `authentication` while `/health` stayed green).

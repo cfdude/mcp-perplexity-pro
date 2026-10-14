@@ -18,6 +18,13 @@ module.exports = {
         PERPLEXITY_HOST: '127.0.0.1',
         PERPLEXITY_PORT: '8102',
         PERPLEXITY_LOG_LEVEL: 'INFO',
+        // Optional routing (README: "Choosing how models are picked"). Defaults: standard mode,
+        // model perplexity/sonar. For custom mode set all three tiers.
+        // PERPLEXITY_ROUTING: 'standard',
+        // PERPLEXITY_MODEL: 'perplexity/sonar',
+        // PERPLEXITY_TIER_LIGHT: 'openai/gpt-6-luna',
+        // PERPLEXITY_TIER_STANDARD: 'perplexity/sonar',
+        // PERPLEXITY_TIER_COMPLEX: 'anthropic/claude-sonnet-5-5',
       },
       // Logging
       log_file: './logs/mcp-perplexity-pro.log',

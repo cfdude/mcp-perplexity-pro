@@ -194,8 +194,9 @@ def test_the_validators_are_imported_from_agent_not_copied():
 
 
 def test_the_agent_date_filter_zero_pads_an_early_year_like_search():
-    from mcp_perplexity_pro.agent import AskOptions
+    from routing_support import ask_options
+
     from mcp_perplexity_pro.agent import build_request as agent_request
 
-    request = agent_request(AskOptions(after="0999-01-02"), "q", store=False)
+    request = agent_request(ask_options(after="0999-01-02"), "q", store=False)
     assert request["tools"][0]["filters"]["search_after_date_filter"] == "01/02/0999"

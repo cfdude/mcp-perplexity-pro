@@ -11,6 +11,7 @@ from fixture_support import FIXTURE_DIR
 from mcp_perplexity_pro import agent
 from mcp_perplexity_pro.agent import Source, digest, source_line, strip_trailing_markers
 from mcp_perplexity_pro.models import AgentRun
+from mcp_perplexity_pro.routing import Route
 
 
 def run_of(name):
@@ -240,7 +241,14 @@ def test_ask_render_shows_ids_beside_each_source():
     from mcp_perplexity_pro.tools.ask import build_result, render_answer
 
     d = digest(run_of("agent_background_cancelled"))
-    text = render_answer(build_result(d, depth=None, latency_ms=1, project="default"))
+    text = render_answer(
+        build_result(
+            d,
+            route=Route("standard", None, "perplexity/sonar", None, "default"),
+            latency_ms=1,
+            project="default",
+        )
+    )
     assert "https://crates.io/crates/rs-stats (ids 10, 71)" in text
 
 

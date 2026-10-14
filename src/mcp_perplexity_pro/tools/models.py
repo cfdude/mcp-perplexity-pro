@@ -8,6 +8,18 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.catalog import PRESETS, CatalogModel, Listing, PresetSection
+from mcp_perplexity_pro.settings import TIER_NAMES, Settings
+
+
+class ConfiguredModel(BaseModel):
+    name: Annotated[str, Field(description="model, or the tier: light, standard, complex")]
+    id: Annotated[str, Field(description="The configured model id")]
+    known: Annotated[bool, Field(description="Whether the live list has it; still used if not")]
+
+
+class RoutingSection(BaseModel):
+    mode: Annotated[str, Field(description="standard or custom")]
+    models: Annotated[list[ConfiguredModel], Field(description="The configured model or tiers")]
 
 
 class ModelsResult(BaseModel):
@@ -23,6 +35,9 @@ class ModelsResult(BaseModel):
     age_seconds: Annotated[float, Field(description="Seconds since the list was fetched live")]
     presets: Annotated[
         PresetSection, Field(description="Documented Agent API presets; not live data")
+    ]
+    routing: Annotated[
+        RoutingSection, Field(description="Active routing; configuration, not live data")
     ]
 
 
@@ -52,6 +67,12 @@ def render(result: ModelsResult, provider: str | None) -> str:
             f"{m.id} | {m.provider or '-'} | {_price(p.input)} | {_price(p.output)} | "
             f"{_price(p.cache_read)} | {_price(p.cache_write)} | {p.unit or '-'}"
         )
+    lines.append("")
+    configured = ", ".join(
+        f"{m.name} = {m.id}{'' if m.known else ' (not in the live list)'}"
+        for m in result.routing.models
+    )
+    lines.append(f"Routing mode {result.routing.mode}: {configured}")
     section = result.presets
     lines.append("")
     lines.append(f"Agent API presets (source: {section.source}, as of {section.as_of}):")
@@ -60,13 +81,26 @@ def render(result: ModelsResult, provider: str | None) -> str:
     return "\n".join(lines)
 
 
-def build_result(listing: Listing, provider: str | None) -> ModelsResult:
+def routing_section(listing: Listing, settings: Settings) -> RoutingSection:
+    live = {m.id for m in listing.for_provider(None)}
+    if settings.routing == "custom":
+        wanted = [(t, getattr(settings, f"tier_{t}")) for t in TIER_NAMES]
+    else:
+        wanted = [("model", settings.model)]
+    return RoutingSection(
+        mode=settings.routing,
+        models=[ConfiguredModel(name=n, id=i, known=i in live) for n, i in wanted],
+    )
+
+
+def build_result(listing: Listing, provider: str | None, settings: Settings) -> ModelsResult:
     return ModelsResult(
         models=listing.for_provider(provider),
         providers=listing.providers,
         stale=listing.stale,
         age_seconds=round(listing.age_seconds, 3),
         presets=PRESETS,
+        routing=routing_section(listing, settings),
     )
 
 
@@ -89,7 +123,7 @@ def register(server: FastMCP) -> None:
         """List the models available to the configured key with their prices (live data), plus
         the documented Agent API presets as a separate section."""
         listing = await ctx.lifespan_context.catalog.get(refresh=refresh)
-        result = build_result(listing, provider)
+        result = build_result(listing, provider, ctx.lifespan_context.settings)
         return ToolResult(
             content=render(result, provider),
             structured_content=result.model_dump(mode="json"),
