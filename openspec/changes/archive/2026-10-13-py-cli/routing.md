@@ -1,0 +1,3 @@
+practice: none, because no gate or discipline beyond the existing two gates and the cross-spec review was adopted (checked `tasks.md` 6.1 to 6.5 against the gate procedure in `CLAUDE.md`).
+tooling: none, because nothing was routed around in pm for this change; the friction met earlier in this epic series is already filed as pm issue 241 and `.conductor/feedback/2026-10-13-*.md` (checked `git log -- .conductor/feedback`).
+process: `docs/lessons/restore-process-global-state-a-command-changes.md` (the CLI set a logger level and an environment variable and did not restore them, which broke unrelated log tests in the same interpreter).

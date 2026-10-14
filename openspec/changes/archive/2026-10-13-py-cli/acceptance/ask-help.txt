@@ -1,0 +1,57 @@
+usage: perplexity-pro ask [-h] [--project PROJECT] [--depth DEPTH]
+                          [--model MODEL] [--tier TIER]
+                          [--search | --no-search] [--domains DOMAINS]
+                          [--recency RECENCY] [--after AFTER]
+                          [--before BEFORE] [--country COUNTRY]
+                          [--max-results MAX_RESULTS]
+                          [--instructions INSTRUCTIONS]
+                          [--max-output-tokens MAX_OUTPUT_TOKENS]
+                          [--json-schema JSON_SCHEMA] [--args-json JSON]
+                          [--json]
+                          [query]
+
+One web-grounded question, answered now, with its sources. No memory.
+
+positional arguments:
+  query                 The question (at most 20000 characters)
+
+options:
+  -h, --help            show this help message and exit
+  --project PROJECT     Project to record the call under (default: default)
+  --depth DEPTH         fast, low or medium; selects a search preset. high and
+                        xhigh are refused: use perplexity_research. Cannot be
+                        combined with tier or model
+  --model MODEL         An explicit model id, e.g. openai/gpt-6-luna, instead
+                        of a depth. It searches with the web search tool and 3
+                        steps unless search is false
+  --tier TIER           light, standard or complex: custom routing mode only.
+                        Cannot be combined with depth or model
+  --search, --no-search
+                        false answers from the model alone (not with depth: a
+                        depth always searches). true is accepted and changes
+                        nothing
+  --domains DOMAINS     At most 20 domains to search: all allowed (python.org)
+                        or all denied with a '-' prefix (-reddit.com); not
+                        mixed
+  --recency RECENCY     hour, day, week, month or year
+  --after AFTER         Only results published after this date (YYYY-MM-DD)
+  --before BEFORE       Only results published before this date (YYYY-MM-DD)
+  --country COUNTRY     Two-letter country code to localize the search, e.g.
+                        US
+  --max-results MAX_RESULTS
+                        Search results to retrieve, 1 to 50
+  --instructions INSTRUCTIONS
+                        System-style instructions, at most 10000 characters
+  --max-output-tokens MAX_OUTPUT_TOKENS
+                        Cap on answer tokens, 1 to 64000
+  --json-schema JSON_SCHEMA
+                        A JSON Schema (root type object) for a structured
+                        answer
+  --args-json JSON      merge a JSON object of arguments (a JSON string, @path
+                        or - for stdin); explicit flags win
+  --json                print the structured result
+
+cost: Default model perplexity/sonar: $0.00336 in one sample. depth fast: $0.00118 to $0.00180 over four observations, about 2 s. Every call is recorded as spend.
+
+example:
+  perplexity-pro ask 'What is the latest stable Python release?' --depth fast

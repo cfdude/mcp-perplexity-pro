@@ -229,3 +229,19 @@ def test_a_missing_entry_is_noticed(monkeypatch, tools):
 
 
 _ = asyncio  # the fixture above is async; pytest-asyncio runs it
+
+
+def test_the_cli_style_changes_only_the_example_and_the_pointer(make_settings):
+    settings = make_settings()
+    names = sorted(help_text.TOOLS)
+    mcp = help_text.render_index(settings, names, "2.0.0")
+    cli = help_text.render_index(settings, names, "2.0.0", "cli")
+    assert mcp != cli and "perplexity-pro help" in cli and "perplexity_help action" in mcp
+    assert len(cli.encode()) <= 1500
+    assert mcp.splitlines()[:-1] == cli.splitlines()[:-1]
+    params = [{"name": "query", "type": "string", "required": True, "description": "q"}]
+    page = help_text.render_tool(
+        "perplexity_ask", settings, params, {}, example="perplexity-pro ask 'q'"
+    )
+    assert "perplexity-pro ask 'q'" in page and '{"name"' not in page
+    assert help_text.render_topic("costs", settings) == help_text.render_topic("costs", settings)

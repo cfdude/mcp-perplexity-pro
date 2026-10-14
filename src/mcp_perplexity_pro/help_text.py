@@ -248,7 +248,9 @@ def _routing_line(settings: Settings) -> str:
     return f"Routing: standard, default model {settings.model}."
 
 
-def render_index(settings: Settings, tool_names: list[str], version: str) -> str:
+def render_index(
+    settings: Settings, tool_names: list[str], version: str, style: str = "mcp"
+) -> str:
     """The first page: what is here and which tool to pick. At most 1500 ASCII bytes."""
     lines = [
         f"# perplexity-pro {version}",
@@ -264,20 +266,26 @@ def render_index(settings: Settings, tool_names: list[str], version: str) -> str
         entry = TOOLS.get(name)
         kind = entry["kind"].split(";")[0] if entry else "?"
         lines.append(f"- {name}: {kind}")
-    lines += [
-        "",
-        "## Topics",
-        ", ".join(TOPICS),
-        "",
-        'More: perplexity_help action="tool" name="<tool>", or action="topic" name="<topic>".',
-    ]
+    pointer = (
+        'More: perplexity_help action="tool" name="<tool>", or action="topic" name="<topic>".'
+        if style == "mcp"
+        else "More: perplexity-pro help <tool> or help <topic> (a command drops the perplexity_ "
+        "prefix: ask, search)."
+    )
+    lines += ["", "## Topics", ", ".join(TOPICS), "", pointer]
     return "\n".join(lines) + "\n"
 
 
 def render_tool(
-    name: str, settings: Settings, params: list[dict[str, Any]], annotations: dict[str, Any]
+    name: str,
+    settings: Settings,
+    params: list[dict[str, Any]],
+    annotations: dict[str, Any],
+    example: str | None = None,
 ) -> str:
-    """One tool's page: purpose, flags, cost, example, arguments, result keys, errors."""
+    """One tool's page: purpose, flags, cost, example, arguments, result keys, errors.
+
+    ``example`` replaces the MCP-style JSON example line (the CLI passes its command line)."""
     entry = TOOLS[name]
     if annotations.get("readOnlyHint"):
         flags = "free, read-only"
@@ -289,7 +297,11 @@ def render_tool(
             flags += ", some actions can delete data"
     lines = [f"# {name}", entry["summary"], "", f"Flags: {flags}.", f"Cost: {entry['cost']}", ""]
     lines.append("## Example")
-    lines.append(f'{{"name": "{name}", "arguments": {_json(entry["example"])}}}')
+    lines.append(
+        example
+        if example is not None
+        else f'{{"name": "{name}", "arguments": {_json(entry["example"])}}}'
+    )
     lines += ["", "## Arguments"]
     for p in params:
         need = "required" if p["required"] else "optional"

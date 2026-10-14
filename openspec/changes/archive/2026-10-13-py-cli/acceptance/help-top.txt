@@ -1,0 +1,33 @@
+usage: perplexity-pro [-h] [--version] <command> ...
+
+Perplexity web-grounded answers, search, decisions and embeddings, from the
+command line. Every command calls the same tool the MCP server offers.
+
+positional arguments:
+  <command>
+    ask       One web-grounded question, answered now, with its sources. No
+              memory.
+    chat      A conversation kept in the local database: send, list, read,
+              delete.
+    decide    Calibrated answers to typed questions about a text (noul,
+              choice, score).
+    embed     A local vector store: index texts, chats or reports, then search
+              by meaning.
+    jobs      Follows research runs: list, status, result, cancel. Observing a
+              finished run records its cost.
+    models    The live model list with prices, the documented presets, the
+              active routing.
+    projects  List projects, or delete one with its stored records (spend
+              history is kept).
+    research  Starts a deep research run in the background and returns a job
+              id at once.
+    search    Ranked web results as data (title, url, snippet, date). No model
+              answer.
+    usage     A read-only spend report over everything this server has
+              recorded.
+    help      show help: the index, a tool or a topic
+    serve     run the MCP server
+
+options:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit

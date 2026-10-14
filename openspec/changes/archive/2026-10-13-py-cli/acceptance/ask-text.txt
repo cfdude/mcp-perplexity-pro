@@ -1,0 +1,20 @@
+The latest stable Python 3 release is Python 3.15.0.
+
+Sources:
+1. Python 3.10.22, 3.11.17, 3.12.15, 3.13.16 and 3.14.8 are now ... - https://blog.python.org/2026/10/python-31022-31117/ (ids 1)
+2. Python Insider - Python.org - https://blog.python.org/ (ids 2)
+3. Download Python | Python.org - https://www.python.org/downloads/ (ids 3)
+4. 2026 Posts - Python Insider - https://blog.python.org/blog/year/2026/ (ids 4)
+5. Old Versions - https://www.python.org/doc/versions/ (ids 5)
+6. Python Source Releases - https://www.python.org/downloads/source/ (ids 6)
+7. Posts tagged "releases" - Python Insider - https://blog.python.org/tags/releases/ (ids 7)
+8. Status of Python versions - https://devguide.python.org/versions/ (ids 8)
+9. What's new in Python 3.15 — Python 3.15.0 documentation - https://docs.python.org/3/whatsnew/3.15.html (ids 9)
+10. What's new in Python 3.15 — Python 3.16.0a0 documentation - https://docs.python.org/3.16/whatsnew/3.15.html (ids 10)
+11. Python Releases for Windows - https://www.python.org/downloads/windows/ (ids 11)
+12. 【IT速報】Python 3.15.0が正式公開、何が変わったか公式発表の内容を整理｜元サッカー少年、今エンジニア - https://note.com/zeronin_keiei/n/na2580b5593ad (ids 12)
+13. Fedora alert FEDORA-2026-37c784fc16 (python3.11) - https://lwn.net/Articles/1099860 (ids 13)
+14. Fedora alert FEDORA-2026-f105922543 (python3.11) - https://lwn.net/Articles/1099859 (ids 14)
+15. Fedora alert FEDORA-2026-1928c5d40b (python3.13) - https://lwn.net/Articles/1099862 (ids 15)
+
+Usage: perplexity/sonar, cost 0.00364 USD (reported), 3940 tokens, 3612 ms, project acceptance-cli.

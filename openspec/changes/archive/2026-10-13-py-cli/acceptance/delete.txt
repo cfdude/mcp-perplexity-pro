@@ -1,0 +1,1 @@
+Deleted project 'acceptance-cli': 0 row(s) removed, 2 retained record(s) kept (spend history stays reportable by project name).

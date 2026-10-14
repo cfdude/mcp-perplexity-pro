@@ -1,0 +1,40 @@
+## 0. Before apply
+
+- [x] 0.1 Record Gate 1 (`record-gate-review py-cli --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/py-cli`) after a fresh-context review, and record the release cross-spec review (`record-cross-spec-review release-2-0-0`) for the `cli` spec against the main specs; ORDER: before group 1 and again after any amendment
+
+## 1. The offline parser
+
+- [x] 1.1 RED then GREEN: `src/mcp_perplexity_pro/command.py` (set `FASTMCP_CHECK_FOR_UPDATES=off` before importing FastMCP) with `schema_source()` (builds the server over an unused in-memory engine and an unused client, returns each tool's name, input schema and annotations) and `build_parser(tools)` generating one subparser per tool with the mapping of the `cli` spec (positional `action` and `query` when required, `--flags` with dashes, `--flag/--no-flag`, repeated list flags, JSON strings, `@file` and `-`, enum choices, `--args-json`, `--json`); tests `tests/test_command_parser.py`: a parametrized case per tool and per parameter type present in the real schemas (null unions, the string-or-list search `query`, untyped `state`, objects, lists, booleans), a stub tool added to the schema list appears as a flag, wrong types, the two schema enums (`projects` action, `usage` group-by), unknown and abbreviated flags exit 2 naming the flag, `--flag=-value` and `--` work, `--args-json` (JSON, `@path`, `-`) merges before the required check and a still-missing required value exits 2 naming it, building the parser opens no socket and creates no file with an empty environment (the socket guard and a temp HOME); mutation-check: drop the boolean `--no-flag` and confirm red
+
+## 2. Running a command
+
+- [x] 2.1 RED then GREEN: `__main__.bootstrap` gains `http=None` and `serving=True` (existing startup tests stay green); `main(argv, http=None)` for `perplexity-pro`: parse, then `bootstrap(http=http, serving=False)` (reusing it and `close_resources`), call the tool through an in-process `fastmcp.Client`, print text or `--json`, map a tool error to `[category] message` on stderr with exit 1, KeyboardInterrupt to 130; `main` takes an optional upstream client and settings for tests; tests `tests/test_command_run.py` over a `MockTransport`: text and JSON output, tool-error exit 1 with the CLI help sentence and exact stderr (no framework log lines), a setup failure (no key) exits 1 naming `PERPLEXITY_API_KEY` and creates no data directory, exactly one usage event per costed command, routing in custom mode with `--tier`, a refused call sends nothing, stdout stays clean of logs, `BrokenPipeError` ends quietly; a subprocess test sends SIGINT during a slow loopback upstream call and checks exit 130 with no traceback (the recording of an already-answered call is the existing shielded `record_usage`, covered by the cancel tests in `tests/test_agent_costed.py` and `tests/test_ask_tool.py`; it cannot be timed deterministically from outside); the client and engine are closed on success, error and 130 (mutation-check: remove the close and confirm red); verify the existing startup tests still pass
+
+## 3. Help
+
+- [x] 3.1 RED then GREEN: `help_text` renderers gain `style` (`mcp` default, `cli`: command-line example derived from the example dict, pointer naming `perplexity-pro help`, topics unchanged); `perplexity-pro --help`, `<command> --help` (description and epilog from `help_text`: summary, cost line, CLI example; flags show schema defaults), `help [<tool>|<topic>]` (names accepted with or without the `perplexity_` prefix; placeholder key and default-routing fallback with one warning on an invalid environment), `--version`; none needs a key, network or data directory; tests: subprocess runs with an empty environment and with `PERPLEXITY_PORT=nope`, topic pages byte-identical to `perplexity_help` (default server and a custom-routing server), tool pages and the index equal to the MCP text except the example lines and pointer, every example rendered to argv parses back to the same arguments (round trip), the unknown-name error lists valid names
+
+## 4. Serve and packaging
+
+- [x] 4.1 RED then GREEN: `perplexity-pro serve [--transport stdio|http]` runs the server through the existing `run()`; `[project.scripts]` gains `perplexity-pro` next to the unchanged `mcp-perplexity-pro`; tests: `serve --transport http` on an ephemeral port answers `/health` (subprocess), the old command still does, `tests/test_command_serve.py` (its `build` test) sees both entry points in the wheel metadata, and the built wheel is tested for both entry points in its metadata (installing the wheel into a fresh environment needs the package index, so the install-and-run of both commands was done by hand by the Gate 2 reviewer: `--version`, `help ask` and `models` against a refused upstream, no cache file written)
+
+## 5. Acceptance (live)
+
+- [x] 5.1 With the real key (no pm2 change needed: the CLI runs on its own): `uv run perplexity-pro --help`, `help`, `help ask`, `models --json | jq`, one `ask` with a throwaway project (about $0.003) in text and one in `--json`, one refused call, then `usage --project <p>` reconciled to the nano-USD against the `--json` result's cost, and delete the project; save the outputs under `openspec/changes/py-cli/acceptance/`; expected spend under $0.01
+
+## 6. Gate procedure (required, per the pm conductor)
+
+- [x] 6.1 Call-site completeness sweep: for every rule this change introduces (every tool has a subcommand, the argument mapping, the exit codes, one code path, help without a key) enumerate all call sites mechanically with `rg` (every `register(` in `tools/`, every entry in `[project.scripts]`, every place `bootstrap` is called, every place stdout is written in the CLI and in `__main__`, every caller of the `help_text` renderers and of the examples) and state where each rule holds and where not, with the justification; include the inverses (a flag that exists must be refusable by type; a command that starts the server must be stoppable by the signals `run()` handles)
+- [x] 6.2 Verify against each task's commit, not the working tree: for every task above run `git show --stat <sha>` and assert each file the task claims to change appears in that commit
+- [x] 6.3 Attribute every commit of this change to its epic with `update-epic py-cli --attribute-commit <sha>` as each lands, in landing order; never attribute the archive move, the pm bookkeeping commits or an ancestor after a later commit; verify the last attributed commit is the Gate 2 head
+- [x] 6.4 Route what the work taught: practices, tooling friction and process lessons, each named as one of those three kinds; write `openspec/changes/py-cli/routing.md` with exactly three lines `practice: ...`, `tooling: ...` and `process: ...`, each naming the filed item or reading `none, because <reason that names the command or commit checked>`
+- [x] 6.5 Gate 2 implementation review by a fresh-context reviewer over the full committed range, fix Critical and Important findings, then `record-gate-review py-cli --gate 2 --verdict pass --base-sha <a> --head-sha <b>`; verify the verdict reaches the last attributed commit
+
+## 7. Documentation (after Gate 2 is clean)
+
+- [x] 7.1 README: a "Command line" section (the two commands, the subcommand table, the argument mapping with examples, output and exit codes, `help`), the install and run section mentions both commands; `CLAUDE.md` (module table gains `cli_app.py`, the Development Commands block, the current-change pointer) keeping the pm-managed block byte-identical; `CHANGELOG.md` entry under `2.0.0`; verify every example against the acceptance output
+- [x] 7.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
+
+## 8. Archive
+
+- [x] 8.1 Archive the change and record the disposition (`update-epic py-cli --status archived --outcome delivered --no-deferrals`, or name each deferral); verify `openspec list` no longer shows it and `PROJECT.md` renders it archived <!-- pm:lifecycle -->

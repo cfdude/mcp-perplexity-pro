@@ -26,6 +26,7 @@ Python 3.12+, uv. Never use `pip`, bare `python` or a hand-made venv.
 ```bash
 uv sync                              # install from uv.lock (runtime + dev)
 uv run mcp-perplexity-pro --transport stdio    # or: --transport http (127.0.0.1:8102/mcp)
+uv run perplexity-pro help           # the command line front end (also: ask, search, usage, serve ...)
 uv run pytest                        # offline suite, about 60 s
 uv run pytest tests/test_catalog.py -k stale   # one file / one test
 uv run ruff check .                  # lint
@@ -52,6 +53,7 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 |---|---|
 | `__main__.py` | Entry point (`main`, `bootstrap`, `run`). Startup order: settings, then data dir and migrations, then upstream client, then listen. Own `uvicorn.Server` subclass for HTTP, own signal handling for stdio |
 | `cli.py` | `--transport stdio\|http`, `--version`; parsed before settings so `--help` needs no key |
+| `command.py` | The `perplexity-pro` command (`[project.scripts]`, next to the unchanged `mcp-perplexity-pro`): `schema_source()` builds the real server over an unused in-memory engine to read each tool's input schema (offline: no key, network or file), `build_parser` generates one argparse subparser per tool by a fixed mapping (a required `action` and `query` positional, other parameters `--flags`, booleans `--x/--no-x`, lists repeated, JSON/`@file`/`-` for objects, `--args-json` merged first), `main` runs a command in-process through an in-process FastMCP client after `bootstrap(http=, serving=False)`; `--version` and `serve` skip the schema build; text on stdout or `--json`, errors `[category] message` on stderr with exit 1, usage errors 2, Ctrl-C 130; `help` renders `help_text` in `cli` style. It restores the logger level and environment it changes (`docs/lessons/restore-process-global-state-a-command-changes.md`) |
 | `settings.py` | `Settings` (pydantic-settings, prefix `PERPLEXITY_`), `load_settings()` raising `SettingsError` that names each bad variable; the routing fields (`routing`, `model`, `tier_light`, `tier_standard`, `tier_complex`) with their cross-field check, `ignored_routing_vars()` for the startup warning |
 | `help_text.py` | Pure and FastMCP-free (a test blocks those imports): the curated help for every tool (`TOOLS`), `render_index`, `render_tool`, `render_topic`, `describe_params` (a JSON schema to readable arguments) and `POINTER`; every dollar figure in it must appear in `README.md`, every example must validate against its tool's schema, and a registered tool without an entry fails the suite |
 | `tools/help.py` | `perplexity_help` (`index`/`tool`/`topic`), read-only, no API, no usage, no project; reads the other tools' schemas through `ctx.fastmcp.list_tools()` |
@@ -371,7 +373,7 @@ a third by inlining the sequence above:
 
 - `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
   generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
-  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). There is no change in flight (`agent-help` and `routing-modes-config` are archived by their last tasks, `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are all archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
+  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). There is no change in flight (`py-cli`, `agent-help` and `routing-modes-config` are archived by their last tasks, `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are all archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
   with their enforcement points.
 - Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
   task's `tasks.md` checkbox ticked in the same commit.

@@ -1,0 +1,28 @@
+# perplexity-pro 2.0.0
+Web-grounded answers, search, decisions and embeddings; every costed call is recorded.
+Routing: standard, default model perplexity/sonar.
+
+## Pick a tool
+- A quick grounded fact: perplexity_ask
+- A report that takes minutes: perplexity_research, then perplexity_jobs
+- Links and snippets, no answer: perplexity_search
+- A follow-up conversation: perplexity_chat
+- Classify a text: perplexity_decide
+
+## Tools
+- perplexity_ask: billed
+- perplexity_chat: billed
+- perplexity_decide: billed
+- perplexity_embed: billed
+- perplexity_help: free
+- perplexity_jobs: free
+- perplexity_models: free
+- perplexity_projects: free
+- perplexity_research: billed, async
+- perplexity_search: billed
+- perplexity_usage: free
+
+## Topics
+routing, costs, citations, errors, projects
+
+More: perplexity-pro help <tool> or help <topic> (a command drops the perplexity_ prefix: ask, search).

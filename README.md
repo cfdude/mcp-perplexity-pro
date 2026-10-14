@@ -66,6 +66,9 @@ uvx --from . mcp-perplexity-pro --transport http
 # check the install
 uv run mcp-perplexity-pro --version
 uv run mcp-perplexity-pro --help
+
+# the command line front end (see "Command line")
+uv run perplexity-pro --help
 ```
 
 In stdio mode stdout carries only MCP messages; every log line goes to stderr. A missing or invalid
@@ -88,6 +91,50 @@ curl -s http://127.0.0.1:8102/health            # {"status":"ok","version":"2.0.
 to 10 seconds, closes its HTTP client and database connections, and exits 0; pm2 must wait longer
 than that before it sends SIGKILL. `pm2 restart mcp-perplexity-pro` brings the server back on the
 same port.
+
+## Command line
+
+The same tools are a command line, `perplexity-pro`, for a person or a script that would rather not
+run an MCP client. `mcp-perplexity-pro` is unchanged (it is still what pm2 and every MCP client
+configuration start); `perplexity-pro serve` runs the same server.
+
+```bash
+uv run perplexity-pro ask "What is new in Python?" --depth fast
+uv run perplexity-pro search "rust borrow checker" "zig comptime" --domains=-reddit.com
+uv run perplexity-pro chat send --title notes --message "Remember: teal."
+uv run perplexity-pro models --json | jq '.routing'
+uv run perplexity-pro usage --group-by tool
+uv run perplexity-pro help            # the index; `help ask`, `help costs`, `help topic projects`
+uv run perplexity-pro serve --transport http
+```
+
+Every command calls the registered tool in-process, so routing, validation, project rules, usage
+recording and error categories are exactly the MCP tool's, and a costed command records one usage
+event in the same database. The subcommands (`ask`, `chat`, `research`, `jobs`, `search`, `decide`,
+`embed`, `models`, `projects`, `usage`, `help`, `serve`) and their flags are generated from the tool
+schemas, so a new tool parameter appears as a flag without an edit.
+
+| Rule | Form |
+|---|---|
+| Positionals | a required `action`, then a required `query` (`ask "q"`, `chat send`, `jobs status`); everything else is a `--flag` with dashes (`--max-results 3`) |
+| Booleans | `--search` and `--no-search`; unset means the tool's default |
+| Lists | repeat the flag: `--domains python.org --domains docs.python.org`; a search takes several queries as positionals |
+| Objects and arrays | JSON: `--json-schema '{...}'`, `--json-schema @schema.json` or `--json-schema -` (standard input, once); an untyped value such as decide's `--state` is JSON when it is an object or array and text otherwise |
+| Anything else | `--args-json '{"query": "q", "depth": "low"}'` (JSON, `@file` or `-`), merged first; flags win; a JSON `null` means not given |
+| A value that starts with a dash | `--domains=-reddit.com`, and `--` before a query that starts with one |
+
+Output is the tool's readable text on standard output, or the structured result with `--json`.
+Exit status: 0 on success, 1 for a tool error (standard error shows `[category] message`, ending with
+`Run perplexity-pro help <command> for its arguments and examples.`) or a setup failure (missing key,
+invalid setting), 2 for a usage error (a wrong type, an unknown or abbreviated flag, a value outside
+a schema `enum`, a missing required value) refused before anything is set up or sent, 130 for Ctrl-C.
+A described value the schema does not list as an `enum` (a depth, a tier) reaches the tool, which
+refuses it as a tool error. Logs are warnings and errors only unless `PERPLEXITY_LOG_LEVEL` is set,
+and stay on standard error. `--help`, `<command> --help`, `help` and `--version` need no key, no
+network and no data directory, and survive an invalid environment (the routing line then shows the
+defaults, with one warning). `help projects` is the tool page, `help topic projects` the topic.
+Live record: `openspec/changes/archive/2026-10-13-py-cli/acceptance/` (two billed asks, $0.00723,
+reconciled to the nano-USD).
 
 ## Settings
 
@@ -186,8 +233,8 @@ no usage event, no project). It has three actions:
 An unknown name fails with `invalid_request` listing the valid names. Every `invalid_request` from
 a tool ends with the call that shows that tool's arguments, for example `... Call perplexity_help
 with action "tool" and name "perplexity_ask" for its arguments and examples.`, and the server's MCP
-`instructions` name the help tool. The text comes from one module (`help_text.py`) that the planned
-CLI will reuse for `--help`. The help costs figures are the ones in this README (a test checks that
+`instructions` name the help tool. The text comes from one module (`help_text.py`) that `perplexity-pro help`
+reuses for `--help`. The help costs figures are the ones in this README (a test checks that
 each `$N.NN` figure in help appears here). Live record:
 `openspec/changes/archive/2026-10-13-agent-help/acceptance/`.
 
@@ -1598,7 +1645,8 @@ fail when `uv.lock` is out of date; `--frozen` would not.
 ```
 src/mcp_perplexity_pro/
   __main__.py     entry point: startup order, stdio and HTTP runners, graceful shutdown
-  cli.py          argument parsing (--transport, --version)
+  cli.py          argument parsing of the server command (--transport, --version)
+  command.py      the perplexity-pro command: subcommands generated from the tool schemas, run in-process
   settings.py     PERPLEXITY_* settings and their validation
   server.py       build_server(): FastMCP wiring, AppContext, /health, error middleware
   client.py       the one Perplexity HTTP client (httpx2): retry, typed errors, redaction; the
@@ -1612,7 +1660,7 @@ src/mcp_perplexity_pro/
                   recorded usage into the result's cost
   routing.py      which model answers an ask or chat: the routing mode, resolve() for the three
                   selectors, the instructions and description text (pure)
-  help_text.py    the curated help behind perplexity_help (pure, no FastMCP; the planned CLI reuses it)
+  help_text.py    the curated help behind perplexity_help (pure, no FastMCP; `perplexity-pro help` reuses it)
   search.py       Search API request building and validation, response digestion, run_search
   decisions.py    Decisions API request building and validation, response digestion,
                   decisions_usage (cost from input tokens), run_decide

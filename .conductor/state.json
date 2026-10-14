@@ -848,7 +848,7 @@
       "id": "py-cli",
       "title": "Python CLI front end sharing the MCP core",
       "priority": "P2",
-      "status": "later",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -865,9 +865,60 @@
       ],
       "reconcileNeeded": false,
       "description": "Second entry point in the same package over a transport-neutral core (costed_call, storage, usage); same ~/.perplexity-pro database; --json for scripts. First cut: ask, search, embed, usage, projects. Needs the tool logic that reads ctx.lifespan_context pulled out of tools/.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "96fb8720a91f9880963615ad8f9ed148d1f3ce05",
+        "c38d87b4768562fb9470105f15fb6693c9139ca4",
+        "ab0cd1b3a20c4a3c90b29c6cae6247b9f0910ed9",
+        "dac603fed838c3961727e5ef86458c9763168e73",
+        "157e73c723e8314753800be6192aa6cbb1535619",
+        "d769c2db886eaf98c0680c8a3a7820f62bde8d63",
+        "9860c2e0c7a782912bae8cafdc15b1c05025d1eb",
+        "027933795646f6ce37f18d00b567d18ca48dd847",
+        "cbce774b670799008c284f996e1583b4cf6a3921",
+        "ed1de71735811411d71ef29bce048cb2e61a9d62",
+        "8c55c97a73dce0970fffeccc08ded6030843fbaf",
+        "153061004dff161f68a07bb7d9d3df90111d2f2e"
+      ],
       "createdAt": "2026-10-13T13:17:14.603Z",
-      "touchedAt": "2026-10-14T02:25:51.526Z"
+      "touchedAt": "2026-10-14T05:48:53.766Z",
+      "startedAt": "2026-10-14T04:49:46.597Z",
+      "release": "release-2-0-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-14T04:58:27.875Z",
+          "baseSha": "a40776095978bb517601805db1b19db70bf5f857",
+          "headSha": "c38d87b4768562fb9470105f15fb6693c9139ca4",
+          "artifacts": [
+            "openspec/changes/py-cli"
+          ],
+          "reviewer": "fresh-context general-purpose subagent: Gate 1 (8 Important, minors) and cross-spec (3 Important); all Important folded in this head"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-14T05:44:29.709Z",
+          "baseSha": "ab0cd1b3a20c4a3c90b29c6cae6247b9f0910ed9",
+          "headSha": "153061004dff161f68a07bb7d9d3df90111d2f2e",
+          "reviewer": "fresh-context general-purpose subagents: implementation ab0cd1b..cbce774 (0 Critical, 3 Important, 4 Minor, fixed in ed1de71) and documentation diff ed1de71..8c55c97 (1 Important, 2 Minor, fixed in this head); suite 2488 passed",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-14T05:38:54.015Z",
+            "baseSha": "ab0cd1b3a20c4a3c90b29c6cae6247b9f0910ed9",
+            "headSha": "ed1de71735811411d71ef29bce048cb2e61a9d62",
+            "reviewer": "fresh-context general-purpose subagent over ab0cd1b..cbce774 (0 Critical, 3 Important, 4 Minor; all fixed in this head: startup cost, build-test claim, SIGINT test robustness); suite 2488 passed"
+          }
+        }
+      },
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-14T05:48:53.764Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-14T05:48:53.735Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-14T05:48:53.764Z"
     },
     {
       "id": "pypi-publish",
@@ -1071,7 +1122,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 346,
+  "revision": 367,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
@@ -1083,11 +1134,11 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-14T04:07:47.551Z",
+        "reviewedAt": "2026-10-14T04:58:28.369Z",
         "specs": [
           {
             "key": "agent-help/specs/help-tool/spec.md",
-            "sha256": "306f83aa37bbcb7293fc422686327ab2d1b854bdffa6b2532b83858d56ec5bd9"
+            "sha256": "f39104ee719122af7a8fb45b9158d8799f56582a226132ec41ffa1a72190c067"
           },
           {
             "key": "agent-help/specs/routing-config/spec.md",
@@ -1124,6 +1175,14 @@
           {
             "key": "py-agent-citation-fixes/specs/agent-ask/spec.md",
             "sha256": "775709681cc235f68c98e04739f4c18e89e3e5fb9a1e780d6475d25992850c1d"
+          },
+          {
+            "key": "py-cli/specs/cli/spec.md",
+            "sha256": "9197aa80b1408b648ce28943b8790d1101bcda6331656651b841594b4e3f45b8"
+          },
+          {
+            "key": "py-cli/specs/help-tool/spec.md",
+            "sha256": "fb88491c4a2e19ce7441e40e9e898006ddc0e653956e0a39c03f611bed56a0a1"
           },
           {
             "key": "py-decisions-tool/specs/decisions-client/spec.md",
@@ -1214,11 +1273,23 @@
             "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagent over agent-help vs main specs (3 BLOCKS fixed: instructions delta added, help not a fifth channel, costs forms stated; POLISH declined: pre-existing difference between the main specs' rounded cost ranges and the code's, owned by their changes)",
+        "reviewer": "fresh-context general-purpose subagent over py-cli vs main specs (3 Important: help sentence ownership, help-tool style delta added, startup failure exit codes stated; minors folded or declined)",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-14T02:47:22.795Z",
+          "reviewedAt": "2026-10-14T04:07:47.551Z",
           "specs": [
+            {
+              "key": "agent-help/specs/help-tool/spec.md",
+              "sha256": "306f83aa37bbcb7293fc422686327ab2d1b854bdffa6b2532b83858d56ec5bd9"
+            },
+            {
+              "key": "agent-help/specs/routing-config/spec.md",
+              "sha256": "285462c352485673d24249da3a3aa4425d4fc197f8912709bf8bbe230797380c"
+            },
+            {
+              "key": "agent-help/specs/server-runtime/spec.md",
+              "sha256": "3c672eb923e5d37e3f319b4052924ae4e54ccc10d09644f300c032ea09a01ca1"
+            },
             {
               "key": "py-agent-api/specs/agent-ask/spec.md",
               "sha256": "e9e07e5b99a3bc281410aa5254a666b73f1430c9895f08c4264604a77e89e606"
@@ -1329,14 +1400,14 @@
             },
             {
               "key": "routing-modes-config/specs/routing-config/spec.md",
-              "sha256": "294d69378e479ea622fa72184f9af9d063cd318787141871bf0e3f5fcdd8e66f"
+              "sha256": "e8ff7f0dd611b131ee8ee766d8ff40658d714d566d917898d89b43411578497f"
             },
             {
               "key": "routing-modes-config/specs/server-runtime/spec.md",
               "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagent over routing-modes-config vs main specs (1 BLOCK, 8 POLISH; BLOCK and actionable POLISH fixed in e913422; remaining POLISH declined: main-spec fixture wording 'recorded fast response' names a fixture)"
+          "reviewer": "fresh-context general-purpose subagent over agent-help vs main specs (3 BLOCKS fixed: instructions delta added, help not a fifth channel, costs forms stated; POLISH declined: pre-existing difference between the main specs' rounded cost ranges and the code's, owned by their changes)"
         }
       }
     }
