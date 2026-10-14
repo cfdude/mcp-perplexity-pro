@@ -777,10 +777,12 @@
       "description": "Three consumer modes set by config. Standard (default): one model, default perplexity/sonar (probed live 2026-10-13: web search works, about $0.0038 per call; 'auto' is rejected by the API). Custom: user's light/standard/complex model tiers, validated against the live catalog; caller picks the tier via depth. Dynamic: opt-in, classifier picks the tier (see routing-decisions-classifier). Open design problem: how the calling agent learns the active mode (server instructions rendered from settings, resolved mode/tier/model in every result, active routing in perplexity_models). README setup section lays out the three choices.",
       "attributedCommits": [
         "b33f5eaca5dd194bfd35858f5da2b055d34b1d50",
-        "e0c8a52ff9152a33062fcc9f7f3fb2382556c498"
+        "e0c8a52ff9152a33062fcc9f7f3fb2382556c498",
+        "1431d195511e55357e426136c44d1bdbb0067356",
+        "ee3877a1f4025c41afa5edbbb792b036fca41d7b"
       ],
       "createdAt": "2026-10-13T13:17:14.209Z",
-      "touchedAt": "2026-10-13T14:52:57.116Z",
+      "touchedAt": "2026-10-13T16:17:20.223Z",
       "startedAt": "2026-10-13T13:18:53.113Z",
       "release": "release-2-0-0"
     },
@@ -796,13 +798,18 @@
           "type": "depends-on",
           "epic": "routing-modes-config",
           "reason": "CLI honors the same mode config"
+        },
+        {
+          "type": "depends-on",
+          "epic": "agent-help",
+          "reason": "CLI help reuses the help source"
         }
       ],
       "reconcileNeeded": false,
       "description": "Second entry point in the same package over a transport-neutral core (costed_call, storage, usage); same ~/.perplexity-pro database; --json for scripts. First cut: ask, search, embed, usage, projects. Needs the tool logic that reads ctx.lifespan_context pulled out of tools/.",
       "attributedCommits": [],
       "createdAt": "2026-10-13T13:17:14.603Z",
-      "touchedAt": "2026-10-13T13:17:14.605Z"
+      "touchedAt": "2026-10-14T02:25:51.526Z"
     },
     {
       "id": "pypi-publish",
@@ -919,10 +926,35 @@
         "declined": []
       },
       "completedAt": "2026-10-13T14:18:10.467Z"
+    },
+    {
+      "id": "agent-help",
+      "title": "perplexity_help tool (index/tool/topic, llms.txt-style markdown) and CLI --help from one source",
+      "priority": "P2",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "routing-modes-config",
+          "reason": "help documents the routing modes"
+        },
+        {
+          "type": "relates-to",
+          "epic": "py-cli",
+          "reason": "CLI help and the MCP help tool print the same text"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "New tool perplexity_help with actions index (llms.txt-style markdown listing tools and topics), tool (one tool's arguments, examples, errors) and topic (routing, costs, citations, errors). One source generates the help text, the CLI --help and help <topic>; lets tool descriptions be trimmed to pay back the eleventh tool's size.",
+      "attributedCommits": [],
+      "createdAt": "2026-10-14T02:25:51.014Z",
+      "touchedAt": "2026-10-14T02:25:51.016Z"
     }
   ],
   "detourStack": [],
-  "revision": 297,
+  "revision": 301,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
