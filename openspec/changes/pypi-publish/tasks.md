@@ -16,7 +16,7 @@
 
 ## 4. Acceptance (offline and local)
 
-- [ ] 4.1 Build both distributions and list them; run `uvx twine check`; run the built wheel in a clean environment (`uv run --isolated --no-project --with dist/<wheel> mcp-perplexity-pro --version` and `perplexity-pro help ask`, which needs the package index for dependencies); record sizes and outputs under `openspec/changes/pypi-publish/acceptance/`; nothing is uploaded
+- [x] 4.1 Build both distributions and list them; run `uvx twine check`; run the built wheel in a clean environment (`uv run --isolated --no-project --with dist/<wheel> mcp-perplexity-pro --version` and `perplexity-pro help ask`, which needs the package index for dependencies); record sizes and outputs under `openspec/changes/pypi-publish/acceptance/`; nothing is uploaded
 
 ## 5. Gate procedure (required, per the pm conductor)
 

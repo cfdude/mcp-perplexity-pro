@@ -1,0 +1,8 @@
+# perplexity_ask
+One web-grounded question, answered now, with its sources. No memory.
+
+Flags: billed.
+Cost: Default model perplexity/sonar: $0.00336 in one sample. depth fast: $0.00118 to $0.00180 over four observations, about 2 s. Every call is recorded as spend.
+
+## Example
+perplexity-pro ask 'What is the latest stable Python release?' --depth fast

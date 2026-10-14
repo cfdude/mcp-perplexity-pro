@@ -1,0 +1,2 @@
+Checking /tmp/acc-dist/mcp_perplexity_pro-2.0.0-py3-none-any.whl: [32mPASSED[0m
+Checking /tmp/acc-dist/mcp_perplexity_pro-2.0.0.tar.gz: [32mPASSED[0m

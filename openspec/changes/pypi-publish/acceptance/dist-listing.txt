@@ -1,0 +1,4 @@
+total 1680
+-rw-r--r--  1 rsherman  staff  190365 Oct 13 23:16 mcp_perplexity_pro-2.0.0-py3-none-any.whl
+-rw-r--r--  1 rsherman  staff  663577 Oct 13 23:16 mcp_perplexity_pro-2.0.0.tar.gz
+     426
