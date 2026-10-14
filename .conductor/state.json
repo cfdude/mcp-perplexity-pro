@@ -793,10 +793,11 @@
         "ca542869c3c567da4ba8e3039f88cef11a2e0adc",
         "d548c24bad350441b58c6d4c7b3af46f73e85c82",
         "a7df0dad2baaaff6f7a73784f54637883f88ed3a",
-        "9520e15a83177c9ba70c6a90316643348a52e156"
+        "9520e15a83177c9ba70c6a90316643348a52e156",
+        "0639fb5fe6ba01537372684111200af49d8c694b"
       ],
       "createdAt": "2026-10-13T13:17:14.209Z",
-      "touchedAt": "2026-10-14T03:32:43.312Z",
+      "touchedAt": "2026-10-14T03:35:38.947Z",
       "startedAt": "2026-10-13T13:18:53.113Z",
       "release": "release-2-0-0",
       "gateReview": {
@@ -812,10 +813,17 @@
         },
         "gate2": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-14T03:29:42.730Z",
+          "reviewedAt": "2026-10-14T03:35:38.945Z",
           "baseSha": "e91342278fcb28d6961aef876795ac3f67d0e162",
-          "headSha": "a7df0dad2baaaff6f7a73784f54637883f88ed3a",
-          "reviewer": "fresh-context general-purpose subagent over e913422..8241060 (0 Critical, 2 Important, 5 Minor, tests added or fixed in ca54286)"
+          "headSha": "0639fb5fe6ba01537372684111200af49d8c694b",
+          "reviewer": "fresh-context general-purpose subagents: implementation e913422..8241060 (0 Critical, 2 Important, 5 Minor; fixed in ca54286) and documentation diff ca54286..9520e15 (2 Important, 3 Minor; fixed in this head)",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-14T03:29:42.730Z",
+            "baseSha": "e91342278fcb28d6961aef876795ac3f67d0e162",
+            "headSha": "a7df0dad2baaaff6f7a73784f54637883f88ed3a",
+            "reviewer": "fresh-context general-purpose subagent over e913422..8241060 (0 Critical, 2 Important, 5 Minor, tests added or fixed in ca54286)"
+          }
         }
       }
     },
@@ -994,7 +1002,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 319,
+  "revision": 321,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
