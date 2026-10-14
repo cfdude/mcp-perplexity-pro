@@ -941,11 +941,25 @@
       ],
       "reconcileNeeded": false,
       "description": "Check the mcp-perplexity-pro name is free, Trusted Publishing from GitHub Actions (no stored token), tag and release 2.0.0, uvx install docs, refresh the CHANGELOG release date.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "5c778c83f941c6548d52496fff8605ed006de1df"
+      ],
       "createdAt": "2026-10-13T13:17:14.936Z",
-      "touchedAt": "2026-10-14T05:55:27.163Z",
+      "touchedAt": "2026-10-14T06:02:35.829Z",
       "startedAt": "2026-10-14T05:55:26.081Z",
-      "release": "release-2-0-0"
+      "release": "release-2-0-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-14T06:02:35.827Z",
+          "baseSha": "b965f71f1d59bd6fc1c1d64786c9e281a5d99fa0",
+          "headSha": "5c778c83f941c6548d52496fff8605ed006de1df",
+          "artifacts": [
+            "openspec/changes/pypi-publish"
+          ],
+          "reviewer": "fresh-context general-purpose subagent: Gate 1 (1 Critical, 9 Important) and cross-spec (pass, polish); all folded in this head"
+        }
+      }
     },
     {
       "id": "py-agent-citation-fixes",
@@ -1124,7 +1138,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 370,
+  "revision": 373,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
@@ -1136,7 +1150,7 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-14T04:58:28.369Z",
+        "reviewedAt": "2026-10-14T06:02:36.363Z",
         "specs": [
           {
             "key": "agent-help/specs/help-tool/spec.md",
@@ -1180,7 +1194,7 @@
           },
           {
             "key": "py-cli/specs/cli/spec.md",
-            "sha256": "9197aa80b1408b648ce28943b8790d1101bcda6331656651b841594b4e3f45b8"
+            "sha256": "9de448f24236477a8c2d15c52514b4a8f9687fdb2c15a630499dab0f465b9329"
           },
           {
             "key": "py-cli/specs/help-tool/spec.md",
@@ -1255,6 +1269,10 @@
             "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
           },
           {
+            "key": "pypi-publish/specs/package-release/spec.md",
+            "sha256": "c29d9d5129adfcc66a7ba47a348a9f8d8b446c65ba920098bc5956abddd5d87e"
+          },
+          {
             "key": "routing-modes-config/specs/agent-ask/spec.md",
             "sha256": "386d0eb113c90def8c399e23353804355a8e749fc9f865b357ee361aff3d948d"
           },
@@ -1275,14 +1293,14 @@
             "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagent over py-cli vs main specs (3 Important: help sentence ownership, help-tool style delta added, startup failure exit codes stated; minors folded or declined)",
+        "reviewer": "fresh-context general-purpose subagent over pypi-publish vs main specs (no blocks; polish: command-count wording stated as equivalent forms)",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-14T04:07:47.551Z",
+          "reviewedAt": "2026-10-14T04:58:28.369Z",
           "specs": [
             {
               "key": "agent-help/specs/help-tool/spec.md",
-              "sha256": "306f83aa37bbcb7293fc422686327ab2d1b854bdffa6b2532b83858d56ec5bd9"
+              "sha256": "f39104ee719122af7a8fb45b9158d8799f56582a226132ec41ffa1a72190c067"
             },
             {
               "key": "agent-help/specs/routing-config/spec.md",
@@ -1319,6 +1337,14 @@
             {
               "key": "py-agent-citation-fixes/specs/agent-ask/spec.md",
               "sha256": "775709681cc235f68c98e04739f4c18e89e3e5fb9a1e780d6475d25992850c1d"
+            },
+            {
+              "key": "py-cli/specs/cli/spec.md",
+              "sha256": "9197aa80b1408b648ce28943b8790d1101bcda6331656651b841594b4e3f45b8"
+            },
+            {
+              "key": "py-cli/specs/help-tool/spec.md",
+              "sha256": "fb88491c4a2e19ce7441e40e9e898006ddc0e653956e0a39c03f611bed56a0a1"
             },
             {
               "key": "py-decisions-tool/specs/decisions-client/spec.md",
@@ -1409,7 +1435,7 @@
               "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
             }
           ],
-          "reviewer": "fresh-context general-purpose subagent over agent-help vs main specs (3 BLOCKS fixed: instructions delta added, help not a fifth channel, costs forms stated; POLISH declined: pre-existing difference between the main specs' rounded cost ranges and the code's, owned by their changes)"
+          "reviewer": "fresh-context general-purpose subagent over py-cli vs main specs (3 Important: help sentence ownership, help-tool style delta added, startup failure exit codes stated; minors folded or declined)"
         }
       }
     }
