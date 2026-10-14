@@ -32,6 +32,7 @@ from mcp_perplexity_pro.costed import Recording, costed_call
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
+from mcp_perplexity_pro.routing import ASK_DEPTHS, LONG_DEPTHS
 from mcp_perplexity_pro.storage import jobs as job_store
 from mcp_perplexity_pro.storage.models import ResearchJob, UsageEvent
 from mcp_perplexity_pro.storage.session import is_busy_error, unit_of_work
@@ -45,9 +46,7 @@ from mcp_perplexity_pro.usage import (
 logger = logging.getLogger(__name__)
 
 # Depths a caller of ask or chat may pick; high and xhigh belong to perplexity_research (D2).
-ASK_DEPTHS = ("fast", "low", "medium")
 DEFAULT_DEPTH = "fast"
-LONG_DEPTHS = ("high", "xhigh")
 RECENCIES = ("hour", "day", "week", "month", "year")
 
 # This server's own sanity caps (chosen, not provider limits).
