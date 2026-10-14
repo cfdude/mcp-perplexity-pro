@@ -30,6 +30,7 @@ from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.embeddings import ProjectLocks
 from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
 from mcp_perplexity_pro.redaction import redact_text
+from mcp_perplexity_pro.routing import instructions_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
 from mcp_perplexity_pro.tools import register_tools
 from mcp_perplexity_pro.usage import failure_summary, utcnow
@@ -202,6 +203,7 @@ def build_server(
         "perplexity-pro",
         version=pkg_version,
         lifespan=app_lifespan,
+        instructions=instructions_text(settings),
         mask_error_details=True,
         middleware=[in_flight, ErrorContractMiddleware((settings.api_key.get_secret_value(),))],
     )

@@ -15,8 +15,8 @@
 ## 3. Tools
 
 - [x] 3.1 RED then GREEN: `perplexity_ask` and `perplexity_chat` send gain `tier`, a `routing` object in the result (`mode`, `tier`, `model`, `selected_by`, one field description of a few words each) and the rendered one-sentence mode statement in their descriptions (built at registration from the settings; the per-depth costs stay and the sentence says the default model's cost differs from them), `register_tools(server, settings)` and the ask and chat `register(server, settings)` take the settings, the `search` parameter text no longer says it needs `model`; chat stores and replays as before; update the pinned-schema tests (`tests/test_ask_tool.py`, `tests/test_chat_send.py`, `tests/test_chat_actions.py`, `tests/test_contract_checks.py`); verify `perplexity_research` is unchanged (its request still names a preset and its result has no `routing`)
-- [ ] 3.2 RED then GREEN: `perplexity_models` gains the `routing` section with `known` true or false per configured id (an unreadable catalog with no cache fails the call as today; a stale cache still builds the section); tests in `tests/test_catalog.py` and the models-tool tests; verify an unlisted id is still sent by an ask
-- [ ] 3.3 RED then GREEN: `build_server` sets `instructions=routing.instructions_text(settings)`; tests that `initialize` returns it, that two servers with equal settings return identical bytes and that no secret appears; mutation-check by removing the `instructions` argument once
+- [x] 3.2 RED then GREEN: `perplexity_models` gains the `routing` section with `known` true or false per configured id (an unreadable catalog with no cache fails the call as today; a stale cache still builds the section); tests in `tests/test_catalog.py` and the models-tool tests; verify an unlisted id is still sent by an ask
+- [x] 3.3 RED then GREEN: `build_server` sets `instructions=routing.instructions_text(settings)`; tests that `initialize` returns it, that two servers with equal settings return identical bytes and that no secret appears; mutation-check by removing the `instructions` argument once
 
 ## 4. Wiring proof
 
