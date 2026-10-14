@@ -126,7 +126,7 @@ Every command except `help` SHALL call the registered tool in-process, so routin
 - **THEN** the output shows the usage line, every flag with its schema description and default, the tool's cost line and a `perplexity-pro ask ...` example
 
 ### Requirement: The help subcommand
-`perplexity-pro help` SHALL print the index, `help <tool>` (with or without the `perplexity_` prefix) a tool page and `help <topic>` a topic page, from the shared help text in its command-line style: the same data as `perplexity_help`, differing only in the example lines and the closing pointer, and identical for topic pages.
+`perplexity-pro help` SHALL print the index, `help <tool>` (with or without the `perplexity_` prefix) a tool page and `help <topic>` a topic page (`projects` is both a tool and a topic: the tool wins, and `help topic projects` or `help tool ask` is explicit), from the shared help text in its command-line style: the same data as `perplexity_help`, differing only in the example lines and the closing pointer, and identical for topic pages.
 
 #### Scenario: Same data as the MCP tool
 - **WHEN** `perplexity-pro help costs` is compared with `perplexity_help` `topic` `costs` on a default server, and again for the routing topic on a `custom` server

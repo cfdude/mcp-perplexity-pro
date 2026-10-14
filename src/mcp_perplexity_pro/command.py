@@ -19,10 +19,13 @@ import asyncio  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
 import re  # noqa: E402
+import shlex  # noqa: E402
 import sys  # noqa: E402
 from dataclasses import dataclass, field  # noqa: E402
 from importlib.metadata import version  # noqa: E402
 from typing import Any  # noqa: E402
+
+from mcp_perplexity_pro import help_text  # noqa: E402
 
 PREFIX = "perplexity_"
 EXTRA_COMMANDS = ("help", "serve")
@@ -101,6 +104,35 @@ def schema_source() -> list[ToolSpec]:
     return asyncio.run(read())
 
 
+def cli_example(tool: ToolSpec, example: dict[str, Any]) -> str:
+    """The example arguments of a tool written as a ``perplexity-pro`` command line (the inverse
+    of ``collect_arguments``: a test parses it back to the same arguments)."""
+    if tool.name == "perplexity_help":
+        return "perplexity-pro help"
+    required = tool.required
+    parts = ["perplexity-pro", tool.command]
+    given = dict(example)
+    for name in ("action", "query"):
+        if name in required and name in given:
+            value = given.pop(name)
+            parts.extend(
+                shlex.quote(str(v)) for v in (value if isinstance(value, list) else [value])
+            )
+    for name, value in given.items():
+        flag = flag_name(name)
+        kind = _kind(tool.properties[name])
+        if kind == "boolean":
+            parts.append(flag if value else "--no-" + flag[2:])
+        elif kind in ("list", "string_or_list") and isinstance(value, list):
+            for item in value:
+                parts.extend([flag, shlex.quote(str(item))])
+        elif kind in ("json", "text_or_json") and not isinstance(value, str):
+            parts.extend([flag, shlex.quote(json.dumps(value))])
+        else:
+            parts.extend([flag, shlex.quote(str(value))])
+    return " ".join(parts)
+
+
 # --- schema to argparse ---------------------------------------------------------------------
 
 
@@ -158,14 +190,31 @@ def build_parser(tools: list[ToolSpec]) -> argparse.ArgumentParser:
     help_parser = sub.add_parser(
         "help", help="show help: the index, a tool or a topic", allow_abbrev=False
     )
-    help_parser.add_argument("name", nargs="?", help="a tool (ask, perplexity_ask) or a topic")
+    help_parser.add_argument(
+        "name",
+        nargs="*",
+        help="a tool (ask, perplexity_ask) or a topic; 'projects' is both, so the tool wins: "
+        "write 'topic projects' for the topic (or 'tool ask' to be explicit)",
+    )
     serve = sub.add_parser("serve", help="run the MCP server", allow_abbrev=False)
     serve.add_argument("--transport", choices=("stdio", "http"), default="stdio")
     return parser
 
 
 def _add_tool_parser(sub: Any, tool: ToolSpec) -> None:
-    p = sub.add_parser(tool.command, help=_first_line(tool), allow_abbrev=False)
+    entry = help_text.TOOLS.get(tool.name)
+    summary = entry["summary"] if entry else tool.name
+    epilog = None
+    if entry:
+        epilog = f"cost: {entry['cost']}\n\nexample:\n  {cli_example(tool, entry['example'])}"
+    p = sub.add_parser(
+        tool.command,
+        help=summary,
+        description=summary,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        allow_abbrev=False,
+    )
     p.set_defaults(tool=tool)
     required = tool.required
     positional: list[str] = []
@@ -200,10 +249,6 @@ def _add_tool_parser(sub: Any, tool: ToolSpec) -> None:
     p.add_argument(
         "--json", dest="as_json", action="store_true", help="print the structured result"
     )
-
-
-def _first_line(tool: ToolSpec) -> str:
-    return tool.name
 
 
 def _description(tool: ToolSpec, name: str) -> str:
@@ -329,6 +374,59 @@ def parse_command(
         raise  # unreachable: parser.error exits
 
 
+def run_help(words: list[str], tools: list[ToolSpec]) -> int:
+    """``perplexity-pro help [<tool>|<topic>]``: the shared help text in command-line style. Needs
+    no key, no network and no data directory."""
+    settings, warning = settings_for_help()
+    if warning:
+        print(f"perplexity-pro: {warning}", file=sys.stderr)
+    by_name = {t.command: t for t in tools}
+    kind = None
+    name = words[0] if words else None
+    if len(words) == 2 and words[0] in ("tool", "topic"):
+        kind, name = words
+    elif len(words) > 1:
+        print(
+            "perplexity-pro: help takes a name, or 'tool <name>' or 'topic <name>'", file=sys.stderr
+        )
+        return 2
+    if name is None:
+        text = help_text.render_index(
+            settings, [t.name for t in tools], version("mcp-perplexity-pro"), "cli"
+        )
+    elif (
+        kind != "topic"
+        and name.removeprefix(PREFIX) in by_name
+        and name.removeprefix(PREFIX) != "help"
+    ):
+        tool = by_name[name.removeprefix(PREFIX)]
+        entry = help_text.TOOLS.get(tool.name)
+        text = help_text.render_tool(
+            tool.name,
+            settings,
+            help_text.describe_params(tool.schema),
+            tool.annotations,
+            example=cli_example(tool, entry["example"]) if entry else None,
+        )
+    elif kind != "tool" and name in help_text.TOPICS:
+        text = help_text.render_topic(name, settings)
+    elif kind != "topic" and name.removeprefix(PREFIX) == "help":
+        tool = by_name["help"]
+        text = help_text.render_tool(
+            tool.name,
+            settings,
+            help_text.describe_params(tool.schema),
+            tool.annotations,
+            example="perplexity-pro help",
+        )
+    else:
+        valid = ", ".join(sorted(by_name) + list(help_text.TOPICS))
+        print(f"perplexity-pro: no help for {name!r}; try one of: {valid}", file=sys.stderr)
+        return 1
+    print(text, end="")
+    return 0
+
+
 # --- running a command ----------------------------------------------------------------------
 
 MCP_HINT = re.compile(
@@ -394,6 +492,8 @@ def main(argv: list[str] | None = None, *, http: Any = None) -> int:
     try:
         if arguments is not None:
             return asyncio.run(run_tool(ns.tool, arguments, ns.as_json, http))
+        if ns.command == "help":
+            return run_help(ns.name, tools)
         sys.stderr.write(f"perplexity-pro {ns.command}: not available yet\n")
         return 2
     except KeyboardInterrupt:
