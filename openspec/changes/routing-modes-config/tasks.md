@@ -20,7 +20,7 @@
 
 ## 4. Wiring proof
 
-- [ ] 4.1 End-to-end offline test through `build_server` with a `MockTransport`: one ask per mode and per source (`default`, `tier`, `depth`, `model`) checking the request body, the result's `routing` and exactly one usage event per call; add the cases to `tests/test_wiring_one_event_per_call.py`; a refused conflicting-selector call and an explicit `model` in every mode are covered through `build_server` too; verify the full suite and ruff pass
+- [x] 4.1 End-to-end offline test through `build_server` with a `MockTransport`: one ask per mode and per source (`default`, `tier`, `depth`, `model`) checking the request body, the result's `routing` and exactly one usage event per call; the cases live in `tests/test_routing_tools.py` (the nine-call wiring test keeps its own scripted upstream; its default-ask preset expectation changed in 2.1); a refused conflicting-selector call and an explicit `model` in every mode are covered through `build_server` too; verify the full suite and ruff pass
 
 ## 5. Acceptance (live)
 

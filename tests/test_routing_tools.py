@@ -166,3 +166,41 @@ async def test_the_search_parameter_no_longer_says_it_needs_a_model(world):
     props = (await tool(w, ASK)).input_schema["properties"]
     assert "needs model" not in props["search"]["description"]
     assert "tier" in props and "custom" in props["tier"]["description"]
+
+
+# --- wiring: one usage event per call, per mode and per source (task 4.1) ----------------
+
+
+async def test_every_routed_call_makes_exactly_one_event_with_the_requested_preset(world, tmp_path):
+    calls = [
+        ({}, {}),  # default, standard mode
+        ({}, {"depth": "low"}),
+        ({}, {"model": "vendor/explicit"}),
+        (CUSTOM, {}),
+        (CUSTOM, {"tier": "complex"}),
+        (CUSTOM, {"depth": "medium"}),
+        (CUSTOM, {"model": "vendor/explicit"}),
+    ]
+    expected_presets = [None, "low", None, None, None, "medium", None]
+    for i, ((settings, selectors), preset) in enumerate(zip(calls, expected_presets, strict=True)):
+        # a database of its own per call: the fixture's response id would dedupe the events
+        w = await world(data_dir=tmp_path / f"db{i}", **settings)
+        result = await w.call(ASK, query="q", **selectors)
+        assert not result.is_error, result.structured_content
+        events = await w.events()
+        assert len(events) == 1 and events[0][3] == preset, (settings, selectors, events)
+        assert len(w.bodies()) == 1
+
+
+async def test_refused_selector_combinations_make_no_event_and_no_request(world):
+    w = await world(**CUSTOM)
+    for selectors in (
+        {"tier": "light", "depth": "low"},
+        {"tier": "light", "model": "x/y"},
+        {"depth": "low", "model": "x/y"},
+        {"tier": "huge"},
+        {"depth": "high"},
+    ):
+        assert (await w.call(ASK, query="q", **selectors)).is_error
+    assert await w.events() == [] and w.bodies() == []
+    assert await w.count("projects") == 0
