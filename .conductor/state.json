@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": null,
+  "active": "py-cli",
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -848,7 +848,7 @@
       "id": "py-cli",
       "title": "Python CLI front end sharing the MCP core",
       "priority": "P2",
-      "status": "later",
+      "status": "active",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -867,7 +867,9 @@
       "description": "Second entry point in the same package over a transport-neutral core (costed_call, storage, usage); same ~/.perplexity-pro database; --json for scripts. First cut: ask, search, embed, usage, projects. Needs the tool logic that reads ctx.lifespan_context pulled out of tools/.",
       "attributedCommits": [],
       "createdAt": "2026-10-13T13:17:14.603Z",
-      "touchedAt": "2026-10-14T02:25:51.526Z"
+      "touchedAt": "2026-10-14T04:49:47.666Z",
+      "startedAt": "2026-10-14T04:49:46.597Z",
+      "release": "release-2-0-0"
     },
     {
       "id": "pypi-publish",
@@ -1071,7 +1073,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 346,
+  "revision": 349,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
