@@ -32,7 +32,7 @@
 
 ## 7. Documentation (after Gate 2 is clean)
 
-- [ ] 7.1 README: a "Command line" section (the two commands, the subcommand table, the argument mapping with examples, output and exit codes, `help`), the install and run section mentions both commands; `CLAUDE.md` (module table gains `cli_app.py`, the Development Commands block, the current-change pointer) keeping the pm-managed block byte-identical; `CHANGELOG.md` entry under `2.0.0`; verify every example against the acceptance output
+- [x] 7.1 README: a "Command line" section (the two commands, the subcommand table, the argument mapping with examples, output and exit codes, `help`), the install and run section mentions both commands; `CLAUDE.md` (module table gains `cli_app.py`, the Development Commands block, the current-change pointer) keeping the pm-managed block byte-identical; `CHANGELOG.md` entry under `2.0.0`; verify every example against the acceptance output
 - [ ] 7.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 
 ## 8. Archive
