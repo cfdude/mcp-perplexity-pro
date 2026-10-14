@@ -367,7 +367,7 @@ a third by inlining the sequence above:
 - Not built yet: contextualized embeddings (`pplx-embed-context-*`), returning or exporting vectors,
   an approximate-nearest-neighbour index, a delete of one text key, the Decisions API's image input, the Search API's `people` type and page snippets, streaming, the dynamic routing mode (a Decisions-API classifier; `PERPLEXITY_ROUTING=dynamic` is reserved and refused at startup), routing rules, escalation and cost ceilings (there is none:
   `high` and `xhigh` exist only behind `perplexity_research` for that reason), pruning of chats,
-  jobs or usage events. Publishing to PyPI is prepared (metadata, `LICENSE`, the anchored sdist allowlist, `.github/workflows/release.yml`, `docs/releasing.md`) but the first upload is the owner's gate: configure the trusted publishers, rehearse on TestPyPI, push the tag `v<version>`.
+  jobs or usage events. Published to PyPI as `mcp-perplexity-pro` 2.0.0 (2026-10-14) through Trusted Publishing; a release is a pushed tag `v<version>` (`docs/releasing.md`).
 
 ## Workflow: where things live
 
