@@ -779,12 +779,26 @@
         "b33f5eaca5dd194bfd35858f5da2b055d34b1d50",
         "e0c8a52ff9152a33062fcc9f7f3fb2382556c498",
         "1431d195511e55357e426136c44d1bdbb0067356",
-        "ee3877a1f4025c41afa5edbbb792b036fca41d7b"
+        "ee3877a1f4025c41afa5edbbb792b036fca41d7b",
+        "727bf000d5a8400d3ad88de586d4f4632b102673",
+        "e91342278fcb28d6961aef876795ac3f67d0e162"
       ],
       "createdAt": "2026-10-13T13:17:14.209Z",
-      "touchedAt": "2026-10-13T16:17:20.223Z",
+      "touchedAt": "2026-10-14T02:47:22.370Z",
       "startedAt": "2026-10-13T13:18:53.113Z",
-      "release": "release-2-0-0"
+      "release": "release-2-0-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-14T02:47:22.369Z",
+          "baseSha": "815abefbe8684e6bf0c0270d79b96157a3322b1c",
+          "headSha": "e91342278fcb28d6961aef876795ac3f67d0e162",
+          "artifacts": [
+            "openspec/changes/routing-modes-config"
+          ],
+          "reviewer": "two fresh-context general-purpose subagents: Gate 1 review (0 Critical, 5 Important, 9 Minor) and a re-check; all Important and the cross-spec BLOCK fixed in e913422"
+        }
+      }
     },
     {
       "id": "py-cli",
@@ -961,7 +975,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 302,
+  "revision": 306,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
@@ -973,7 +987,7 @@
       "target": "2.0.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-13T13:44:31.527Z",
+        "reviewedAt": "2026-10-14T02:47:22.795Z",
         "specs": [
           {
             "key": "py-agent-api/specs/agent-ask/spec.md",
@@ -1001,7 +1015,7 @@
           },
           {
             "key": "py-agent-citation-fixes/specs/agent-ask/spec.md",
-            "sha256": "1a6ccddf5c901a252671de47df49ee96c303465deb7467124d206b6ff0a6668c"
+            "sha256": "775709681cc235f68c98e04739f4c18e89e3e5fb9a1e780d6475d25992850c1d"
           },
           {
             "key": "py-decisions-tool/specs/decisions-client/spec.md",
@@ -1073,11 +1087,11 @@
           },
           {
             "key": "routing-modes-config/specs/agent-ask/spec.md",
-            "sha256": "5729e7a6c43ac4b02f592a767d47950378130ac04b78fd024f609069f5483b36"
+            "sha256": "386d0eb113c90def8c399e23353804355a8e749fc9f865b357ee361aff3d948d"
           },
           {
             "key": "routing-modes-config/specs/agent-chat/spec.md",
-            "sha256": "ee00132f55543976867f86ce56f2ddc13ce869c695d8acc07d5725578d900893"
+            "sha256": "7b657929c3b53bb87c1d487d706c81ad2342a0694150104543ee45fb40365772"
           },
           {
             "key": "routing-modes-config/specs/model-catalog/spec.md",
@@ -1085,17 +1099,17 @@
           },
           {
             "key": "routing-modes-config/specs/routing-config/spec.md",
-            "sha256": "a142c3a1687d2ba07b4b55a8c8ce5e16fd8cbc98c07af86f5300a959992e91a9"
+            "sha256": "294d69378e479ea622fa72184f9af9d063cd318787141871bf0e3f5fcdd8e66f"
           },
           {
             "key": "routing-modes-config/specs/server-runtime/spec.md",
             "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagent over routing-modes-config and py-agent-citation-fixes vs main specs (5 BLOCKS and 11 POLISH; all BLOCKS and the actionable POLISH fixed in e0c8a52ff9152a33062fcc9f7f3fb2382556c498)",
+        "reviewer": "fresh-context general-purpose subagent over routing-modes-config vs main specs (1 BLOCK, 8 POLISH; BLOCK and actionable POLISH fixed in e913422; remaining POLISH declined: main-spec fixture wording 'recorded fast response' names a fixture)",
         "superseded": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-11T18:48:55.206Z",
+          "reviewedAt": "2026-10-13T13:44:31.527Z",
           "specs": [
             {
               "key": "py-agent-api/specs/agent-ask/spec.md",
@@ -1122,6 +1136,10 @@
               "sha256": "00b475b5aeca32de31223afc80c40dab3309e16c19f28a194ce53fe34ac93fd7"
             },
             {
+              "key": "py-agent-citation-fixes/specs/agent-ask/spec.md",
+              "sha256": "1a6ccddf5c901a252671de47df49ee96c303465deb7467124d206b6ff0a6668c"
+            },
+            {
               "key": "py-decisions-tool/specs/decisions-client/spec.md",
               "sha256": "e2cfbe58a6bf86dadb9c2e72ba0d66e62fc9f0cbcec71c2318d95c048d04bf0e"
             },
@@ -1143,7 +1161,7 @@
             },
             {
               "key": "py-embeddings/specs/embeddings-tool/spec.md",
-              "sha256": "1a5a5a8bf23e3a6f73789be774f294421f6c9d02dadea25019482ef8ebcba87a"
+              "sha256": "a34881bcfcaa8882711de25c3e1e49cb0f38d8a09c0eb6e94a1729e74c8fb9a9"
             },
             {
               "key": "py-foundation/specs/local-storage/spec.md",
@@ -1188,9 +1206,29 @@
             {
               "key": "py-usage-log/specs/usage-reporting/spec.md",
               "sha256": "85a38826d35de5be8c087e9bf6344e336ba74a578f791fdf98300f547cef96c9"
+            },
+            {
+              "key": "routing-modes-config/specs/agent-ask/spec.md",
+              "sha256": "5729e7a6c43ac4b02f592a767d47950378130ac04b78fd024f609069f5483b36"
+            },
+            {
+              "key": "routing-modes-config/specs/agent-chat/spec.md",
+              "sha256": "ee00132f55543976867f86ce56f2ddc13ce869c695d8acc07d5725578d900893"
+            },
+            {
+              "key": "routing-modes-config/specs/model-catalog/spec.md",
+              "sha256": "e2a745a7bfbb23cd32884ba4423ff785994b3bdeb481c4effc01cab65eda4a77"
+            },
+            {
+              "key": "routing-modes-config/specs/routing-config/spec.md",
+              "sha256": "a142c3a1687d2ba07b4b55a8c8ce5e16fd8cbc98c07af86f5300a959992e91a9"
+            },
+            {
+              "key": "routing-modes-config/specs/server-runtime/spec.md",
+              "sha256": "a70c53e727f52acf772caa4c0a6c576bb6ec25196b1311075992e2a10bd9a431"
             }
           ],
-          "reviewer": "two fresh-context general-purpose subagents (spec lens, data-model lens) plus narrow re-verification for py-embeddings (2026-10-11); residual findings fixed by the parent"
+          "reviewer": "fresh-context general-purpose subagent over routing-modes-config and py-agent-citation-fixes vs main specs (5 BLOCKS and 11 POLISH; all BLOCKS and the actionable POLISH fixed in e0c8a52ff9152a33062fcc9f7f3fb2382556c498)"
         }
       }
     }
