@@ -210,7 +210,9 @@ def build_server(
     async def health(_request: Request) -> JSONResponse:
         return JSONResponse({"status": "ok", "version": pkg_version})
 
-    register_tools(server)  # tools exist from construction, so the tool contract covers them
+    register_tools(
+        server, settings
+    )  # tools exist from construction, so the tool contract covers them
 
     server.app = app  # type: ignore[attr-defined]
     server.in_flight = in_flight  # type: ignore[attr-defined]

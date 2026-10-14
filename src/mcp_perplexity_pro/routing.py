@@ -85,6 +85,26 @@ def resolve(
     return Route(settings.routing, None, settings.model, None, "default")
 
 
+def description_sentence(settings: Settings) -> str:
+    """One paragraph for the ask and chat tool descriptions: the mode, what a call with no
+    selector uses, and that the default's cost differs from the per-depth figures."""
+    if settings.routing == "custom":
+        head = (
+            "Routing mode: custom. With no depth, tier or model the standard tier "
+            f"({settings.tier_standard}) answers; `tier` picks light ({settings.tier_light}), "
+            f"standard or complex ({settings.tier_complex})."
+        )
+    else:
+        head = (
+            f"Routing mode: standard. With no depth, tier or model {settings.model} answers "
+            "with web search; `tier` is for custom mode only."
+        )
+    return (
+        f"{head} A `model` is always used as given. The per-depth costs above apply to depth; "
+        "the default model's cost differs (see perplexity_usage)."
+    )
+
+
 def instructions_text(settings: Settings) -> str:
     """The MCP ``instructions``: a pure function of the settings, with no secret in it."""
     if settings.routing == "custom":

@@ -1,5 +1,6 @@
 """``perplexity_ask``: a stateless, synchronous, web-grounded answer (agent-ask spec)."""
 
+import inspect
 from typing import Annotated, Any
 
 from fastmcp import Context, FastMCP
@@ -19,10 +20,26 @@ from mcp_perplexity_pro.agent import (
     source_line,
 )
 from mcp_perplexity_pro.errors import PerplexityError
-from mcp_perplexity_pro.routing import resolve
+from mcp_perplexity_pro.routing import Route, description_sentence, resolve
+from mcp_perplexity_pro.settings import Settings
 
 TOOL = "perplexity_ask"
 GENERIC_400 = "invalid request"  # the API's body for several unrelated mistakes (design D6)
+
+
+class Routing(BaseModel):
+    """How the model was picked for one call."""
+
+    mode: Annotated[str, Field(description="Server routing mode")]
+    tier: Annotated[str | None, Field(description="Tier used, if any")] = None
+    model: Annotated[str | None, Field(description="Model id requested; null for a preset")] = None
+    selected_by: Annotated[str, Field(description="default, tier, depth or model")]
+
+    @classmethod
+    def of(cls, route: Route) -> "Routing":
+        return cls(
+            mode=route.mode, tier=route.tier, model=route.model, selected_by=route.selected_by
+        )
 
 
 class AskResult(BaseModel):
@@ -48,9 +65,10 @@ class AskResult(BaseModel):
     usage: Annotated[UsageSummary, Field(description="Tokens and cost of this call")]
     latency_ms: Annotated[int, Field(description="Measured wall time of the upstream call")]
     project: Annotated[str, Field(description="The project the call was recorded under")]
+    routing: Annotated[Routing | None, Field(description="How the model was picked")] = None
 
 
-def build_result(d: Digest, *, depth: str | None, latency_ms: int, project: str) -> AskResult:
+def build_result(d: Digest, *, route: Route, latency_ms: int, project: str) -> AskResult:
     return AskResult(
         answer=d.answer,
         answer_json=d.answer_json,
@@ -59,11 +77,12 @@ def build_result(d: Digest, *, depth: str | None, latency_ms: int, project: str)
         incomplete_reason=d.incomplete_reason,
         warnings=d.warnings,
         model=d.model,
-        depth=depth,
+        depth=route.preset,
         response_id=d.response_id,
         usage=d.usage,
         latency_ms=latency_ms,
         project=project,
+        routing=Routing.of(route),
     )
 
 
@@ -104,12 +123,7 @@ def schema_hint(exc: PerplexityError) -> PerplexityError:
     return exc
 
 
-def register(server: FastMCP) -> None:
-    @server.tool(
-        name=TOOL,
-        output_schema=AskResult.model_json_schema(),
-        annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True),
-    )
+def register(server: FastMCP, settings: Settings) -> None:
     async def perplexity_ask(
         ctx: Context,
         query: Annotated[str, Field(description="The question (at most 20000 characters)")],
@@ -120,8 +134,8 @@ def register(server: FastMCP) -> None:
         depth: Annotated[
             str | None,
             Field(
-                description="fast (default), low or medium; selects the search preset. high and "
-                "xhigh are refused: use perplexity_research. Cannot be combined with model"
+                description="fast, low or medium; selects a search preset. high and xhigh are "
+                "refused: use perplexity_research. Cannot be combined with tier or model"
             ),
         ] = None,
         model: Annotated[
@@ -131,11 +145,18 @@ def register(server: FastMCP) -> None:
                 "It searches with the web search tool and 3 steps unless search is false"
             ),
         ] = None,
+        tier: Annotated[
+            str | None,
+            Field(
+                description="light, standard or complex: custom routing mode only. Cannot be "
+                "combined with depth or model"
+            ),
+        ] = None,
         search: Annotated[
             bool | None,
             Field(
-                description="false answers from the model alone (needs model: a depth always "
-                "searches). true is accepted and changes nothing"
+                description="false answers from the model alone (not with depth: a depth "
+                "always searches). true is accepted and changes nothing"
             ),
         ] = None,
         domains: Annotated[
@@ -174,7 +195,7 @@ def register(server: FastMCP) -> None:
         stateless; it never waits for a background run (use perplexity_research for those).
 
         Approximate cost per call by depth (observed ranges; the upper figures are estimates):
-        fast $0.001 to $0.002 (the default), low $0.0005 to $0.004 (up to about $0.02
+        fast $0.001 to $0.002, low $0.0005 to $0.004 (up to about $0.02
         estimated), medium $0.016 to $0.025 as a research run (up to about $0.05 estimated; a
         synchronous medium call was not measured). high and xhigh can cost dollars and take
         minutes (unmeasured estimates), so they exist only behind perplexity_research. Giving a
@@ -188,7 +209,7 @@ def register(server: FastMCP) -> None:
         check_text("query", query)
         app = ctx.lifespan_context
         options = AskOptions(
-            route=resolve(app.settings, depth=depth, model=model),
+            route=resolve(app.settings, depth=depth, tier=tier, model=model),
             search=search,
             domains=domains,
             recency=recency,
@@ -218,10 +239,17 @@ def register(server: FastMCP) -> None:
                 structured=json_schema is not None,
                 secrets=(app.settings.api_key.get_secret_value(),),
             ),
-            depth=options.preset,
+            route=options.route,
             latency_ms=costed.latency_ms,
             project=costed.project,
         )
         return ToolResult(
             content=render_answer(result), structured_content=result.model_dump(mode="json")
         )
+
+    server.tool(
+        name=TOOL,
+        description=f"{inspect.cleandoc(perplexity_ask.__doc__)}\n\n{description_sentence(settings)}",
+        output_schema=AskResult.model_json_schema(),
+        annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True),
+    )(perplexity_ask)
