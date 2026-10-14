@@ -1,6 +1,6 @@
 ## 0. Before apply
 
-- [ ] 0.1 Record Gate 1 (`record-gate-review py-cli --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/py-cli`) after a fresh-context review, and record the release cross-spec review (`record-cross-spec-review release-2-0-0`) for the `cli` spec against the main specs; ORDER: before group 1 and again after any amendment
+- [x] 0.1 Record Gate 1 (`record-gate-review py-cli --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/py-cli`) after a fresh-context review, and record the release cross-spec review (`record-cross-spec-review release-2-0-0`) for the `cli` spec against the main specs; ORDER: before group 1 and again after any amendment
 
 ## 1. The offline parser
 
