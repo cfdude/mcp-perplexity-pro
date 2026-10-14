@@ -127,5 +127,6 @@ def instructions_text(settings: Settings) -> str:
         f"{picking} Pass `depth` (fast, low or medium) to use a Perplexity preset instead, or "
         "`model` to name any model id; an explicit model is always used exactly as given. "
         f"Pass only one of {selectors} per call. Override the default only "
-        "when the user asks. Depths high and xhigh belong to perplexity_research."
+        "when the user asks. Depths high and xhigh belong to perplexity_research. "
+        "Call perplexity_help for how to use the tools."
     )

@@ -213,3 +213,63 @@ def test_api_code_is_redacted_when_it_is_a_string():
     err = PerplexityError("authentication", "bad", api_code=f"bad key {KEY}")
     assert KEY not in str(err.api_code)
     assert PerplexityError("authentication", "bad", api_code=401).api_code == 401
+
+
+# --- invalid requests point to help (agent-help 3.1) -------------------------------------
+
+HINT = 'Call perplexity_help with action "tool" and name "{}" for its arguments and examples.'
+
+
+@pytest.fixture
+async def help_world(make_settings):
+    from agent_support import make_world, respond_with
+
+    w = await make_world(make_settings, respond_with("agent_fast.json"))
+    yield w
+    await w.aclose()
+
+
+async def test_an_invalid_request_from_a_tool_names_the_help_call(help_world):
+    result = await help_world.call("perplexity_ask", query="q", depth="turbo")
+    message = result.structured_content["message"]
+    assert result.structured_content["category"] == "invalid_request"
+    assert message.startswith("depth:") and message.endswith(HINT.format("perplexity_ask"))
+    assert result.content[0].text == f"[invalid_request] {message}"
+    assert result.is_error
+
+
+async def test_a_framework_validation_error_gets_the_same_sentence(help_world):
+    result = await help_world.call("perplexity_ask", query=5)
+    assert result.structured_content["category"] == "invalid_request"
+    assert result.structured_content["message"].endswith(HINT.format("perplexity_ask"))
+
+
+async def test_other_categories_have_no_hint(make_settings):
+    from agent_support import make_world
+
+    def rate_limited(request, n):
+        return httpx2.Response(429, json={"error": {"message": "slow", "type": "rate_limit"}})
+
+    w = await make_world(make_settings, rate_limited)
+    try:
+        result = await w.call("perplexity_ask", query="q")
+        assert result.structured_content["category"] == "rate_limited"
+        assert "perplexity_help" not in result.structured_content["message"]
+    finally:
+        await w.aclose()
+
+
+async def test_helps_own_errors_get_no_hint(help_world):
+    for arguments in ({"action": "tool", "name": "nope"}, {"action": 5}):
+        result = await help_world.call("perplexity_help", **arguments)
+        assert result.structured_content["category"] == "invalid_request"
+        assert 'Call perplexity_help with action "tool"' not in result.structured_content["message"]
+
+
+async def test_a_tool_without_a_help_entry_gets_no_hint(help_world):
+    @help_world.server.tool
+    def stub() -> str:
+        raise PerplexityError("invalid_request", "stub: bad")
+
+    result = await help_world.call("stub")
+    assert result.structured_content["message"] == "stub: bad"

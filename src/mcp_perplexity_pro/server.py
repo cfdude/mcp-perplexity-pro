@@ -29,6 +29,7 @@ from mcp_perplexity_pro.catalog import Catalog
 from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.embeddings import ProjectLocks
 from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
+from mcp_perplexity_pro.help_text import TOOLS
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.routing import instructions_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
@@ -86,6 +87,19 @@ def error_result(category: str, message: str) -> ToolResult:
     )
 
 
+def with_help_hint(category: str, message: str, context: Any) -> str:
+    """Name the help call for the tool, on an ``invalid_request`` from a tool that has a help
+    entry (help-tool: not on other categories, not on help's own errors, not on a tool help
+    does not know, because the call it would name would fail)."""
+    tool = getattr(getattr(context, "message", None), "name", None)
+    if category != "invalid_request" or tool == "perplexity_help" or tool not in TOOLS:
+        return message
+    return (
+        f'{message} Call perplexity_help with action "tool" and name "{tool}" '
+        "for its arguments and examples."
+    )
+
+
 class InFlightMiddleware(Middleware):
     """Counts running tool calls; once draining, refuses new ones."""
 
@@ -136,7 +150,8 @@ class ErrorContractMiddleware(Middleware):
         except PerplexityError as exc:
             # PerplexityError already redacts what it was built with; this covers a message
             # that gained text afterwards, or a subclass that skipped its own redaction.
-            return error_result(exc.category, redact_text(str(exc), self._secrets))
+            message = redact_text(str(exc), self._secrets)
+            return error_result(exc.category, with_help_hint(exc.category, message, context))
         except Exception as exc:
             return self._classify(context, exc)
 
@@ -146,7 +161,10 @@ class ErrorContractMiddleware(Middleware):
             busy = storage_busy_error()
             return error_result(busy.category, str(busy))
         if isinstance(exc, ValidationError):  # FastMCP's: arguments failed schema validation
-            return error_result("invalid_request", redact_text(str(exc), self._secrets))
+            message = redact_text(str(exc), self._secrets)
+            return error_result(
+                "invalid_request", with_help_hint("invalid_request", message, context)
+            )
         if isinstance(exc, NotFoundError):
             return error_result("not_found", redact_text(str(exc), self._secrets))
         name = getattr(getattr(context, "message", None), "name", "?")

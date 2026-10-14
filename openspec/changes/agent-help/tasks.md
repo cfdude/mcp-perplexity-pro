@@ -12,7 +12,7 @@
 
 ## 3. Errors point to help
 
-- [ ] 3.1 RED then GREEN: `routing.instructions_text` names `perplexity_help` (test in `tests/test_routing.py` and the initialize test in `tests/test_server.py`); `ErrorContractMiddleware` appends the help sentence to an `invalid_request` from a tool that has a help entry, except `perplexity_help` (both a `PerplexityError` and a framework `ValidationError`), never to other categories; tests in `tests/test_tool_errors.py` (or the file that owns the middleware tests) for each scenario of the `server-runtime` delta, including that the category and structured fields are unchanged, a tool without an entry (a stub registered in the test) gets no sentence and a framework `ValidationError` from help itself gets none; update any test that asserts an exact `invalid_request` message; mutation-check: remove the append and confirm red
+- [x] 3.1 RED then GREEN: `routing.instructions_text` names `perplexity_help` (test in `tests/test_routing.py` and the initialize test in `tests/test_server.py`); `ErrorContractMiddleware` appends the help sentence to an `invalid_request` from a tool that has a help entry, except `perplexity_help` (both a `PerplexityError` and a framework `ValidationError`), never to other categories; tests in `tests/test_tool_errors.py` (or the file that owns the middleware tests) for each scenario of the `server-runtime` delta, including that the category and structured fields are unchanged, a tool without an entry (a stub registered in the test) gets no sentence and a framework `ValidationError` from help itself gets none; update any test that asserts an exact `invalid_request` message; mutation-check: remove the append and confirm red
 
 ## 4. Trim the descriptions
 

@@ -143,3 +143,8 @@ def test_instructions_are_a_pure_function_of_settings_and_hold_no_secret(standar
         text = instructions_text(settings)
         assert text == instructions_text(settings)
         assert settings.api_key.get_secret_value() not in text
+
+
+def test_instructions_point_to_help_in_both_modes(standard, custom):
+    for settings in (standard, custom):
+        assert "perplexity_help" in instructions_text(settings)
