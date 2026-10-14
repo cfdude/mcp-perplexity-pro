@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "routing-modes-config",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -758,7 +758,7 @@
       "id": "routing-modes-config",
       "title": "Routing modes: standard, custom tiers, dynamic switch",
       "priority": "P2",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -797,7 +797,7 @@
         "0639fb5fe6ba01537372684111200af49d8c694b"
       ],
       "createdAt": "2026-10-13T13:17:14.209Z",
-      "touchedAt": "2026-10-14T03:35:38.947Z",
+      "touchedAt": "2026-10-14T03:39:46.619Z",
       "startedAt": "2026-10-13T13:18:53.113Z",
       "release": "release-2-0-0",
       "gateReview": {
@@ -825,6 +825,11 @@
             "reviewer": "fresh-context general-purpose subagent over e913422..8241060 (0 Critical, 2 Important, 5 Minor, tests added or fixed in ca54286)"
           }
         }
+      },
+      "disposition": {
+        "outcome": "unknown",
+        "recordedAt": "2026-10-14T03:39:46.618Z",
+        "recordedBy": "archive-drift-heal"
       }
     },
     {
@@ -1002,7 +1007,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 321,
+  "revision": 322,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",

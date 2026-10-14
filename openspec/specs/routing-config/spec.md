@@ -1,7 +1,7 @@
 # routing-config Specification
 
 ## Purpose
-TBD - created by archiving change routing-modes-config. Update Purpose after archive.
+Defines which model answers `perplexity_ask` and `perplexity_chat` send: the routing mode (`standard`, `custom`, reserved `dynamic`), the `tier`, `depth` and `model` selectors and their order and conflicts, the rule that an explicit model is always used as given, the `routing` object every result carries, and the instructions text that tells the calling agent the configuration.
 
 ## Requirements
 
