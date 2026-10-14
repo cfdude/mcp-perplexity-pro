@@ -183,7 +183,8 @@ DECISIONS = (
 )
 
 ERROR_FIXES: dict[str, str] = {
-    "invalid_request": "Fix the argument the message names; nothing was sent or billed.",
+    "invalid_request": "Fix the argument the message names; it is usually checked before any "
+    "call, and an upstream 400 means the API rejected it.",
     "authentication": "The API key is rejected; tell the operator.",
     "forbidden": "The key lacks access to this feature; tell the operator.",
     "not_found": "The chat, job or project does not exist; list first.",

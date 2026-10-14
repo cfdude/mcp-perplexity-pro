@@ -9,7 +9,8 @@ from mcp_perplexity_pro.storage.engine import create_engine_for
 from mcp_perplexity_pro.storage.migrate import migrate
 
 # Measured 2026-10-13 on the live server after the routing modes (acceptance record of
-# routing-modes-config): 59779 bytes for ten tools. The help tool must be paid for.
+# routing-modes-config): 59779 bytes for ten tools. With the help tool (eleven) the live server
+# measured 55512 (agent-help acceptance); the cap stays at the spec's number.
 BUDGET = 59779
 
 

@@ -147,3 +147,21 @@ async def test_titles_are_not_sent_but_a_property_named_title_stays(world):
 
     assert "title" in set(property_names(chat.output_schema))  # the chat's own title field
     assert all("title" not in v for v in chat.output_schema["properties"].values())
+
+
+def test_strip_titles_keeps_data_inside_defaults_and_enums():
+    from mcp_perplexity_pro.server import strip_titles
+
+    schema = {
+        "title": "Gone",
+        "properties": {
+            "title": {"title": "Title", "type": "string", "default": {"title": "kept"}},
+            "kind": {"enum": [{"title": "kept"}], "title": "Kind"},
+        },
+    }
+    assert strip_titles(schema) == {
+        "properties": {
+            "title": {"type": "string", "default": {"title": "kept"}},
+            "kind": {"enum": [{"title": "kept"}]},
+        }
+    }

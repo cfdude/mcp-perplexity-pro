@@ -46,6 +46,11 @@ async def tools(make_settings):
     return data
 
 
+def uncovered(registered):
+    """Registered tools that have no curated help entry."""
+    return set(registered) - set(help_text.TOOLS)
+
+
 def test_the_module_imports_neither_fastmcp_nor_storage():
     code = (
         "import sys\n"
@@ -58,8 +63,7 @@ def test_the_module_imports_neither_fastmcp_nor_storage():
 
 
 def test_every_registered_tool_has_a_curated_entry(tools):
-    # perplexity_help itself is registered by the tool task (2.1), which tests it
-    assert set(help_text.TOOLS) - {"perplexity_help"} == set(tools) - {"perplexity_help"}
+    assert uncovered(tools) == set() and set(help_text.TOOLS) == set(tools)
 
 
 def test_the_index_is_small_ascii_and_names_everything(make_settings, tools):
@@ -158,6 +162,9 @@ def test_every_named_result_key_is_a_top_level_output_property(tools):
 
 
 def test_flags_match_the_annotations(make_settings, tools):
+    read_only = [n for n, (_s, _o, a) in tools.items() if a.get("readOnlyHint")]
+    destructive = [n for n, (_s, _o, a) in tools.items() if a.get("destructiveHint")]
+    assert read_only and destructive, "the guards below must have something to check"
     for name, (schema, _out, ann) in tools.items():
         entry = help_text.TOOLS[name]
         if ann.get("readOnlyHint"):
@@ -217,8 +224,8 @@ def test_an_unknown_name_is_refused_with_the_valid_names(make_settings):
 
 
 def test_a_missing_entry_is_noticed(monkeypatch, tools):
-    monkeypatch.delitem(help_text.TOOLS, "perplexity_models")
-    assert set(help_text.TOOLS) - {"perplexity_help"} != set(tools) - {"perplexity_help"}
+    monkeypatch.delitem(help_text.TOOLS, "perplexity_help")
+    assert uncovered(tools) == {"perplexity_help"}
 
 
 _ = asyncio  # the fixture above is async; pytest-asyncio runs it

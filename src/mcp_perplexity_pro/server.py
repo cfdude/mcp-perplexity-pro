@@ -111,6 +111,8 @@ def strip_titles(node: Any) -> Any:
                 out[key] = {name: strip_titles(sub) for name, sub in value.items()}
             elif key == "title" and isinstance(value, str):
                 continue
+            elif key in ("default", "enum", "const", "examples"):
+                out[key] = value  # data, not schema: a "title" inside it stays
             else:
                 out[key] = strip_titles(value)
         return out
