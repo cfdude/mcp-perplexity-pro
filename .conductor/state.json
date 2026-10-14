@@ -797,7 +797,7 @@
         "0639fb5fe6ba01537372684111200af49d8c694b"
       ],
       "createdAt": "2026-10-13T13:17:14.209Z",
-      "touchedAt": "2026-10-14T03:39:46.619Z",
+      "touchedAt": "2026-10-14T03:41:50.076Z",
       "startedAt": "2026-10-13T13:18:53.113Z",
       "release": "release-2-0-0",
       "gateReview": {
@@ -827,10 +827,15 @@
         }
       },
       "disposition": {
-        "outcome": "unknown",
-        "recordedAt": "2026-10-14T03:39:46.618Z",
-        "recordedBy": "archive-drift-heal"
-      }
+        "outcome": "delivered",
+        "recordedAt": "2026-10-14T03:41:50.074Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-14T03:41:50.040Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-14T03:41:50.074Z"
     },
     {
       "id": "py-cli",
@@ -1007,7 +1012,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 322,
+  "revision": 323,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
