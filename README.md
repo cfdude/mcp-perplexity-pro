@@ -12,7 +12,7 @@ now return `403 chat_completions_not_available` ("Sonar is now the Agent API"), 
 answer a single query. There was no working behavior to port, so the TypeScript code is deleted
 (git history keeps it) and the server was rebuilt in Python on the Agent API (`POST /v1/agent`).
 
-**Ten tools exist today:**
+**Eleven tools exist today:**
 
 | Tool | What it does | Spends money |
 |---|---|---|
@@ -26,6 +26,7 @@ answer a single query. There was no working behavior to port, so the TypeScript 
 | `perplexity_models` | Lists the models your key can use, with live prices, plus the documented Agent API presets | no |
 | `perplexity_projects` | Lists projects, or deletes one and its stored records (spend history is kept) | no |
 | `perplexity_usage` | Reports what recorded upstream calls cost, grouped by tool, API, model, project or day. Read-only | no |
+| `perplexity_help` | The server's own help: an index that picks the right tool, one tool's page, or a topic. Free, no API call | no |
 
 **The four Agent tools, `perplexity_search`, `perplexity_decide` and `perplexity_embed` record their
 usage.** Every costed upstream call stores one usage event (`perplexity_usage` reports them), and a
@@ -166,6 +167,30 @@ ask and chat result (`mode`, `tier`, `model` and `selected_by`: `default`, `tier
 `perplexity_models`, which marks each configured id `known` when the live list has it. A model the
 list does not have is still sent as configured, because the list can lag a new model and the API
 reports a typo on the first call.
+
+## Getting help
+
+`perplexity_help` is the first thing a calling agent should read, and it costs nothing (no API call,
+no usage event, no project). It has three actions:
+
+| Action | Name | Returns |
+|---|---|---|
+| `index` (default) | none | A page of about 900 bytes: a table that maps a need to a tool, one line per tool saying whether it is free, billed or asynchronous, the topic names and the active routing mode |
+| `tool` | a tool name | What the tool is for, whether a call is billed, asynchronous or can delete data, its cost, one example call, its arguments (read from the tool's own schema, so they cannot drift), the result keys per action and the errors with their fixes |
+| `topic` | `routing`, `costs`, `citations`, `errors` or `projects` | One short topic page, at most 3000 bytes |
+
+```json
+{"name": "perplexity_help", "arguments": {"action": "tool", "name": "perplexity_search"}}
+```
+
+An unknown name fails with `invalid_request` listing the valid names. Every `invalid_request` from
+a tool ends with the call that shows that tool's arguments, for example `... Call perplexity_help
+with action "tool" and name "perplexity_ask" for its arguments and examples.`, and the server's MCP
+`instructions` name the help tool. The text comes from one module (`help_text.py`) that the planned
+CLI will reuse for `--help`. The help costs figures are the ones in this README (a test checks that
+each dollar figure in help appears here). Live record:
+`openspec/changes/archive/2026-10-14-agent-help/acceptance/` (the archive directory carries the date
+of the archive command).
 
 ## Client configuration
 

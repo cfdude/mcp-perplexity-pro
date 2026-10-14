@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MCP server for the Perplexity API, written in Python (FastMCP, SQLAlchemy 2.0 async, SQLite,
 Alembic). Version 2.0.0 replaced the TypeScript 1.x server, which is deleted (git history keeps
 it): Perplexity retired the Sonar endpoints (`403 chat_completions_not_available`), so there was
-nothing to port. Ten tools exist: the four Agent API tools `perplexity_ask`, `perplexity_chat`,
+nothing to port. Eleven tools exist: `perplexity_help` (free, the server's own help: `index`, `tool`, `topic`), the four Agent API tools `perplexity_ask`, `perplexity_chat`,
 `perplexity_research` and `perplexity_jobs` (they spend money), `perplexity_search` (the Search
 API, one costed request per call), `perplexity_decide` (the Decisions API, one costed request per
 call), `perplexity_embed` (the Embeddings API: `index`, `search`, `status` and `delete` over a local
@@ -53,8 +53,10 @@ PERPLEXITY_API_KEY=... uv run pytest -m live   # live tests; real key, never com
 | `__main__.py` | Entry point (`main`, `bootstrap`, `run`). Startup order: settings, then data dir and migrations, then upstream client, then listen. Own `uvicorn.Server` subclass for HTTP, own signal handling for stdio |
 | `cli.py` | `--transport stdio\|http`, `--version`; parsed before settings so `--help` needs no key |
 | `settings.py` | `Settings` (pydantic-settings, prefix `PERPLEXITY_`), `load_settings()` raising `SettingsError` that names each bad variable; the routing fields (`routing`, `model`, `tier_light`, `tier_standard`, `tier_complex`) with their cross-field check, `ignored_routing_vars()` for the startup warning |
+| `help_text.py` | Pure and FastMCP-free (a test blocks those imports): the curated help for every tool (`TOOLS`), `render_index`, `render_tool`, `render_topic`, `describe_params` (a JSON schema to readable arguments) and `POINTER`; every dollar figure in it must appear in `README.md`, every example must validate against its tool's schema, and a registered tool without an entry fails the suite |
+| `tools/help.py` | `perplexity_help` (`index`/`tool`/`topic`), read-only, no API, no usage, no project; reads the other tools' schemas through `ctx.fastmcp.list_tools()` |
 | `routing.py` | Pure and network-free: `Route`, `resolve(settings, depth=, tier=, model=)` (the one place the three selectors are checked and a default is chosen; an explicit `model` is always verbatim), `description_sentence` (ask and chat descriptions) and `instructions_text` (the MCP `instructions`); owns `ASK_DEPTHS` and `LONG_DEPTHS` |
-| `server.py` | `build_server(settings, http, engine)`, `AppContext`, `/health`, the two middlewares, `error_result()` |
+| `server.py` | `build_server(settings, http, engine)`, `AppContext`, `/health`, the middlewares (in-flight counting, `CompactSchemasMiddleware` which sends title-free schemas, `ErrorContractMiddleware` which also appends the `perplexity_help` sentence to an `invalid_request` of a tool with a help entry via `with_help_hint`), `error_result()` |
 | `client.py` | `PerplexityClient`: the one httpx2 client, retry loop, typed errors, redacted logging. Agent helpers `create_run` (a synchronous run gets `PERPLEXITY_AGENT_READ_TIMEOUT`), `get_run`, `cancel_run` |
 | `errors.py` | `PerplexityError` (a FastMCP `ToolError`), `CATEGORIES`, `ALL_CATEGORIES`, status-to-category mapping |
 | `catalog.py` | Model list TTL cache, stale-on-failure rule, the dated `PRESETS` table |
@@ -134,9 +136,7 @@ so nothing may depend on `ctx.session_id`. Version has one source, `importlib.me
    bytes. Adding `perplexity_embed` (ten tools) measured 2026-10-11 the same way (at `aba65c1`
    against `e252e8f`): 56161 bytes (+13.4%, from 49539), and the `perplexity_embed` entry alone is
    6621 bytes. The `ids` field of `Source` (py-agent-citation-fixes) then measured 56898 bytes
-   (+737, +1.3%) on 2026-10-13. The routing modes (the `tier` argument and `routing` result field on ask and chat, the `perplexity_models` routing section, the mode sentence in two descriptions) then measured 59779 bytes (+2881, +5.1%, the same way, live server, 2026-10-13; over the 3% the design aimed for, and the `agent-help` epic trims descriptions). Ten tools exceed the design target of about nine by one; nothing was trimmed, and
-   the existing descriptions (`perplexity_chat` is the largest) are the lever. Prefer one tool with
-   an `action` argument over several, and trim descriptions before adding an eleventh tool.
+   (+737, +1.3%) on 2026-10-13. The routing modes (the `tier` argument and `routing` result field on ask and chat, the `perplexity_models` routing section, the mode sentence in two descriptions) then measured 59779 bytes (+2881, +5.1%, the same way, live server, 2026-10-13). `perplexity_help` (eleven tools, agent-help) with `CompactSchemasMiddleware` (it removes the `title` annotation pydantic writes on every schema node from the listed schemas, about 14% of the schema bytes) measured 55512 bytes live on 2026-10-14, 4267 below the routing figure, and `tests/test_tools_list_budget.py` fails above 59779. Eleven tools exceed the design target of about nine; the remaining lever is the field descriptions of `perplexity_chat`, `perplexity_jobs` and `perplexity_embed`. Prefer one tool with an `action` argument over several.
 
 ### Error contract
 
@@ -371,7 +371,7 @@ a third by inlining the sequence above:
 
 - `.conductor/` is the pm conductor state (`state.json` is the state of record; `PROJECT.md` is
   generated, never hand-edit it). `openspec/` holds change records: `openspec/changes/<id>/`
-  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). There is no change in flight (`routing-modes-config` is archived by its last task, `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are all archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
+  (`proposal.md`, `design.md`, `specs/*/spec.md`, `tasks.md`). There is no change in flight (`agent-help` and `routing-modes-config` are archived by their last tasks, `py-foundation`, `py-usage-log`, `py-agent-api`, `py-search-api`, `py-decisions-tool`, `py-embeddings` and `py-agent-citation-fixes` are all archived under `openspec/changes/archive/`). `docs/lessons/` holds process lessons
   with their enforcement points.
 - Commits are conventional (`feat|fix|docs|test|chore(scope): subject`), one per task, with the
   task's `tasks.md` checkbox ticked in the same commit.
