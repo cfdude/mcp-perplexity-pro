@@ -1,9 +1,22 @@
 [project]
 name = "mcp-perplexity-pro"
 version = "2.0.0"
-description = "MCP server for the Perplexity API"
+description = "MCP server and command line for the Perplexity API: Agent, Search, Embeddings and Decisions"
 readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Rob Sherman" }]
+keywords = ["mcp", "perplexity", "llm", "search", "agent", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries",
+]
 dependencies = [
     "fastmcp>=4.0.11,<5",
     "sqlalchemy[asyncio]",
@@ -11,6 +24,11 @@ dependencies = [
     "aiosqlite",
     "numpy>=2.3.2",
 ]
+
+[project.urls]
+Repository = "https://github.com/cfdude/mcp-perplexity-pro"
+Changelog = "https://github.com/cfdude/mcp-perplexity-pro/blob/main/CHANGELOG.md"
+Issues = "https://github.com/cfdude/mcp-perplexity-pro/issues"
 
 [project.scripts]
 mcp-perplexity-pro = "mcp_perplexity_pro.__main__:main"
@@ -23,11 +41,16 @@ dev = [
     "ruff",
     "pre-commit",
     "jsonschema>=4.26.0",
+    "pyyaml>=6.0.3",
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+# Anchored: a bare name matches at any depth (a README.md under openspec/ would ship).
+include = ["/src", "/tests", "/README.md", "/CHANGELOG.md", "/LICENSE", "/pyproject.toml", "/uv.lock"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_perplexity_pro"]

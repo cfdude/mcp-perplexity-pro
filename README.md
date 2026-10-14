@@ -51,7 +51,25 @@ uv sync
 export PERPLEXITY_API_KEY=<your-perplexity-api-key>
 ```
 
-Start commands:
+From PyPI (2.0.0 and later), with nothing cloned:
+
+```bash
+export PERPLEXITY_API_KEY=<your-perplexity-api-key>
+
+# run the MCP server (stdio is the default transport)
+uvx mcp-perplexity-pro
+
+# run the command line
+uvx --from mcp-perplexity-pro perplexity-pro ask "What is new in Python?"
+
+# or install both commands once
+uv tool install mcp-perplexity-pro        # then: mcp-perplexity-pro, perplexity-pro
+pipx install mcp-perplexity-pro
+```
+
+How a release is made: [docs/releasing.md](https://github.com/cfdude/mcp-perplexity-pro/blob/main/docs/releasing.md).
+
+Start commands from a checkout:
 
 ```bash
 # stdio (the default transport): the MCP client launches this process
@@ -260,7 +278,21 @@ The URL is the same as in 1.x. The equivalent command is
 
 ### Over stdio
 
-The client launches the server, so the key goes in the client's `env` block:
+The client launches the server, so the key goes in the client's `env` block. From PyPI:
+
+```json
+{
+  "mcpServers": {
+    "perplexity": {
+      "command": "uvx",
+      "args": ["mcp-perplexity-pro"],
+      "env": { "PERPLEXITY_API_KEY": "<your-perplexity-api-key>" }
+    }
+  }
+}
+```
+
+From a checkout:
 
 ```json
 {
