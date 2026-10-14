@@ -6,7 +6,7 @@
       "id": "python-rewrite-2-0",
       "title": "Python rewrite 2.0: FastMCP + Agent/Search/Embeddings APIs",
       "priority": "P0",
-      "status": "queued",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [],
@@ -14,14 +14,25 @@
       "description": "Parent release epic. Full rewrite in Python (uv, src/ layout, FastMCP, pydantic, SQLAlchemy+Alembic, pytest, ruff pre-commit). Moves off deprecated Sonar (support ended 2026-09-27) to the Agent API; adds Search, Embeddings, Decisions. Clean slate, no data import.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-14T03:58:18.467Z",
+      "touchedAt": "2026-10-14T22:35:52.568Z",
       "notes": [
         {
           "at": "2026-10-14T03:58:18.466Z",
           "actor": "agent",
           "text": "Archive after pypi-publish ships (Rob, 2026-10-13: accept the tools/list growth; archive the umbrella after pypi-publish)."
         }
-      ]
+      ],
+      "disposition": {
+        "outcome": "superseded",
+        "recordedAt": "2026-10-14T22:35:52.565Z",
+        "reason": "delivered as its 11 child epics in release-2-0-0 (2.0.0 on PyPI 2026-10-14), each with its own passing Gate 2"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-14T22:35:52.563Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-14T22:35:52.565Z"
     },
     {
       "id": "model-routing",
@@ -1173,7 +1184,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 385,
+  "revision": 386,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
