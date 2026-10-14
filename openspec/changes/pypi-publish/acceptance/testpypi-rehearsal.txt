@@ -1,0 +1,13 @@
+run: https://github.com/cfdude/mcp-perplexity-pro/actions/runs/38592094482 (workflow_dispatch on main; build, publish-testpypi success; publish-pypi skipped)
+published: mcp-perplexity-pro 2.0.0.dev1 on test.pypi.org
+
+$ uvx --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --from mcp-perplexity-pro==2.0.0.dev1 mcp-perplexity-pro --version
+2.0.0.dev1
+
+$ ... perplexity-pro help ask  (first lines)
+# perplexity_ask
+One web-grounded question, answered now, with its sources. No memory.
+
+Flags: billed.
+Cost: Default model perplexity/sonar: $0.00336 in one sample. depth fast: $0.00118 to $0.00180 over four observations, about 2 s. Every call is recorded as spend.
+
