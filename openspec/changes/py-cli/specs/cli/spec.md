@@ -85,8 +85,8 @@ A successful command SHALL print the tool's readable text to standard output, or
 - **WHEN** a user runs `perplexity-pro models --json`
 - **THEN** standard output is one JSON document that parses and equals the tool's structured result
 
-### Requirement: Exit codes and cleanup
-A tool failure SHALL print `[category] message` to standard error and exit 1, with the MCP help sentence replaced by `Run perplexity-pro help <command> for its arguments and examples.` A setup failure (a missing key, an invalid setting, a failed migration) SHALL print the startup message and exit 1. An interrupted command SHALL exit 130, still recording a call the provider had accepted, and every path SHALL close the upstream client and the database engine.
+### Requirement: Exit codes
+A tool failure SHALL print `[category] message` to standard error and exit 1, with the MCP help sentence replaced by `Run perplexity-pro help <command> for its arguments and examples.` A setup failure (a missing key, an invalid setting, a failed migration) SHALL print the startup message and exit 1.
 
 #### Scenario: A tool error
 - **WHEN** a user runs `perplexity-pro ask "q" --depth high`
@@ -96,9 +96,12 @@ A tool failure SHALL print `[category] message` to standard error and exit 1, wi
 - **WHEN** a user runs `perplexity-pro ask "q"` with no `PERPLEXITY_API_KEY`
 - **THEN** standard error names `PERPLEXITY_API_KEY`, the exit status is 1 and no data directory was created
 
+### Requirement: Interruption and cleanup
+An interrupted command SHALL exit 130 without a traceback, and every path SHALL close the upstream client and the database engine. A call whose response had already arrived is still recorded, by the same shielded usage write the MCP tools use.
+
 #### Scenario: Interrupted
 - **WHEN** a user presses Ctrl-C while a call is in flight
-- **THEN** the exit status is 130 and the usage event of a call the provider already answered is still recorded
+- **THEN** the exit status is 130, standard error has no traceback and standard output is empty
 
 #### Scenario: Resources are closed
 - **WHEN** a command fails or is interrupted after setup

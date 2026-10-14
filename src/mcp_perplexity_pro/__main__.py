@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 from mcp_perplexity_pro.cli import parse_args
 
 if TYPE_CHECKING:
+    import httpx2
     import uvicorn
     from fastmcp import FastMCP
 
@@ -34,10 +35,14 @@ def _fail(message: str) -> SystemExit:
     return SystemExit(1)
 
 
-def bootstrap() -> tuple[FastMCP, Settings]:
+def bootstrap(
+    http: httpx2.AsyncClient | None = None, *, serving: bool = True
+) -> tuple[FastMCP, Settings]:
     """Startup in the required order; returns the built server, ready for ``run()``.
 
-    Any failure exits non-zero before a listener exists.
+    ``http`` is an upstream client to use instead of building one (the CLI's tests inject a mock
+    transport); ``serving`` is false for a process that does not listen (the CLI), which skips
+    the non-loopback host warning. Any failure exits non-zero before a listener exists.
     """
     # FastMCP checks PyPI and writes a cache file under the user's home when its banner shows;
     # the banner is never shown, and this is the second guard. Set before fastmcp is imported.
@@ -57,7 +62,7 @@ def bootstrap() -> tuple[FastMCP, Settings]:
     except SettingsError as exc:
         raise _fail(str(exc)) from None
     configure_logging(settings.log_level, [settings.api_key.get_secret_value()])
-    if settings.host not in LOOPBACK_HOSTS:
+    if serving and settings.host not in LOOPBACK_HOSTS:
         logger.warning(
             "PERPLEXITY_HOST is %s, not loopback: the HTTP endpoints are unauthenticated and "
             "reachable by anything that can reach this address",
@@ -80,7 +85,7 @@ def bootstrap() -> tuple[FastMCP, Settings]:
         raise SystemExit(1) from None
 
     # 3. Upstream client; the listener opens later, inside run().
-    return build_server(settings, httpx2.AsyncClient(), engine), settings
+    return build_server(settings, http or httpx2.AsyncClient(), engine), settings
 
 
 def main(argv: list[str] | None = None) -> None:

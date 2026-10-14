@@ -17,6 +17,8 @@ os.environ.setdefault("FASTMCP_CHECK_FOR_UPDATES", "off")
 import argparse  # noqa: E402
 import asyncio  # noqa: E402
 import json  # noqa: E402
+import logging  # noqa: E402
+import re  # noqa: E402
 import sys  # noqa: E402
 from dataclasses import dataclass, field  # noqa: E402
 from importlib.metadata import version  # noqa: E402
@@ -325,3 +327,86 @@ def parse_command(
     except UsageError as exc:
         parser.error(str(exc))
         raise  # unreachable: parser.error exits
+
+
+# --- running a command ----------------------------------------------------------------------
+
+MCP_HINT = re.compile(
+    r' Call perplexity_help with action "tool" and name "[a-z_]+" for its arguments and examples\.$'
+)
+
+
+def cli_error_text(tool: ToolSpec, category: str, message: str) -> str:
+    """``[category] message`` with the MCP help sentence replaced by the command-line one."""
+    cleaned = MCP_HINT.sub("", message)
+    if cleaned != message:
+        cleaned += f" Run perplexity-pro help {tool.command} for its arguments and examples."
+    return f"[{category}] {cleaned}"
+
+
+async def run_tool(
+    tool: ToolSpec, arguments: dict[str, Any], as_json: bool, http: Any = None
+) -> int:
+    """Call ``tool`` in-process and print its result. Returns the exit status."""
+    from fastmcp import Client
+
+    from mcp_perplexity_pro.__main__ import bootstrap, close_resources
+
+    # A command line is quiet unless asked: warnings and errors only (the operator can set
+    # PERPLEXITY_LOG_LEVEL), and FastMCP's own "Error calling tool" line is not wanted because
+    # the failure is printed once below, in the CLI's own form.
+    quiet = "PERPLEXITY_LOG_LEVEL" not in os.environ
+    if quiet:
+        os.environ["PERPLEXITY_LOG_LEVEL"] = "WARNING"
+    try:
+        server, _settings = bootstrap(http=http, serving=False)  # exits 1 on a setup failure
+    finally:
+        if quiet:
+            del os.environ["PERPLEXITY_LOG_LEVEL"]
+    fastmcp_log = logging.getLogger("fastmcp")
+    saved_level = fastmcp_log.level
+    fastmcp_log.setLevel(logging.CRITICAL)
+    try:
+        async with Client(server) as client:
+            result = await client.call_tool(tool.name, arguments, raise_on_error=False)
+    finally:
+        fastmcp_log.setLevel(saved_level)
+        await close_resources(server)
+    structured = result.structured_content or {}
+    if result.is_error:
+        category = str(structured.get("category", "internal_error"))
+        message = str(structured.get("message", ""))
+        print(cli_error_text(tool, category, message), file=sys.stderr)
+        return 1
+    if as_json:
+        indent = 2 if sys.stdout.isatty() else None
+        print(json.dumps(structured, indent=indent, ensure_ascii=False))
+    else:
+        print(result.content[0].text if result.content else "")
+    return 0
+
+
+def main(argv: list[str] | None = None, *, http: Any = None) -> int:
+    """The ``perplexity-pro`` command; returns the exit status."""
+    argv = list(sys.argv[1:] if argv is None else argv)
+    tools = schema_source()
+    ns, arguments = parse_command(argv, tools)
+    try:
+        if arguments is not None:
+            return asyncio.run(run_tool(ns.tool, arguments, ns.as_json, http))
+        sys.stderr.write(f"perplexity-pro {ns.command}: not available yet\n")
+        return 2
+    except KeyboardInterrupt:
+        return 130
+    except BrokenPipeError:
+        # the reader went away (``| head``): leave quietly and keep Python from complaining
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        return 0
+
+
+def cli() -> None:
+    sys.exit(main())
+
+
+if __name__ == "__main__":
+    cli()
