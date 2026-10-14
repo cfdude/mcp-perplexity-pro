@@ -120,9 +120,12 @@ def instructions_text(settings: Settings) -> str:
         picking = (
             f"Routing mode: standard. Calls that name nothing use {settings.model} with web search."
         )
+    selectors = (
+        "`tier`, `depth` and `model`" if settings.routing == "custom" else "`depth` and `model`"
+    )
     return (
         f"{picking} Pass `depth` (fast, low or medium) to use a Perplexity preset instead, or "
         "`model` to name any model id; an explicit model is always used exactly as given. "
-        "Pass only one of `tier`, `depth` and `model` per call. Override the default only "
+        f"Pass only one of {selectors} per call. Override the default only "
         "when the user asks. Depths high and xhigh belong to perplexity_research."
     )

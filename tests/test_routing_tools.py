@@ -204,3 +204,42 @@ async def test_refused_selector_combinations_make_no_event_and_no_request(world)
         assert (await w.call(ASK, query="q", **selectors)).is_error
     assert await w.events() == [] and w.bodies() == []
     assert await w.count("projects") == 0
+
+
+# --- Gate 2 findings: stored row, anthropic cap, default-route shape -------------------------
+
+
+async def test_a_model_route_stores_a_null_preset_and_an_old_fast_row_still_reads(chat_world):
+    w = await chat_world()
+    await w.call(CHAT, action="send", title="t", message="hi")
+    rows = await w.rows("SELECT preset FROM chat_messages WHERE role = 'assistant'")
+    assert rows == [(None,)]
+    await w.call(CHAT, action="send", chat_id=1, message="and", depth="fast")
+    rows = await w.rows("SELECT preset FROM chat_messages WHERE role = 'assistant' ORDER BY id")
+    assert rows == [(None,), ("fast",)]
+    read = await w.call(CHAT, action="read", chat_id=1)
+    assert [
+        m["preset"] for m in read.structured_content["messages"] if m["role"] == "assistant"
+    ] == [
+        None,
+        "fast",
+    ]
+
+
+async def test_an_anthropic_tier_and_default_route_are_shaped_like_an_explicit_model(world):
+    w = await world(
+        routing="custom",
+        tier_light="x/l",
+        tier_standard="x/s",
+        tier_complex="anthropic/claude-sonnet-5-5",
+    )
+    await w.call(ASK, query="q", tier="complex")
+    await w.call(ASK, query="q")  # the standard tier, no cap
+    capped, plain = w.bodies()
+    assert capped["max_output_tokens"] == 4096 and "max_output_tokens" not in plain
+    for body in (capped, plain):
+        assert body["tools"] == [{"type": "web_search"}] and body["max_steps"] == 3
+    w2 = await world(model="anthropic/claude-sonnet-5-5")
+    await w2.call(ASK, query="q")
+    default = w2.bodies()[0]
+    assert default["max_output_tokens"] == 4096 and default["tools"] and default["max_steps"] == 3

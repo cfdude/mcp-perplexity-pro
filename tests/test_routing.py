@@ -127,6 +127,7 @@ def test_standard_instructions_name_the_mode_and_model_and_no_tiers(standard):
     assert "standard" in text and "perplexity/sonar" in text
     assert "perplexity_research" in text and "depth" in text and "model" in text
     assert "light" not in text and "complex" not in text
+    assert "tier" not in text  # tier is not usable in standard mode
 
 
 def test_custom_instructions_list_the_three_tiers_and_how_to_pick(custom):

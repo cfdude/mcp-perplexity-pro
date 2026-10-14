@@ -236,7 +236,17 @@ def test_custom_with_three_tiers_starts(key_env, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "bad", ["", "a" * 201, "two words", "line\nbreak", "tab\there", "bell\x07"]
+    "bad",
+    [
+        "",
+        "a" * 201,
+        "two words",
+        "line\nbreak",
+        "tab\there",
+        "bell\x07",
+        "zero\u200bwidth",
+        "`tick`",
+    ],
 )
 def test_a_bad_model_id_is_refused_naming_the_variable(key_env, monkeypatch, bad):
     assert "PERPLEXITY_MODEL" in routing_error(monkeypatch, MODEL=bad)

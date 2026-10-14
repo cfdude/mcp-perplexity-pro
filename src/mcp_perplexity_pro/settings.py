@@ -23,9 +23,10 @@ LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 ROUTING_MODES = ("standard", "custom", "dynamic")
 TIER_NAMES = ("light", "standard", "complex")
 DEFAULT_MODEL = "perplexity/sonar"
-# A model id is written into the instructions text the calling agent reads, so no whitespace
-# and no control characters; 200 characters is this server's own sanity cap.
-_MODEL_ID = re.compile(r"[^\s\x00-\x1f\x7f]{1,200}")
+# A model id is written into the instructions text the calling agent reads, so only the plain
+# characters real ids use (no whitespace, control, invisible or Markdown characters); 200
+# characters is this server's own sanity cap.
+_MODEL_ID = re.compile(r"[A-Za-z0-9._:/@+-]{1,200}")
 
 
 def _default_data_dir() -> Path:
@@ -101,8 +102,8 @@ class Settings(BaseSettings):
                 problems.append(f"{ENV_PREFIX}{name} is required when routing is custom")
             elif not _MODEL_ID.fullmatch(value):
                 problems.append(
-                    f"{ENV_PREFIX}{name}: a model id is 1 to 200 characters with no whitespace "
-                    "or control characters"
+                    f"{ENV_PREFIX}{name}: a model id is 1 to 200 characters from letters, "
+                    "digits and . _ : / @ + - only"
                 )
         return problems
 
