@@ -651,7 +651,7 @@
       "id": "routing-rules-v1",
       "title": "Deterministic complexity matrix selects preset (depth=auto)",
       "priority": "P2",
-      "status": "later",
+      "status": "queued",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -669,9 +669,36 @@
       "reconcileNeeded": false,
       "parent": "model-routing",
       "description": "Deterministic rules classifier (prompt length, task type, tool needs): the fallback when the Decisions classifier is rate-limited or fails, and the offline option for dynamic mode.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "0860ec3d6c2e40aacac7225be8a9b90d5be85432",
+        "8f865223d1bda7d46ca31365b4e6f11d5d6963a4",
+        "4bc0cf048b7935d67f2e1e6dcf035bf4afb329df"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-13T13:17:15.661Z"
+      "touchedAt": "2026-10-15T15:46:42.458Z",
+      "startedAt": "2026-10-15T15:30:14.374Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-15T15:46:37.308Z",
+          "baseSha": "97e6eaf9c6eb7978a45f8a508ae86f99ea6c138d",
+          "headSha": "4bc0cf048b7935d67f2e1e6dcf035bf4afb329df",
+          "artifacts": [
+            "openspec/changes/routing-rules-v1"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review (2 Critical, 10 Important, 7 Minor, all but one Minor folded in) and a narrow verification (0 Critical, 3 Important, 8 Minor, folded in 4bc0cf0)"
+        }
+      },
+      "gateRounds": {
+        "gate1": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-15T15:46:37.308Z",
+          "lastPassAt": "2026-10-15T15:46:37.308Z"
+        }
+      },
+      "release": "release-2-1-0"
     },
     {
       "id": "routing-decisions-classifier",
@@ -1184,7 +1211,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 386,
+  "revision": 393,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
@@ -1488,6 +1515,12 @@
           "reviewer": "fresh-context general-purpose subagent over pypi-publish vs main specs (no blocks; polish: command-count wording stated as equivalent forms)"
         }
       }
+    },
+    {
+      "id": "release-2-1-0",
+      "intent": "Dynamic model routing: the rules classifier and dynamic mode, then the Decisions classifier",
+      "deferred": [],
+      "target": "2.1.0"
     }
   ],
   "reviewMode": "standard"
