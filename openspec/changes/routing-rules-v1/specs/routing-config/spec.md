@@ -56,7 +56,7 @@ For one call the server SHALL resolve the model by the one selector the call nam
 - **THEN** the request names the `light` tier's model, and the next turn of the same chat may name a different tier
 
 ### Requirement: Every ask and chat result reports its routing
-`perplexity_ask` and `perplexity_chat` send SHALL return a `routing` object with `mode`, `tier` (null unless a tier was used, the `custom` default applied or the rules picked one), `model` (the id requested, or null when a preset was named), `selected_by` (`default`, `tier`, `depth`, `model` or `rules`) and `reason` (a short text, set only when `selected_by` is `rules`), so the caller sees what happened to its call without having been told the configuration.
+`perplexity_ask` and `perplexity_chat` send SHALL return a `routing` object with `mode`, `tier` (null unless a tier was used, the `custom` default applied or dynamic mode picked one), `model` (the id requested, or null when a preset was named), `selected_by` (`default`, `tier`, `depth`, `model` or `rules`) and `reason` (a short text, set only when `selected_by` is `rules`), so the caller sees what happened to its call without having been told the configuration.
 
 #### Scenario: Custom default
 - **WHEN** an ask names nothing in `custom` mode
@@ -124,7 +124,7 @@ The routing mode and its models SHALL only supply what a call does not choose fo
 - **THEN** the request names the mode's default route: the default model in `standard` and `custom` mode, the tier the rules pick in `dynamic` mode
 
 ### Requirement: The instructions text
-The MCP `instructions` SHALL be rendered at startup from the settings and state the mode, the standard model or the three tiers with what each runs (a model id or a preset), when to pass `tier`, `depth` or `model`, that depth `high` and `xhigh` belong to `perplexity_research`, and that `perplexity_help` explains the tools. The text SHALL contain no secret and SHALL be identical for the life of the process. `perplexity_help` repeats the routing mode but is a pointer and a topic, not a fifth channel of "The calling agent is told the configuration".
+The MCP `instructions` SHALL be rendered at startup from the settings and state the mode, the standard model or the three tiers with what each runs (a model id or a preset), when to pass `tier`, `depth` or `model`, that `high` and `xhigh` belong to `perplexity_research`, and that `perplexity_help` explains the tools. It SHALL hold no secret and not change during the process. `perplexity_help` repeats the mode but is a pointer, not a fifth channel of "The calling agent is told the configuration".
 
 #### Scenario: Standard instructions
 - **WHEN** a client initializes against a `standard` server
@@ -146,11 +146,15 @@ The MCP `instructions` SHALL be rendered at startup from the settings and state 
 
 ## ADDED Requirements
 ### Requirement: Dynamic mode needs a model when search is off
-In `dynamic` mode a call with `search` false that names no selector SHALL run the `standard` tier's model without classification (a preset always searches), with `selected_by` `rules` and a reason saying search is off. The search filters stay allowed on a preset route, as they are with an explicit `depth`.
+In `dynamic` mode a call with `search` false that names no selector SHALL run the `standard` tier's model without classification (a preset always searches), with tier `standard`, `selected_by` `rules` and a reason saying search is off. With an explicit `tier` that runs a preset it SHALL fail with `invalid_request` naming `tier` and `search`. Search filters stay allowed on a preset route, as with `depth`.
 
 #### Scenario: Search off
 - **WHEN** an ask in `dynamic` mode with `search` false has a lookup-shaped query
 - **THEN** the request names the standard tier's model, carries no tools and does not fail, and the routing reason says search is off
+
+#### Scenario: Search off with a preset tier named
+- **WHEN** an ask in `dynamic` mode names `tier` `light` (preset `fast`) and `search` false
+- **THEN** the call fails with `invalid_request` naming `tier` and `search`, says a preset always searches and to pass `model`, tier `standard` or search true, and nothing is sent
 
 ### Requirement: Dynamic mode warns about a shadowed model variable
 In `dynamic` mode the server SHALL log one warning naming `PERPLEXITY_MODEL` when both it and `PERPLEXITY_TIER_STANDARD` are set, because the tier variable replaces it. No other variable is ignored in `dynamic` mode.
@@ -186,7 +190,7 @@ In `dynamic` mode the `light` tier SHALL run preset `fast`, the `standard` tier 
 - **THEN** startup fails naming `PERPLEXITY_TIER_LIGHT`
 
 ### Requirement: A chat follow-up holds its tier
-In `dynamic` mode a `perplexity_chat` send to an existing chat that names no selector SHALL route to the higher of the tier the rules pick for the new message and the tier of the chat's previous assistant turn, found by matching that turn's stored preset, else its stored model, against the three tiers (the highest tier wins a tie; no match counts as `standard`). It SHALL NOT route below that tier, and the routing reason SHALL say the tier was held when the floor applied.
+In `dynamic` mode a `perplexity_chat` send to an existing chat that names no selector SHALL route to the higher of the tier the rules pick for the new message and the tier of the chat's previous assistant turn, found by matching that turn's stored preset, else its stored model, against the three tiers (the highest tier wins a tie; no match counts as `standard`). It SHALL NOT route below that tier, and when that tier is higher than the rules' pick the routing reason SHALL say the tier was held.
 
 #### Scenario: A short follow-up to a complex chat
 - **WHEN** a chat's first turn ran the `complex` tier and the next message is `and in 2025?`
@@ -202,7 +206,7 @@ In `dynamic` mode a `perplexity_chat` send to an existing chat that names no sel
 
 #### Scenario: Errors keep their order
 - **WHEN** a nameless follow-up in `dynamic` mode names a chat that does not exist, or a send names an invalid selector
-- **THEN** the call fails with `not_found` for the chat, and with `invalid_request` for the selector before any database access, as in the other modes
+- **THEN** the call fails with `not_found` for the chat, and with `invalid_request` for the selector or any other invalid option before the chat is looked up, as in the other modes
 
 ### Requirement: Dynamic mode is told to the calling agent
 The MCP `instructions` and the `perplexity_ask` and `perplexity_chat` description sentence SHALL, in `dynamic` mode, state the mode, that the server picks a tier from the prompt when a call names nothing, what each tier runs, and that `tier`, `depth` or `model` overrides the choice. Both SHALL be pure functions of the settings, with no secret.

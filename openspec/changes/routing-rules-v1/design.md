@@ -35,12 +35,13 @@ grow (and gain a sibling that calls the network).
 
 **D2. Signals, matching and initial thresholds.** Text is trimmed and case-folded; length is
 `len()` of the trimmed text. Complex when any holds: (a) two or more distinct entries of the
-analysis vocabulary match as whole words: compare, comparison, evaluate, evaluation, trade-off,
-trade-offs, tradeoff, tradeoffs, pros and cons, step by step, root cause, architecture, in depth,
-analyze, analyse, analysis, critique, derive, prove, design, implications (the list is a module
-constant pinned by its test); (b) length is 1200 or more; (c) three or more questions, where a
-question is a `?`, `？` or `؟` followed by whitespace or the end of the text (so a URL query string
-is not one), or three or more lines that start with a number and `.` or `)`. Light when none of
+analysis vocabulary groups match as whole words, one group per word family: {compare, comparison},
+{evaluate, evaluation}, {trade-off, trade-offs, tradeoff, tradeoffs}, {pros and cons}, {step by
+step}, {root cause}, {architecture}, {in depth}, {analyze, analyse, analysis}, {critique}, {derive},
+{prove}, {design}, {implications} (a module constant pinned by its test; variants of one family
+count once); (b) length is 1200 or more; (c) questions plus numbered list items sum to three or more, where a question is an ASCII `?`
+followed by whitespace or the end of the text (so a URL query string is not one) or any `？` or
+`؟`, and a numbered item is a line that starts with a number and `.` or `)`. Light when none of
 those fired, length is 120 or less, at most one question, and the text opens with a lookup form
 (regex over: what is, what are, who is, who was, when did, when is, where is, how many, how much,
 define, latest, current, price of). A text with no question mark can still be a lookup (`define
@@ -65,7 +66,9 @@ with nothing set, and `custom` already covers the all-explicit case.
 **D5. `resolve()` gains optional `text`, `previous` and `search`.** In dynamic mode with no
 selector it classifies `text`, applies the floor from `previous` (a tier name or None) and
 returns `selected_by="rules"` with `reason`; with `search` false it returns the standard tier's
-route without classifying; with `text=None` (a caller that has none, such as a test) it returns the
+route without classifying, and a `tier` that runs a preset with `search` false is refused naming
+`tier` and `search` (the caller named a tier, so the standard model is not substituted silently);
+`tier` in dynamic mode resolves through `dynamic_route`, not the `custom` settings; with `text=None` (a caller that has none, such as a test) it returns the
 standard tier with `selected_by="default"`. With a selector the behavior is today's (a test asserts
 the classifier is not called). `Route` gains `reason: str | None = None`. `_default_description`
 and the conflict message learn the dynamic wording ("with neither, the tier is picked from the
@@ -78,18 +81,23 @@ false needs the model route, because `agent.build_request` refuses it with a pre
 `storage.chats.last_route(session, chat_id) -> (preset, model) | None` reads the last assistant
 message's stored `preset` and `model`. `routing.tier_of(settings, preset, model)` checks the preset
 first (the stored preset column holds the preset name for a preset run), then the stored model
-against each tier's configured model; a tie takes the highest tier, no match is `standard`.
+against each tier's configured model; a tie takes the highest tier, no match is `standard`, and a tier replaced by a
+`PERPLEXITY_TIER_*` model matches by model only.
 In `perplexity_chat` a send that names a selector resolves exactly as today, before any database
-access, so invalid selectors still beat `not_found`; only a nameless send to an existing chat in
-dynamic mode defers `resolve` into `_send`, after the read-only chat lookup that already
-produces `not_found`, so the order of errors is preserved. A new chat has no previous turn. The
+access, so invalid selectors still beat `not_found`. A nameless send to an existing chat in dynamic
+mode validates its options in `_send` step 1 against a provisional route (the standard tier's
+model), so every other invalid option still beats `not_found`; then, after the read-only chat
+lookup that already produces `not_found`, it calls `last_route` in the same unit of work, resolves
+the real route and builds the request again (preset routes only add what `depth` already allows,
+and `search` false was forced to the model route, so the second build cannot newly fail). A new chat has no previous turn. The
 stored `model` is the model the API reports; acceptance compares the reported id with the requested
 one for `perplexity/sonar` and an `anthropic/` id on a live call, and if they differ the match
 falls back to standard (documented, never an error). Alternative: a `tier` column on `chats`;
 rejected because it needs a migration for what the stored rows already imply.
 
 **D7. Settings.** `dynamic` leaves the refusal list. `_check_routing` accepts it; `tier_*` stay
-optional (validated as model ids when set) and `PERPLEXITY_MODEL` is validated as in standard mode;
+optional (validated as model ids when set) and `PERPLEXITY_MODEL` is validated only when `PERPLEXITY_TIER_STANDARD` is unset (a shadowed variable is
+unused, so the existing rule says it is not validated);
 `ignored_routing_vars()` reports `PERPLEXITY_MODEL` only when `PERPLEXITY_TIER_STANDARD` is also
 set, and nothing else. `__main__` logs the mode and the three tiers' routes once at INFO (a test
 checks the line holds no secret).
@@ -98,7 +106,7 @@ checks the line holds no secret).
 `selected_by` description adds `rules` (it is a plain string, not an enum). `routing.instructions_text`
 and `description_sentence` render a dynamic variant; the `tier` parameter descriptions in
 `tools/ask.py` and `tools/chat.py` say "custom or dynamic mode"; `tools/models.py` gives
-`ConfiguredModel` an optional `preset` (and a nullable `id`) and `RoutingSection` an optional
+`ConfiguredModel` an optional `preset` (a nullable `id`, `known` null for a preset entry) and `RoutingSection` an optional
 `classifier`; `help_text._routing_line` and the `routing` topic get a dynamic variant (index stays
 within 1500 bytes). `tests/test_tools_list_budget.py` measures a default server, so acceptance also
 measures a dynamic one and records both numbers.

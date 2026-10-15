@@ -17,14 +17,14 @@ Classifying a text SHALL need no network, no database and no API key, SHALL cost
 - **THEN** the only upstream request is the ask itself and the only usage event is the ask's
 
 ### Requirement: A result is a tier, signals and a reason
-A classification SHALL return a tier (`light`, `standard` or `complex`), the ordered list of signal names that fired, and a reason of at most 120 ASCII characters built from those names and counts. The reason SHALL NOT contain any text taken from the prompt, because prompts can hold secrets and the reason is returned to the caller and may be logged.
+A classification SHALL return a tier (`light`, `standard` or `complex`), the signal names that fired in the fixed order vocabulary, length, questions, lookup (empty when none did), and a reason of at most 120 ASCII characters built from those names and counts. The reason SHALL NOT contain any text taken from the prompt, because prompts can hold secrets and the reason is returned to the caller and may be logged.
 
 #### Scenario: The reason names signals, not words
 - **WHEN** a prompt containing the string `hunter2` is classified
 - **THEN** the reason does not contain `hunter2` and names only signals such as length, question count or vocabulary count
 
 ### Requirement: Complexity signals raise the tier
-A text SHALL classify as `complex` when any one of these holds: it contains at least two distinct entries of the fixed analysis vocabulary (compare, evaluate, trade-offs, pros and cons, step by step, root cause, architecture, in depth and similar, matched as whole words without regard to case); its trimmed length is at least 1200 characters; it holds three or more questions or numbered list items.
+A text SHALL classify as `complex` when any one of these holds: it contains words from at least two distinct groups of the fixed analysis vocabulary (listed in the design and pinned by a test; forms of one word such as trade-off and trade-offs are one group), matched as whole words without regard to case; its trimmed length is at least 1200 characters; its questions and numbered list items together number three or more.
 
 #### Scenario: Two analysis words
 - **WHEN** the text asks to compare two libraries and evaluate their trade-offs
@@ -66,7 +66,7 @@ A text that is neither `complex` nor `light` SHALL classify as `standard`.
 
 #### Scenario: Text the vocabulary cannot read
 - **WHEN** a 60-character question in Japanese with one question mark is classified
-- **THEN** only the length and question signals apply and the tier is `standard`, never an error
+- **THEN** no signal fires, the reason says so, and the tier is `standard`, never an error
 
 ### Requirement: A labeled prompt set is the contract
 The test suite SHALL hold a labeled set of at least 40 prompts, each with an expected tier and a mark of `clear` or `borderline`, covering every tier at least 10 times and, for each complexity signal and the lookup rule, at least one clear prompt that triggers only that signal. Every `clear` prompt SHALL classify to its expected tier; every `borderline` prompt SHALL land within one tier. Changing a rule SHALL be done by changing this set first.

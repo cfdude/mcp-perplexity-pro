@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Active routing is reported
-`perplexity_models` SHALL include a `routing` section stating the active mode, the standard model or the three tiers with what each runs (a model id, or a preset name for a dynamic tier that runs a preset), and for each configured model id whether the live catalog this call read lists it (`known` true or false). In `dynamic` mode it SHALL also name the classifier (`rules`). The section describes configuration and SHALL be present whatever the `provider` filter is.
+`perplexity_models` SHALL include a `routing` section stating the active mode, the standard model or the three tiers with what each runs (a model id, or a preset name for a dynamic tier that runs a preset), and for each configured model id whether the live catalog this call read lists it (`known` true or false; a preset entry has no id and `known` null). In `dynamic` mode it SHALL also name the classifier (`rules`). The section describes configuration and SHALL be present whatever the `provider` filter is.
 
 #### Scenario: Standard routing section
 - **WHEN** a client calls `perplexity_models` against a default server
