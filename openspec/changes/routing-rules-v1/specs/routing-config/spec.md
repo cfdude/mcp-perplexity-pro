@@ -78,6 +78,66 @@ For one call the server SHALL resolve the model by the one selector the call nam
 - **WHEN** an ask in `dynamic` mode names nothing and the rules pick `light`
 - **THEN** the routing is mode `dynamic`, tier `light`, preset `fast` with model null, `selected_by` `rules` and a non-empty `reason`
 
+### Requirement: Refusal order
+A call that breaks more than one routing rule SHALL be refused with the first of these that applies: a conflict between selectors, then `tier` outside `custom` and `dynamic`, then an unknown `tier`, then `depth` `high` or `xhigh`, so the message an agent reads is deterministic. In `dynamic` mode the selector-conflict message SHALL say that, with nothing named, the server picks the tier from the prompt.
+
+#### Scenario: Two rules broken at once
+- **WHEN** an ask in `standard` mode names `tier` `light` and `depth` `low`
+- **THEN** the call fails with the selector-conflict message naming `tier` and `depth`, not the message about `tier` outside `custom` and `dynamic`
+
+#### Scenario: Conflict in dynamic mode
+- **WHEN** an ask in `dynamic` mode names `tier` and `model`
+- **THEN** the message names both, says to pass one or neither, and says that with neither the tier is picked from the prompt
+
+### Requirement: A routed call is shaped like an explicit model call
+A call resolved to a model by the mode's default, by `tier` or by the rules SHALL be shaped exactly as an explicit `model` call is: the web search tool, the step budget, `search` false allowed and the `anthropic/` default output cap. A call resolved to a preset by the rules SHALL be shaped exactly as a call naming that `depth` is. `agent-ask` owns those rules; this requirement only says they apply to routed calls.
+
+#### Scenario: Default route is shaped like an explicit model
+- **WHEN** an ask names nothing in `standard` mode
+- **THEN** the request carries the web search tool and the step budget of an explicit-model request
+
+#### Scenario: Anthropic tier gets the output cap
+- **WHEN** an ask in `custom` mode resolves to a tier model whose id starts with `anthropic/`
+- **THEN** the request carries the same default output cap as an explicit `anthropic/` model
+
+#### Scenario: A rules preset is shaped like a depth call
+- **WHEN** an ask in `dynamic` mode is routed by the rules to preset `fast`
+- **THEN** its request equals the request of the same ask naming `depth` `fast`
+
+### Requirement: The mode is a default, never a restriction
+The routing mode and its models SHALL only supply what a call does not choose for itself. An explicit `model` on `perplexity_ask` or `perplexity_chat` send SHALL be used exactly as given in every mode, whether or not it is the configured model, one of the tiers or listed in the live catalog, and a call that names no `model` (and no `depth` or `tier`) SHALL fall back to the mode's default route. No mode SHALL refuse, rewrite or second-guess an explicit model.
+
+#### Scenario: Explicit model in standard mode
+- **WHEN** `PERPLEXITY_MODEL` is `perplexity/sonar` and an ask names `model` `anthropic/claude-opus-5-5`
+- **THEN** the request names `anthropic/claude-opus-5-5`, and the result's routing is model `anthropic/claude-opus-5-5` with `selected_by` `model`
+
+#### Scenario: Explicit model that is not a tier
+- **WHEN** the mode is `custom` and a chat send names a `model` that none of the three tiers uses
+- **THEN** the request names that model
+
+#### Scenario: Explicit model the catalog does not list
+- **WHEN** an ask names a `model` the live catalog does not list
+- **THEN** the call is sent with it and any refusal comes from the API, as an upstream error
+
+#### Scenario: No model falls back to the default
+- **WHEN** an ask or chat send names no `model`, `depth` or `tier`
+- **THEN** the request names the mode's default route: the default model in `standard` and `custom` mode, the tier the rules pick in `dynamic` mode
+
+### Requirement: The instructions text
+The MCP `instructions` SHALL be rendered at startup from the settings and state the mode, the standard model or the three tiers with what each runs (a model id or a preset), when to pass `tier`, `depth` or `model`, that depth `high` and `xhigh` belong to `perplexity_research`, and that `perplexity_help` explains the tools. The text SHALL contain no secret and SHALL be identical for the life of the process. `perplexity_help` repeats the routing mode but is a pointer and a topic, not a fifth channel of "The calling agent is told the configuration".
+
+#### Scenario: Standard instructions
+- **WHEN** a client initializes against a `standard` server
+- **THEN** the instructions name the mode `standard` and the standard model, and do not mention tiers as usable
+
+#### Scenario: Custom instructions
+- **WHEN** a client initializes against a `custom` server
+- **THEN** the instructions list `light`, `standard` and `complex` with their model ids and say that `tier` selects one
+
+#### Scenario: Instructions point to help
+- **WHEN** a client initializes against any server
+- **THEN** the instructions name `perplexity_help`
+
 ## REMOVED Requirements
 
 ### Requirement: Dynamic mode is reserved
@@ -85,6 +145,19 @@ For one call the server SHALL resolve the model by the one selector the call nam
 **Migration**: A server started with `PERPLEXITY_ROUTING=dynamic` now starts. Nothing to change for the other modes; the startup refusal message is gone.
 
 ## ADDED Requirements
+### Requirement: Dynamic mode needs a model when search is off
+In `dynamic` mode a call with `search` false that names no selector SHALL run the `standard` tier's model without classification (a preset always searches), with `selected_by` `rules` and a reason saying search is off. The search filters stay allowed on a preset route, as they are with an explicit `depth`.
+
+#### Scenario: Search off
+- **WHEN** an ask in `dynamic` mode with `search` false has a lookup-shaped query
+- **THEN** the request names the standard tier's model, carries no tools and does not fail, and the routing reason says search is off
+
+### Requirement: Dynamic mode warns about a shadowed model variable
+In `dynamic` mode the server SHALL log one warning naming `PERPLEXITY_MODEL` when both it and `PERPLEXITY_TIER_STANDARD` are set, because the tier variable replaces it. No other variable is ignored in `dynamic` mode.
+
+#### Scenario: Both set
+- **WHEN** the server starts in `dynamic` mode with `PERPLEXITY_MODEL` and `PERPLEXITY_TIER_STANDARD` set
+- **THEN** it starts and logs one warning naming `PERPLEXITY_MODEL`
 
 ### Requirement: Dynamic mode routes by rules
 In `dynamic` mode a call that names no `depth`, `tier` or `model` SHALL be classified by the rules of `routing-rules` over the call's text (the ask's query, the chat send's message) and run the tier the classification names. The classification makes no upstream request.
@@ -113,11 +186,11 @@ In `dynamic` mode the `light` tier SHALL run preset `fast`, the `standard` tier 
 - **THEN** startup fails naming `PERPLEXITY_TIER_LIGHT`
 
 ### Requirement: A chat follow-up holds its tier
-In `dynamic` mode a `perplexity_chat` send to an existing chat that names no selector SHALL route to the higher of the tier the rules pick for the new message and the tier of the chat's previous assistant turn, recovered by matching that turn's stored preset or model against the three tiers (a model that matches none counts as `standard`). It SHALL NOT route below the previous tier.
+In `dynamic` mode a `perplexity_chat` send to an existing chat that names no selector SHALL route to the higher of the tier the rules pick for the new message and the tier of the chat's previous assistant turn, found by matching that turn's stored preset, else its stored model, against the three tiers (the highest tier wins a tie; no match counts as `standard`). It SHALL NOT route below that tier, and the routing reason SHALL say the tier was held when the floor applied.
 
 #### Scenario: A short follow-up to a complex chat
 - **WHEN** a chat's first turn ran the `complex` tier and the next message is `and in 2025?`
-- **THEN** the second turn runs the `complex` tier, with `selected_by` `rules`
+- **THEN** the second turn runs the `complex` tier with `selected_by` `rules` and a reason saying it was held at `complex`
 
 #### Scenario: A longer question raises the tier
 - **WHEN** a chat's first turn ran `light` and the next message classifies `complex`
@@ -126,6 +199,10 @@ In `dynamic` mode a `perplexity_chat` send to an existing chat that names no sel
 #### Scenario: Explicit selectors still win
 - **WHEN** a follow-up names `depth` `fast`
 - **THEN** it runs preset `fast` with `selected_by` `depth`, whatever tier the chat last used
+
+#### Scenario: Errors keep their order
+- **WHEN** a nameless follow-up in `dynamic` mode names a chat that does not exist, or a send names an invalid selector
+- **THEN** the call fails with `not_found` for the chat, and with `invalid_request` for the selector before any database access, as in the other modes
 
 ### Requirement: Dynamic mode is told to the calling agent
 The MCP `instructions` and the `perplexity_ask` and `perplexity_chat` description sentence SHALL, in `dynamic` mode, state the mode, that the server picks a tier from the prompt when a call names nothing, what each tier runs, and that `tier`, `depth` or `model` overrides the choice. Both SHALL be pure functions of the settings, with no secret.
