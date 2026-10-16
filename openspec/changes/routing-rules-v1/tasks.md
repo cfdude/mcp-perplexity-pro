@@ -33,7 +33,7 @@
 ## 7. Documentation (after Gate 2 is clean)
 
 - [x] 7.1 README: "Choosing how models are picked" gains the dynamic mode (what it does, the three default tiers, the overrides, the follow-up floor, that no savings are claimed), the `PERPLEXITY_ROUTING` row no longer says reserved, the `dynamic` row in the mode table, the `ecosystem.example.cjs` comment; the stale `routing-config` Purpose line ("reserved `dynamic`") edited in the main spec; `CLAUDE.md` (module table gains `rules.py`, routing row, the non-goal list loses "the dynamic routing mode" and keeps the Decisions classifier, the tools/list size) keeping the pm block byte-identical; `CHANGELOG.md` entry; verify every example against the acceptance output
-- [ ] 7.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
+- [x] 7.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 
 ## 8. Archive
 
