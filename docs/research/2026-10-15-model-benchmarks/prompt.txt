@@ -1,0 +1,14 @@
+I am building a model router for an API that exposes these {n} models from {prov}. I need EVIDENCE from published benchmarks and independent evaluations, not vendor marketing, to decide which model to send which kind of task to, at what price.
+
+Models (use these exact ids in the first column):
+{ids}
+
+Produce ONE markdown table with one row per model and these columns:
+1. Model id (exactly as listed).
+2. Release date and family, if published.
+3. Benchmark results: for each of coding (SWE-bench Verified, LiveCodeBench, Terminal-Bench or similar), reasoning/maths (GPQA Diamond, AIME), general knowledge (MMLU-Pro), agentic tool use (tau-bench, BFCL or similar), search/browse (BrowseComp or similar) and multimodal (MMMU or similar) give the benchmark name, the score, the date and the source URL. Mark each number as independent (leaderboard, third-party evaluation) or vendor-reported.
+4. Input modalities (text, image, audio, video, files) and context window, if published.
+5. Documented reasoning-effort controls (levels it accepts), if published.
+6. Strengths that the numbers support, in at most 15 words, naming the benchmark; and weaknesses the numbers support.
+
+Rules: prefer independent leaderboards and technical reports (LMArena, Artificial Analysis, Epoch AI, LiveBench, official SWE-bench, Scale SEAL). Do not infer a model's performance from its family name or version number. If no published benchmark exists for a model, write "no published data" in that cell; if you cannot find the model at all, write "not found". Do not guess and do not fill cells with adjectives. After the table add at most six lines: which models are near-duplicates, and which pairs score within about 3 points of each other on coding, so the cheaper can be chosen.

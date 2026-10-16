@@ -899,7 +899,14 @@
       "description": "Labeled prompt set plus usage log. The only place a savings number gets claimed. No headline percentage before this runs.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:43.683Z"
+      "touchedAt": "2026-10-16T06:24:45.235Z",
+      "notes": [
+        {
+          "at": "2026-10-16T06:24:45.233Z",
+          "actor": "agent",
+          "text": "2026-10-15: now gates routing-v2 and the 2.1.0 release; first dynamic-mode observations (decider over-escalates ordinary questions) are in the archived routing-decisions-classifier acceptance."
+        }
+      ]
     },
     {
       "id": "routing-router-api-backend",
@@ -1331,10 +1338,104 @@
         "declined": []
       },
       "completedAt": "2026-10-14T04:43:21.729Z"
+    },
+    {
+      "id": "media-inputs",
+      "title": "Image, audio and file inputs on ask and chat, with modality-aware routing",
+      "priority": "P2",
+      "status": "planned",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "relates-to",
+          "epic": "model-routing",
+          "reason": "the router must pick a model that accepts the attached media"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "perplexity_ask and perplexity_chat take text only, so a user cannot hand Perplexity an image, audio clip or document. An MCP server's callers are unknown; someone will ask to send an image and do something with it. Add attachment parameters (shape probed from the live Agent API first), validate size and type locally, record cost, and give the router (routing-v2) a modality requirement so it only considers models whose probed input modalities include it. Our omission, found 2026-10-15 while designing routing-v2.",
+      "notes": [
+        {
+          "at": "2026-10-16T06:24:43.476Z",
+          "actor": "agent",
+          "text": "lane: openspec, as routed. Evidence 2026-10-15: ask takes query text only; the Decisions API image input is also not built (CLAUDE.md non-goals); Perplexity docs say Nemotron 3.5 Super is text-only, so modality differs per model."
+        }
+      ],
+      "parent": "model-routing",
+      "attributedCommits": [],
+      "createdAt": "2026-10-16T06:24:43.477Z",
+      "touchedAt": "2026-10-16T06:24:43.478Z"
+    },
+    {
+      "id": "model-matrix",
+      "title": "Model matrix: prices, accepted effort levels and input modalities, refreshed at startup",
+      "priority": "P2",
+      "status": "planned",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "relates-to",
+          "epic": "media-inputs",
+          "reason": "the matrix records input modalities"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "A JSON file in the data directory, seeded from a packaged baseline of about eight curated models so it is never empty, refreshed at every start from GET /v1/models (ids, prices; never blocks or fails startup, atomic write under a lock because the pm2 server and a stdio server share the directory). New models are probed once for accepted reasoning.effort values (and later input modalities) at about one thousandth of a dollar each, with a cost cap. Probed facts only; benchmark-derived strengths belong to routing-v2. Evidence 2026-10-15: /v1/models returns only id, owned_by and pricing; a 54-call probe showed none/minimal/low/medium/high accepted by all 9 models tried, xhigh rejected by gpt-5-nano, invalid values rejected; the docs page lists 40 of the 54 live models and names its presets differently (gpt-5.6-luna against the live gpt-6-luna).",
+      "notes": [
+        {
+          "at": "2026-10-16T06:24:44.130Z",
+          "actor": "agent",
+          "text": "lane: openspec, as routed. Probe script and raw results are in the session scratchpad; move them under this change's acceptance/ when it is proposed."
+        }
+      ],
+      "parent": "model-routing",
+      "attributedCommits": [],
+      "createdAt": "2026-10-16T06:24:44.131Z",
+      "touchedAt": "2026-10-16T06:24:44.132Z"
+    },
+    {
+      "id": "routing-v2",
+      "title": "Router v2: pick a model and an effort level per prompt from benchmark evidence and price",
+      "priority": "P2",
+      "status": "planned",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "depends-on",
+          "epic": "model-matrix",
+          "reason": "needs the matrix of models, prices and accepted efforts"
+        },
+        {
+          "type": "relates-to",
+          "epic": "routing-eval-tuning",
+          "reason": "the evaluation is the gate for the shortlist and for publishing"
+        },
+        {
+          "type": "relates-to",
+          "epic": "media-inputs",
+          "reason": "modality requirement"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "Replace the three-tier effort ladder with a choice of (model, effort) in ask, chat and research. Candidates are a curated shortlist backed by published benchmark data (Perplexity Research per provider family, cited) and our own evaluation; among models within a few points on the relevant benchmark the cheaper wins. Effort not accepted by the model is dropped. Fallbacks: model gpt-6-luna, effort low. Research may use high and xhigh (background); ask and chat cap effort to what fits 120 s. Explicit model/depth/tier still win. Not published until an evaluation shows it picks well.",
+      "notes": [
+        {
+          "at": "2026-10-16T06:24:44.693Z",
+          "actor": "agent",
+          "text": "lane: openspec, as routed. Presets are bundles (docs: fast = 1 web search, low = 1 search + 1 fetch, medium = 2+2, high = 3+3); a router on an explicit model must attach comparable tools or it answers with weaker grounding than preset medium."
+        }
+      ],
+      "parent": "model-routing",
+      "attributedCommits": [],
+      "createdAt": "2026-10-16T06:24:44.693Z",
+      "touchedAt": "2026-10-16T06:24:44.695Z"
     }
   ],
   "detourStack": [],
-  "revision": 428,
+  "revision": 432,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
