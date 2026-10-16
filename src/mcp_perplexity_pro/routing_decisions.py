@@ -26,7 +26,7 @@ from mcp_perplexity_pro import decisions, rules
 from mcp_perplexity_pro.decisions import DecideOptions, DecisionAnswer
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.rules import Classification
-from mcp_perplexity_pro.settings import TIER_NAMES
+from mcp_perplexity_pro.settings import TIER_NAMES, Settings
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +94,26 @@ def _decided(text: str, tier: str, strength: float | None) -> Classification:
             base.signals,
         )
     return Classification(tier, f"decisions: {tier} ({strength:.2f}, weak)", CLASSIFIER)
+
+
+def wants_decider(
+    settings: Settings,
+    *,
+    depth: str | None,
+    tier: str | None,
+    model: str | None,
+    search: bool | None,
+) -> bool:
+    """Whether a call is classified by the Decisions API: dynamic mode with that classifier, no
+    selector named and ``search`` not false. The caller still validates the call first."""
+    return (
+        settings.routing == "dynamic"
+        and settings.classifier == CLASSIFIER
+        and depth is None
+        and tier is None
+        and model is None
+        and search is not False
+    )
 
 
 async def classify_dynamic(

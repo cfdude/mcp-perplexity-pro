@@ -1,6 +1,7 @@
 """``perplexity_ask``: a stateless, synchronous, web-grounded answer (agent-ask spec)."""
 
 import inspect
+from dataclasses import replace
 from typing import Annotated, Any
 
 from fastmcp import Context, FastMCP
@@ -22,7 +23,9 @@ from mcp_perplexity_pro.agent import (
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.help_text import POINTER
 from mcp_perplexity_pro.routing import Route, description_sentence, resolve
+from mcp_perplexity_pro.routing_decisions import classify_dynamic, wants_decider
 from mcp_perplexity_pro.settings import Settings
+from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, validate_project_name
 
 TOOL = "perplexity_ask"
 GENERIC_400 = "invalid request"  # the API's body for several unrelated mistakes (design D6)
@@ -35,7 +38,9 @@ class Routing(BaseModel):
     tier: Annotated[str | None, Field(description="Tier used, if any")] = None
     model: Annotated[str | None, Field(description="Model id requested; null for a preset")] = None
     selected_by: Annotated[str, Field(description="default, tier, depth, model or classifier")]
-    classifier: Annotated[str | None, Field(description="Who picked the tier: rules")] = None
+    classifier: Annotated[
+        str | None, Field(description="Who picked the tier: rules or decisions")
+    ] = None
     reason: Annotated[str | None, Field(description="Why dynamic mode routed it so")] = None
 
     @classmethod
@@ -216,9 +221,17 @@ def register(server: FastMCP, settings: Settings) -> None:
         reaches the API is recorded as spend (see perplexity_usage)."""
         check_text("query", query)
         app = ctx.lifespan_context
+        decider = wants_decider(app.settings, depth=depth, tier=tier, model=model, search=search)
+        # With the Decisions classifier the route below is provisional (the standard tier's
+        # model: enough to validate every option); the real one is resolved after validation.
         options = AskOptions(
             route=resolve(
-                app.settings, depth=depth, tier=tier, model=model, text=query, search=search
+                app.settings,
+                depth=depth,
+                tier=tier,
+                model=model,
+                text=None if decider else query,
+                search=search,
             ),
             search=search,
             domains=domains,
@@ -232,6 +245,16 @@ def register(server: FastMCP, settings: Settings) -> None:
             json_schema=json_schema,
         )
         request = build_request(options, query, store=False)
+        if decider:  # only now: an invalid call spends nothing (the project name is checked first)
+            name = validate_project_name(project or DEFAULT_PROJECT)
+            classification = await classify_dynamic(app, query, project=name, tool=TOOL)
+            options = replace(
+                options,
+                route=resolve(
+                    app.settings, text=query, search=search, classification=classification
+                ),
+            )
+            request = build_request(options, query, store=False)
         try:
             costed = await run_costed(
                 app,

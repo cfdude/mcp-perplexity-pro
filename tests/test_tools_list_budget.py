@@ -10,7 +10,9 @@ from mcp_perplexity_pro.storage.migrate import migrate
 
 # Measured 2026-10-13 on the live server after the routing modes (acceptance record of
 # routing-modes-config): 59779 bytes for ten tools. With the help tool (eleven) the live server
-# measured 55512 (agent-help acceptance); the cap stays at the spec's number.
+# measured 55512 (agent-help acceptance); the cap stays at the spec's number. Test-server sizes
+# after routing-rules-v1 and routing-decisions-classifier: default 56545, dynamic 56831,
+# dynamic with the Decisions classifier 57065 (measured 2026-10-15).
 BUDGET = 59779
 
 
@@ -44,7 +46,11 @@ async def tools_list_size(make_server, **overrides) -> tuple[int, list[str]]:
     return len(response.content), [t["name"] for t in response.json()["result"]["tools"]]
 
 
-@pytest.mark.parametrize("overrides", [{}, {"routing": "dynamic"}], ids=["default", "dynamic"])
+@pytest.mark.parametrize(
+    "overrides",
+    [{}, {"routing": "dynamic"}, {"routing": "dynamic", "classifier": "decisions"}],
+    ids=["default", "dynamic", "dynamic-decisions"],
+)
 async def test_the_tools_list_response_stays_within_its_budget(make_server, overrides):
     size, names = await tools_list_size(make_server, **overrides)
     assert "perplexity_help" in names and len(names) == 11

@@ -342,8 +342,14 @@ def render_topic(name: str, settings: Settings) -> str:
 def _routing_topic(settings: Settings) -> str:
     if settings.routing == "dynamic":
         modes = (
-            "Mode dynamic. A call that names nothing is classified from the prompt by fixed "
-            "rules (no API call, no cost) and runs a tier: "
+            "Mode dynamic. A call that names nothing is classified from the prompt "
+            + (
+                "by the Decisions API (a small costed request, at most 3 s; the rules replace it "
+                "when it fails) "
+                if settings.classifier == "decisions"
+                else "by fixed rules (no API call, no cost) "
+            )
+            + "and runs a tier: "
             f"light = {tier_runs(settings, 'light')} (short lookups), "
             f"standard = {tier_runs(settings, 'standard')} (everyday), "
             f"complex = {tier_runs(settings, 'complex')} (analysis, long or multi-part prompts). "

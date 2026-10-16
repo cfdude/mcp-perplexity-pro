@@ -8,7 +8,7 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.catalog import PRESETS, CatalogModel, Listing, PresetSection
-from mcp_perplexity_pro.rules import CLASSIFIER
+from mcp_perplexity_pro.decisions import DEFAULT_MODEL as DEFAULT_DECIDER
 from mcp_perplexity_pro.settings import TIER_NAMES, Settings, dynamic_target
 
 
@@ -26,7 +26,10 @@ class RoutingSection(BaseModel):
     mode: Annotated[str, Field(description="standard, custom or dynamic")]
     models: Annotated[list[ConfiguredModel], Field(description="The configured model or tiers")]
     classifier: Annotated[
-        str | None, Field(description="Dynamic mode: who picks the tier (rules)")
+        str | None, Field(description="Dynamic mode: who picks the tier (rules or decisions)")
+    ] = None
+    decider_model: Annotated[
+        str | None, Field(description="Decisions classifier: the decider model asked")
     ] = None
 
 
@@ -83,6 +86,10 @@ def render(result: ModelsResult, provider: str | None) -> str:
         for m in result.routing.models
     )
     classifier = f" (classifier {result.routing.classifier})" if result.routing.classifier else ""
+    if result.routing.decider_model:
+        classifier = (
+            f" (classifier {result.routing.classifier}, decider {result.routing.decider_model})"
+        )
     lines.append(f"Routing mode {result.routing.mode}{classifier}: {configured}")
     section = result.presets
     lines.append("")
@@ -102,7 +109,12 @@ def routing_section(listing: Listing, settings: Settings) -> RoutingSection:
                 models.append(ConfiguredModel(name=tier, id=None, preset=preset, known=None))
             else:
                 models.append(ConfiguredModel(name=tier, id=model, known=model in live))
-        return RoutingSection(mode="dynamic", models=models, classifier=CLASSIFIER)
+        return RoutingSection(
+            mode="dynamic",
+            models=models,
+            classifier=settings.classifier,
+            decider_model=DEFAULT_DECIDER if settings.classifier == "decisions" else None,
+        )
     if settings.routing == "custom":
         wanted = [(t, getattr(settings, f"tier_{t}")) for t in TIER_NAMES]
     else:
