@@ -12,6 +12,7 @@ from mcp_perplexity_pro.storage.chats import (
     create_chat,
     delete_chat,
     last_anchor,
+    last_route,
     list_chats,
     load_chat,
     read_messages,
@@ -210,3 +211,40 @@ async def test_a_first_turn_for_a_project_deleted_in_between_is_not_found(engine
             await create_chat(session, pid, "orphan", "q", turn(1))
     assert err.value.category == "not_found"  # an IntegrityError, mapped
     assert await rows(engine, "SELECT count(*) FROM chats") == [(0,)]
+
+
+async def test_last_route_is_the_preset_and_model_of_the_last_assistant_turn(engine):
+    pid = await project_id(engine)
+    cid = await start(engine, pid)
+    async with unit_of_work(engine, write=False) as session:
+        assert await last_route(session, cid) == ("fast", "openai/gpt-6-luna")
+    async with unit_of_work(engine) as session:
+        await append_turn(
+            session, pid, cid, "question 2", AssistantTurn("resp_2", "a", "x/m", None)
+        )
+    async with unit_of_work(engine, write=False) as session:
+        assert await last_route(session, cid) == (None, "x/m")  # the newest assistant row wins
+
+
+async def test_last_route_of_a_chat_without_an_assistant_turn_or_a_missing_chat_is_none(engine):
+    pid = await project_id(engine)
+    cid = await start(engine, pid)
+    async with unit_of_work(engine) as session:
+        await session.execute(text("DELETE FROM chat_messages WHERE role = 'assistant'"))
+    async with unit_of_work(engine, write=False) as session:
+        assert await last_route(session, cid) is None
+        assert await last_route(session, cid + 99) is None
+
+
+async def test_last_route_reads_only_its_own_chat(engine):
+    pid = await project_id(engine)
+    first = await start(engine, pid, "one")
+    async with unit_of_work(engine) as session:
+        other = (
+            await create_chat(
+                session, pid, "two", "q", AssistantTurn("resp_o", "a", "x/o", "medium")
+            )
+        ).id
+    async with unit_of_work(engine, write=False) as session:
+        assert await last_route(session, first) == ("fast", "openai/gpt-6-luna")
+        assert await last_route(session, other) == ("medium", "x/o")

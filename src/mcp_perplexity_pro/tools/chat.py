@@ -8,6 +8,7 @@ across the call, usage recorded), and only then writes the chat in one short uni
 import inspect
 import json
 import logging
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -32,7 +33,7 @@ from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.help_text import POINTER
 from mcp_perplexity_pro.redaction import scrub_secrets
-from mcp_perplexity_pro.routing import description_sentence, resolve
+from mcp_perplexity_pro.routing import description_sentence, resolve, tier_of
 from mcp_perplexity_pro.settings import Settings
 from mcp_perplexity_pro.storage.chats import (
     AssistantTurn,
@@ -44,6 +45,7 @@ from mcp_perplexity_pro.storage.chats import (
     create_chat,
     delete_chat,
     last_anchor,
+    last_route,
     list_chats,
     load_chat,
     read_messages,
@@ -183,7 +185,11 @@ async def _send(
     chat_id: int | None,
     replay: bool,
     options: AskOptions,
+    classify_route: bool = False,
 ) -> tuple[ChatResult, str]:
+    """``classify_route`` is true for a nameless send in dynamic mode: ``options`` then holds a
+    provisional route (the standard tier's model, enough to validate every option), and the real
+    route is resolved below, after the chat lookup, from the message and the chat's last tier."""
     # 1. Everything local, before any database access or request.
     check_text("message", message)
     if chat_id is not None:
@@ -202,6 +208,7 @@ async def _send(
 
     # 2. Find the chat (read-only; the project is never created here).
     project_id = anchor = None
+    previous: tuple[str | None, str | None] | None = None
     history: list[tuple[str, str]] = []
     if chat_id is not None:
         async with unit_of_work(app.engine, write=False) as session:
@@ -210,6 +217,8 @@ async def _send(
                 raise _not_found_project(name)
             project_id = found.id
             await load_chat(session, project_id, chat_id)
+            if classify_route:
+                previous = await last_route(session, chat_id)
             if replay:
                 history = await chat_history(session, chat_id)
             else:
@@ -220,7 +229,13 @@ async def _send(
                 f"chat {chat_id} has no stored response to continue from; send with replay true.",
             )
 
-    # 3. The request.
+    # 3. The route (dynamic mode, nothing named), then the request. A preset route only adds
+    # what ``depth`` already allows, and ``search`` false never gets one, so the build cannot
+    # newly fail.
+    if classify_route:
+        floor = None if previous is None else tier_of(app.settings, *previous)
+        route = resolve(app.settings, text=message, previous=floor, search=options.search)
+        options = replace(options, route=route)
     warnings: list[str] = []
     if replay:
         items = [_message_item(role, content) for role, content in history]
@@ -471,7 +486,8 @@ def register(server: FastMCP, settings: Settings) -> None:
         tier: Annotated[
             str | None,
             Field(
-                description="send: light, standard or complex (custom mode); may change per turn"
+                description="send: light, standard or complex (custom or dynamic mode); may "
+                "change per turn"
             ),
         ] = None,
         model: Annotated[
@@ -544,8 +560,18 @@ def register(server: FastMCP, settings: Settings) -> None:
         elif action == "delete":
             result, text = await _delete(app, project=project, chat_id=chat_id, confirm=confirm)
         else:
+            # Selectors resolve here, before any database access, so an invalid one beats
+            # ``not_found``. Nameless in dynamic mode this is the provisional route, or the
+            # final one when ``search`` is false; ``_send`` classifies the rest.
+            classify_route = (
+                app.settings.routing == "dynamic"
+                and depth is None
+                and tier is None
+                and model is None
+                and search is not False
+            )
             options = AskOptions(
-                route=resolve(app.settings, depth=depth, tier=tier, model=model),
+                route=resolve(app.settings, depth=depth, tier=tier, model=model, search=search),
                 search=search,
                 domains=domains,
                 recency=recency,
@@ -564,6 +590,7 @@ def register(server: FastMCP, settings: Settings) -> None:
                 chat_id=chat_id,
                 replay=replay,
                 options=options,
+                classify_route=classify_route,
             )
         return ToolResult(content=text, structured_content=result.model_dump(mode="json"))
 
