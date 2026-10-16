@@ -109,3 +109,10 @@ The tool SHALL declare an output schema and return structured content that valid
 #### Scenario: An unlisted id is still used
 - **WHEN** a configured model id is `known` false
 - **THEN** calls still send it as configured, because the catalog can lag and a typo is reported by the API on the first call
+
+### Requirement: The routing section names the Decisions classifier
+In `dynamic` mode with the Decisions classifier the `perplexity_models` routing section SHALL name classifier `decisions` and the decider model it asks, in place of `rules`.
+
+#### Scenario: Decisions classifier section
+- **WHEN** a client calls `perplexity_models` against a `dynamic` server with the Decisions classifier
+- **THEN** the routing section names classifier `decisions` and the default decider model

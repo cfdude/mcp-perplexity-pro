@@ -113,7 +113,7 @@ An interrupted command SHALL exit 130 without a traceback, and every path SHALL 
 - **THEN** the upstream client and the database engine are closed
 
 ### Requirement: One code path with the tools
-Every command except `help` SHALL call the registered tool in-process, so routing resolution, validation, project rules, usage recording and error categories are those of the MCP tool. A costed command SHALL record exactly one usage event, in the same database the server uses.
+Every command except `help` SHALL call the registered tool in-process, so routing resolution, validation, project rules, usage recording and error categories are those of the MCP tool. A costed command SHALL record one usage event per upstream request its call makes (one for an ask, two for an ask in `dynamic` mode with the Decisions classifier), in the same database the server uses.
 
 #### Scenario: A costed command
 - **WHEN** `perplexity-pro ask "q"` completes against a mocked upstream

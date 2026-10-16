@@ -1,6 +1,6 @@
 ## 0. Before apply
 
-- [ ] 0.1 Apply only after `routing-rules-v1` is archived (this change extends its modules and specs). Record Gate 1 (`record-gate-review routing-decisions-classifier --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/routing-decisions-classifier`) after a fresh-context review of the artifacts, add the change to `release-2-1-0` (`release release-2-1-0 --member routing-decisions-classifier`) and record a fresh-context cross-spec review of this release's spec deltas against the main specs and each other (`record-cross-spec-review release-2-1-0`); ORDER: before group 1 and again after any amendment
+- [x] 0.1 Apply only after `routing-rules-v1` is archived (this change extends its modules and specs). Record Gate 1 (`record-gate-review routing-decisions-classifier --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/routing-decisions-classifier`) after a fresh-context review of the artifacts, add the change to `release-2-1-0` (`release release-2-1-0 --member routing-decisions-classifier`) and record a fresh-context cross-spec review of this release's spec deltas against the main specs and each other (`record-cross-spec-review release-2-1-0`); ORDER: before group 1 and again after any amendment
 
 ## 1. Settings and the classifier
 
