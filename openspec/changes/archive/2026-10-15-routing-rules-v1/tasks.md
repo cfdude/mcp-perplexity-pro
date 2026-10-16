@@ -1,6 +1,6 @@
 ## 0. Before apply
 
-- [ ] 0.1 Record Gate 1 (`record-gate-review routing-rules-v1 --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/routing-rules-v1`) after a fresh-context review of the artifacts; create release `release-2-1-0` (`release release-2-1-0 --member routing-rules-v1`; 2.0.0 already shipped) and run a fresh-context cross-spec review of the seven spec deltas (one new, four modified, two added-only) against the main specs (`record-cross-spec-review release-2-1-0`); ORDER: before group 1 and again after any amendment
+- [x] 0.1 Record Gate 1 (`record-gate-review routing-rules-v1 --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact openspec/changes/routing-rules-v1`) after a fresh-context review of the artifacts; create release `release-2-1-0` (`release release-2-1-0 --member routing-rules-v1`; 2.0.0 already shipped) and run a fresh-context cross-spec review of the seven spec deltas (one new, four modified, two added-only) against the main specs (`record-cross-spec-review release-2-1-0`); ORDER: before group 1 and again after any amendment
 
 ## 1. The classifier
 

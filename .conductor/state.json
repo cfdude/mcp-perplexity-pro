@@ -651,7 +651,7 @@
       "id": "routing-rules-v1",
       "title": "Deterministic complexity matrix selects preset (depth=auto)",
       "priority": "P2",
-      "status": "queued",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -680,10 +680,12 @@
         "bfedb68ae6746a920206d149d0ae634423e6eca3",
         "ed4357941d13688b5e9be0ef43b1926bcfea58d0",
         "6d00fcc4c12f764db1b1fce1b515576e92350c46",
-        "229ca8df97375f473da82260f790a2106a546793"
+        "229ca8df97375f473da82260f790a2106a546793",
+        "cb9977f1f46c3986b95b2548711b96219aa984ba",
+        "7e4077158cbcf610a90bd037e439aaf9bbeeaac9"
       ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-16T01:37:42.016Z",
+      "touchedAt": "2026-10-16T01:45:28.927Z",
       "startedAt": "2026-10-15T15:30:14.374Z",
       "gateReview": {
         "gate1": {
@@ -708,10 +710,17 @@
         },
         "gate2": {
           "verdict": "pass",
-          "reviewedAt": "2026-10-16T01:37:42.014Z",
+          "reviewedAt": "2026-10-16T01:44:56.842Z",
           "baseSha": "bb4fb25cd4e02efcccfdaad41f45be575811f5d1",
-          "headSha": "229ca8df97375f473da82260f790a2106a546793",
-          "reviewer": "fresh-context general-purpose subagent: Gate 2 over bb4fb25..6d00fcc (0 Critical; 1 Important, the live anthropic floor probe, run and recorded; Minor: the numbered-item pattern fixed with a RED test, the rest noted); suite 2707 passed"
+          "headSha": "7e4077158cbcf610a90bd037e439aaf9bbeeaac9",
+          "reviewer": "fresh-context general-purpose subagents: Gate 2 over the code (0 Critical, 1 Important run live, numbered-item fix) and a documentation-diff review (1 Important and 3 Minor, fixed); suite 2707 passed",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-16T01:37:42.014Z",
+            "baseSha": "bb4fb25cd4e02efcccfdaad41f45be575811f5d1",
+            "headSha": "229ca8df97375f473da82260f790a2106a546793",
+            "reviewer": "fresh-context general-purpose subagent: Gate 2 over bb4fb25..6d00fcc (0 Critical; 1 Important, the live anthropic floor probe, run and recorded; Minor: the numbered-item pattern fixed with a RED test, the rest noted); suite 2707 passed"
+          }
         }
       },
       "gateRounds": {
@@ -724,13 +733,23 @@
         },
         "gate2": {
           "fails": 0,
-          "passes": 1,
+          "passes": 2,
           "failStreak": 0,
-          "lastVerdictAt": "2026-10-16T01:37:42.014Z",
-          "lastPassAt": "2026-10-16T01:37:42.014Z"
+          "lastVerdictAt": "2026-10-16T01:44:56.842Z",
+          "lastPassAt": "2026-10-16T01:44:56.842Z"
         }
       },
-      "release": "release-2-1-0"
+      "release": "release-2-1-0",
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-16T01:45:28.926Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-16T01:45:28.898Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-16T01:45:28.926Z"
     },
     {
       "id": "routing-decisions-classifier",
@@ -1269,7 +1288,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 409,
+  "revision": 413,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",

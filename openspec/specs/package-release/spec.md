@@ -1,7 +1,7 @@
 # package-release Specification
 
 ## Purpose
-TBD - created by archiving change pypi-publish. Update Purpose after archive.
+Defines what makes the package publishable to PyPI under its real name: complete and true metadata, a distribution allowlist, and a tag-triggered Trusted Publishing release with a TestPyPI rehearsal path, so a release needs no stored token and no hand-built upload.
 
 ## Requirements
 
