@@ -50,7 +50,8 @@ higher-wins direction is the quality-safe one (a wrong `light` costs an answer, 
 few cents). The classifier sees at most 4000 characters while the rules see all of them; the
 length signal is rules-only, so a long prompt the decider saw truncated can still merge upward.
 
-**D4. The bound, inside the recorded call.** The deadline (3 s, a constant) is fixed at the start
+**D4. The bound, inside the recorded call.** The bound covers the Decisions request and its retries;
+the project commit and the usage write still wait on SQLite's busy timeout as every costed call does. The deadline (3 s, a constant) is fixed at the start
 of `classify_dynamic` and the `call` lambda handed to `costed_call` wraps the request in
 `asyncio.timeout` for the time left, converting `TimeoutError` into `PerplexityError("network_timeout")`.
 The existing failure branch of `costed_call` then records the request with that status, so a
@@ -70,12 +71,14 @@ added (CLAUDE.md).
 provisional route (the standard tier's model, as the chat tool does for follow-ups in
 `routing-rules-v1`), then, for a nameless dynamic call with the Decisions classifier and `search`
 not false, `classify_dynamic`, then `resolve(..., classification=c)` for the final route. For a
-chat follow-up it runs after the chat lookup and after `last_route`, with that read-only unit
+chat follow-up it is skipped when the floor is already `complex` (the answer cannot change the
+route); otherwise it runs after the chat lookup and after `last_route`, with that read-only unit
 closed (a Decisions request is a costed call and must hold no write unit). Nothing else makes a
 Decisions request for routing.
 
-**D7. Settings.** `PERPLEXITY_CLASSIFIER` in `settings.py`: `rules` default or `decisions`,
-case-insensitive; validated in dynamic mode only; elsewhere ignored with one warning
+**D7. Settings.** `PERPLEXITY_CLASSIFIER` in `settings.py` as a plain `str` (a `Literal` field would fail startup in
+standard mode and contradict the spec): `rules` default or `decisions`, case-insensitive,
+checked in `_routing_problems` in dynamic mode only; elsewhere ignored with one warning
 (`ignored_routing_vars()`). A failure is a `SettingsError` naming the variable.
 
 **D8. Surfaces.** `Classification.classifier` flows to `Route.classifier` and `Routing.classifier`

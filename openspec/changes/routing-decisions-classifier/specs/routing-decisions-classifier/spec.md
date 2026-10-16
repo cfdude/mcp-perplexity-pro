@@ -36,7 +36,7 @@ The answer's strength is the probability it gives the chosen option, or its `con
 - **THEN** the answer is trusted alone
 
 ### Requirement: Classification is bounded and never fatal
-The whole classification, retries included, SHALL end within 3 seconds. Any failure (a timeout, any error category, an answer that is unreadable or whose choice is not one of the three tiers) SHALL fall back to the rules' tier, with a reason naming the failure category, and SHALL NOT fail or delay the call beyond the bound.
+The Decisions request, retries included, SHALL end within 3 seconds. Any failure (a timeout, any error category, an answer that is unreadable or whose choice is not one of the three tiers) SHALL fall back to the rules' tier, with a reason naming the failure category, and SHALL NOT fail the call or wait on the request beyond the bound.
 
 #### Scenario: Timeout
 - **WHEN** the Decisions request does not answer within 3 seconds
@@ -62,7 +62,7 @@ Each Decisions request the classifier makes, answered, failed or timed out, SHAL
 - **THEN** one `decisions` event exists with status `rate_limited` and the ask is still answered
 
 ### Requirement: The classifier runs only when it is needed
-The classifier SHALL run only for a call in dynamic mode with the Decisions classifier that names no `depth`, `tier` or `model`, whose `search` is not false and whose options and project name validated; for a chat follow-up also after the chat was found with a response to continue. An invalid call makes no Decisions request. A chat follow-up never routes below the tier its chat last used.
+The classifier SHALL run only for a call in dynamic mode with the Decisions classifier that names no `depth`, `tier` or `model`, whose `search` is not false and whose options and project name validated. An invalid call makes no Decisions request.
 
 #### Scenario: Explicit selector
 - **WHEN** a call in this mode names `depth` `fast`
@@ -76,9 +76,17 @@ The classifier SHALL run only for a call in dynamic mode with the Decisions clas
 - **WHEN** a call in this mode has `search` false
 - **THEN** no Decisions request is made and the standard tier's model runs
 
+#### Scenario: Unknown chat
+- **WHEN** a nameless follow-up names a chat that does not exist, or one with no stored response and `replay` false
+- **THEN** it fails as it does today and no Decisions request is made
+
+#### Scenario: Floor already complex
+- **WHEN** the chat's last turn ran `complex` and the follow-up names nothing
+- **THEN** no Decisions request is made and the follow-up runs `complex`
+
 #### Scenario: Follow-up floor
-- **WHEN** the chat's last turn ran `complex` and the Decisions classifier answers `light` for the follow-up
-- **THEN** the follow-up runs the `complex` tier
+- **WHEN** the chat's last turn ran `standard` and the Decisions classifier answers `light` for the follow-up
+- **THEN** the follow-up runs the `standard` tier
 
 ### Requirement: The prompt is not repeated outside the request
 The prompt text SHALL appear in the Decisions request and nowhere else the classifier writes: not in the routing reason, the logs or the recorded usage event.
@@ -87,12 +95,8 @@ The prompt text SHALL appear in the Decisions request and nowhere else the class
 - **WHEN** a prompt containing `hunter2` is classified
 - **THEN** the reason, the log records and the usage event do not contain `hunter2`
 
-#### Scenario: Unknown chat
-- **WHEN** a nameless follow-up names a chat that does not exist, or one with no stored response to continue
-- **THEN** it fails as it does today and no Decisions request is made
-
 ### Requirement: Reasons and the classifier field have a closed vocabulary
-The routing `reason` of a Decisions-classified call SHALL be at most 120 ASCII characters built from constants, the tier, a probability and a failure category, never prompt text.
+The routing `reason` of a Decisions-classified call SHALL be at most 120 ASCII characters (the cap `resolve()` enforces on the final reason) built from constants, the tier, a probability and a failure category, never prompt text.
 
 #### Scenario: Reason length
 - **WHEN** a Decisions request fails and the rules' own reason is long
@@ -110,8 +114,8 @@ The routing `classifier` SHALL be `decisions` when the Decisions tier was used (
 - **THEN** the routing has `classifier` `rules` and a reason naming `rate_limited` and the rules' own reason, within 120 characters
 
 #### Scenario: Floor held over a Decisions answer
-- **WHEN** a follow-up's Decisions answer is `light` and the chat last ran `complex`
-- **THEN** the tier is `complex`, `classifier` is `decisions` and the reason says the tier was held
+- **WHEN** a follow-up's Decisions answer is `light` and the chat last ran `standard`
+- **THEN** the tier is `standard`, `classifier` is `decisions` and the reason says the tier was held
 
 ### Requirement: The request carries what the validators accept
 The classifier SHALL build its request with the same request builder `perplexity_decide` uses, so the question and state limits apply, and a prompt that the builder refuses (for example one that is an image data URL) SHALL fall back to the rules with a reason saying the prompt was not classifiable.
@@ -119,3 +123,10 @@ The classifier SHALL build its request with the same request builder `perplexity
 #### Scenario: A refused prompt
 - **WHEN** the prompt starts with `data:image/`
 - **THEN** no Decisions request is made and the rules classify with a reason saying the prompt was not classifiable
+
+### Requirement: A chat follow-up is classified only when it can matter
+For a chat follow-up the classifier SHALL run after the chat was found with a response to continue (or with `replay` true), and only when the follow-up's floor is below `complex`. A follow-up never routes below the tier its chat last used.
+
+#### Scenario: Floor repeated for a follow-up
+- **WHEN** a nameless follow-up's chat last ran `standard`
+- **THEN** the classifier runs after the chat lookup and the tier is at least `standard`

@@ -27,7 +27,8 @@ reaching `high` or `xhigh`. See proposal.md for the motivation.
 ## Decisions
 
 **D1. `rules.py` is a pure module with one entry, `classify(text) -> Classification`.**
-`Classification` is a frozen dataclass: `tier`, `reason`, and `signals` (an ordered tuple of
+`Classification` is a frozen dataclass: `tier`, `reason`, `classifier` (the constant `"rules"`; a
+network classifier returns its own), and `signals` (an ordered tuple of
 signal names, built in a fixed order so two processes agree under hash randomization). There is no
 confidence value: nothing uses one yet, and the Decisions epic can add it when it needs it. No settings, no I/O. Alternative: put it in
 `routing.py`; rejected because `routing.py` is about selectors and text, and the classifier will
@@ -51,7 +52,7 @@ classifier (needs data and a dependency; that is the Decisions epic), length alo
 hard questions).
 
 **D3. The reason is built from signal names only.** `classify` assembles it from constants
-(`"2 analysis terms"`, `"1500 chars"`, `"3 questions"`, `"short lookup"`, only; `resolve()` appends `"held at complex"` or builds `"search off"` where the follow-up floor or `search` false applied, so the text is built in one place), never from the text,
+(`"2 analysis terms"`, `"1500 chars"`, `"3 questions"`, `"short lookup"`, `"no signals"`, only; `resolve()` appends `"held at complex"` or builds `"search off"` where the follow-up floor or `search` false applied, so the text is built in one place), never from the text,
 so it can be returned and logged without leaking a prompt. A test classifies a prompt holding a
 secret-shaped string and checks the reason.
 
@@ -72,7 +73,9 @@ route without classifying, and a `tier` that runs a preset with `search` false i
 `tier` and `search` (the caller named a tier, so the standard model is not substituted silently);
 `tier` in dynamic mode resolves through `dynamic_route`, not the `custom` settings; with `text=None` (a caller that has none, such as a test) it returns the
 standard tier with `selected_by="default"`. With a selector the behavior is today's (a test asserts
-the classifier is not called). `Route` gains `reason: str | None = None`. `_default_description`
+the classifier is not called). `Route` gains `reason: str | None = None` and `classifier: str | None = None` (`resolve()` copies
+both from the classification; search-off and held-floor reasons are built in `resolve()`, which
+caps the final reason at 120 ASCII characters). `_default_description`
 and the conflict message learn the dynamic wording ("with neither, the tier is picked from the
 prompt"). `tier` is accepted when the mode is `custom` or `dynamic`; the refusal order is
 unchanged and its message drops "custom only". A filtered preset route is allowed, as it is with an
@@ -91,7 +94,10 @@ mode validates its options in `_send` step 1 against a provisional route (the st
 model), so every other invalid option still beats `not_found`; then, after the read-only chat
 lookup that already produces `not_found`, it calls `last_route` in the same unit of work, resolves
 the real route and builds the request again (preset routes only add what `depth` already allows,
-and `search` false was forced to the model route, so the second build cannot newly fail). A new chat has no previous turn. The
+and `search` false was forced to the model route, so the second build cannot newly fail). When
+`search` is false the standard tier's model wins over the follow-up floor (a preset always searches),
+and the reason says search is off. A new chat has no previous turn; in `perplexity_chat` any nameless dynamic send (new or existing
+chat) replaces the provisional route inside `_send` once classification is available. The
 stored `model` is the model the API reports; acceptance compares the reported id with the requested
 one for `perplexity/sonar` and an `anthropic/` id on a live call, and if they differ the match
 falls back to standard (documented, never an error). Alternative: a `tier` column on `chats`;

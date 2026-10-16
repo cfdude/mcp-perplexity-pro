@@ -13,7 +13,7 @@ Classifying a text SHALL need no network, no database and no API key, SHALL cost
 - **THEN** both results are equal, signals included
 
 #### Scenario: No side effects
-- **WHEN** a text is classified during a call to `perplexity_ask` in dynamic mode
+- **WHEN** a text is classified by the rules during a call to `perplexity_ask` in dynamic mode
 - **THEN** the only upstream request is the ask itself and the only usage event is the ask's
 
 ### Requirement: A result is a tier, signals and a reason

@@ -13,8 +13,8 @@ always-available fallback.
 - New setting `PERPLEXITY_CLASSIFIER` (`rules` default, `decisions`), used only in dynamic mode.
 - With `decisions`, a nameless call in dynamic mode asks the Decisions API one `choice` question
   (tier: light, standard or complex) over the prompt, within a hard 3-second limit that covers any
-  retries, and routes to the tier it picks. When its confidence is under 0.5 the higher of its
-  tier and the rules' tier wins.
+  retries, and routes to the tier it picks. When the probability it gives its choice is under 0.5 the
+  higher of its tier and the rules' tier wins.
 - Any failure (timeout, rate limit, upstream error, unreadable or unknown answer) falls back to the
   rules, says so in the routing `reason`, and never fails the call.
 - Each Decisions request is one recorded usage event (api `decisions`, the calling tool's name,
