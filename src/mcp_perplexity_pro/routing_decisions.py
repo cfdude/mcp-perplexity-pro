@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
+from types import MappingProxyType
 from typing import Any
 
 from mcp_perplexity_pro import decisions, rules
@@ -39,12 +41,15 @@ REASON_MAX_LENGTH = rules.REASON_MAX_LENGTH
 
 # Final criteria (fixtures ``decisions_tier_*`` were captured with exactly these; a change here
 # means re-capturing them, and ``tests/test_routing_decisions.py`` compares the two).
-CRITERIA = {
-    "light": "A short factual lookup with one clear answer, such as a current value or a date.",
-    "standard": "An ordinary question that needs a sourced, explained answer but no deep analysis.",
-    "complex": "An analytical, multi-part or long task that needs comparison, design or "
-    "step-by-step reasoning.",
-}
+CRITERIA = MappingProxyType(
+    {
+        "light": "A short factual lookup with one clear answer, such as a current value or a date.",
+        "standard": "An ordinary question that needs a sourced, explained answer "
+        "but no deep analysis.",
+        "complex": "An analytical, multi-part or long task that needs comparison, design or "
+        "step-by-step reasoning.",
+    }
+)
 
 
 def _cap(reason: str) -> str:
@@ -62,12 +67,19 @@ def _from_rules(text: str, lead: str) -> Classification:
     )
 
 
+def _unit(value: float | None) -> float | None:
+    """A probability or confidence, or ``None`` when it is not a number from 0 to 1."""
+    if value is None or not math.isfinite(value) or not 0.0 <= value <= 1.0:
+        return None
+    return value
+
+
 def _strength(answer: DecisionAnswer, choice: str) -> float | None:
     """The chosen option's probability, else ``confidence``, else ``None`` (unreadable)."""
     for name, probability in (answer.probabilities or {}).items():
         if name.strip().casefold() == choice and probability is not None:
-            return probability
-    return answer.confidence
+            return _unit(probability)
+    return _unit(answer.confidence)
 
 
 def _read(answer: DecisionAnswer | None) -> tuple[str, float | None] | None:

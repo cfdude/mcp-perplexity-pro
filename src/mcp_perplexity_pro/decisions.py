@@ -337,9 +337,9 @@ async def run_decide(
 
     ``tool`` is the name of the MCP tool whose call caused the request (the event's tool): the
     routing classifier passes the ask or chat tool's name. ``deadline`` is an absolute event-loop
-    time (``loop.time()``) by which the request, retries included, must end; past it the request
-    is cancelled and recorded as ``network_timeout``. A cancel that does not come from the
-    deadline is never turned into that error."""
+    time (``loop.time()``) by which the request must end (it is made once, with no retry); past
+    it the request is cancelled and recorded as ``network_timeout``. A cancel that does not
+    come from the deadline is never turned into that error."""
 
     def interpret(response: DecisionsResponse) -> Recording:
         model = response.model if isinstance(response.model, str) else None
@@ -350,7 +350,9 @@ async def run_decide(
             return await app.client.decide(body)
         try:
             async with asyncio.timeout_at(deadline):
-                return await app.client.decide(body)
+                # one attempt: a 429 is reported as rate_limited at once rather than slept on
+                # until the deadline cuts it off and mislabels it network_timeout
+                return await app.client.decide(body, attempts=1)
         except TimeoutError:
             raise PerplexityError(
                 "network_timeout", "The Decisions request did not answer within its time limit."

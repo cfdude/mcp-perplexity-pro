@@ -243,3 +243,27 @@ def test_version_and_serve_help_do_not_build_the_schemas(monkeypatch, capsys):
     with pytest.raises(SystemExit) as info:
         main(["serve", "--help"])
     assert info.value.code == 0 and "--transport" in capsys.readouterr().out
+
+
+def test_an_ask_in_dynamic_mode_with_the_decisions_classifier_records_two_events(
+    env, monkeypatch, capsys
+):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "dynamic")
+    monkeypatch.setenv("PERPLEXITY_CLASSIFIER", "decisions")
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.path)
+        if request.url.path == "/v1/decisions":
+            return httpx2.Response(200, json=fixture("decisions_tier_light.json"))
+        return httpx2.Response(200, json=fixture("agent_fast.json"))
+
+    http = httpx2.AsyncClient(transport=httpx2.MockTransport(handler))
+    assert main(["ask", "What is the latest stable Python release?", "--json"], http=http) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["routing"]["classifier"] == "decisions" and doc["routing"]["tier"] == "light"
+    assert seen == ["/v1/decisions", "/v1/agent"]
+    assert [(e[0], e[1], e[2]) for e in events(env)] == [
+        ("perplexity_ask", "decisions", "ok"),
+        ("perplexity_ask", "agent", "ok"),
+    ]

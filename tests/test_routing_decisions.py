@@ -351,15 +351,53 @@ async def test_a_request_past_the_bound_falls_back_and_records_one_timeout(world
     )  # fmt: skip
 
 
-async def test_the_bound_covers_the_retries(world, monkeypatch):
-    monkeypatch.setattr(routing_decisions, "BOUND_SECONDS", 0.05)
-    # a 429 asking for a 10 second wait is retried (max_attempts 3), so the client sleeps
+async def test_a_rate_limit_is_reported_at_once_and_not_retried_into_a_timeout(world):
+    # default retry settings: a 429 asking for a 2 second wait would be retried and the 3 second
+    # bound would cut that sleep, reporting network_timeout; the classifier makes one attempt
     app, upstream = await world(
-        serve({"error": {"message": "slow"}}, 429, {"Retry-After": "10"}), max_attempts=3
+        serve({"error": {"message": "slow"}}, 429, {"Retry-After": "2"}), max_attempts=3
     )
+    started = asyncio.get_running_loop().time()
     result = await classify(app, LIGHT_PROMPT)
-    assert upstream.calls == 1 and "(network_timeout)" in result.reason
+    assert asyncio.get_running_loop().time() - started < 1.0
+    assert upstream.calls == 1 and "(rate_limited)" in result.reason
+    assert [e["status"] for e in await events(app)] == ["rate_limited"]
+
+
+async def test_a_deadline_already_past_still_falls_back_and_records_the_timeout(world, monkeypatch):
+    monkeypatch.setattr(routing_decisions, "BOUND_SECONDS", 0)
+
+    async def slow(request, n):  # suspends, as a real connection does
+        await asyncio.sleep(30)
+        return httpx2.Response(200, json=fixture("light"))
+
+    app, _ = await world(slow)
+    result = await classify(app, LIGHT_PROMPT)
+    assert result.classifier == "rules" and "network_timeout" in result.reason
     assert [e["status"] for e in await events(app)] == ["network_timeout"]
+
+
+@pytest.mark.parametrize("strength", [7.0, -3.0])
+async def test_a_strength_outside_zero_to_one_is_unreadable_and_trusts_the_answer(world, strength):
+    body = answer("complex", {"light": 0.1, "standard": 0.1, "complex": strength}, confidence=None)
+    app, _ = await world(serve(body))
+    result = await classify(app, LIGHT_PROMPT)
+    assert result.tier == "complex" and result.classifier == "decisions"
+    assert not any(s in result.reason for s in ("nan", "7.00", "-3.00", "inf"))
+
+
+@pytest.mark.parametrize("strength", [float("nan"), float("inf")])
+async def test_a_non_finite_strength_never_reaches_the_reason(world, strength):
+    body = answer("complex", {"light": 0.1, "standard": 0.1, "complex": strength})
+    app, _ = await world(serve(body))
+    result = await classify(app, LIGHT_PROMPT)  # trusted alone, or a fallback: never an error
+    assert result.tier in ("light", "complex")
+    assert not any(s in result.reason.lower() for s in ("nan", "inf"))
+
+
+def test_the_criteria_cannot_be_changed_in_place():
+    with pytest.raises(TypeError):
+        CRITERIA["light"] = "x"  # type: ignore[index]
 
 
 async def test_a_real_client_cancel_propagates_and_is_not_folded_into_the_fallback(world):
@@ -388,7 +426,7 @@ async def test_run_decide_without_a_deadline_is_unbounded_and_keeps_its_tool(wor
 
 def _options(state):
     return decisions.DecideOptions(
-        state=state, questions={"tier": {"type": "choice", "criteria": CRITERIA}}
+        state=state, questions={"tier": {"type": "choice", "criteria": dict(CRITERIA)}}
     )
 
 
