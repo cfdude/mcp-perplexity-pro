@@ -1,0 +1,3 @@
+practice: none, because the work used disciplines the repo already records (real captured fixtures, mutation checks, no third `record_usage(` site); checked `ls docs/lessons` and `rg "record_usage\(" src` on 2026-10-15.
+tooling: none new, because the one friction met (record-gate-review giving no digest for a change directory) is already filed as cfdude/pm#252 from routing-rules-v1.
+process: the implementer wrote task 1.2's code before its tests and then hid the code to see RED (an ImportError), then relied on six mutation checks; recorded here, not filed as a lesson because it happened once and the mutation checks caught the same defects a RED-first order would.
