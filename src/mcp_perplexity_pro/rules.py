@@ -71,7 +71,7 @@ _LOOKUP = re.compile(r"(?:" + "|".join(_phrase(o) for o in LOOKUP_OPENINGS) + r"
 # An ASCII question mark counts only before whitespace or the end (so a URL query string does
 # not); the full-width and Arabic ones count anywhere.
 _QUESTION = re.compile(r"\?(?=\s|\Z)|[？؟]")
-_NUMBERED_ITEM = re.compile(r"^[ \t]*\d+[.)]", re.MULTILINE)
+_NUMBERED_ITEM = re.compile(r"^[ \t]*[0-9]+[.)][ \t]", re.MULTILINE)
 
 
 @dataclass(frozen=True)

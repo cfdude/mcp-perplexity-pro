@@ -678,10 +678,11 @@
         "4b74d7a7fa9a14be779d38fee1b2a80c332ba761",
         "1d1867abb37d652b606f6f1be6e20cdefd3eb987",
         "bfedb68ae6746a920206d149d0ae634423e6eca3",
-        "ed4357941d13688b5e9be0ef43b1926bcfea58d0"
+        "ed4357941d13688b5e9be0ef43b1926bcfea58d0",
+        "6d00fcc4c12f764db1b1fce1b515576e92350c46"
       ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-16T01:22:24.168Z",
+      "touchedAt": "2026-10-16T01:30:37.052Z",
       "startedAt": "2026-10-15T15:30:14.374Z",
       "gateReview": {
         "gate1": {
@@ -1253,7 +1254,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 406,
+  "revision": 407,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",

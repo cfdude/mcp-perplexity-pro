@@ -183,6 +183,16 @@ def test_numbered_items_count_like_questions():
     assert classify("Why?\n1. one\n2. two").tier == "complex"  # a question plus two items
 
 
+def test_a_version_or_year_at_a_line_start_is_not_a_numbered_item():
+    notes = "3.12 release notes?\n3.11 release notes\n3.10 release notes"
+    assert classify(notes).tier == "standard"
+    assert classify("1.5 times faster?\n2.5 times slower\n3.5 times more").tier == "standard"
+    assert classify("Cover:\n1.   one\n2.\ttwo\n3.  three").tier == "complex"  # spacing is fine
+    assert (
+        classify("Cover:\n\u0661. one\n\u0662. two\n\u0663. three").tier == "standard"
+    )  # not ASCII
+
+
 def test_a_question_mark_inside_a_url_is_not_a_question():
     text = "Is https://example.com/a?x=1 the same as https://example.com/a?x=2&y=3 for a crawler?"
     assert classify(text).signals == ()

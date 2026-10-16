@@ -40,7 +40,10 @@ directory; the live pm2 app was not touched. Raw outputs are the numbered `.json
   The same exposure already exists for an explicit `depth` `medium`; recorded, not changed here.
 - Reported versus requested model ids: `perplexity/sonar` came back as `perplexity/sonar`, and
   preset `fast` and `medium` runs report `openai/gpt-6-luna`, so a stored preset (not the model)
-  is what identifies a preset tier, as `tier_of` assumes. No `anthropic/` id was run (nothing
-  routes there by default); the tie and no-match paths fall back to `standard`.
+  is what identifies a preset tier, as `tier_of` assumes. A second run after the Gate 2 review set `PERPLEXITY_TIER_COMPLEX=anthropic/claude-haiku-5-5`: a chat
+  turn named `--tier complex` ran and reported `anthropic/claude-haiku-5-5` (the requested id,
+  cost $0.0002), and the nameless follow-up `and for async?` was held at complex by the stored
+  model (reason `no signals, held at complex`, cost $0.00027): files `10-floor-chat-1.json` and
+  `11-floor-chat-2.json`. The tie and no-match paths fall back to `standard`.
 - The lookup and ordinary-question routes landed where the labeled set expects. Seven calls are
   too few to say anything about accuracy, and none is claimed.
