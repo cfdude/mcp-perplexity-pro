@@ -26,7 +26,7 @@
 ## 5. Documentation (after Gate 2 is clean)
 
 - [x] 5.1 README (the classifier setting, what the Decisions classifier sends and costs, the bound and fallback, the observation numbers from acceptance stated as observations), `CLAUDE.md` (module table gains `routing_decisions.py`, `PERPLEXITY_CLASSIFIER` in the configuration list, the non-goal list loses the Decisions classifier), `CHANGELOG.md`, `ecosystem.example.cjs` comment; keep the pm block byte-identical; verify every example against the acceptance output
-- [ ] 5.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
+- [x] 5.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 
 ## 6. Archive
 

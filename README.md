@@ -199,7 +199,7 @@ There are three modes, set with `PERPLEXITY_ROUTING`:
 |---|---|---|
 | `standard` (default) | Every call that names nothing uses one model, `perplexity/sonar` unless you change it. A base Sonar model line is the default because the line always exists, while a preset's model behind `fast` moves (it was `openai/gpt-6-luna` on 2026-10-06) | Nothing. To use another model: `PERPLEXITY_MODEL=anthropic/claude-sonnet-5-5` |
 | `custom` | Three tiers you choose: `light` (light or agent-execution work), `standard` (everyday work, what a call with no selector uses) and `complex` (work that needs deeper reasoning). The agent picks one with `tier` | `PERPLEXITY_ROUTING=custom` plus all three `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX`, each a model id. A missing tier stops startup and names it |
-| `dynamic` | The server picks a tier from the prompt when a call names nothing, with fixed offline rules (no extra request, no cost): `light` runs the `fast` preset, `standard` runs `perplexity/sonar` (or `PERPLEXITY_MODEL`), `complex` runs the `medium` preset. Never `high` or `xhigh` | `PERPLEXITY_ROUTING=dynamic`. Nothing else is required; `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX` replace a tier's default with a model id |
+| `dynamic` | The server picks a tier from the prompt when a call names nothing, with fixed offline rules by default (no extra request, no cost; `PERPLEXITY_CLASSIFIER=decisions` asks the Decisions API instead, see "The Decisions classifier"): `light` runs the `fast` preset, `standard` runs `perplexity/sonar` (or `PERPLEXITY_MODEL`), `complex` runs the `medium` preset. Never `high` or `xhigh` | `PERPLEXITY_ROUTING=dynamic`. Nothing else is required; `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX` replace a tier's default with a model id |
 
 Example `custom` setup (in the pm2 `env` block or the shell):
 
@@ -225,8 +225,8 @@ architecture, in depth, analyze, critique, derive, prove, design, implications),
 longer, or holds three or more questions or numbered items; **light** when it is at most 120
 characters, holds at most one question and opens like a lookup (what is or are, who is or was, when is or did, where is, how many, how much,
 define, latest, current, price of); **standard** otherwise. The result's `routing` says what
-happened: `tier`, `selected_by` `classifier`, `classifier` `rules` and a short `reason` that names
-signals, never your words.
+happened: `tier`, `selected_by` `classifier`, `classifier` `rules` (or `decisions`, see below) and a short
+`reason` that names signals, a tier, a probability or a failure category, never your words.
 
 - Any explicit `depth`, `tier` or `model` skips the rules and is used as given. `tier` is valid in
   `custom` and `dynamic` mode.
