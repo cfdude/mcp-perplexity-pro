@@ -8,18 +8,26 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
 from mcp_perplexity_pro.catalog import PRESETS, CatalogModel, Listing, PresetSection
-from mcp_perplexity_pro.settings import TIER_NAMES, Settings
+from mcp_perplexity_pro.rules import CLASSIFIER
+from mcp_perplexity_pro.settings import TIER_NAMES, Settings, dynamic_target
 
 
 class ConfiguredModel(BaseModel):
     name: Annotated[str, Field(description="model, or the tier: light, standard, complex")]
-    id: Annotated[str, Field(description="The configured model id")]
-    known: Annotated[bool, Field(description="Whether the live list has it; still used if not")]
+    id: Annotated[str | None, Field(description="The configured model id; null for a preset")]
+    preset: Annotated[str | None, Field(description="The preset a dynamic tier runs")] = None
+    known: Annotated[
+        bool | None,
+        Field(description="Whether the live list has it; still used if not; null for a preset"),
+    ]
 
 
 class RoutingSection(BaseModel):
-    mode: Annotated[str, Field(description="standard or custom")]
+    mode: Annotated[str, Field(description="standard, custom or dynamic")]
     models: Annotated[list[ConfiguredModel], Field(description="The configured model or tiers")]
+    classifier: Annotated[
+        str | None, Field(description="Dynamic mode: who picks the tier (rules)")
+    ] = None
 
 
 class ModelsResult(BaseModel):
@@ -69,10 +77,13 @@ def render(result: ModelsResult, provider: str | None) -> str:
         )
     lines.append("")
     configured = ", ".join(
-        f"{m.name} = {m.id}{'' if m.known else ' (not in the live list)'}"
+        f"{m.name} = preset {m.preset}"
+        if m.preset
+        else f"{m.name} = {m.id}{'' if m.known else ' (not in the live list)'}"
         for m in result.routing.models
     )
-    lines.append(f"Routing mode {result.routing.mode}: {configured}")
+    classifier = f" (classifier {result.routing.classifier})" if result.routing.classifier else ""
+    lines.append(f"Routing mode {result.routing.mode}{classifier}: {configured}")
     section = result.presets
     lines.append("")
     lines.append(f"Agent API presets (source: {section.source}, as of {section.as_of}):")
@@ -83,6 +94,15 @@ def render(result: ModelsResult, provider: str | None) -> str:
 
 def routing_section(listing: Listing, settings: Settings) -> RoutingSection:
     live = {m.id for m in listing.for_provider(None)}
+    if settings.routing == "dynamic":
+        models = []
+        for tier in TIER_NAMES:
+            model, preset = dynamic_target(settings, tier)
+            if preset is not None:
+                models.append(ConfiguredModel(name=tier, id=None, preset=preset, known=None))
+            else:
+                models.append(ConfiguredModel(name=tier, id=model, known=model in live))
+        return RoutingSection(mode="dynamic", models=models, classifier=CLASSIFIER)
     if settings.routing == "custom":
         wanted = [(t, getattr(settings, f"tier_{t}")) for t in TIER_NAMES]
     else:

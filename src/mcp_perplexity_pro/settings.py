@@ -132,6 +132,27 @@ class Settings(BaseSettings):
         return value.rstrip("/")
 
 
+# The preset a dynamic tier runs when no ``PERPLEXITY_TIER_*`` variable replaces it. ``standard``
+# runs a model, and ``high`` and ``xhigh`` are in no row, so dynamic mode cannot select them.
+DYNAMIC_PRESETS = {"light": "fast", "complex": "medium"}
+
+
+def dynamic_target(settings: Settings, tier: str) -> tuple[str | None, str | None]:
+    """What a dynamic tier runs as ``(model, preset)``: a ``PERPLEXITY_TIER_*`` model when set,
+    else the tier's default (light is preset ``fast``, standard is ``PERPLEXITY_MODEL``, complex
+    is preset ``medium``). Exactly one of the two is set."""
+    model = getattr(settings, f"tier_{tier}")
+    if model is None and tier == "standard":
+        model = settings.model
+    return (model, None) if model is not None else (None, DYNAMIC_PRESETS[tier])
+
+
+def tier_runs(settings: Settings, tier: str) -> str:
+    """What a dynamic tier runs, as text: ``preset fast`` or a model id."""
+    model, preset = dynamic_target(settings, tier)
+    return f"preset {preset}" if preset else str(model)
+
+
 class SettingsError(Exception):
     """Invalid or missing configuration; the message names each offending variable."""
 

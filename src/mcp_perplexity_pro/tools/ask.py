@@ -156,7 +156,7 @@ def register(server: FastMCP, settings: Settings) -> None:
         tier: Annotated[
             str | None,
             Field(
-                description="light, standard or complex: custom or dynamic routing mode only. "
+                description="light, standard or complex: custom or dynamic mode only. "
                 "Cannot be combined with depth or model"
             ),
         ] = None,

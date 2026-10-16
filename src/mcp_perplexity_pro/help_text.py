@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
-from mcp_perplexity_pro.settings import Settings
+from mcp_perplexity_pro.settings import Settings, tier_runs
 
 # The closing sentence of the largest tool descriptions (agent-help).
 POINTER = " Details: call perplexity_help."
@@ -240,6 +240,12 @@ def check_topic(name: object) -> str:
 
 
 def _routing_line(settings: Settings) -> str:
+    if settings.routing == "dynamic":
+        return (
+            "Routing: dynamic, the server picks a tier from the prompt (light "
+            f"{tier_runs(settings, 'light')}, standard {tier_runs(settings, 'standard')}, "
+            f"complex {tier_runs(settings, 'complex')})."
+        )
     if settings.routing == "custom":
         return (
             f"Routing: custom, tiers light {settings.tier_light}, standard "
@@ -334,7 +340,18 @@ def render_topic(name: str, settings: Settings) -> str:
 
 
 def _routing_topic(settings: Settings) -> str:
-    if settings.routing == "custom":
+    if settings.routing == "dynamic":
+        modes = (
+            "Mode dynamic. A call that names nothing is classified from the prompt by fixed "
+            "rules (no API call, no cost) and runs a tier: "
+            f"light = {tier_runs(settings, 'light')} (short lookups), "
+            f"standard = {tier_runs(settings, 'standard')} (everyday), "
+            f"complex = {tier_runs(settings, 'complex')} (analysis, long or multi-part prompts). "
+            "A chat follow-up never runs below the tier its chat last used. search false runs the "
+            "standard tier's model, because a preset always searches. tier, depth or model "
+            "overrides the choice. high and xhigh are never picked."
+        )
+    elif settings.routing == "custom":
         modes = (
             f"Mode custom. Three tiers: light = {settings.tier_light} (light or agent work), "
             f"standard = {settings.tier_standard} (everyday, the default), complex = "
@@ -353,7 +370,12 @@ def _routing_topic(settings: Settings) -> str:
         "model cannot be combined: pass one, or none for the default. perplexity_research is not "
         "routed: it always runs a preset.\n"
         "Every ask and chat result has routing: mode, tier, model and selected_by (default, tier, "
-        "depth or model).\n"
+        "depth, model or classifier)"
+        + (
+            ", plus classifier and reason, which say which tier was picked and why.\n"
+            if settings.routing == "dynamic"
+            else ".\n"
+        )
     )
 
 

@@ -16,7 +16,7 @@
 
 ## 4. Telling the agent
 
-- [ ] 4.1 RED then GREEN: `routing.instructions_text` and `description_sentence` render dynamic (D8), `tools/models.py` routing section reports `classifier` and the three tiers (preset or model with `known`), `help_text._routing_line` and the routing topic dynamic variants (index at most 1500 and topic at most 3000 bytes, every dollar figure still in the README), the `tier` parameter descriptions say "custom or dynamic mode"; tests: instructions, description sentence, `perplexity_models` section against the live-shaped fixture, help topic, and `tests/test_tools_list_budget.py` is extended to build a dynamic server and fail above 59779 bytes there too; measure `tools/list` on a default and on a dynamic server and record both byte counts in `acceptance/README.md`
+- [x] 4.1 RED then GREEN: `routing.instructions_text` and `description_sentence` render dynamic (D8), `tools/models.py` routing section reports `classifier` and the three tiers (preset or model with `known`), `help_text._routing_line` and the routing topic dynamic variants (index at most 1500 and topic at most 3000 bytes, every dollar figure still in the README), the `tier` parameter descriptions say "custom or dynamic mode"; tests: instructions, description sentence, `perplexity_models` section against the live-shaped fixture, help topic, and `tests/test_tools_list_budget.py` is extended to build a dynamic server and fail above 59779 bytes there too; measure `tools/list` on a default and on a dynamic server and record both byte counts in `acceptance/README.md`
 
 ## 5. Acceptance (live)
 

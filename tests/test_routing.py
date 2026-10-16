@@ -9,6 +9,7 @@ from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.routing import (
     LONG_DEPTHS,
     Route,
+    description_sentence,
     dynamic_route,
     instructions_text,
     resolve,
@@ -154,8 +155,8 @@ def test_instructions_are_a_pure_function_of_settings_and_hold_no_secret(standar
         assert settings.api_key.get_secret_value() not in text
 
 
-def test_instructions_point_to_help_in_both_modes(standard, custom):
-    for settings in (standard, custom):
+def test_instructions_point_to_help_in_every_mode(standard, custom, dynamic):
+    for settings in (standard, custom, dynamic):
         assert "perplexity_help" in instructions_text(settings)
 
 
@@ -406,3 +407,48 @@ def test_a_tie_between_tiers_takes_the_highest(make_settings):
         routing="dynamic", tier_light="x/same", tier_standard="x/same", tier_complex="x/same"
     )
     assert tier_of(s, None, "x/same") == "complex"
+
+
+# --- telling the agent: dynamic instructions and description (task 4.1) ---------------------
+
+
+def test_dynamic_instructions_name_the_mode_the_tiers_and_how_to_override(dynamic):
+    text = instructions_text(dynamic)
+    assert "Routing mode: dynamic" in text
+    assert "picks a tier from the prompt" in text
+    assert "light = preset fast" in text
+    assert "standard = perplexity/sonar" in text and "complex = preset medium" in text
+    assert "`tier`" in text and "`depth`" in text and "`model`" in text and "overrides" in text
+    assert "perplexity_research" in text and "perplexity_help" in text
+    assert "high" in text and "xhigh" in text
+
+
+def test_dynamic_instructions_show_a_replaced_tier_as_its_model(make_settings):
+    s = make_settings(routing="dynamic", tier_light="x/l", tier_standard="x/s", tier_complex="x/c")
+    text = instructions_text(s)
+    assert "light = x/l" in text and "standard = x/s" in text and "complex = x/c" in text
+    assert "preset" not in text.split("Pass")[0]
+
+
+def test_dynamic_instructions_and_description_are_pure_and_hold_no_secret(dynamic):
+    for text in (instructions_text(dynamic), description_sentence(dynamic)):
+        assert dynamic.api_key.get_secret_value() not in text
+    assert instructions_text(dynamic) == instructions_text(dynamic)
+    assert description_sentence(dynamic) == description_sentence(dynamic)
+
+
+def test_the_dynamic_description_sentence_states_mode_tiers_and_override(dynamic):
+    text = description_sentence(dynamic)
+    assert "Routing mode: dynamic" in text and "from the prompt" in text
+    assert "light runs preset fast" in text and "standard runs perplexity/sonar" in text
+    assert "complex runs preset medium" in text
+    assert "`tier`, `depth` or `model` overrides" in text
+    assert "always used as given" in text and "perplexity_usage" in text
+
+
+def test_the_other_modes_description_sentences_are_unchanged(standard, custom):
+    assert "Routing mode: standard" in description_sentence(standard)
+    assert "dynamic" not in description_sentence(standard)
+    assert "Routing mode: custom" in description_sentence(custom)
+    assert "dynamic" not in description_sentence(custom)
+    assert "dynamic" not in instructions_text(standard) + instructions_text(custom)

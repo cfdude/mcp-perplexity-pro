@@ -176,7 +176,9 @@ async def test_the_search_parameter_no_longer_says_it_needs_a_model(world):
     w = await world()
     props = (await tool(w, ASK)).input_schema["properties"]
     assert "needs model" not in props["search"]["description"]
-    assert "tier" in props and "custom" in props["tier"]["description"]
+    assert "tier" in props and "custom or dynamic mode" in props["tier"]["description"]
+    chat = (await tool(w, CHAT)).input_schema["properties"]
+    assert "custom or dynamic mode" in chat["tier"]["description"]
 
 
 # --- wiring: one usage event per call, per mode and per source (task 4.1) ----------------

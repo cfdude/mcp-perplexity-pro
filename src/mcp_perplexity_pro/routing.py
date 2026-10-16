@@ -11,13 +11,10 @@ from dataclasses import dataclass
 
 from mcp_perplexity_pro import rules
 from mcp_perplexity_pro.errors import PerplexityError
-from mcp_perplexity_pro.settings import TIER_NAMES, Settings
+from mcp_perplexity_pro.settings import TIER_NAMES, Settings, dynamic_target, tier_runs
 
 ASK_DEPTHS = ("fast", "low", "medium")
 LONG_DEPTHS = ("high", "xhigh")
-# The preset a dynamic tier runs when no ``PERPLEXITY_TIER_*`` variable replaces it. ``standard``
-# runs a model, and ``high`` and ``xhigh`` are in no row, so dynamic mode cannot select them.
-DYNAMIC_PRESETS = {"light": "fast", "complex": "medium"}
 REASON_MAX_LENGTH = 120
 
 
@@ -59,10 +56,7 @@ def dynamic_route(
 ) -> Route:
     """The route of a dynamic tier: a ``PERPLEXITY_TIER_*`` model when set, else the tier's
     default (light is preset ``fast``, standard is ``PERPLEXITY_MODEL``, complex is ``medium``)."""
-    model = getattr(settings, f"tier_{tier}")
-    if model is None and tier == "standard":
-        model = settings.model
-    preset = None if model is not None else DYNAMIC_PRESETS[tier]
+    model, preset = dynamic_target(settings, tier)
     return Route("dynamic", tier, model, preset, selected_by, reason, classifier)
 
 
@@ -203,6 +197,13 @@ def description_sentence(settings: Settings) -> str:
             f"({settings.tier_standard}) answers; `tier` picks light ({settings.tier_light}), "
             f"standard or complex ({settings.tier_complex})."
         )
+    elif settings.routing == "dynamic":
+        head = (
+            "Routing mode: dynamic. With no depth, tier or model the server picks a tier from "
+            f"the prompt: light runs {tier_runs(settings, 'light')}, standard runs "
+            f"{tier_runs(settings, 'standard')}, complex runs {tier_runs(settings, 'complex')}. "
+            "A named `tier`, `depth` or `model` overrides the choice."
+        )
     else:
         head = (
             f"Routing mode: standard. With no depth, tier or model {settings.model} answers "
@@ -225,12 +226,24 @@ def instructions_text(settings: Settings) -> str:
             "Pass `tier` (light, standard or complex) on perplexity_ask or perplexity_chat to "
             "pick one."
         )
+    elif settings.routing == "dynamic":
+        picking = (
+            "Routing mode: dynamic. The server picks a tier from the prompt when a call names "
+            "nothing: "
+            f"light = {tier_runs(settings, 'light')} (short lookups), "
+            f"standard = {tier_runs(settings, 'standard')} (everyday work), "
+            f"complex = {tier_runs(settings, 'complex')} (analysis, long or multi-part prompts). "
+            "Naming `tier` (light, standard or complex), `depth` or `model` overrides the "
+            "server's choice."
+        )
     else:
         picking = (
             f"Routing mode: standard. Calls that name nothing use {settings.model} with web search."
         )
     selectors = (
-        "`tier`, `depth` and `model`" if settings.routing == "custom" else "`depth` and `model`"
+        "`tier`, `depth` and `model`"
+        if settings.routing in ("custom", "dynamic")
+        else "`depth` and `model`"
     )
     return (
         f"{picking} Pass `depth` (fast, low or medium) to use a Perplexity preset instead, or "

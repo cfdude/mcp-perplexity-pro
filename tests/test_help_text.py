@@ -83,6 +83,14 @@ def test_the_index_states_the_custom_mode(make_settings, tools):
     assert "custom" in text and len(text.encode()) <= 1500
 
 
+def test_the_dynamic_index_states_the_mode_and_that_the_tier_is_picked_from_the_prompt(
+    make_settings, tools
+):
+    text = help_text.render_index(make_settings(routing="dynamic"), sorted(tools), "2.0.0")
+    assert "dynamic" in text and "picks a tier from the prompt" in text
+    assert text.isascii() and len(text.encode()) <= 1500, len(text.encode())
+
+
 def test_the_decision_table_maps_needs_to_tools(make_settings, tools):
     text = help_text.render_index(make_settings(), sorted(tools), "2.0.0")
     table = text.split("## Pick a tool")[1].split("## Tools")[0]
@@ -108,6 +116,21 @@ def test_the_routing_topic_in_standard_and_custom(make_settings):
     assert "always" in standard and "cannot be combined" in standard
     custom = help_text.render_topic("routing", make_settings(routing="custom", **TIERS))
     assert all(model in custom for model in TIERS.values()) and "custom" in custom
+
+
+def test_the_dynamic_routing_topic_names_the_tiers_the_override_and_the_result(make_settings):
+    text = help_text.render_topic("routing", make_settings(routing="dynamic"))
+    assert text.isascii() and len(text.encode()) <= 3000, len(text.encode())
+    assert "Mode dynamic" in text and "from the prompt" in text
+    assert "light = preset fast" in text and "standard = perplexity/sonar" in text
+    assert "complex = preset medium" in text
+    assert "tier, depth or model overrides" in text
+    assert "explicit model is always used exactly as given" in text
+    assert "classifier" in text and "reason" in text and "tier was picked and why" in text
+    replaced = help_text.render_topic(
+        "routing", make_settings(routing="dynamic", tier_light="x/l", tier_complex="x/c")
+    )
+    assert "light = x/l" in replaced and "complex = x/c" in replaced
 
 
 def test_the_errors_topic_lists_every_category(make_settings):

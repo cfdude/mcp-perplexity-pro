@@ -394,7 +394,8 @@ async def test_the_standard_routing_section_marks_the_configured_model_known(
     result = await routing_of(make_settings, upstream, clock, model=listed)
     section = result.structured_content["routing"]
     assert section["mode"] == "standard"
-    assert section["models"] == [{"name": "model", "id": listed, "known": True}]
+    assert section["classifier"] is None
+    assert section["models"] == [{"name": "model", "id": listed, "preset": None, "known": True}]
 
 
 async def test_a_model_the_catalog_does_not_list_is_known_false_and_still_reported(
@@ -402,7 +403,7 @@ async def test_a_model_the_catalog_does_not_list_is_known_false_and_still_report
 ):
     result = await routing_of(make_settings, upstream, clock, model="vendor/not-listed")
     (entry,) = result.structured_content["routing"]["models"]
-    assert entry == {"name": "model", "id": "vendor/not-listed", "known": False}
+    assert entry == {"name": "model", "id": "vendor/not-listed", "preset": None, "known": False}
 
 
 async def test_the_custom_routing_section_lists_three_tiers(make_settings, upstream, clock):
@@ -422,6 +423,43 @@ async def test_the_custom_routing_section_lists_three_tiers(make_settings, upstr
         ("light", True),
         ("standard", False),
         ("complex", False),
+    ]
+
+
+async def test_the_dynamic_routing_section_reports_the_classifier_presets_and_a_model(
+    make_settings, upstream, clock
+):
+    listed = FIXTURE["data"][0]["id"]
+    result = await routing_of(make_settings, upstream, clock, routing="dynamic", model=listed)
+    section = result.structured_content["routing"]
+    assert section["mode"] == "dynamic" and section["classifier"] == "rules"
+    assert section["models"] == [
+        {"name": "light", "id": None, "preset": "fast", "known": None},
+        {"name": "standard", "id": listed, "preset": None, "known": True},
+        {"name": "complex", "id": None, "preset": "medium", "known": None},
+    ]
+    assert f"light = preset fast, standard = {listed}, complex = preset medium" in (
+        result.content[0].text
+    )
+
+
+async def test_a_replaced_dynamic_tier_is_a_model_with_known_and_the_rest_stay_presets(
+    make_settings, upstream, clock
+):
+    listed = FIXTURE["data"][0]["id"]
+    result = await routing_of(
+        make_settings,
+        upstream,
+        clock,
+        routing="dynamic",
+        tier_complex=listed,
+        tier_standard="vendor/not-listed",
+    )
+    entries = result.structured_content["routing"]["models"]
+    assert [(m["name"], m["id"], m["preset"], m["known"]) for m in entries] == [
+        ("light", None, "fast", None),
+        ("standard", "vendor/not-listed", None, False),
+        ("complex", listed, None, True),
     ]
 
 
