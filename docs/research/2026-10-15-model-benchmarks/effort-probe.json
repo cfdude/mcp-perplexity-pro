@@ -1,0 +1,542 @@
+[
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 5e-05,
+  "reasoning_tokens": 64,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 4e-05,
+  "reasoning_tokens": 64,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0001,
+  "reasoning_tokens": 192,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 10,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00024,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00024,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0003,
+  "reasoning_tokens": 17,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00128,
+  "reasoning_tokens": 136,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00028,
+  "reasoning_tokens": 25,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00122,
+  "reasoning_tokens": 129,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00127,
+  "reasoning_tokens": 135,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00114,
+  "reasoning_tokens": 120,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "bogus",
+  "http": 400,
+  "status": null,
+  "err": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ }
+]
