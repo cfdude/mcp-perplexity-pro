@@ -1,0 +1,34 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-15",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded.",
+  "request_note": "routing-decisions-classifier D2: a standard-tier prompt",
+  "latency_seconds": 0.47,
+  "observed": {
+    "choice": "complex",
+    "confidence": 0.4543875658023896,
+    "probabilities": {
+      "light": 0.0016154083865174218,
+      "standard": 0.3621262144118895,
+      "complex": 0.6362583772015931
+    }
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": "How do I configure retries with exponential backoff in an httpx client, and which status codes should I retry?",
+    "questions": {
+      "tier": {
+        "type": "choice",
+        "criteria": {
+          "light": "A short factual lookup with one clear answer, such as a current value or a date.",
+          "standard": "An ordinary question that needs a sourced, explained answer but no deep analysis.",
+          "complex": "An analytical, multi-part or long task that needs comparison, design or step-by-step reasoning."
+        }
+      }
+    }
+  }
+}

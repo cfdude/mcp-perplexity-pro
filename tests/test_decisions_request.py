@@ -19,6 +19,9 @@ COMPARED = [
     "decisions_model_v1",
     "decisions_11_questions",
     "decisions_32_questions",
+    "decisions_tier_light",
+    "decisions_tier_standard",
+    "decisions_tier_complex",
 ]
 REFUSED_ALTHOUGH_ACCEPTED = {"decisions_empty_state": "blank state"}
 

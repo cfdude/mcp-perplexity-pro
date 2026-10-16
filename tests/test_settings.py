@@ -309,3 +309,68 @@ def test_unused_variables_are_ignored_not_validated_and_reported(key_env, monkey
     for tier in ("LIGHT", "STANDARD", "COMPLEX"):
         monkeypatch.setenv(f"PERPLEXITY_TIER_{tier}", f"x/{tier.lower()}")
     assert load_settings().ignored_routing_vars() == ["PERPLEXITY_MODEL"]
+
+
+# --- PERPLEXITY_CLASSIFIER (routing-decisions-classifier, task 1.1) ---------------------------
+
+
+def test_classifier_defaults_to_rules(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "dynamic")
+    s = load_settings()
+    assert s.classifier == "rules" and s.ignored_routing_vars() == []
+
+
+@pytest.mark.parametrize("raw", ["decisions", "DECISIONS", " DeCiSiOnS "])
+def test_classifier_decisions_is_case_insensitive(key_env, monkeypatch, raw):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "dynamic")
+    monkeypatch.setenv("PERPLEXITY_CLASSIFIER", raw)
+    s = load_settings()
+    assert s.classifier == "decisions" and s.ignored_routing_vars() == []
+
+
+def test_an_unknown_classifier_in_dynamic_names_the_variable_and_both_values(key_env, monkeypatch):
+    text = routing_error(monkeypatch, ROUTING="dynamic", CLASSIFIER="smart")
+    assert "PERPLEXITY_CLASSIFIER" in text and "'smart'" in text
+    assert "rules" in text and "decisions" in text and KEY not in text
+
+
+@pytest.mark.parametrize("mode", ["standard", "custom"])
+def test_classifier_is_ignored_and_reported_outside_dynamic(key_env, monkeypatch, mode):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", mode)
+    for tier in ("LIGHT", "STANDARD", "COMPLEX"):
+        if mode == "custom":
+            monkeypatch.setenv(f"PERPLEXITY_TIER_{tier}", f"x/{tier.lower()}")
+    monkeypatch.setenv("PERPLEXITY_CLASSIFIER", "decisions")
+    assert load_settings().ignored_routing_vars() == ["PERPLEXITY_CLASSIFIER"]
+
+
+def test_an_unknown_classifier_outside_dynamic_starts_and_is_reported(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_CLASSIFIER", "smart")  # standard mode: not validated
+    s = load_settings()
+    assert s.ignored_routing_vars() == ["PERPLEXITY_CLASSIFIER"]
+
+
+def test_an_empty_classifier_in_dynamic_is_set_and_therefore_refused(key_env, monkeypatch):
+    assert "PERPLEXITY_CLASSIFIER" in routing_error(monkeypatch, ROUTING="dynamic", CLASSIFIER="")
+
+
+def test_startup_logs_one_warning_naming_an_ignored_classifier(
+    key_env, monkeypatch, caplog, tmp_path
+):
+    import asyncio
+    import logging
+
+    from mcp_perplexity_pro.__main__ import bootstrap
+
+    monkeypatch.setenv("PERPLEXITY_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("PERPLEXITY_CLASSIFIER", "decisions")
+    with caplog.at_level(logging.WARNING):
+        server, _ = bootstrap(serving=False)
+    named = [r for r in caplog.records if "PERPLEXITY_CLASSIFIER" in r.getMessage()]
+    assert len(named) == 1 and "ignored" in named[0].getMessage()
+
+    async def close():
+        await server.app.http.aclose()
+        await server.app.engine.dispose()
+
+    asyncio.run(close())

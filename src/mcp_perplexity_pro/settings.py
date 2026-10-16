@@ -22,6 +22,7 @@ LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 ROUTING_MODES = ("standard", "custom", "dynamic")
 TIER_NAMES = ("light", "standard", "complex")
+CLASSIFIERS = ("rules", "decisions")
 DEFAULT_MODEL = "perplexity/sonar"
 # A model id is written into the instructions text the calling agent reads, so only the plain
 # characters real ids use (no whitespace, control, invisible or Markdown characters); 200
@@ -61,13 +62,14 @@ class Settings(BaseSettings):
     tier_light: str | None = None
     tier_standard: str | None = None
     tier_complex: str | None = None
+    classifier: str = "rules"
 
     @field_validator("log_level", mode="before")
     @classmethod
     def _upper_log_level(cls, value: object) -> object:
         return value.upper() if isinstance(value, str) else value
 
-    @field_validator("routing", mode="before")
+    @field_validator("routing", "classifier", mode="before")
     @classmethod
     def _lower_routing(cls, value: object) -> object:
         return value.strip().lower() if isinstance(value, str) else value
@@ -95,6 +97,11 @@ class Settings(BaseSettings):
             if self.tier_standard is None:  # TIER_STANDARD shadows MODEL: an unused variable
                 wanted["MODEL"] = self.model
         problems = []
+        if self.routing == "dynamic" and self.classifier not in CLASSIFIERS:
+            problems.append(
+                f"{ENV_PREFIX}CLASSIFIER: got {self.classifier!r}; accepted values are rules "
+                "and decisions"
+            )
         for name, value in wanted.items():
             if value is None:
                 if self.routing == "custom":
@@ -111,11 +118,13 @@ class Settings(BaseSettings):
 
         In ``dynamic`` mode the tier variables replace a tier's default, so none is ignored;
         ``PERPLEXITY_MODEL`` is, when ``PERPLEXITY_TIER_STANDARD`` is also set (it replaces it).
+        ``PERPLEXITY_CLASSIFIER`` is ignored outside ``dynamic`` mode, whatever its value.
         """
         if self.routing == "dynamic":
             shadowed = "model" in self.model_fields_set and "tier_standard" in self.model_fields_set
             return [f"{ENV_PREFIX}MODEL"] if shadowed else []
         unused = ["model"] if self.routing == "custom" else [f"tier_{t}" for t in TIER_NAMES]
+        unused.append("classifier")  # only dynamic mode classifies
         return [f"{ENV_PREFIX}{n.upper()}" for n in unused if n in self.model_fields_set]
 
     @field_validator("data_dir", mode="after")

@@ -50,14 +50,15 @@ higher-wins direction is the quality-safe one (a wrong `light` costs an answer, 
 few cents). The classifier sees at most 4000 characters while the rules see all of them; the
 length signal is rules-only, so a long prompt the decider saw truncated can still merge upward.
 
-**D4. The bound, inside the recorded call.** The bound covers the Decisions request and its retries;
+**D4. The bound, inside the recorded call.** The bound covers the single Decisions request;
 the project commit and the usage write still wait on SQLite's busy timeout as every costed call does. The deadline (3 s, a constant) is fixed at the start
 of `classify_dynamic` and the `call` lambda handed to `costed_call` wraps the request in
 `asyncio.timeout` for the time left, converting `TimeoutError` into `PerplexityError("network_timeout")`.
 The existing failure branch of `costed_call` then records the request with that status, so a
 timeout is not an unrecorded cancel; a genuine client cancel still propagates (it is a
-`CancelledError`, not folded into the fallback). The client's retry loop only sleeps through its
-injected sleep and awaits httpx2, so both are cancellable and the bound covers retries.
+`CancelledError`, not folded into the fallback). The request is made once (`attempts=1`): the client's retry loop would sleep through a 429's
+`Retry-After` until the deadline cut it off and mislabel it `network_timeout`, and a retry would add
+latency to a call that has a fallback anyway.
 
 **D5. Recording.** `decisions.run_decide` gains a keyword `tool` (default `TOOL`), so the event
 carries the calling tool's name, as the usage spec defines the event's tool. `costed_call`

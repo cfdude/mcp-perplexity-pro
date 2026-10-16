@@ -1,9 +1,9 @@
-# Spec Delta
+# routing-decisions-classifier Specification
 
 ## Purpose
 Defines how dynamic routing asks Perplexity's Decisions API to pick a tier for a prompt, how it is bounded, recorded and replaced by the rules classifier when it fails.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: One choice question picks the tier
 The Decisions classifier SHALL send one request to the Decisions API with the default decider model, a state that is the prompt text as a string (its first 4000 characters) and one `choice` question named `tier` whose options are `light`, `standard` and `complex`, each with a fixed one-line criterion. The answer's `choice` is the tier.
@@ -36,15 +36,15 @@ The answer's strength is the probability it gives the chosen option, or its `con
 - **THEN** the answer is trusted alone
 
 ### Requirement: Classification is bounded and never fatal
-The Decisions request, retries included, SHALL end within 3 seconds. Any failure (a timeout, any error category, an answer that is unreadable or whose choice is not one of the three tiers) SHALL fall back to the rules' tier, with a reason naming the failure category, and SHALL NOT fail the call or wait on the request beyond the bound.
+The Decisions request SHALL be made once, with no retry, and end within 3 seconds, so a rate limit is reported as such at once. Any failure (a timeout, any error category, an answer that is unreadable or whose choice is not one of the three tiers) SHALL fall back to the rules' tier, with a reason naming the failure category, and SHALL NOT fail the call or wait on the request beyond the bound.
 
 #### Scenario: Timeout
 - **WHEN** the Decisions request does not answer within 3 seconds
 - **THEN** the call proceeds with the rules' tier, the reason names `network_timeout`, and one `decisions` event is recorded with status `network_timeout`
 
 #### Scenario: Rate limited
-- **WHEN** the Decisions API answers `rate_limited`
-- **THEN** the call proceeds with the rules' tier and the reason names `rate_limited`
+- **WHEN** the Decisions API answers `rate_limited`, even with a `Retry-After`
+- **THEN** the call proceeds at once with the rules' tier, the reason names `rate_limited` and one `decisions` event is recorded with that status
 
 #### Scenario: Unknown choice
 - **WHEN** the answer's choice is `huge`

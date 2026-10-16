@@ -1,0 +1,398 @@
+[
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.94)",
+  "seconds": 0.675
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.59)",
+  "seconds": 0.28
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.97)",
+  "seconds": 0.269
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.91)",
+  "seconds": 0.26
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.86)",
+  "seconds": 0.251
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.85)",
+  "seconds": 0.251
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.93)",
+  "seconds": 0.251
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.94)",
+  "seconds": 0.263
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.97)",
+  "seconds": 0.256
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.75)",
+  "seconds": 0.262
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.96)",
+  "seconds": 0.252
+ },
+ {
+  "expected": "light",
+  "mark": "clear",
+  "rules": "light",
+  "tier": "light",
+  "classifier": "decisions",
+  "reason": "decisions: light (0.98)",
+  "seconds": 0.269
+ },
+ {
+  "expected": "standard",
+  "mark": "borderline",
+  "rules": "light",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.77)",
+  "seconds": 0.268
+ },
+ {
+  "expected": "standard",
+  "mark": "borderline",
+  "rules": "light",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.63)",
+  "seconds": 0.263
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.89)",
+  "seconds": 0.25
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.67)",
+  "seconds": 0.262
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.87)",
+  "seconds": 0.266
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.90)",
+  "seconds": 0.329
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.94)",
+  "seconds": 0.266
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.54)",
+  "seconds": 0.264
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.61)",
+  "seconds": 0.255
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.96)",
+  "seconds": 0.246
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.81)",
+  "seconds": 0.266
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.91)",
+  "seconds": 0.259
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.74)",
+  "seconds": 0.265
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.85)",
+  "seconds": 0.274
+ },
+ {
+  "expected": "standard",
+  "mark": "clear",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.60)",
+  "seconds": 0.265
+ },
+ {
+  "expected": "standard",
+  "mark": "borderline",
+  "rules": "standard",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.49, weak)",
+  "seconds": 0.263
+ },
+ {
+  "expected": "standard",
+  "mark": "borderline",
+  "rules": "standard",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.81)",
+  "seconds": 0.259
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.98)",
+  "seconds": 0.266
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.98)",
+  "seconds": 0.264
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.99)",
+  "seconds": 0.249
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.98)",
+  "seconds": 0.288
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.84)",
+  "seconds": 0.252
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.99)",
+  "seconds": 0.251
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.92)",
+  "seconds": 0.264
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.55)",
+  "seconds": 0.281
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.53)",
+  "seconds": 0.269
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "standard",
+  "classifier": "decisions",
+  "reason": "decisions: standard (0.71)",
+  "seconds": 0.26
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "rules",
+  "reason": "decisions weak (light 0.39), rules: 3 questions",
+  "seconds": 0.268
+ },
+ {
+  "expected": "complex",
+  "mark": "clear",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.98)",
+  "seconds": 0.261
+ },
+ {
+  "expected": "complex",
+  "mark": "borderline",
+  "rules": "complex",
+  "tier": "complex",
+  "classifier": "rules",
+  "reason": "decisions weak (standard 0.44), rules: 1200 chars",
+  "seconds": 0.272
+ },
+ {
+  "expected": "standard",
+  "mark": "borderline",
+  "rules": "standard",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (0.57)",
+  "seconds": 0.258
+ },
+ {
+  "expected": "complex",
+  "mark": "borderline",
+  "rules": "standard",
+  "tier": "complex",
+  "classifier": "decisions",
+  "reason": "decisions: complex (1.00)",
+  "seconds": 0.271
+ }
+]

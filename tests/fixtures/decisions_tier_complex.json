@@ -1,0 +1,19 @@
+{
+  "model": "pplx-decider-v1.1-27b",
+  "answers": {
+    "tier": {
+      "type": "choice",
+      "choice": "complex",
+      "confidence": 0.9991123274245259,
+      "probabilities": {
+        "light": 0.00014461263293129967,
+        "standard": 0.0004471690840511983,
+        "complex": 0.9994082182830174
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 286,
+    "output_tokens": 1
+  }
+}

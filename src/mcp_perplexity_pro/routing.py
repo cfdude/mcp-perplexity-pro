@@ -188,6 +188,17 @@ def describe_tiers(settings: Settings) -> str:
     return ", ".join(parts)
 
 
+def classifier_sentence(settings: Settings) -> str:
+    """One sentence naming the dynamic classifier in use (and, for the Decisions classifier,
+    that the rules replace it when it is unavailable)."""
+    if settings.classifier == "decisions":
+        return (
+            "Classifier: decisions (Perplexity's Decisions API, one small recorded request per "
+            "call, at most 3 seconds); the rules replace it when it is unavailable."
+        )
+    return "Classifier: rules (fixed, offline)."
+
+
 def description_sentence(settings: Settings) -> str:
     """One paragraph for the ask and chat tool descriptions: the mode, what a call with no
     selector uses, and that the default's cost differs from the per-depth figures."""
@@ -202,7 +213,8 @@ def description_sentence(settings: Settings) -> str:
             "Routing mode: dynamic. With no depth, tier or model the server picks a tier from "
             f"the prompt: light runs {tier_runs(settings, 'light')}, standard runs "
             f"{tier_runs(settings, 'standard')}, complex runs {tier_runs(settings, 'complex')}. "
-            "A named `tier`, `depth` or `model` overrides the choice."
+            "A named `tier`, `depth` or `model` overrides the choice. "
+            f"{classifier_sentence(settings)}"
         )
     else:
         head = (
@@ -234,7 +246,7 @@ def instructions_text(settings: Settings) -> str:
             f"standard = {tier_runs(settings, 'standard')} (everyday work), "
             f"complex = {tier_runs(settings, 'complex')} (analysis, long or multi-part prompts). "
             "Naming `tier` (light, standard or complex), `depth` or `model` overrides the "
-            "server's choice."
+            f"server's choice. {classifier_sentence(settings)}"
         )
     else:
         picking = (

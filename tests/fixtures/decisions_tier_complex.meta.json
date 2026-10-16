@@ -1,0 +1,34 @@
+{
+  "endpoint": "/v1/decisions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-10-15",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded.",
+  "request_note": "routing-decisions-classifier D2: a complex-tier prompt",
+  "latency_seconds": 0.29,
+  "observed": {
+    "choice": "complex",
+    "confidence": 0.9991123274245259,
+    "probabilities": {
+      "light": 0.00014461263293129967,
+      "standard": 0.0004471690840511983,
+      "complex": 0.9994082182830174
+    }
+  },
+  "request": {
+    "model": "pplx-decider-v1.1-27b",
+    "state": "We run a multi-tenant billing service on PostgreSQL that has grown to 4 TB. Compare three designs for moving to horizontal sharding: tenant-id hash sharding, directory based sharding with a lookup service, and a move to a distributed SQL database. For each design evaluate the migration path step by step, the operational trade-offs, the effect on cross-tenant reporting queries, the failure modes during resharding and the likely cost over three years. Then critique the weakest assumption in each design, propose a phased rollout with rollback points for the one you recommend, and list the metrics we should watch during each phase. Finish with the implications for our on-call rotation and for the data team that owns the nightly warehouse export.",
+    "questions": {
+      "tier": {
+        "type": "choice",
+        "criteria": {
+          "light": "A short factual lookup with one clear answer, such as a current value or a date.",
+          "standard": "An ordinary question that needs a sourced, explained answer but no deep analysis.",
+          "complex": "An analytical, multi-part or long task that needs comparison, design or step-by-step reasoning."
+        }
+      }
+    }
+  }
+}

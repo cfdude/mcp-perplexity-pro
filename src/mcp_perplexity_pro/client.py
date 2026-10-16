@@ -191,16 +191,19 @@ class PerplexityClient:
         json: Any = None,
         *,
         timeout: httpx2.Timeout | None = None,
+        attempts: int | None = None,
     ) -> Any:
         """Send a request, applying the retry rules, and return the parsed 2xx JSON body.
 
         A POST creates work and is replayed only after a 429 (never billed) or a connect
         failure (provably not sent). A GET is also retried on 5xx, timeouts and any
         connection failure. Every other failure is raised as ``PerplexityError`` at once.
-        ``timeout`` replaces the general timeout for this call only.
+        ``timeout`` replaces the general timeout for this call only; ``attempts`` replaces
+        ``max_attempts`` for it (the routing classifier makes one attempt, so a 429 is reported
+        at once instead of being slept on until its deadline).
         """
         is_read = method.upper() == "GET"
-        attempts = self._settings.max_attempts
+        attempts = attempts if attempts is not None else self._settings.max_attempts
         for attempt in range(1, attempts + 1):
             wait: float | None = None  # set when this attempt may be retried
             started = time.monotonic()
@@ -303,10 +306,12 @@ class PerplexityClient:
         path = "/search"
         return self._parse(SearchResponse, await self.request_json("POST", path, json=body), path)
 
-    async def decide(self, body: dict[str, Any]) -> DecisionsResponse:
+    async def decide(
+        self, body: dict[str, Any], *, attempts: int | None = None
+    ) -> DecisionsResponse:
         """``POST /v1/decisions`` (billed: never replayed after a response other than 429)."""
         path = "/v1/decisions"
-        data = await self.request_json("POST", path, json=body)
+        data = await self.request_json("POST", path, json=body, attempts=attempts)
         return self._parse(DecisionsResponse, data, path)
 
     async def embed(self, body: dict[str, Any]) -> EmbeddingsResponse:

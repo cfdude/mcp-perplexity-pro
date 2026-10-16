@@ -755,7 +755,7 @@
       "id": "routing-decisions-classifier",
       "title": "Use Perplexity Decisions API as routing classifier",
       "priority": "P2",
-      "status": "later",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -781,10 +781,17 @@
       "attributedCommits": [
         "09cc114aa3f11c40d042559ab1f86ade8c0dd7a1",
         "8068b22cf12cd7765b51251114450b64ce84fa7a",
-        "0f1dd8a8ba647d14451566e20ff5d4b5db327261"
+        "0f1dd8a8ba647d14451566e20ff5d4b5db327261",
+        "4ac3891a806e2e46dcd61a12f03aa93546add49a",
+        "80251615d45f1733d99b064e498a0bd95b5f33b1",
+        "a60d59bba124e0eb274757f146f2e7b68d37386a",
+        "50dc3938413cdbb2edab8a0e7ab2ab36530d2716",
+        "896f2fd06c5ab32374358adf74a2cbb409f364ea",
+        "dbef079e10ab6e7ab473359ea27c4d94b0a1a101",
+        "5176c30ced34c28ccc85a8ea875866c43258154d"
       ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-16T00:57:16.383Z",
+      "touchedAt": "2026-10-16T02:30:31.178Z",
       "release": "release-2-1-0",
       "gateReview": {
         "gate1": {
@@ -796,6 +803,20 @@
             "openspec/changes/routing-decisions-classifier"
           ],
           "reviewer": "fresh-context general-purpose subagents: Gate 1 review (1 Critical, 7 Important), the release cross-spec review and a final verification; all Critical and Important findings folded (0f1dd8a)"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-16T02:30:23.545Z",
+          "baseSha": "debe123fe883aefade4e4011c6963a843f9d20a3",
+          "headSha": "5176c30ced34c28ccc85a8ea875866c43258154d",
+          "reviewer": "fresh-context general-purpose subagents: Gate 2 over the code (0 Critical, 2 Important fixed) and a documentation-diff review (1 Important and 3 Minor, fixed); suite 2822 passed",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-16T02:24:58.046Z",
+            "baseSha": "debe123fe883aefade4e4011c6963a843f9d20a3",
+            "headSha": "896f2fd06c5ab32374358adf74a2cbb409f364ea",
+            "reviewer": "fresh-context general-purpose subagent: Gate 2 over debe123..50dc393 (0 Critical, 2 Important and 4 of the Minor fixed with RED tests and a mutation check: single-attempt 429, CLI two-event test, shared chat gate, strength range, immutable criteria, deadline-past test); suite 2822 passed"
+          }
         }
       },
       "gateRounds": {
@@ -805,8 +826,33 @@
           "failStreak": 0,
           "lastVerdictAt": "2026-10-16T00:57:16.381Z",
           "lastPassAt": "2026-10-16T00:57:16.381Z"
+        },
+        "gate2": {
+          "fails": 0,
+          "passes": 2,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-16T02:30:23.545Z",
+          "lastPassAt": "2026-10-16T02:30:23.545Z"
         }
-      }
+      },
+      "startedAt": "2026-10-16T01:52:33.011Z",
+      "withdrawnCommits": [
+        {
+          "sha": "debe123fe883aefade4e4011c6963a843f9d20a3",
+          "reason": "attributed HEAD by mistake before the task 1.1 commit existed (a failed sed aborted the commit chain)",
+          "withdrawnAt": "2026-10-16T01:54:29.761Z"
+        }
+      ],
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-16T02:30:31.177Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-16T02:30:31.151Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-16T02:30:31.177Z"
     },
     {
       "id": "routing-escalation",
@@ -1288,7 +1334,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 413,
+  "revision": 428,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",

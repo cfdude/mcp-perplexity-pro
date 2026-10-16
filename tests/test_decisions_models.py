@@ -17,9 +17,9 @@ def ok_fixtures():
     ]
 
 
-def test_there_are_eight_recorded_200_bodies():
+def test_there_are_eleven_recorded_200_bodies():
     paths = ok_fixtures()
-    assert len(paths) == 8
+    assert len(paths) == 11  # eight probes plus three decisions_tier_*
     for path in paths:
         assert json.loads(path.with_suffix(".meta.json").read_text())["http_status"] == 200
 

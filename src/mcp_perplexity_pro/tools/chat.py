@@ -34,6 +34,7 @@ from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.help_text import POINTER
 from mcp_perplexity_pro.redaction import scrub_secrets
 from mcp_perplexity_pro.routing import description_sentence, resolve, tier_of
+from mcp_perplexity_pro.routing_decisions import classify_dynamic, wants_decider
 from mcp_perplexity_pro.settings import Settings
 from mcp_perplexity_pro.storage.chats import (
     AssistantTurn,
@@ -234,7 +235,20 @@ async def _send(
     # newly fail.
     if classify_route:
         floor = None if previous is None else tier_of(app.settings, *previous)
-        route = resolve(app.settings, text=message, previous=floor, search=options.search)
+        classification = None
+        if floor != "complex" and wants_decider(
+            app.settings, depth=None, tier=None, model=None, search=options.search
+        ):
+            # After the lookup (its read-only unit is closed) and only when the answer can
+            # change the route: a follow-up already at the top tier cannot move.
+            classification = await classify_dynamic(app, message, project=name, tool=TOOL)
+        route = resolve(
+            app.settings,
+            text=message,
+            previous=floor,
+            search=options.search,
+            classification=classification,
+        )
         options = replace(options, route=route)
     warnings: list[str] = []
     if replay:
@@ -569,7 +583,7 @@ def register(server: FastMCP, settings: Settings) -> None:
                 and tier is None
                 and model is None
                 and search is not False
-            )
+            )  # the rules, or the Decisions classifier (``wants_decider``), run in ``_send``
             options = AskOptions(
                 route=resolve(app.settings, depth=depth, tier=tier, model=model, search=search),
                 search=search,

@@ -198,3 +198,83 @@ def test_capture_fixtures():
     for name, (payload, meta) in pending.items():
         (FIXTURE_DIR / f"{name}.json").write_text(json.dumps(payload, indent=2) + "\n")
         (FIXTURE_DIR / f"{name}.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+
+
+# --- routing-decisions-classifier (task 1.1, design D2) --------------------------------------
+# The three criteria below are final: ``src/mcp_perplexity_pro/routing_decisions.py`` must send
+# the same text (``tests/test_routing_decisions.py`` compares it with each sidecar's request).
+# Changing a criterion means re-capturing these fixtures.
+
+TIER_CRITERIA = {
+    "light": "A short factual lookup with one clear answer, such as a current value or a date.",
+    "standard": "An ordinary question that needs a sourced, explained answer but no deep analysis.",
+    "complex": "An analytical, multi-part or long task that needs comparison, design or "
+    "step-by-step reasoning.",
+}
+TIER_PROMPTS = {
+    "light": "What is the current stable version of Python?",
+    "standard": "How do I configure retries with exponential backoff in an httpx client, and "
+    "which status codes should I retry?",
+    "complex": (
+        "We run a multi-tenant billing service on PostgreSQL that has grown to 4 TB. Compare "
+        "three designs for moving to horizontal sharding: tenant-id hash sharding, directory "
+        "based sharding with a lookup service, and a move to a distributed SQL database. For "
+        "each design evaluate the migration path step by step, the operational trade-offs, the "
+        "effect on cross-tenant reporting queries, the failure modes during resharding and the "
+        "likely cost over three years. Then critique the weakest assumption in each design, "
+        "propose a phased rollout with rollback points for the one you recommend, and list the "
+        "metrics we should watch during each phase. Finish with the implications for our "
+        "on-call rotation and for the data team that owns the nightly warehouse export."
+    ),
+}
+
+
+def test_capture_decisions_tier_fixtures():
+    key = os.environ.get("PERPLEXITY_API_KEY")
+    if not key:
+        pytest.skip("PERPLEXITY_API_KEY is not set")
+    today = date.today().isoformat()
+    pending: dict[str, tuple[dict, dict]] = {}
+    auth = {"Authorization": f"Bearer {key}"}
+    with httpx2.Client(base_url=BASE_URL, timeout=httpx2.Timeout(30.0, read=60.0)) as c:
+        for tier, prompt in TIER_PROMPTS.items():
+            request = {
+                "model": "pplx-decider-v1.1-27b",
+                "state": prompt,
+                "questions": {"tier": {"type": "choice", "criteria": TIER_CRITERIA}},
+            }
+            started = time.monotonic()
+            resp = c.post("/v1/decisions", headers=auth, json=request)
+            latency = round(time.monotonic() - started, 3)
+            body = _body(resp)
+            assert resp.status_code == 200, f"{tier}: HTTP {resp.status_code}"
+            answer = body["answers"]["tier"]
+            removed: list[str] = []
+            pending[f"decisions_tier_{tier}"] = (
+                scrub(body, "", removed),
+                {
+                    "endpoint": "/v1/decisions",
+                    "method": "POST",
+                    "http_status": resp.status_code,
+                    "capture_date": today,
+                    "content_type": resp.headers.get("content-type"),
+                    "scrubbed": removed or "nothing: no account-specific values were present",
+                    "note": "Request headers and the API key are never recorded.",
+                    "request_note": f"routing-decisions-classifier D2: a {tier}-tier prompt",
+                    "latency_seconds": latency,
+                    "observed": {
+                        "choice": answer.get("choice"),
+                        "confidence": answer.get("confidence"),
+                        "probabilities": answer.get("probabilities"),
+                    },
+                    "request": request,
+                },
+            )
+    for name, (payload, meta) in pending.items():
+        hits = find_key_shapes(json.dumps(payload)) + find_key_shapes(json.dumps(meta))
+        assert not hits, f"key-shaped string in {name}; nothing written"
+    assert key not in json.dumps([[p, m] for p, m in pending.values()]), "live key in a payload"
+    FIXTURE_DIR.mkdir(exist_ok=True)
+    for name, (payload, meta) in pending.items():
+        (FIXTURE_DIR / f"{name}.json").write_text(json.dumps(payload, indent=2) + "\n")
+        (FIXTURE_DIR / f"{name}.meta.json").write_text(json.dumps(meta, indent=2) + "\n")

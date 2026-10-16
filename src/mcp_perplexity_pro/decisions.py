@@ -12,6 +12,7 @@ recorded or created for a bad call. The shared validators come from ``agent.py``
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
 import logging
@@ -25,6 +26,7 @@ from pydantic import BaseModel, Field
 from mcp_perplexity_pro import pricing
 from mcp_perplexity_pro.agent import _bad
 from mcp_perplexity_pro.costed import Costed, Recording, costed_call
+from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.models import DecisionsResponse
 from mcp_perplexity_pro.redaction import scrub_secrets
 from mcp_perplexity_pro.usage import Usage, computed_usage, to_tokens
@@ -324,20 +326,44 @@ def decisions_usage(raw: object) -> Usage:
 
 
 async def run_decide(
-    app: Any, *, project: str | None, body: dict[str, Any]
+    app: Any,
+    *,
+    project: str | None,
+    body: dict[str, Any],
+    tool: str = TOOL,
+    deadline: float | None = None,
 ) -> Costed[DecisionsResponse]:
-    """Send ``body`` and record the request (``costed.costed_call``)."""
+    """Send ``body`` and record the request (``costed.costed_call``).
+
+    ``tool`` is the name of the MCP tool whose call caused the request (the event's tool): the
+    routing classifier passes the ask or chat tool's name. ``deadline`` is an absolute event-loop
+    time (``loop.time()``) by which the request must end (it is made once, with no retry); past
+    it the request is cancelled and recorded as ``network_timeout``. A cancel that does not
+    come from the deadline is never turned into that error."""
 
     def interpret(response: DecisionsResponse) -> Recording:
         model = response.model if isinstance(response.model, str) else None
         return Recording(status="ok", usage=decisions_usage(response.usage), model=model)
 
+    async def send() -> DecisionsResponse:
+        if deadline is None:
+            return await app.client.decide(body)
+        try:
+            async with asyncio.timeout_at(deadline):
+                # one attempt: a 429 is reported as rate_limited at once rather than slept on
+                # until the deadline cuts it off and mislabels it network_timeout
+                return await app.client.decide(body, attempts=1)
+        except TimeoutError:
+            raise PerplexityError(
+                "network_timeout", "The Decisions request did not answer within its time limit."
+            ) from None
+
     return await costed_call(
         app,
-        tool=TOOL,
+        tool=tool,
         api="decisions",
         project=project,
         preset=None,
-        call=lambda: app.client.decide(body),
+        call=send,
         record=interpret,
     )

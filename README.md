@@ -178,6 +178,7 @@ value. No `.env` file is read.
 | `PERPLEXITY_DB_BUSY_TIMEOUT` | `5` | Seconds a write waits for the database lock before failing with `storage_busy` |
 | `PERPLEXITY_ROUTING` | `standard` | `standard`, `custom` or `dynamic`, case-insensitive. See "Choosing how models are picked" |
 | `PERPLEXITY_MODEL` | `perplexity/sonar` | `standard` mode: the model a call that names nothing uses; `dynamic` mode: the `standard` tier's model |
+| `PERPLEXITY_CLASSIFIER` | `rules` | `dynamic` mode only: `rules` (fixed offline rules) or `decisions` (the Decisions API picks the tier, the rules back it up). Ignored with a warning in other modes |
 | `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD`, `PERPLEXITY_TIER_COMPLEX` | none | `custom` mode: the three tier models, all required there. `dynamic` mode: optional, each replaces that tier's default |
 
 Variables starting with `FASTMCP_` belong to FastMCP and are not used for this server's own
@@ -198,7 +199,7 @@ There are three modes, set with `PERPLEXITY_ROUTING`:
 |---|---|---|
 | `standard` (default) | Every call that names nothing uses one model, `perplexity/sonar` unless you change it. A base Sonar model line is the default because the line always exists, while a preset's model behind `fast` moves (it was `openai/gpt-6-luna` on 2026-10-06) | Nothing. To use another model: `PERPLEXITY_MODEL=anthropic/claude-sonnet-5-5` |
 | `custom` | Three tiers you choose: `light` (light or agent-execution work), `standard` (everyday work, what a call with no selector uses) and `complex` (work that needs deeper reasoning). The agent picks one with `tier` | `PERPLEXITY_ROUTING=custom` plus all three `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX`, each a model id. A missing tier stops startup and names it |
-| `dynamic` | The server picks a tier from the prompt when a call names nothing, with fixed offline rules (no extra request, no cost): `light` runs the `fast` preset, `standard` runs `perplexity/sonar` (or `PERPLEXITY_MODEL`), `complex` runs the `medium` preset. Never `high` or `xhigh` | `PERPLEXITY_ROUTING=dynamic`. Nothing else is required; `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX` replace a tier's default with a model id |
+| `dynamic` | The server picks a tier from the prompt when a call names nothing, with fixed offline rules by default (no extra request, no cost; `PERPLEXITY_CLASSIFIER=decisions` asks the Decisions API instead, see "The Decisions classifier"): `light` runs the `fast` preset, `standard` runs `perplexity/sonar` (or `PERPLEXITY_MODEL`), `complex` runs the `medium` preset. Never `high` or `xhigh` | `PERPLEXITY_ROUTING=dynamic`. Nothing else is required; `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX` replace a tier's default with a model id |
 
 Example `custom` setup (in the pm2 `env` block or the shell):
 
@@ -224,8 +225,8 @@ architecture, in depth, analyze, critique, derive, prove, design, implications),
 longer, or holds three or more questions or numbered items; **light** when it is at most 120
 characters, holds at most one question and opens like a lookup (what is or are, who is or was, when is or did, where is, how many, how much,
 define, latest, current, price of); **standard** otherwise. The result's `routing` says what
-happened: `tier`, `selected_by` `classifier`, `classifier` `rules` and a short `reason` that names
-signals, never your words.
+happened: `tier`, `selected_by` `classifier`, `classifier` `rules` (or `decisions`, see below) and a short
+`reason` that names signals, a tier, a probability or a failure category, never your words.
 
 - Any explicit `depth`, `tier` or `model` skips the rules and is used as given. `tier` is valid in
   `custom` and `dynamic` mode.
@@ -240,6 +241,31 @@ signals, never your words.
   claimed: the rules are a first version (a 44-prompt labeled set pins them) and
   measuring them is later work.
 - To go back, unset `PERPLEXITY_ROUTING`.
+
+#### The Decisions classifier
+
+`PERPLEXITY_CLASSIFIER=decisions` replaces the rules with one request to Perplexity's Decisions API
+per nameless call: the first 4000 characters of your prompt go to `/v1/decisions` as the state of a
+single `choice` question (light, standard or complex), and the answer picks the tier. The same
+provider receives the same text next as the ask itself.
+
+- **Bounded and never fatal.** One attempt, at most 3 seconds. A timeout, a rate limit, any error or
+  an answer it cannot read falls back to the rules and the `reason` says why (for example
+  `decisions failed (rate_limited), rules: short lookup`). A weak answer (the chosen option under
+  50% probability) is raised to the rules' tier when that is higher.
+- **Recorded.** Each request is its own usage event (API `decisions`, the calling tool's name,
+  your project), billed on input tokens at 20 nano-USD each; the four requests of the acceptance
+  run cost 12,660 nano-USD in total (`openspec/changes/routing-decisions-classifier/acceptance/`).
+- **When it runs.** Only for a call that names no `depth`, `tier` or `model`, whose `search` is not
+  false, after the call validated; never for a chat follow-up already at `complex`. An invalid call
+  makes no request. The result's `classifier` says `decisions` or `rules` (when the rules supplied
+  the tier).
+- **What it did in testing, as observations.** The median classification took 0.26 s (0.68 s
+  slowest of 44). The decider leans toward `complex` on ordinary questions: it sent 4 of the 18
+  prompts we labeled `standard` there and, on one real ordinary question, ran `medium` for $0.018
+  and 55.7 s where the rules route it to `standard` ($0.005, about 10 s). The labels were written to
+  pin the rules, so agreement with them is not a measure of quality. That is why `rules` is the
+  default; tuning the decider's criteria and threshold is later work (`routing-eval-tuning`).
 
 **What the default costs.** `perplexity/sonar` with web search cost $0.00336 for one question, $0.00371
 for a `json_schema` question (acceptance, `openspec/changes/archive/2026-10-13-routing-modes-config/acceptance/`) and
