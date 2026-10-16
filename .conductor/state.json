@@ -679,10 +679,11 @@
         "1d1867abb37d652b606f6f1be6e20cdefd3eb987",
         "bfedb68ae6746a920206d149d0ae634423e6eca3",
         "ed4357941d13688b5e9be0ef43b1926bcfea58d0",
-        "6d00fcc4c12f764db1b1fce1b515576e92350c46"
+        "6d00fcc4c12f764db1b1fce1b515576e92350c46",
+        "229ca8df97375f473da82260f790a2106a546793"
       ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-16T01:30:37.052Z",
+      "touchedAt": "2026-10-16T01:37:42.016Z",
       "startedAt": "2026-10-15T15:30:14.374Z",
       "gateReview": {
         "gate1": {
@@ -704,6 +705,13 @@
             ],
             "reviewer": "fresh-context general-purpose subagents: Gate 1 review (2 Critical, 10 Important, 7 Minor, all but one Minor folded in) and a narrow verification (0 Critical, 3 Important, 8 Minor, folded in 4bc0cf0)"
           }
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-16T01:37:42.014Z",
+          "baseSha": "bb4fb25cd4e02efcccfdaad41f45be575811f5d1",
+          "headSha": "229ca8df97375f473da82260f790a2106a546793",
+          "reviewer": "fresh-context general-purpose subagent: Gate 2 over bb4fb25..6d00fcc (0 Critical; 1 Important, the live anthropic floor probe, run and recorded; Minor: the numbered-item pattern fixed with a RED test, the rest noted); suite 2707 passed"
         }
       },
       "gateRounds": {
@@ -713,6 +721,13 @@
           "failStreak": 0,
           "lastVerdictAt": "2026-10-16T00:57:15.884Z",
           "lastPassAt": "2026-10-16T00:57:15.884Z"
+        },
+        "gate2": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-16T01:37:42.014Z",
+          "lastPassAt": "2026-10-16T01:37:42.014Z"
         }
       },
       "release": "release-2-1-0"
@@ -1254,7 +1269,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 407,
+  "revision": 409,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",

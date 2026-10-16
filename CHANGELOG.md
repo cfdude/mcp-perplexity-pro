@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Dynamic routing: `PERPLEXITY_ROUTING=dynamic` now starts. A call to `perplexity_ask` or `perplexity_chat` send that names no `depth`, `tier` or `model` is classified by fixed offline rules (analysis vocabulary, length, question and numbered-item counts, lookup openings) and runs the `light` tier (preset `fast`), `standard` (`perplexity/sonar`, or `PERPLEXITY_MODEL`) or `complex` (preset `medium`); `PERPLEXITY_TIER_*` replace a tier's default; `high` and `xhigh` are never selected. An explicit selector wins, a chat follow-up never runs below its chat's last tier, and `search` false uses the standard tier's model. The `routing` result gains `reason`, `classifier` (`rules`) and `selected_by` `classifier`; `tier` is valid in `custom` and `dynamic` mode; `perplexity_models` reports the tiers (`ConfiguredModel` gains `preset` and its `id` and `known` can be null). No savings figure is claimed.
+
 ## [2.0.0] - 2026-10-14
 
 ### Changed
