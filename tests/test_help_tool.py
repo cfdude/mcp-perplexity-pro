@@ -103,6 +103,14 @@ async def test_the_routing_topic_follows_the_server_mode(world):
     assert "x/complex" in custom["text"]
 
 
+async def test_a_dynamic_server_describes_dynamic_mode_in_the_index_and_the_topic(world):
+    w = await world(routing="dynamic")
+    index = (await w.call(TOOL)).structured_content["text"]
+    assert "dynamic" in index and "picks a tier from the prompt" in index
+    topic = (await w.call(TOOL, action="topic", name="routing")).structured_content["text"]
+    assert "complex = preset medium" in topic and len(topic.encode()) <= 3000
+
+
 async def test_help_costs_nothing_and_leaves_no_trace(world):
     w = await world()
     await w.call(TOOL)

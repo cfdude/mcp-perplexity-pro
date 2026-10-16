@@ -34,12 +34,19 @@ class Routing(BaseModel):
     mode: Annotated[str, Field(description="Server routing mode")]
     tier: Annotated[str | None, Field(description="Tier used, if any")] = None
     model: Annotated[str | None, Field(description="Model id requested; null for a preset")] = None
-    selected_by: Annotated[str, Field(description="default, tier, depth or model")]
+    selected_by: Annotated[str, Field(description="default, tier, depth, model or classifier")]
+    classifier: Annotated[str | None, Field(description="Who picked the tier: rules")] = None
+    reason: Annotated[str | None, Field(description="Why dynamic mode routed it so")] = None
 
     @classmethod
     def of(cls, route: Route) -> "Routing":
         return cls(
-            mode=route.mode, tier=route.tier, model=route.model, selected_by=route.selected_by
+            mode=route.mode,
+            tier=route.tier,
+            model=route.model,
+            selected_by=route.selected_by,
+            classifier=route.classifier,
+            reason=route.reason,
         )
 
 
@@ -149,8 +156,8 @@ def register(server: FastMCP, settings: Settings) -> None:
         tier: Annotated[
             str | None,
             Field(
-                description="light, standard or complex: custom routing mode only. Cannot be "
-                "combined with depth or model"
+                description="light, standard or complex: custom or dynamic mode only. "
+                "Cannot be combined with depth or model"
             ),
         ] = None,
         search: Annotated[
@@ -210,7 +217,9 @@ def register(server: FastMCP, settings: Settings) -> None:
         check_text("query", query)
         app = ctx.lifespan_context
         options = AskOptions(
-            route=resolve(app.settings, depth=depth, tier=tier, model=model),
+            route=resolve(
+                app.settings, depth=depth, tier=tier, model=model, text=query, search=search
+            ),
             search=search,
             domains=domains,
             recency=recency,

@@ -94,11 +94,44 @@ def test_non_loopback_host_warns_that_endpoints_are_unauthenticated(tmp_path, ho
     assert "WARNING" in warning[0] and host in warning[0]
 
 
-def test_dynamic_routing_is_refused_before_anything_is_created(tmp_path):
+def test_dynamic_routing_starts_with_only_the_key_and_logs_its_three_tiers(tmp_path):
     result = run_main(tmp_path, "--transport", "stdio", PERPLEXITY_ROUTING="dynamic", stdin="")
-    assert result.returncode != 0
-    assert "PERPLEXITY_ROUTING" in result.stderr and "not available" in result.stderr
-    assert not (tmp_path / "data").exists()
+    assert result.returncode == 0, result.stderr
+    lines = [ln for ln in result.stderr.splitlines() if "routing mode dynamic" in ln]
+    assert len(lines) == 1 and "INFO" in lines[0]
+    for part in ("light=preset fast", "standard=model perplexity/sonar", "complex=preset medium"):
+        assert part in lines[0]
+    assert "test-dummy-api-key" not in result.stderr
+    assert "WARNING" not in result.stderr
+
+
+def test_dynamic_routing_logs_a_replaced_tier_as_its_model(tmp_path):
+    result = run_main(
+        tmp_path,
+        "--transport",
+        "stdio",
+        PERPLEXITY_ROUTING="dynamic",
+        PERPLEXITY_TIER_COMPLEX="anthropic/claude-opus-5-5",
+        stdin="",
+    )
+    line = next(ln for ln in result.stderr.splitlines() if "routing mode dynamic" in ln)
+    assert "complex=model anthropic/claude-opus-5-5" in line
+
+
+def test_dynamic_routing_warns_once_about_a_shadowed_model_variable(tmp_path):
+    result = run_main(
+        tmp_path,
+        "--transport",
+        "stdio",
+        PERPLEXITY_ROUTING="dynamic",
+        PERPLEXITY_MODEL="x/shadowed",
+        PERPLEXITY_TIER_STANDARD="x/standard",
+        stdin="",
+    )
+    assert result.returncode == 0, result.stderr
+    warnings = [ln for ln in result.stderr.splitlines() if "WARNING" in ln]
+    assert len(warnings) == 1 and "PERPLEXITY_MODEL" in warnings[0]
+    assert "x/shadowed" not in warnings[0] and "PERPLEXITY_TIER_STANDARD" in warnings[0]
 
 
 def test_an_unused_routing_variable_logs_one_warning_naming_it(tmp_path):

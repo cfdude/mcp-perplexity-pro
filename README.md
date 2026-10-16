@@ -176,9 +176,9 @@ value. No `.env` file is read.
 | `PERPLEXITY_CATALOG_TTL` | `3600` | Seconds the model list is cached |
 | `PERPLEXITY_CATALOG_MAX_STALE` | `86400` | Oldest cached model list, in seconds, that may be returned when the live request fails |
 | `PERPLEXITY_DB_BUSY_TIMEOUT` | `5` | Seconds a write waits for the database lock before failing with `storage_busy` |
-| `PERPLEXITY_ROUTING` | `standard` | `standard`, `custom` or `dynamic` (reserved: refused at startup), case-insensitive. See "Choosing how models are picked" |
-| `PERPLEXITY_MODEL` | `perplexity/sonar` | `standard` mode: the model a call that names nothing uses |
-| `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD`, `PERPLEXITY_TIER_COMPLEX` | none | `custom` mode: the three tier models, all required there |
+| `PERPLEXITY_ROUTING` | `standard` | `standard`, `custom` or `dynamic`, case-insensitive. See "Choosing how models are picked" |
+| `PERPLEXITY_MODEL` | `perplexity/sonar` | `standard` mode: the model a call that names nothing uses; `dynamic` mode: the `standard` tier's model |
+| `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD`, `PERPLEXITY_TIER_COMPLEX` | none | `custom` mode: the three tier models, all required there. `dynamic` mode: optional, each replaces that tier's default |
 
 Variables starting with `FASTMCP_` belong to FastMCP and are not used for this server's own
 settings.
@@ -188,7 +188,7 @@ settings.
 `perplexity_ask` and `perplexity_chat` (send) need a model. The **routing mode** says which one runs
 when a call names nothing; it is a **default, never a restriction**. A call can always name its own
 `model` (used exactly as given, in every mode, even if it is not in the catalog), a `depth` (a
-Perplexity preset) or, in `custom` mode, a `tier`. Name only one of the three per call; two of them
+Perplexity preset) or, in `custom` and `dynamic` mode, a `tier`. Name only one of the three per call; two of them
 fail with an `invalid_request` that says so. `perplexity_research` is not affected: its depths are
 presets with their own runtime.
 
@@ -198,7 +198,7 @@ There are three modes, set with `PERPLEXITY_ROUTING`:
 |---|---|---|
 | `standard` (default) | Every call that names nothing uses one model, `perplexity/sonar` unless you change it. A base Sonar model line is the default because the line always exists, while a preset's model behind `fast` moves (it was `openai/gpt-6-luna` on 2026-10-06) | Nothing. To use another model: `PERPLEXITY_MODEL=anthropic/claude-sonnet-5-5` |
 | `custom` | Three tiers you choose: `light` (light or agent-execution work), `standard` (everyday work, what a call with no selector uses) and `complex` (work that needs deeper reasoning). The agent picks one with `tier` | `PERPLEXITY_ROUTING=custom` plus all three `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX`, each a model id. A missing tier stops startup and names it |
-| `dynamic` | Not available yet. It is reserved for a classifier built on Perplexity's Decisions API (`perplexity_decide`) that would pick a model per prompt to save cost; startup refuses it with a message saying so, and never falls back to `standard` silently | none |
+| `dynamic` | The server picks a tier from the prompt when a call names nothing, with fixed offline rules (no extra request, no cost): `light` runs the `fast` preset, `standard` runs `perplexity/sonar` (or `PERPLEXITY_MODEL`), `complex` runs the `medium` preset. Never `high` or `xhigh` | `PERPLEXITY_ROUTING=dynamic`. Nothing else is required; `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX` replace a tier's default with a model id |
 
 Example `custom` setup (in the pm2 `env` block or the shell):
 
@@ -212,8 +212,34 @@ PERPLEXITY_TIER_COMPLEX=anthropic/claude-sonnet-5-5
 A model id is 1 to 200 characters from letters, digits and `. _ : / @ + -`. A variable the active
 mode does not use (a tier in `standard` mode, `PERPLEXITY_MODEL` in `custom` mode) is ignored with
 one startup warning. To go back, unset the variables: the defaults are `standard` and
-`perplexity/sonar`. `auto` is not a model: the API refuses it, so "auto" would have to be something
-this server implements, which is what `dynamic` is for.
+`perplexity/sonar`. `auto` is not a model: the API refuses it, so "auto" has to be something this
+server implements, which is what `dynamic` is for.
+
+### Dynamic mode
+
+A call that names no `depth`, `tier` or `model` is classified from its text and routed to a tier. The
+rules, in the order the result lists them, are: **complex** when the text uses words from two
+different analysis groups (compare, evaluate, trade-offs, pros and cons, step by step, root cause,
+architecture, in depth, analyze, critique, derive, prove, design, implications), is 1200 characters or
+longer, or holds three or more questions or numbered items; **light** when it is at most 120
+characters, holds at most one question and opens like a lookup (what is or are, who is or was, when is or did, where is, how many, how much,
+define, latest, current, price of); **standard** otherwise. The result's `routing` says what
+happened: `tier`, `selected_by` `classifier`, `classifier` `rules` and a short `reason` that names
+signals, never your words.
+
+- Any explicit `depth`, `tier` or `model` skips the rules and is used as given. `tier` is valid in
+  `custom` and `dynamic` mode.
+- A chat follow-up never runs below the tier its chat last used (`and in 2025?` after a `complex`
+  turn stays `complex`); the reason says `held at complex`.
+- With `search` false no preset can run, so the `standard` tier's model answers (reason `search
+  off`); naming a preset tier together with `search` false is refused.
+- Cost and time: a `complex` call runs `medium`, $0.016 to $0.025 as a research run in the figures below and
+  $0.0376 in the one live dynamic run (`openspec/changes/routing-rules-v1/acceptance/`), which also took
+  108 seconds against the 120 second limit for a synchronous run
+  (`PERPLEXITY_AGENT_READ_TIMEOUT`), so read dynamic mode as a quality policy. No savings figure is
+  claimed: the rules are a first version (a 44-prompt labeled set pins them) and
+  measuring them is later work.
+- To go back, unset `PERPLEXITY_ROUTING`.
 
 **What the default costs.** `perplexity/sonar` with web search cost $0.00336 for one question, $0.00371
 for a `json_schema` question (acceptance, `openspec/changes/archive/2026-10-13-routing-modes-config/acceptance/`) and
@@ -330,7 +356,7 @@ where the table says "not measured".
 |---|---|---|---|---|
 | `fast` | `perplexity_ask`, `perplexity_chat` | $0.00118 to $0.00180 | Live acceptance run, 2026-10-09: $0.00143, $0.00118, $0.00158. Probe fixtures, 2026-10-09 (the eight synchronous `fast` captures in `tests/fixtures/`; a ninth, the background poll `agent_background_poll.json`, cost $0.00105): $0.00119 to $0.00180 | 1.7 to 2.6 s (acceptance) |
 | `low` | `perplexity_ask`, `perplexity_chat` | $0.00045 to $0.00386 | Acceptance, 2026-10-09: $0.00156 (one call, 3.2 s). Probe fixtures, 2026-10-09: $0.00045 (`agent_chat_depth_switch.json`, a chained chat turn) and $0.00386 (`agent_low_fetch_url.json`, a call that fetched a page). Up to about $0.02 is the probe report's range; it is not backed by a saved capture | 3.2 s (acceptance) |
-| `medium` | `perplexity_research` (background); `perplexity_ask` and `perplexity_chat` accept it too | $0.01599 to $0.02524 as a research run (three of ours and one reported) | Acceptance, 2026-10-09: $0.01722 (job 1, 39 s between our submit and the call that saw it finish). Probe fixture `agent_background_completed.json`, 2026-10-09: $0.01599. Acceptance, 2026-10-13 (`openspec/changes/py-agent-citation-fixes/acceptance/`): $0.02524 and 71 s on a five-vendor pricing question. Reported by another project the same day: about $0.023 and about 90 s (not saved here). Cost follows how many fetches and searches the run makes (the fixture's tool cost was $0.01352, $0.01052 of it from three `fetch_url` calls), so it depends on the question. About $0.05 as an upper figure is the probe report's range; not backed by a saved capture. A synchronous `medium` call was not run | 39 to about 90 s (39 s and 71 s measured by us) |
+| `medium` | `perplexity_research` (background); `perplexity_ask` and `perplexity_chat` accept it too | $0.01599 to $0.02524 as a research run (three of ours and one reported) | Acceptance, 2026-10-09: $0.01722 (job 1, 39 s between our submit and the call that saw it finish). Probe fixture `agent_background_completed.json`, 2026-10-09: $0.01599. Acceptance, 2026-10-13 (`openspec/changes/py-agent-citation-fixes/acceptance/`): $0.02524 and 71 s on a five-vendor pricing question. Reported by another project the same day: about $0.023 and about 90 s (not saved here). Cost follows how many fetches and searches the run makes (the fixture's tool cost was $0.01352, $0.01052 of it from three `fetch_url` calls), so it depends on the question. About $0.05 as an upper figure is the probe report's range; not backed by a saved capture. One synchronous `medium` call (a dynamic-mode `complex` ask, `openspec/changes/routing-rules-v1/acceptance/`, 2026-10-15) cost $0.0376 and took 108.1 s | 39 to about 90 s as a research run (39 s and 71 s measured by us); 108.1 s for the one synchronous call, against the 120 s synchronous limit |
 | `high` | `perplexity_research` only | not measured | Never run. "Up to about $0.4 to $0.9, and minutes" is the probe report's and the provider's own positioning: an estimate | minutes (estimate) |
 | `xhigh` | `perplexity_research` only | not measured | Never run; more than `high` | minutes (estimate) |
 

@@ -32,8 +32,8 @@ async def make_server(make_settings):
         await engine.dispose()
 
 
-async def test_the_tools_list_response_stays_within_its_budget(make_server):
-    server, settings = await make_server(port=free_port())
+async def tools_list_size(make_server, **overrides) -> tuple[int, list[str]]:
+    server, settings = await make_server(port=free_port(), **overrides)
     async with serving(server, settings):
         async with httpx2.AsyncClient() as client:
             response = await client.post(
@@ -41,7 +41,11 @@ async def test_the_tools_list_response_stays_within_its_budget(make_server):
                 json={"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
                 headers=HEADERS,
             )
-    size = len(response.content)
-    names = [t["name"] for t in response.json()["result"]["tools"]]
+    return len(response.content), [t["name"] for t in response.json()["result"]["tools"]]
+
+
+@pytest.mark.parametrize("overrides", [{}, {"routing": "dynamic"}], ids=["default", "dynamic"])
+async def test_the_tools_list_response_stays_within_its_budget(make_server, overrides):
+    size, names = await tools_list_size(make_server, **overrides)
     assert "perplexity_help" in names and len(names) == 11
     assert size <= BUDGET, f"tools/list is {size} bytes, budget {BUDGET}"

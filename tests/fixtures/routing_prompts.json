@@ -1,0 +1,229 @@
+[
+  {
+    "text": "What is the latest stable Python release?",
+    "expected": "light",
+    "mark": "clear",
+    "single_signal": "lookup"
+  },
+  {
+    "text": "define idempotent",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "Who was the first person to walk on the moon?",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "When is the next total solar eclipse in the US?",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "How many people live in Tokyo?",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "What are the primary colors?",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "Price of a Raspberry Pi 5 8GB",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "Latest version of Node.js",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "Where is the Louvre museum located?",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "How much does a gallon of milk cost in the US?",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "Current population of Canada",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "When did the Berlin Wall fall?",
+    "expected": "light",
+    "mark": "clear"
+  },
+  {
+    "text": "What is Rust's borrow checker and why does it reject my loop?",
+    "expected": "standard",
+    "mark": "borderline"
+  },
+  {
+    "text": "What is the best way to learn Rust coming from Python?",
+    "expected": "standard",
+    "mark": "borderline"
+  },
+  {
+    "text": "Explain why my Postgres query is slow when I add an ORDER BY on an unindexed column.",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "How do I rotate a JWT signing key without logging everyone out?",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "Summarize the main causes of the 2008 financial crisis.",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "Write a short note on how TCP slow start works.",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "Why did the Roman Empire split into an eastern and a western half?",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "What should I know before adopting Kubernetes for a team of five?",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "Explain why the new onboarding design failed to reduce churn.",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "How does Perplexity pick the sources it shows for an answer?",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "I run a small bakery and want to sell gift boxes online before the holidays. I have a simple website with a contact form and no payment processing yet. Which payment provider is the easiest to add for someone who has never done it, and roughly how long does setup take for a shop that ships only inside one country?",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "Suggest three podcasts about economic history for a long drive.",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "Which Python web framework fits a small internal API with async database access?",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "東京で一番おいしいラーメン屋さんはどこにあるか、おすすめを教えてもらえますか？",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "Is https://example.com/search?q=python&page=2 the same page as https://example.com/search?q=python&page=3 as far as a crawler is concerned?",
+    "expected": "standard",
+    "mark": "clear"
+  },
+  {
+    "text": "The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a ta?",
+    "expected": "standard",
+    "mark": "borderline"
+  },
+  {
+    "text": "Prove that the square root of 2 is irrational.",
+    "expected": "standard",
+    "mark": "borderline"
+  },
+  {
+    "text": "Compare Postgres and MySQL and evaluate the trade-offs for a write-heavy workload.",
+    "expected": "complex",
+    "mark": "clear",
+    "single_signal": "vocabulary"
+  },
+  {
+    "text": "Analyze the root cause of the outage and critique the rollback plan we used.",
+    "expected": "complex",
+    "mark": "clear"
+  },
+  {
+    "text": "Walk me through how to derive the Black-Scholes formula and prove each assumption holds.",
+    "expected": "complex",
+    "mark": "clear"
+  },
+  {
+    "text": "Give an in depth review of the architecture of an event-sourced ordering system.",
+    "expected": "complex",
+    "mark": "clear"
+  },
+  {
+    "text": "What are the pros and cons of microservices, and what are the implications for a five-person team?",
+    "expected": "complex",
+    "mark": "clear"
+  },
+  {
+    "text": "Evaluate the implications of adopting a service mesh and compare Istio with Linkerd.",
+    "expected": "complex",
+    "mark": "clear"
+  },
+  {
+    "text": "Last Tuesday our nightly export job started failing on one customer account while every other account finished normally. The job reads rows from a reporting table, writes a CSV file, uploads it to object storage and then sends the customer an email with a download link. The failing account has about forty thousand rows, which is roughly average. The log shows that the upload step stops after the file reaches a little over fifty megabytes, and the next line says the connection was reset by the peer. We retried by hand three times and got the same result each time at nearly the same byte count. The storage provider status page shows no incident. Our proxy has a request timeout of sixty seconds, and the upload takes about fifty seconds on a good day, so we are close to that limit, but the other large accounts upload without trouble. The customer also changed their column mapping last week, which added several free-text columns that can hold long notes. The job runs on a small container with half a gigabyte of memory and no swap. Nothing in the container metrics shows memory pressure, though the sampling interval is one minute. We have not changed the job code in a month, the storage client library was updated two weeks ago, and the proxy configuration was last touched in the spring. I can share the exact log lines, the container settings and the proxy configuration if that helps. What should I check first?",
+    "expected": "complex",
+    "mark": "clear",
+    "single_signal": "length"
+  },
+  {
+    "text": "Which license should I use? Can I change it later? Do contributors need to sign anything?",
+    "expected": "complex",
+    "mark": "clear",
+    "single_signal": "questions"
+  },
+  {
+    "text": "Summarize these topics:\n1. Rust ownership\n2. Go channels\n3. Python asyncio",
+    "expected": "complex",
+    "mark": "clear",
+    "single_signal": "numbered_items"
+  },
+  {
+    "text": "Give me one sentence on each:\n  1) tokio\n  2) asyncio\n  3) goroutines",
+    "expected": "complex",
+    "mark": "clear",
+    "single_signal": "numbered_items"
+  },
+  {
+    "text": "これは何ですか？どうしてですか？いつですか？",
+    "expected": "complex",
+    "mark": "clear",
+    "single_signal": "questions"
+  },
+  {
+    "text": "Step by step, derive the expected value of a geometric distribution and critique the usual textbook shortcut.",
+    "expected": "complex",
+    "mark": "clear"
+  },
+  {
+    "text": "The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a table and writes them to a file for the customer The nightly job reads rows from a tab?",
+    "expected": "complex",
+    "mark": "borderline"
+  },
+  {
+    "text": "Explain how Raft handles leader election and what happens during a network partition?",
+    "expected": "standard",
+    "mark": "borderline"
+  },
+  {
+    "text": "Design a schema for a multi-tenant billing system with usage tiers and refunds.",
+    "expected": "complex",
+    "mark": "borderline"
+  }
+]

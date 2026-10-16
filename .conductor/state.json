@@ -651,7 +651,7 @@
       "id": "routing-rules-v1",
       "title": "Deterministic complexity matrix selects preset (depth=auto)",
       "priority": "P2",
-      "status": "later",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -669,9 +669,87 @@
       "reconcileNeeded": false,
       "parent": "model-routing",
       "description": "Deterministic rules classifier (prompt length, task type, tool needs): the fallback when the Decisions classifier is rate-limited or fails, and the offline option for dynamic mode.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "0860ec3d6c2e40aacac7225be8a9b90d5be85432",
+        "8f865223d1bda7d46ca31365b4e6f11d5d6963a4",
+        "4bc0cf048b7935d67f2e1e6dcf035bf4afb329df",
+        "8068b22cf12cd7765b51251114450b64ce84fa7a",
+        "0f1dd8a8ba647d14451566e20ff5d4b5db327261",
+        "4b74d7a7fa9a14be779d38fee1b2a80c332ba761",
+        "1d1867abb37d652b606f6f1be6e20cdefd3eb987",
+        "bfedb68ae6746a920206d149d0ae634423e6eca3",
+        "ed4357941d13688b5e9be0ef43b1926bcfea58d0",
+        "6d00fcc4c12f764db1b1fce1b515576e92350c46",
+        "229ca8df97375f473da82260f790a2106a546793",
+        "cb9977f1f46c3986b95b2548711b96219aa984ba",
+        "7e4077158cbcf610a90bd037e439aaf9bbeeaac9"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-13T13:17:15.661Z"
+      "touchedAt": "2026-10-16T01:45:28.927Z",
+      "startedAt": "2026-10-15T15:30:14.374Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-16T00:57:15.884Z",
+          "baseSha": "97e6eaf9c6eb7978a45f8a508ae86f99ea6c138d",
+          "headSha": "0f1dd8a8ba647d14451566e20ff5d4b5db327261",
+          "artifacts": [
+            "openspec/changes/routing-rules-v1"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review, narrow verification, cross-spec review and a final verification across both routing changes; all Critical and Important findings folded (0f1dd8a)",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-15T15:46:37.308Z",
+            "baseSha": "97e6eaf9c6eb7978a45f8a508ae86f99ea6c138d",
+            "headSha": "4bc0cf048b7935d67f2e1e6dcf035bf4afb329df",
+            "artifacts": [
+              "openspec/changes/routing-rules-v1"
+            ],
+            "reviewer": "fresh-context general-purpose subagents: Gate 1 review (2 Critical, 10 Important, 7 Minor, all but one Minor folded in) and a narrow verification (0 Critical, 3 Important, 8 Minor, folded in 4bc0cf0)"
+          }
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-16T01:44:56.842Z",
+          "baseSha": "bb4fb25cd4e02efcccfdaad41f45be575811f5d1",
+          "headSha": "7e4077158cbcf610a90bd037e439aaf9bbeeaac9",
+          "reviewer": "fresh-context general-purpose subagents: Gate 2 over the code (0 Critical, 1 Important run live, numbered-item fix) and a documentation-diff review (1 Important and 3 Minor, fixed); suite 2707 passed",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-16T01:37:42.014Z",
+            "baseSha": "bb4fb25cd4e02efcccfdaad41f45be575811f5d1",
+            "headSha": "229ca8df97375f473da82260f790a2106a546793",
+            "reviewer": "fresh-context general-purpose subagent: Gate 2 over bb4fb25..6d00fcc (0 Critical; 1 Important, the live anthropic floor probe, run and recorded; Minor: the numbered-item pattern fixed with a RED test, the rest noted); suite 2707 passed"
+          }
+        }
+      },
+      "gateRounds": {
+        "gate1": {
+          "fails": 0,
+          "passes": 2,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-16T00:57:15.884Z",
+          "lastPassAt": "2026-10-16T00:57:15.884Z"
+        },
+        "gate2": {
+          "fails": 0,
+          "passes": 2,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-16T01:44:56.842Z",
+          "lastPassAt": "2026-10-16T01:44:56.842Z"
+        }
+      },
+      "release": "release-2-1-0",
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-16T01:45:28.926Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-16T01:45:28.898Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-16T01:45:28.926Z"
     },
     {
       "id": "routing-decisions-classifier",
@@ -700,9 +778,35 @@
       "reconcileNeeded": false,
       "parent": "model-routing",
       "description": "Core of dynamic mode: Perplexity Decisions API picks the tier (light/standard/complex) from the prompt; adds one network hop, about $0.02 per 1M tokens, 10 req/s per org.",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "09cc114aa3f11c40d042559ab1f86ade8c0dd7a1",
+        "8068b22cf12cd7765b51251114450b64ce84fa7a",
+        "0f1dd8a8ba647d14451566e20ff5d4b5db327261"
+      ],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-13T13:17:15.279Z"
+      "touchedAt": "2026-10-16T00:57:16.383Z",
+      "release": "release-2-1-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-16T00:57:16.381Z",
+          "baseSha": "97e6eaf9c6eb7978a45f8a508ae86f99ea6c138d",
+          "headSha": "0f1dd8a8ba647d14451566e20ff5d4b5db327261",
+          "artifacts": [
+            "openspec/changes/routing-decisions-classifier"
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review (1 Critical, 7 Important), the release cross-spec review and a final verification; all Critical and Important findings folded (0f1dd8a)"
+        }
+      },
+      "gateRounds": {
+        "gate1": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-16T00:57:16.381Z",
+          "lastPassAt": "2026-10-16T00:57:16.381Z"
+        }
+      }
     },
     {
       "id": "routing-escalation",
@@ -1184,7 +1288,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 386,
+  "revision": 413,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.51.0",
   "platform": "claude-code",
@@ -1487,6 +1591,75 @@
           ],
           "reviewer": "fresh-context general-purpose subagent over pypi-publish vs main specs (no blocks; polish: command-count wording stated as equivalent forms)"
         }
+      }
+    },
+    {
+      "id": "release-2-1-0",
+      "intent": "Dynamic model routing: the rules classifier and dynamic mode, then the Decisions classifier",
+      "deferred": [],
+      "target": "2.1.0",
+      "crossSpecReview": {
+        "verdict": "pass",
+        "reviewedAt": "2026-10-16T00:57:16.902Z",
+        "specs": [
+          {
+            "key": "routing-decisions-classifier/specs/cli/spec.md",
+            "sha256": "64e52dc6dab81c83e64f105fe575823c17bfd2ad5aa16bc27145c97ddabf7d7d"
+          },
+          {
+            "key": "routing-decisions-classifier/specs/help-tool/spec.md",
+            "sha256": "e3c371cf4042d4371945ddc6108b669a024ceb6f0fbab5f2ccaadc66e2e0ea94"
+          },
+          {
+            "key": "routing-decisions-classifier/specs/model-catalog/spec.md",
+            "sha256": "0fcebe13b4c1c4597102d7ea892060bb740ff6640e2c3c2a4468f9b1cabc1f45"
+          },
+          {
+            "key": "routing-decisions-classifier/specs/routing-config/spec.md",
+            "sha256": "a6d97cdf9cde81513d049da1f9817500b4aab2591e4d0a743b32333787af8fc6"
+          },
+          {
+            "key": "routing-decisions-classifier/specs/routing-decisions-classifier/spec.md",
+            "sha256": "34948b2c6eacb77ea878b6182d2ecffa76c427f118f5bfc7164b5c11049335f2"
+          },
+          {
+            "key": "routing-decisions-classifier/specs/server-runtime/spec.md",
+            "sha256": "d2bc125d830ff197eecde6aa95a669db972a60c22f0c313eff6fc541af708145"
+          },
+          {
+            "key": "routing-decisions-classifier/specs/usage-recording/spec.md",
+            "sha256": "381614342ff8beef2ca779ad9d2abcd2202f5d1f261d9e3607bcc833a09795e0"
+          },
+          {
+            "key": "routing-rules-v1/specs/agent-ask/spec.md",
+            "sha256": "84542fcfe0e3df17751dddb803afbc8c05b2d7975c208c52f5cc97bc5cead586"
+          },
+          {
+            "key": "routing-rules-v1/specs/agent-chat/spec.md",
+            "sha256": "907be8f3eead5e51e926e35d9aa1d44f0358acc6b7d1ae8d665ad4272a04ca60"
+          },
+          {
+            "key": "routing-rules-v1/specs/help-tool/spec.md",
+            "sha256": "41363a40720a253a7c5f168a3f9f1235d962744876d6b3295a664ef5bef214cd"
+          },
+          {
+            "key": "routing-rules-v1/specs/model-catalog/spec.md",
+            "sha256": "dcafa382a40aec221b4d246da11f31a854699f5f43b9e437c0ca31f79f1dd676"
+          },
+          {
+            "key": "routing-rules-v1/specs/routing-config/spec.md",
+            "sha256": "d6326bc1ac0f24964bedbf53973dd4e0bbf099d22ba90c8eb2fe981d29ea9077"
+          },
+          {
+            "key": "routing-rules-v1/specs/routing-rules/spec.md",
+            "sha256": "dbae3106308b7f6d33cc53cc256756463ec2ec47926ae7eafc6edb4d03e2b361"
+          },
+          {
+            "key": "routing-rules-v1/specs/server-runtime/spec.md",
+            "sha256": "e012e3cc29af957744dfb5393f83f8814e765ffbd3273d0ec4ecc226395e0bea"
+          }
+        ],
+        "reviewer": "fresh-context general-purpose subagents: cross-spec review of both routing changes (6 BLOCKS, all fixed) and a final verification across both (3 Important, folded in 0f1dd8a)"
       }
     }
   ],

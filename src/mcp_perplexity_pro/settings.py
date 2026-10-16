@@ -81,25 +81,24 @@ class Settings(BaseSettings):
 
     def _routing_problems(self) -> list[str]:
         """One line per problem, each naming its variable (never an API key)."""
-        if self.routing == "dynamic":
-            return [
-                f"{ENV_PREFIX}ROUTING=dynamic is not available in this version "
-                "(the dynamic classifier has not shipped); use standard or custom"
-            ]
         if self.routing not in ROUTING_MODES:
             return [
-                f"{ENV_PREFIX}ROUTING: got {self.routing!r}; accepted values are standard "
-                "and custom (dynamic is reserved and not available yet)"
+                f"{ENV_PREFIX}ROUTING: got {self.routing!r}; accepted values are standard, "
+                "custom and dynamic"
             ]
-        wanted = (
-            {"MODEL": self.model}
-            if self.routing == "standard"
-            else {f"TIER_{t.upper()}": getattr(self, f"tier_{t}") for t in TIER_NAMES}
-        )
+        if self.routing == "standard":
+            wanted: dict[str, str | None] = {"MODEL": self.model}
+        elif self.routing == "custom":
+            wanted = {f"TIER_{t.upper()}": getattr(self, f"tier_{t}") for t in TIER_NAMES}
+        else:  # dynamic: every variable is optional, and is checked only when it is used
+            wanted = {f"TIER_{t.upper()}": getattr(self, f"tier_{t}") for t in TIER_NAMES}
+            if self.tier_standard is None:  # TIER_STANDARD shadows MODEL: an unused variable
+                wanted["MODEL"] = self.model
         problems = []
         for name, value in wanted.items():
             if value is None:
-                problems.append(f"{ENV_PREFIX}{name} is required when routing is custom")
+                if self.routing == "custom":
+                    problems.append(f"{ENV_PREFIX}{name} is required when routing is custom")
             elif not _MODEL_ID.fullmatch(value):
                 problems.append(
                     f"{ENV_PREFIX}{name}: a model id is 1 to 200 characters from letters, "
@@ -108,7 +107,14 @@ class Settings(BaseSettings):
         return problems
 
     def ignored_routing_vars(self) -> list[str]:
-        """Routing variables that are set but unused by the active mode (the caller warns)."""
+        """Routing variables that are set but unused by the active mode (the caller warns).
+
+        In ``dynamic`` mode the tier variables replace a tier's default, so none is ignored;
+        ``PERPLEXITY_MODEL`` is, when ``PERPLEXITY_TIER_STANDARD`` is also set (it replaces it).
+        """
+        if self.routing == "dynamic":
+            shadowed = "model" in self.model_fields_set and "tier_standard" in self.model_fields_set
+            return [f"{ENV_PREFIX}MODEL"] if shadowed else []
         unused = ["model"] if self.routing == "custom" else [f"tier_{t}" for t in TIER_NAMES]
         return [f"{ENV_PREFIX}{n.upper()}" for n in unused if n in self.model_fields_set]
 
@@ -124,6 +130,27 @@ class Settings(BaseSettings):
         if parts.scheme not in ("http", "https") or not parts.netloc:
             raise ValueError("must be an http or https URL such as https://api.perplexity.ai")
         return value.rstrip("/")
+
+
+# The preset a dynamic tier runs when no ``PERPLEXITY_TIER_*`` variable replaces it. ``standard``
+# runs a model, and ``high`` and ``xhigh`` are in no row, so dynamic mode cannot select them.
+DYNAMIC_PRESETS = {"light": "fast", "complex": "medium"}
+
+
+def dynamic_target(settings: Settings, tier: str) -> tuple[str | None, str | None]:
+    """What a dynamic tier runs as ``(model, preset)``: a ``PERPLEXITY_TIER_*`` model when set,
+    else the tier's default (light is preset ``fast``, standard is ``PERPLEXITY_MODEL``, complex
+    is preset ``medium``). Exactly one of the two is set."""
+    model = getattr(settings, f"tier_{tier}")
+    if model is None and tier == "standard":
+        model = settings.model
+    return (model, None) if model is not None else (None, DYNAMIC_PRESETS[tier])
+
+
+def tier_runs(settings: Settings, tier: str) -> str:
+    """What a dynamic tier runs, as text: ``preset fast`` or a model id."""
+    model, preset = dynamic_target(settings, tier)
+    return f"preset {preset}" if preset else str(model)
 
 
 class SettingsError(Exception):

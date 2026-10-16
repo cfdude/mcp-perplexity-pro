@@ -46,6 +46,8 @@ async def test_default_ask_in_standard_mode_reports_its_routing(world):
         "tier": None,
         "model": "perplexity/sonar",
         "selected_by": "default",
+        "classifier": None,
+        "reason": None,
     }
     assert w.bodies()[0]["model"] == "perplexity/sonar" and "preset" not in w.bodies()[0]
 
@@ -58,6 +60,8 @@ async def test_default_ask_in_custom_mode_uses_the_standard_tier(world):
         "tier": "standard",
         "model": "x/standard",
         "selected_by": "default",
+        "classifier": None,
+        "reason": None,
     }
     assert w.bodies()[0]["model"] == "x/standard"
 
@@ -74,7 +78,14 @@ async def test_a_tier_ask_names_the_tier_model(world, tier):
 async def test_a_depth_ask_reports_a_preset_route(world):
     w = await world(**CUSTOM)
     out = (await w.call(ASK, query="q", depth="low")).structured_content
-    assert out["routing"] == {"mode": "custom", "tier": None, "model": None, "selected_by": "depth"}
+    assert out["routing"] == {
+        "mode": "custom",
+        "tier": None,
+        "model": None,
+        "selected_by": "depth",
+        "classifier": None,
+        "reason": None,
+    }
     assert w.bodies()[0]["preset"] == "low"
 
 
@@ -165,7 +176,9 @@ async def test_the_search_parameter_no_longer_says_it_needs_a_model(world):
     w = await world()
     props = (await tool(w, ASK)).input_schema["properties"]
     assert "needs model" not in props["search"]["description"]
-    assert "tier" in props and "custom" in props["tier"]["description"]
+    assert "tier" in props and "custom or dynamic mode" in props["tier"]["description"]
+    chat = (await tool(w, CHAT)).input_schema["properties"]
+    assert "custom or dynamic mode" in chat["tier"]["description"]
 
 
 # --- wiring: one usage event per call, per mode and per source (task 4.1) ----------------

@@ -157,6 +157,20 @@ async def last_anchor(session: AsyncSession, chat_id: int) -> str | None:
     ).scalar_one_or_none()
 
 
+async def last_route(session: AsyncSession, chat_id: int) -> tuple[str | None, str | None] | None:
+    """The stored ``(preset, model)`` of the chat's last assistant message, or ``None`` when it
+    has none: what dynamic routing reads to hold a follow-up at the tier the chat last ran."""
+    row = (
+        await session.execute(
+            select(ChatMessage.preset, ChatMessage.model)
+            .where(ChatMessage.chat_id == chat_id, ChatMessage.role == "assistant")
+            .order_by(ChatMessage.id.desc())
+            .limit(1)
+        )
+    ).one_or_none()
+    return None if row is None else (row[0], row[1])
+
+
 async def chat_history(session: AsyncSession, chat_id: int) -> list[tuple[str, str]]:
     """Every message as ``(role, content)``, oldest first: the input of a replay."""
     rows = await session.execute(

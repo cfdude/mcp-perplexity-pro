@@ -6,7 +6,14 @@ import re
 import pytest
 from fixture_support import FIXTURE_DIR, REQUIRED_META_KEYS, find_key_shapes
 
-PAYLOADS = sorted(p for p in FIXTURE_DIR.glob("*.json") if not p.name.endswith(".meta.json"))
+# ``routing_prompts.json`` is the labeled prompt set of the rules classifier (routing-rules-v1):
+# written by hand, not recorded from an API, so it has no sidecar. It is still key-scanned.
+HAND_WRITTEN = {"routing_prompts.json"}
+PAYLOADS = sorted(
+    p
+    for p in FIXTURE_DIR.glob("*.json")
+    if not p.name.endswith(".meta.json") and p.name not in HAND_WRITTEN
+)
 SIDECARS = sorted(FIXTURE_DIR.glob("*.meta.json"))
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -15,7 +22,9 @@ def test_fixtures_exist():
     assert PAYLOADS, "no fixtures recorded"
 
 
-@pytest.mark.parametrize("path", [*PAYLOADS, *SIDECARS], ids=lambda p: p.name)
+@pytest.mark.parametrize(
+    "path", [*PAYLOADS, *SIDECARS, *(FIXTURE_DIR / n for n in HAND_WRITTEN)], ids=lambda p: p.name
+)
 def test_no_key_shaped_strings(path):
     hits = find_key_shapes(path.read_text())
     assert not hits, f"{path.name} contains key-shaped strings: {hits}"
