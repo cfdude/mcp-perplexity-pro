@@ -178,6 +178,7 @@ value. No `.env` file is read.
 | `PERPLEXITY_DB_BUSY_TIMEOUT` | `5` | Seconds a write waits for the database lock before failing with `storage_busy` |
 | `PERPLEXITY_ROUTING` | `standard` | `standard`, `custom` or `dynamic`, case-insensitive. See "Choosing how models are picked" |
 | `PERPLEXITY_MODEL` | `perplexity/sonar` | `standard` mode: the model a call that names nothing uses; `dynamic` mode: the `standard` tier's model |
+| `PERPLEXITY_CLASSIFIER` | `rules` | `dynamic` mode only: `rules` (fixed offline rules) or `decisions` (the Decisions API picks the tier, the rules back it up). Ignored with a warning in other modes |
 | `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD`, `PERPLEXITY_TIER_COMPLEX` | none | `custom` mode: the three tier models, all required there. `dynamic` mode: optional, each replaces that tier's default |
 
 Variables starting with `FASTMCP_` belong to FastMCP and are not used for this server's own
@@ -240,6 +241,31 @@ signals, never your words.
   claimed: the rules are a first version (a 44-prompt labeled set pins them) and
   measuring them is later work.
 - To go back, unset `PERPLEXITY_ROUTING`.
+
+#### The Decisions classifier
+
+`PERPLEXITY_CLASSIFIER=decisions` replaces the rules with one request to Perplexity's Decisions API
+per nameless call: the first 4000 characters of your prompt go to `/v1/decisions` as the state of a
+single `choice` question (light, standard or complex), and the answer picks the tier. The same
+provider receives the same text next as the ask itself.
+
+- **Bounded and never fatal.** One attempt, at most 3 seconds. A timeout, a rate limit, any error or
+  an answer it cannot read falls back to the rules and the `reason` says why (for example
+  `decisions failed (rate_limited), rules: short lookup`). A weak answer (the chosen option under
+  50% probability) is raised to the rules' tier when that is higher.
+- **Recorded.** Each request is its own usage event (API `decisions`, the calling tool's name,
+  your project), billed on input tokens at 20 nano-USD each; the four requests of the acceptance
+  run cost 12,660 nano-USD in total (`openspec/changes/routing-decisions-classifier/acceptance/`).
+- **When it runs.** Only for a call that names no `depth`, `tier` or `model`, whose `search` is not
+  false, after the call validated; never for a chat follow-up already at `complex`. An invalid call
+  makes no request. The result's `classifier` says `decisions` or `rules` (when the rules supplied
+  the tier).
+- **What it did in testing, as observations.** The median classification took 0.26 s (0.68 s
+  slowest of 44). The decider leans toward `complex` on ordinary questions: it sent 4 of the 18
+  prompts we labeled `standard` there and, on one real ordinary question, ran `medium` for $0.018
+  and 55.7 s where the rules route it to `standard` ($0.005, about 10 s). The labels were written to
+  pin the rules, so agreement with them is not a measure of quality. That is why `rules` is the
+  default; tuning the decider's criteria and threshold is later work (`routing-eval-tuning`).
 
 **What the default costs.** `perplexity/sonar` with web search cost $0.00336 for one question, $0.00371
 for a `json_schema` question (acceptance, `openspec/changes/archive/2026-10-13-routing-modes-config/acceptance/`) and

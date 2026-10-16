@@ -21,6 +21,7 @@ module.exports = {
         // Optional routing (README: "Choosing how models are picked"). Defaults: standard mode,
         // model perplexity/sonar. For custom mode set all three tiers; 'dynamic' needs no tiers (optional overrides).
         // PERPLEXITY_ROUTING: 'standard',
+        // PERPLEXITY_CLASSIFIER: 'rules', // dynamic mode only: 'rules' or 'decisions'
         // PERPLEXITY_MODEL: 'perplexity/sonar',
         // PERPLEXITY_TIER_LIGHT: 'openai/gpt-6-luna',
         // PERPLEXITY_TIER_STANDARD: 'perplexity/sonar',
