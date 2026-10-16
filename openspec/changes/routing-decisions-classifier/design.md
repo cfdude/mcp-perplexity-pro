@@ -22,53 +22,67 @@ and records Decisions requests through `decisions.run_decide` and `costed.costed
 
 ## Decisions
 
-**D1. `routing_decisions.py` holds `classify_dynamic(app, text, *, project, tool, floor_rules)`.**
-It returns the same `Classification` shape as `rules.classify`, plus `source` (`rules` or
-`decisions`). It is the only caller of the Decisions API for routing. `rules.py` stays pure and
-unchanged. Alternative: put it in `routing.py`; rejected because `routing.py` is pure and
-network-free (its module docstring says so, a test could pin it).
+**D1. `routing_decisions.py` holds `classify_dynamic(app, text, *, project, tool)`.** It returns
+a `Classification` (the shape of `rules.classify`, with a `classifier` field, `rules` or
+`decisions`), having done the Decisions request and the weak-answer merge itself. It does not
+touch the floor, the search-off rule or the route: `routing.resolve(..., classification=c,
+previous=...)` (`routing-rules-v1` D5) owns those, so there is one place that builds the final
+route and its reason suffixes. `rules.py` stays pure and unchanged. Alternative: put the network
+call in `routing.py`; rejected because `routing.py` is pure and network-free.
 
-**D2. The request.** `{"model": DEFAULT_MODEL, "state": {"prompt": text[:4000]}, "questions":
-{"tier": {"type": "choice", "criteria": {"light": ..., "standard": ..., "complex": ...}}}}` with
-three fixed one-line criteria written for a router ("a short factual lookup", "an ordinary question
-that needs a sourced answer", "an analytical, multi-part or long task"). Built by
-`decisions.build_request` so the Decisions validators apply. Alternative: a `score` question
-(0 to 2); rejected because a `choice` names the tier directly and returns a confidence per option.
-The criteria are checked live in acceptance (a fixture is captured with
-`tests/test_live_capture.py`, never hand-written).
+**D2. The request.** `decisions.build_request(DecideOptions(state=text[:4000], questions={"tier":
+{"type": "choice", "criteria": {...}}}))` with the default decider model and three fixed one-line
+criteria written for a router ("a short factual lookup", "an ordinary question that needs a sourced
+answer", "an analytical, multi-part or long task"). The state is a string (the common fixture shape);
+`decisions._state` refuses a prompt that is an image data URL, which falls back to the rules with
+the not-classifiable reason. The answer has `choice`, one `confidence` and `probabilities` per
+option; `confidence` is not the chosen option's probability (in `decisions_choice.json` the top
+probability is 0.6996 and the confidence 0.5493). The criteria are checked live and fixtures
+captured with `tests/test_live_capture.py` after they are final; changing a criterion means
+re-capturing. Alternative: a `score` question; rejected because a `choice` names the tier directly.
 
-**D3. The weak-answer rule.** Confidence under 0.5 means take the higher of the Decisions tier and
-`rules.classify(text)`; at or above 0.5, the Decisions tier alone. The 0.5 is a starting value, not
-a claim; `routing-eval-tuning` tunes it. The higher-wins direction is the quality-safe one (a
-wrong `light` costs an answer, a wrong `complex` costs a few cents).
+**D3. The weak-answer rule.** Strength is the probability of the chosen option (`probabilities`),
+else `confidence`, else unreadable (trusted alone when the choice is a known tier). Under 0.5, take
+the higher of the Decisions tier and `rules.classify(text)`, a tie going to Decisions; at 0.5 or
+more, the Decisions tier alone. The 0.5 means "a majority of the probability mass", a starting
+value that `routing-eval-tuning` tunes; acceptance records the observed strength distribution. The
+higher-wins direction is the quality-safe one (a wrong `light` costs an answer, a wrong `complex` a
+few cents). The classifier sees at most 4000 characters while the rules see all of them; the
+length signal is rules-only, so a long prompt the decider saw truncated can still merge upward.
 
-**D4. The bound.** `asyncio.timeout(3)` around the whole call, retries included, because the client
-retries internally; a timeout cancels the in-flight request, which `costed_call` already handles
-(a cancelled call is not recorded, an accepted gap; the timeout is reported as a fallback reason).
-3 seconds is a constant, not a setting. Alternative: one attempt only (`max_attempts=1`);
-rejected because it does not bound a slow first attempt.
+**D4. The bound, inside the recorded call.** The deadline (3 s, a constant) is fixed at the start
+of `classify_dynamic` and the `call` lambda handed to `costed_call` wraps the request in
+`asyncio.timeout` for the time left, converting `TimeoutError` into `PerplexityError("network_timeout")`.
+The existing failure branch of `costed_call` then records the request with that status, so a
+timeout is not an unrecorded cancel; a genuine client cancel still propagates (it is a
+`CancelledError`, not folded into the fallback). The client's retry loop only sleeps through its
+injected sleep and awaits httpx2, so both are cancellable and the bound covers retries.
 
 **D5. Recording.** `decisions.run_decide` gains a keyword `tool` (default `TOOL`), so the event
-carries the calling tool's name. `costed_call` already does validate, project commit, timed call,
-`record_usage`, and records a failure with `status=exc.category`. The project is the call's own;
-the classifier runs after the ask's project name validated. Alternative: a `routing` tool name;
-rejected because the usage spec defines the event's tool as the MCP tool name.
+carries the calling tool's name, as the usage spec defines the event's tool. `costed_call`
+validates the project name, commits the project, makes the timed call and records; the caller
+(`ask`, or `_send`) validates the project name before classifying so an invalid name is
+refused as it is today and never swallowed as a fallback. The project commit then runs twice (the
+classifier's and the ask's), a short write each; accepted. No third `record_usage(` call site is
+added (CLAUDE.md).
 
-**D6. Where it runs.** In `perplexity_ask`: validate options with a provisional route (the
-standard tier's model, as the chat tool does for follow-ups in `routing-rules-v1`), then, if the
-call is nameless, in dynamic mode, with the Decisions classifier and `search` not false, classify
-and build the final route (floor applied for chat follow-ups). An invalid call therefore spends
-nothing. A cancelled call during classification records nothing for the classifier (accepted gap,
-same as every costed call).
+**D6. Where it runs.** `perplexity_ask`: validate the project name and the options with a
+provisional route (the standard tier's model, as the chat tool does for follow-ups in
+`routing-rules-v1`), then, for a nameless dynamic call with the Decisions classifier and `search`
+not false, `classify_dynamic`, then `resolve(..., classification=c)` for the final route. For a
+chat follow-up it runs after the chat lookup and after `last_route`, with that read-only unit
+closed (a Decisions request is a costed call and must hold no write unit). Nothing else makes a
+Decisions request for routing.
 
-**D7. Settings.** `PERPLEXITY_CLASSIFIER` in `settings.py`: `rules` default or `decisions`;
-case-insensitive; used in dynamic mode only; `ignored_routing_vars()` warns in other modes. A
-failure is `SettingsError` naming the variable.
+**D7. Settings.** `PERPLEXITY_CLASSIFIER` in `settings.py`: `rules` default or `decisions`,
+case-insensitive; validated in dynamic mode only; elsewhere ignored with one warning
+(`ignored_routing_vars()`). A failure is a `SettingsError` naming the variable.
 
-**D8. Surfaces.** `Route` gains `classifier: str | None`; `Routing` (result) gains `classifier`;
-`instructions_text`, `description_sentence`, the models section (`classifier`, plus the decider
-model) and the help topic name it. `tests/test_tools_list_budget.py` (extended for dynamic in
-`routing-rules-v1`) stays the gate.
+**D8. Surfaces.** `Classification.classifier` flows to `Route.classifier` and `Routing.classifier`
+(added by `routing-rules-v1`); `instructions_text`, `description_sentence`, the models section
+(`RoutingSection.classifier` from `routing-rules-v1`, plus a new optional `decider_model`) and the
+help topic name it. `tests/test_tools_list_budget.py` is extended to the largest variant (dynamic
+with the Decisions classifier) and acceptance records the combined size of both changes.
 
 ## Risks / Trade-offs
 
@@ -81,8 +95,9 @@ model) and the help topic name it. `tests/test_tools_list_budget.py` (extended f
 - [The decider's choices drift or the criteria misfit] → the rules backstop it only on failure or
   weakness, so a confidently wrong answer is routed as given; mitigation is the eval epic and the
   reason/`classifier` fields that make each decision inspectable.
-- [The Decisions API may be unavailable on a key (forbidden)] → falls back to the rules every call
-  with a warning-level log naming the category (never the prompt) at most once a minute.
+- [The Decisions API may be unavailable on a key (forbidden)] → falls back to the rules every call;
+  each failure is a recorded event and an INFO log naming the category, never the prompt (no
+  once-a-minute throttle: it would need module-level state).
 
 ## Migration Plan
 

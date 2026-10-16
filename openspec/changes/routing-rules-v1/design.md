@@ -51,7 +51,7 @@ classifier (needs data and a dependency; that is the Decisions epic), length alo
 hard questions).
 
 **D3. The reason is built from signal names only.** `classify` assembles it from constants
-(`"2 analysis terms"`, `"1500 chars"`, `"3 questions"`, `"short lookup"`, and `"search off"` or `"held at complex"` where the follow-up floor or `search` false applied), never from the text,
+(`"2 analysis terms"`, `"1500 chars"`, `"3 questions"`, `"short lookup"`, only; `resolve()` appends `"held at complex"` or builds `"search off"` where the follow-up floor or `search` false applied, so the text is built in one place), never from the text,
 so it can be returned and logged without leaking a prompt. A test classifies a prompt holding a
 secret-shaped string and checks the reason.
 
@@ -63,9 +63,11 @@ route). `high` and `xhigh` are not in the table, so dynamic cannot select them b
 Alternative: require the three tier variables as `custom` does; rejected because dynamic must work
 with nothing set, and `custom` already covers the all-explicit case.
 
-**D5. `resolve()` gains optional `text`, `previous` and `search`.** In dynamic mode with no
-selector it classifies `text`, applies the floor from `previous` (a tier name or None) and
-returns `selected_by="rules"` with `reason`; with `search` false it returns the standard tier's
+**D5. `resolve()` gains optional `text`, `previous`, `search` and `classification`, and owns the
+floor and the reason suffixes.** In dynamic mode with no selector it uses `classification` (a ready
+`Classification`, supplied by an async classifier such as the Decisions one) or else classifies
+`text` with `rules.classify`, applies the floor from `previous` (a tier name or None) and
+returns `selected_by="classifier"` (and `classifier="rules"`) with `reason`; with `search` false it returns the standard tier's
 route without classifying, and a `tier` that runs a preset with `search` false is refused naming
 `tier` and `search` (the caller named a tier, so the standard model is not substituted silently);
 `tier` in dynamic mode resolves through `dynamic_route`, not the `custom` settings; with `text=None` (a caller that has none, such as a test) it returns the
@@ -103,7 +105,8 @@ set, and nothing else. `__main__` logs the mode and the three tiers' routes once
 checks the line holds no secret).
 
 **D8. Surfaces.** `Routing` (shared by ask and chat) gains an optional `reason`; its
-`selected_by` description adds `rules` (it is a plain string, not an enum). `routing.instructions_text`
+`selected_by` description adds `classifier` and `classifier` (`rules` here) is a new field (both plain
+strings, not enums). `routing.instructions_text`
 and `description_sentence` render a dynamic variant; the `tier` parameter descriptions in
 `tools/ask.py` and `tools/chat.py` say "custom or dynamic mode"; `tools/models.py` gives
 `ConfiguredModel` an optional `preset` (a nullable `id`, `known` null for a preset entry) and `RoutingSection` an optional

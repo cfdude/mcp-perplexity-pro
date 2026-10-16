@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: The classifier setting
-The server SHALL read `PERPLEXITY_CLASSIFIER` (case-insensitive), `rules` (the default) or `decisions`, and use it in `dynamic` mode only. In any other mode it SHALL be ignored with one warning naming the variable. An unknown value SHALL fail startup naming the variable and the two accepted values.
+The server SHALL read `PERPLEXITY_CLASSIFIER` (case-insensitive), `rules` (the default) or `decisions`, and use it in `dynamic` mode only. In any other mode it SHALL be ignored with one warning naming the variable and not validated. An unknown value in `dynamic` mode SHALL fail startup naming the variable and the two accepted values.
 
 #### Scenario: Default classifier
 - **WHEN** the server starts in `dynamic` mode with `PERPLEXITY_CLASSIFIER` unset
@@ -18,22 +18,18 @@ The server SHALL read `PERPLEXITY_CLASSIFIER` (case-insensitive), `rules` (the d
 - **THEN** it starts, ignores the variable and logs one warning naming it
 
 #### Scenario: Unknown value
-- **WHEN** `PERPLEXITY_CLASSIFIER=smart`
+- **WHEN** `PERPLEXITY_CLASSIFIER=smart` in `dynamic` mode
 - **THEN** startup fails naming `PERPLEXITY_CLASSIFIER` and the accepted values
 
-### Requirement: The routing result names the classifier
-When the tier was picked by a classifier (`selected_by` `rules`), the `routing` object of an ask or chat result SHALL carry `classifier`, `rules` or `decisions`: `decisions` only when the Decisions answer decided the tier, `rules` otherwise, including when the rules replaced a failed or weak answer. In every other case `classifier` is null.
+#### Scenario: Unknown value in another mode
+- **WHEN** `PERPLEXITY_CLASSIFIER=smart` in `standard` mode
+- **THEN** the server starts and logs one warning naming the variable
 
-#### Scenario: Decisions decided
-- **WHEN** the Decisions classifier answers with confidence 0.9
-- **THEN** the routing carries `classifier` `decisions` and a reason naming the tier and the confidence
-
-#### Scenario: Fallback
-- **WHEN** the Decisions request times out
-- **THEN** the routing carries `classifier` `rules` and a reason naming the timeout
+### Requirement: The classifier field can be decisions
+Where `routing-config` says the `routing` object's `classifier` is the classifier that decided, its value SHALL be `decisions` or `rules` when the Decisions classifier is configured, as defined by "The classifier field says who supplied the tier" in `routing-decisions-classifier`, and null whenever `selected_by` is not `classifier`.
 
 #### Scenario: Explicit selector
-- **WHEN** a call names `tier`
+- **WHEN** a call in this mode names `tier`
 - **THEN** the routing's `classifier` is null
 
 ### Requirement: The classifier is told to the calling agent

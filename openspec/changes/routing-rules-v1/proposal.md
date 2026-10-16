@@ -24,7 +24,7 @@ testable against labeled prompts, and it stays as the fallback once a network cl
 - A chat follow-up never routes below the tier the chat last used; the tier is recovered from the
   stored preset or model of the previous turn, so there is no migration.
 - A dynamic call with `search` false runs the standard tier's model (a preset always searches).
-- The result's `routing` gains `reason` and a new `selected_by` value `rules`; the instructions
+- The result's `routing` gains `reason` and a new `selected_by` value `classifier`, and a `classifier` field (`rules` here); the instructions
   text, the `perplexity_ask` and `perplexity_chat` description sentence, `perplexity_models` and
   the help routing topic describe dynamic mode.
 - A labeled prompt set in the test suite is the contract for the rules. No cost or savings figure
@@ -36,8 +36,10 @@ testable against labeled prompts, and it stays as the fallback once a network cl
 - `routing-rules`: the offline rules classifier, its signals, its output and the labeled prompt set that pins it.
 
 ### Modified Capabilities
+- `agent-chat`: the chat tool description and the first-turn scenario no longer promise one default model.
 - `routing-config`: dynamic mode is accepted and resolves by rules (replaces "reserved"), `tier` is valid in dynamic, the resolution order, refusal order, shaping, default-route and instructions requirements and the `routing` result cover `rules`, presets and `reason`; dynamic tiers, the follow-up floor, search off, the shadowed-variable warning.
-- `agent-ask`: "Depth selects a preset" no longer says a nameless call never runs a preset (it does in dynamic mode).
+- `agent-ask`: "Depth selects a preset" and the tool description no longer say a nameless call never runs a preset or names one default model.
+- `server-runtime`: dynamic mode's variables are optional.
 - `model-catalog`: the `perplexity_models` routing section reports dynamic mode, presets and the classifier.
 - `help-tool`: the index routing line and the routing topic describe dynamic mode.
 

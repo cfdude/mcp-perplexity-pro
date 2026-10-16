@@ -43,7 +43,7 @@ A text SHALL classify as `complex` when any one of these holds: it contains word
 - **THEN** it counts one question
 
 ### Requirement: Short lookups are light
-A text SHALL classify as `light` when its trimmed length is at most 120 characters, it holds at most one question, it opens in a lookup form (what is, who is, when did, where is, how many, how much, define, latest, current, price of) and no complexity signal fired.
+A text SHALL classify as `light` when its trimmed length is at most 120 characters, it holds at most one question, it opens in a lookup form (what is, what are, who is, who was, when did, when is, where is, how many, how much, define, latest, current, price of) and no complexity signal fired.
 
 #### Scenario: A lookup
 - **WHEN** the text is `What is the latest stable Python release?`

@@ -21,7 +21,7 @@ always-available fallback.
   the call's project), so its cost is visible in `perplexity_usage`.
 - It runs only when the call names no selector and `search` is not false, and only after the
   call's options validated, so an invalid call spends nothing.
-- The `routing` result gains `classifier` (`rules` or `decisions`); the instructions text, the
+- The routing `classifier` field (added by `routing-rules-v1`) can now be `decisions`; the instructions text, the
   models routing section and the help routing topic name the classifier in use.
 - No savings or accuracy claim: live acceptance records how the two classifiers compare on the
   labeled prompt set as a measurement, and `routing-eval-tuning` owns any claim.
@@ -32,7 +32,10 @@ always-available fallback.
 - `routing-decisions-classifier`: the Decisions-API tier classification, its confidence rule, bound, fallback, recording and when it runs.
 
 ### Modified Capabilities
-- `routing-config`: the `PERPLEXITY_CLASSIFIER` setting, the `classifier` field of the routing result, the instructions text naming the classifier.
+- `routing-config`: the `PERPLEXITY_CLASSIFIER` setting, the `decisions` value of the routing `classifier` field, the instructions text naming the classifier.
+- `cli`: a costed command records one event per upstream request (two for an ask with this classifier).
+- `server-runtime`: the configuration variable.
+- `usage-recording`: a nested request is recorded under the calling tool.
 - `model-catalog`: the `perplexity_models` routing section names the Decisions classifier.
 - `help-tool`: the routing topic names the classifier and its fallback.
 
@@ -44,7 +47,8 @@ always-available fallback.
   after validation, before the final route); `tools/models.py`; `help_text.py`; README, CHANGELOG,
   CLAUDE.md.
 - Depends on `routing-rules-v1` (its rules, `Route.reason`, dynamic mode and the follow-up floor).
-  It is applied after that change is archived, so its main-spec deltas are ADDED requirements only.
+  It is applied after that change is archived; `routing-rules-v1` words its shared requirements
+  classifier-neutral so these deltas compose by ADDED requirements, plus one MODIFIED (`cli`).
 - No migration, no new dependency, no new tool; `tools/list` stays under the 59779-byte budget.
 - Cost: one Decisions request per nameless dynamic call, billed on input tokens at the documented
   20 nano-USD each. A 4000-character prompt is roughly 1000 tokens (an estimate, not a measurement),
