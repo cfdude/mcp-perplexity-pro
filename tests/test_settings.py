@@ -211,13 +211,53 @@ def test_routing_mode_is_case_insensitive(key_env, monkeypatch):
 def test_unknown_mode_names_the_variable_the_value_and_the_choices(key_env, monkeypatch):
     text = routing_error(monkeypatch, ROUTING="auto")
     assert "PERPLEXITY_ROUTING" in text and "'auto'" in text
-    assert "standard" in text and "custom" in text and "dynamic" in text
+    assert "standard, custom and dynamic" in text
+    assert "reserved" not in text and "not available" not in text
     assert "PERPLEXITY_?" not in text and KEY not in text
 
 
-def test_dynamic_is_reserved_and_refused_at_startup(key_env, monkeypatch):
-    text = routing_error(monkeypatch, ROUTING="dynamic")
-    assert "PERPLEXITY_ROUTING" in text and "not available" in text
+def test_dynamic_starts_with_nothing_but_the_key_set(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "DyNaMiC")
+    s = load_settings()
+    assert s.routing == "dynamic" and s.model == "perplexity/sonar"
+    assert (s.tier_light, s.tier_standard, s.tier_complex) == (None, None, None)
+    assert s.ignored_routing_vars() == []
+
+
+def test_dynamic_tier_variables_replace_a_default_and_are_kept(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "dynamic")
+    monkeypatch.setenv("PERPLEXITY_TIER_COMPLEX", "anthropic/claude-opus-5-5")
+    s = load_settings()
+    assert s.tier_complex == "anthropic/claude-opus-5-5" and s.tier_light is None
+
+
+@pytest.mark.parametrize("tier", ["LIGHT", "STANDARD", "COMPLEX"])
+def test_a_bad_dynamic_tier_variable_names_the_variable(key_env, monkeypatch, tier):
+    text = routing_error(monkeypatch, ROUTING="dynamic", **{f"TIER_{tier}": "bad id"})
+    assert f"PERPLEXITY_TIER_{tier}" in text and KEY not in text
+    assert "is required" not in text
+
+
+def test_an_empty_dynamic_tier_variable_is_set_and_therefore_refused(key_env, monkeypatch):
+    assert "PERPLEXITY_TIER_LIGHT" in routing_error(monkeypatch, ROUTING="dynamic", TIER_LIGHT="")
+
+
+def test_dynamic_validates_the_model_variable_only_when_it_is_used(key_env, monkeypatch):
+    assert "PERPLEXITY_MODEL" in routing_error(monkeypatch, ROUTING="dynamic", MODEL="bad id")
+    monkeypatch.setenv("PERPLEXITY_TIER_STANDARD", "x/standard")  # shadows it: not validated
+    assert load_settings().model == "bad id"
+
+
+def test_dynamic_reports_only_a_model_variable_shadowed_by_the_standard_tier(key_env, monkeypatch):
+    monkeypatch.setenv("PERPLEXITY_ROUTING", "dynamic")
+    monkeypatch.setenv("PERPLEXITY_MODEL", "x/m")
+    assert load_settings().ignored_routing_vars() == []  # used as the standard tier
+    monkeypatch.setenv("PERPLEXITY_TIER_STANDARD", "x/s")
+    assert load_settings().ignored_routing_vars() == ["PERPLEXITY_MODEL"]
+    monkeypatch.delenv("PERPLEXITY_MODEL")
+    monkeypatch.setenv("PERPLEXITY_TIER_LIGHT", "x/l")
+    monkeypatch.setenv("PERPLEXITY_TIER_COMPLEX", "x/c")
+    assert load_settings().ignored_routing_vars() == []  # no tier variable is ignored
 
 
 def test_custom_names_every_missing_tier_in_one_message(key_env, monkeypatch):

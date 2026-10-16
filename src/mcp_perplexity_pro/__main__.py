@@ -51,6 +51,7 @@ def bootstrap(
     import httpx2
 
     from mcp_perplexity_pro.log_setup import configure_logging
+    from mcp_perplexity_pro.routing import describe_tiers
     from mcp_perplexity_pro.server import build_server
     from mcp_perplexity_pro.settings import SettingsError, load_settings
     from mcp_perplexity_pro.storage.engine import StorageError, create_engine_for
@@ -70,11 +71,20 @@ def bootstrap(
         )
 
     for name in settings.ignored_routing_vars():
-        logger.warning(
-            "%s is set but PERPLEXITY_ROUTING=%s does not use it; it is ignored",
-            name,
-            settings.routing,
-        )
+        if settings.routing == "dynamic":
+            logger.warning(
+                "%s is set but PERPLEXITY_TIER_STANDARD replaces it in dynamic routing; it is "
+                "ignored",
+                name,
+            )
+        else:
+            logger.warning(
+                "%s is set but PERPLEXITY_ROUTING=%s does not use it; it is ignored",
+                name,
+                settings.routing,
+            )
+    if settings.routing == "dynamic":
+        logger.info("routing mode dynamic: %s", describe_tiers(settings))
 
     # 2. Data directory and migrations. A failure aborts before anything listens.
     try:
