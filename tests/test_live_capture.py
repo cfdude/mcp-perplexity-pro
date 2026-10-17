@@ -278,3 +278,36 @@ def test_capture_decisions_tier_fixtures():
     for name, (payload, meta) in pending.items():
         (FIXTURE_DIR / f"{name}.json").write_text(json.dumps(payload, indent=2) + "\n")
         (FIXTURE_DIR / f"{name}.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+
+
+def test_capture_models_list_fixture():
+    """model-matrix 1.1: the free live list the packaged matrix baseline is built from."""
+    key = os.environ.get("PERPLEXITY_API_KEY")
+    if not key:
+        pytest.skip("PERPLEXITY_API_KEY is not set")
+    today = date.today().isoformat()
+    auth = {"Authorization": f"Bearer {key}"}
+    with httpx2.Client(base_url=BASE_URL, timeout=httpx2.Timeout(30.0, read=60.0)) as c:
+        resp = c.get("/v1/models", headers=auth)
+    assert resp.status_code == 200, f"HTTP {resp.status_code}"
+    body = _body(resp)
+    removed: list[str] = []
+    payload = scrub(body, "", removed)
+    meta = {
+        "endpoint": "/v1/models",
+        "method": "GET",
+        "http_status": resp.status_code,
+        "capture_date": today,
+        "content_type": resp.headers.get("content-type"),
+        "scrubbed": removed or "nothing: no account-specific values were present",
+        "note": "Response ids are kept; they identify no account. Request headers and the API "
+        "key are never recorded.",
+        "request_note": "model-matrix 1.1: a free call; the packaged matrix baseline's source",
+    }
+    hits = find_key_shapes(json.dumps(payload)) + find_key_shapes(json.dumps(meta))
+    assert not hits, "key-shaped string; nothing written"
+    assert key not in json.dumps([payload, meta]), "live key in a payload"
+    FIXTURE_DIR.mkdir(exist_ok=True)
+    name = f"models_{today}"
+    (FIXTURE_DIR / f"{name}.json").write_text(json.dumps(payload, indent=2) + "\n")
+    (FIXTURE_DIR / f"{name}.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
