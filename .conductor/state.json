@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "model-matrix",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -1371,7 +1371,7 @@
       "id": "model-matrix",
       "title": "Model matrix: prices, accepted effort levels and input modalities, refreshed at startup",
       "priority": "P2",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -1408,7 +1408,7 @@
         "0570787fc7adb2b9b57fad2c331d49bacde46f33"
       ],
       "createdAt": "2026-10-16T06:24:44.131Z",
-      "touchedAt": "2026-10-17T12:56:21.196Z",
+      "touchedAt": "2026-10-17T12:58:54.076Z",
       "gateReview": {
         "gate1": {
           "verdict": "pass",
@@ -1477,7 +1477,17 @@
         }
       },
       "release": "release-2-2-0",
-      "startedAt": "2026-10-17T08:03:45.304Z"
+      "startedAt": "2026-10-17T08:03:45.304Z",
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-17T12:58:54.075Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-17T12:58:54.046Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-17T12:58:54.075Z"
     },
     {
       "id": "routing-v2",
@@ -1519,7 +1529,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 454,
+  "revision": 456,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",

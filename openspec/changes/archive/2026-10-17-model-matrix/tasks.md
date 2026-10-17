@@ -37,7 +37,7 @@
 ## 8. Documentation (after Gate 2 is clean)
 
 - [x] 8.1 README (the matrix: what it holds, where, the refresh and probe settings with defaults and limits, what `perplexity_models` now shows, what a probe costs and that accepted is not effective, that probe events show under no project; the two variables in the table), `CLAUDE.md` (module table gains `matrix.py` and `matrix_refresh.py`, the five `costed_call` callers and `unscoped`, the new variables, the data directory file, the `tools/list` size), `CHANGELOG.md` under Unreleased, `ecosystem.example.cjs` comment, the "Documented defaults" scenario of `server-runtime` reworded in the main spec if it lists variables; keep the pm block byte-identical; verify every example against the acceptance output
-- [ ] 8.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
+- [x] 8.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 
 ## 9. Archive
 
