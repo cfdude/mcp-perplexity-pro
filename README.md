@@ -179,6 +179,8 @@ value. No `.env` file is read.
 | `PERPLEXITY_ROUTING` | `standard` | `standard`, `custom` or `dynamic`, case-insensitive. See "Choosing how models are picked" |
 | `PERPLEXITY_MODEL` | `perplexity/sonar` | `standard` mode: the model a call that names nothing uses; `dynamic` mode: the `standard` tier's model |
 | `PERPLEXITY_CLASSIFIER` | `rules` | `dynamic` mode only: `rules` (fixed offline rules) or `decisions` (the Decisions API picks the tier, the rules back it up). Ignored with a warning in other modes |
+| `PERPLEXITY_MATRIX_REFRESH` | `86400` | Seconds between refreshes of the model matrix (see "Model matrix"); `0` refreshes only at start, otherwise 300 to 604800 |
+| `PERPLEXITY_MATRIX_PROBE` | `new` | `new` probes models neither the matrix file nor the packaged baseline knows (a few cents at most per refresh); `off` never probes, case-insensitive |
 | `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD`, `PERPLEXITY_TIER_COMPLEX` | none | `custom` mode: the three tier models, all required there. `dynamic` mode: optional, each replaces that tier's default |
 
 Variables starting with `FASTMCP_` belong to FastMCP and are not used for this server's own
@@ -284,6 +286,45 @@ ask and chat result (`mode`, `tier`, `model` and `selected_by`: `default`, `tier
 `perplexity_models`, which marks each configured id `known` when the live list has it. A model the
 list does not have is still sent as configured, because the list can lag a new model and the API
 reports a typo on the first call.
+
+## Model matrix
+
+The server keeps a small file, `model_matrix.json`, in the data directory: for every model in
+Perplexity's live list its provider, prices, whether it is still listed (`available` or `removed`)
+and its **efforts**, which `reasoning.effort` levels (`minimal`, `low`, `medium`, `high`, `xhigh`,
+`max`) the Agent API accepts for it. Nothing in it is typed by hand and nothing routes by it yet; it
+is the fact base for model routing.
+
+- **Never empty.** A baseline of all 54 models as of 2026-10-17 ships inside the package, so the
+  matrix is the baseline on a first start, after a deleted file, and after a corrupt one (a file
+  that is not a matrix is renamed `model_matrix.json.corrupt-<time>` and never deleted; a file written
+  by a newer version is left alone).
+- **Refreshed by the server.** A serving process (`mcp-perplexity-pro`, `perplexity-pro serve`)
+  starts a background task that fetches the live list at start and then every
+  `PERPLEXITY_MATRIX_REFRESH` seconds, adds new models, updates prices and marks vanished models
+  `removed`. It never delays startup and never fails it: a failure logs one warning and the matrix
+  stays as it was. One-shot `perplexity-pro` commands do not refresh and never write the file. The
+  file is written atomically under `model_matrix.lock`, so the pm2 server and a stdio server sharing
+  the data directory do not lose each other's rows.
+- **Probed, not guessed.** Perplexity's list has only ids and prices, and its docs have no
+  per-model capability table (they list 40 of the 54 models and are wrong about at least one: they
+  say Kimi K3 accepts `xhigh` and `max`, the API refuses both). A model that neither the file nor
+  the baseline knows is probed once: a control request with no effort and one request per level,
+  each a trivial prompt with no tools, a 400 counting as a refusal only when the control completed.
+  A probe is capped at 10 models and $0.25 of reported cost per refresh, makes one attempt per
+  request, and every request is recorded as a usage event with tool `model_matrix` and no project
+  (`perplexity_usage` shows it under `(none)`). On 2026-10-17 probing all 54 models at six levels cost
+  $0.197 in total ($0.0036 on average, at most $0.036 for one model). A fresh install of a release
+  probes nothing, because the baseline already knows every model it was built with.
+- **Accepted is not effective.** The probe learns which levels the API takes, not whether a level
+  changes the answer: on a trivial prompt only 3 of 9 models tried showed reasoning tokens or cost
+  moving with effort. In the 2026-10-17 probe 45 of 54 models accepted every level; the `gpt-5`
+  family and Kimi K3 refused `xhigh` and `max`, `gemini-3.1-pro-preview` refused `minimal`, and
+  `deepseek-v4-pro`, `grok-4.20-multi-agent` and `grok-4.20-reasoning` refused every level.
+- **See it.** `perplexity_models` shows each model's efforts and the matrix's origin (`file` or
+  `baseline`), when it was fetched and how many models are still unprobed. To start over, delete
+  `model_matrix.json`; to stop automatic work, set `PERPLEXITY_MATRIX_REFRESH=0` and
+  `PERPLEXITY_MATRIX_PROBE=off`.
 
 ## Getting help
 
@@ -1388,10 +1429,11 @@ Output (`structuredContent`, with the same data rendered as text):
 
 | Key | Meaning |
 |---|---|
-| `models` | Entries with `id`, `provider` (the API's `owned_by`) and `pricing`: `input`, `output`, `cache_read`, `cache_write`, `unit`. A field the API did not supply is `null` |
+| `models` | Entries with `id`, `provider` (the API's `owned_by`), `pricing`: `input`, `output`, `cache_read`, `cache_write`, `unit` (a field the API did not supply is `null`), and `efforts` from the model matrix: `accepted` and `refused` as lists of effort levels and `source` (`probe`, `baseline` or `unprobed`; an unprobed model lists none). A model the matrix does not hold has no `efforts` |
 | `providers` | Every provider in the live list, ignoring the filter, so a typo in `provider` shows the real names |
 | `stale` | `true` when the live request failed and an older cached list is shown instead |
 | `age_seconds` | Seconds since the list was fetched live |
+| `matrix` | The model matrix's `origin` (`file` or `baseline`), `fetched_at` and `unprobed`, the number of available matrix models with no complete probe. The tool reads the stored matrix; `refresh` refreshes only the list above |
 | `routing` | The active routing mode and the configured model or tiers (`name`, `id`, `known`: whether the live list has the id; an id that is not listed is still used). Configuration, not live data, and present whatever `provider` says |
 | `presets` | The Agent API preset names (`fast`, `low`, `medium`, `high`, `xhigh`) and the model each maps to, with `source: "documentation"` and `as_of` (the recording date). Presets are copied from Perplexity's documentation, not live data, and the model behind a name can change |
 
@@ -1643,6 +1685,8 @@ Everything persistent lives in `PERPLEXITY_DATA_DIR` (default `~/.perplexity-pro
 |---|---|
 | `perplexity.db` | The SQLite database: projects, usage events, chats and their messages, research jobs with their queries and results, embedding chunks with their vectors (WAL mode, so `perplexity.db-wal` and `perplexity.db-shm` appear while it is open) |
 | `migrate.lock` | Lock file so two processes starting together cannot migrate at once |
+| `model_matrix.json` | The model matrix (prices, availability and accepted effort levels per model), written atomically by the refresh task of a serving process; safe to delete (see "Model matrix") |
+| `model_matrix.lock` | Lock file for the matrix writes, so two servers sharing the directory do not overwrite each other |
 | `backup-<rev>.db` | Copy of the database as it was at schema revision `<rev>`, taken automatically before a migration touches a database that already has a revision (for example `backup-0001.db`, or `backup-0004.db` when a revision-0004 database starts on this release) |
 
 Migrations run at startup. A failed migration rolls back and the server exits non-zero without
