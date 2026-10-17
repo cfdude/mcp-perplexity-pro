@@ -72,6 +72,8 @@ def test_the_wheel_has_the_license_metadata_entry_points_and_migrations(built):
     assert "mcp-perplexity-pro = mcp_perplexity_pro.__main__:main" in scripts
     assert "perplexity-pro = mcp_perplexity_pro.command:cli" in scripts
     assert "mcp_perplexity_pro/migrations/versions/0005_embedding_chunks.py" in names
+    # model-matrix: the baseline matrix is data inside the package, read with importlib.resources
+    assert "mcp_perplexity_pro/data/model_matrix_baseline.json" in names
 
 
 @pytest.mark.build

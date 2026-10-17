@@ -24,6 +24,10 @@ ROUTING_MODES = ("standard", "custom", "dynamic")
 TIER_NAMES = ("light", "standard", "complex")
 CLASSIFIERS = ("rules", "decisions")
 DEFAULT_MODEL = "perplexity/sonar"
+# The model matrix refresh interval: 0 (only at start) or 300 s to 7 days (design D6: the floor
+# keeps several servers sharing a data directory from refreshing and probing in a tight loop).
+MATRIX_REFRESH_MIN = 300
+MATRIX_REFRESH_MAX = 604800
 # A model id is written into the instructions text the calling agent reads, so only the plain
 # characters real ids use (no whitespace, control, invisible or Markdown characters); 200
 # characters is this server's own sanity cap.
@@ -63,11 +67,28 @@ class Settings(BaseSettings):
     tier_standard: str | None = None
     tier_complex: str | None = None
     classifier: str = "rules"
+    matrix_refresh: int = 86400
+    matrix_probe: Literal["new", "off"] = "new"
 
     @field_validator("log_level", mode="before")
     @classmethod
     def _upper_log_level(cls, value: object) -> object:
         return value.upper() if isinstance(value, str) else value
+
+    @field_validator("matrix_probe", mode="before")
+    @classmethod
+    def _lower_probe(cls, value: object) -> object:
+        return value.strip().lower() if isinstance(value, str) else value
+
+    @field_validator("matrix_refresh", mode="after")
+    @classmethod
+    def _check_matrix_refresh(cls, value: int) -> int:
+        if value != 0 and not MATRIX_REFRESH_MIN <= value <= MATRIX_REFRESH_MAX:
+            raise ValueError(
+                f"must be 0 (refresh only at start) or from {MATRIX_REFRESH_MIN} to "
+                f"{MATRIX_REFRESH_MAX} seconds"
+            )
+        return value
 
     @field_validator("routing", "classifier", mode="before")
     @classmethod

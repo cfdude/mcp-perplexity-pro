@@ -60,6 +60,27 @@ if os.environ.get("FIXTURE_FAIL_CLOSE"):
     _make_close_fail()
 
 
+def _slow_matrix_write(seconds):
+    """Make the matrix write take ``seconds`` (it runs in a thread, so a shutdown can arrive in
+    the middle of it); the real write follows, so the file is still replaced atomically."""
+    import time
+
+    from mcp_perplexity_pro import matrix
+
+    real_write = matrix.write
+
+    def slow_write(path, value):
+        log.info("matrix write begun")
+        time.sleep(seconds)
+        real_write(path, value)
+
+    matrix.write = slow_write
+
+
+if os.environ.get("FIXTURE_SLOW_MATRIX_WRITE"):
+    _slow_matrix_write(float(os.environ["FIXTURE_SLOW_MATRIX_WRITE"]))
+
+
 @server.tool
 async def log_all() -> str:
     """Log once at every level."""

@@ -2,6 +2,8 @@
 
 1. validate the project name (pure);
 2. commit the project in a short write unit (``resolve_project=False`` skips it);
+   ``unscoped=True`` skips steps 1 and 2 and records the event under no project (a background
+   task of the server, such as the model matrix probe, has no project to name);
 3. the timed upstream call, holding NO write unit;
 4. ``record_usage`` (its own unit) while no write unit is open: a failure is recorded with its
    category and re-raised; a response is recorded as the caller's interpreter says.
@@ -50,12 +52,13 @@ class Recording:
 
 @dataclass(frozen=True)
 class Costed[T]:
-    """The result, the measured latency, the project name used, the status the event carries
-    (``None`` when no event was attempted) and the interpreted ``Recording``."""
+    """The result, the measured latency, the project name used (``None`` for an unscoped call),
+    the status the event carries (``None`` when no event was attempted) and the interpreted
+    ``Recording``."""
 
     result: T
     latency_ms: int
-    project: str
+    project: str | None
     status: str | None
     recording: Recording | None
 
@@ -81,10 +84,16 @@ async def costed_call[T](
     call: Callable[[], Awaitable[T]],
     record: Callable[[T], Recording | None],
     resolve_project: bool = True,
+    unscoped: bool = False,
 ) -> Costed[T]:
-    """Run ``call`` and record it. ``app`` is the ``AppContext`` (``.settings``, ``.engine``)."""
-    name = validate_project_name(project or DEFAULT_PROJECT)
-    if resolve_project:
+    """Run ``call`` and record it. ``app`` is the ``AppContext`` (``.settings``, ``.engine``).
+
+    ``unscoped`` records the event under no project: the name is neither validated nor used,
+    no project row is created or touched (whatever ``resolve_project`` says) and the result's
+    ``project`` is ``None``. Every other caller leaves it false and gets a project name back.
+    """
+    name: str | None = None if unscoped else validate_project_name(project or DEFAULT_PROJECT)
+    if name is not None and resolve_project:
         async with unit_of_work(app.engine) as session:  # short, committed before the call
             await get_or_create_project(session, name)
     secrets = (app.settings.api_key.get_secret_value(),)

@@ -22,6 +22,8 @@ module.exports = {
         // model perplexity/sonar. For custom mode set all three tiers; 'dynamic' needs no tiers (optional overrides).
         // PERPLEXITY_ROUTING: 'standard',
         // PERPLEXITY_CLASSIFIER: 'rules', // dynamic mode only: 'rules' or 'decisions'
+        // PERPLEXITY_MATRIX_REFRESH: '86400', // model matrix refresh seconds; '0' = at start only
+        // PERPLEXITY_MATRIX_PROBE: 'new', // 'new' probes unknown models for effort levels; 'off' never
         // PERPLEXITY_MODEL: 'perplexity/sonar',
         // PERPLEXITY_TIER_LIGHT: 'openai/gpt-6-luna',
         // PERPLEXITY_TIER_STANDARD: 'perplexity/sonar',

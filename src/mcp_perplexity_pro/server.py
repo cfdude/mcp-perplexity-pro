@@ -30,6 +30,7 @@ from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.embeddings import ProjectLocks
 from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
 from mcp_perplexity_pro.help_text import TOOLS
+from mcp_perplexity_pro.matrix_refresh import MatrixState, start_task, stop_task
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.routing import instructions_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
@@ -62,6 +63,8 @@ class AppContext:
     client: PerplexityClient
     engine: AsyncEngine
     catalog: Catalog
+    # the model matrix (lazily loaded) and its refresh task; one mutable holder, no globals
+    matrix: MatrixState
     # OUR clock for research jobs (naive UTC); tests inject one
     now: Callable[[], datetime] = utcnow
     # one in-process lock per research job (design D8)
@@ -222,11 +225,16 @@ def build_server(
     *,
     clock: Callable[[], float] = time.time,
     now: Callable[[], datetime] = utcnow,
+    matrix_refresh: bool = False,
 ) -> FastMCP:
     """Build the server around caller-owned ``http`` and ``engine``.
 
     ``clock`` (wall-clock seconds) drives the model-catalog cache and ``now`` (a naive UTC
     datetime) the research jobs' own times; tests inject fake ones.
+
+    ``matrix_refresh`` starts the model matrix refresh task in the lifespan: only a serving
+    process passes true (``bootstrap(serving=True)``); a one-shot command, the schema builder and
+    the test servers leave it false, so none of them touches the network or the matrix file.
 
     ``server.app`` is the ``AppContext`` (so ``__main__.run`` can close its members) and
     ``server.in_flight`` the ``InFlightMiddleware`` (so stdio shutdown can wait for calls).
@@ -244,12 +252,20 @@ def build_server(
             max_stale=settings.catalog_max_stale,
             clock=clock,
         ),
+        matrix=MatrixState(data_dir=settings.data_dir, enabled=matrix_refresh),
         now=now,
     )
 
     @lifespan
     async def app_lifespan(_server: FastMCP):
-        yield app  # the caller closes these; a signal never reaches this teardown in stdio mode
+        if app.matrix.enabled:
+            start_task(app)  # never awaited here: startup does not wait for the refresh
+        try:
+            yield app  # the caller closes these
+        finally:
+            # HTTP teardown. A signal never reaches this in stdio mode, so ``close_resources``
+            # stops the task too (idempotent) before it closes the client.
+            await stop_task(app.matrix)
 
     in_flight = InFlightMiddleware()
     server = FastMCP(

@@ -134,12 +134,19 @@ TOOLS: dict[str, ToolHelp] = {
         "errors": [("confirmation_required", "delete needs confirm true.")],
     },
     "perplexity_models": {
-        "summary": "The live model list with prices, the documented presets, the active routing.",
+        "summary": "The live model list with prices and each model's reasoning.effort levels, "
+        "the documented presets, the active routing. A model's efforts come from the model "
+        "matrix, a file the server keeps current: accepted lists the levels it took, refused "
+        "the levels it answered 400 to, source says probe (tested), baseline (shipped with the "
+        "server) or unprobed (unknown: the lists are empty). Accepted is not effective: a level "
+        "can be taken and change nothing. A model the matrix lacks has no efforts. matrix gives "
+        "its origin (file or baseline), fetched_at and the unprobed count; refresh refreshes "
+        "the list, never the matrix.",
         "billed": False,
         "kind": "free",
         "cost": "Free; it calls the models endpoint, which is not billed.",
         "example": {"provider": "perplexity"},
-        "result": {"always": ["models", "providers", "routing", "presets", "stale"]},
+        "result": {"always": ["models", "providers", "routing", "presets", "stale", "matrix"]},
         "errors": [("authentication", "The API key is wrong.")],
     },
     "perplexity_projects": {

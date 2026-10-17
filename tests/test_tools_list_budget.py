@@ -12,7 +12,9 @@ from mcp_perplexity_pro.storage.migrate import migrate
 # routing-modes-config): 59779 bytes for ten tools. With the help tool (eleven) the live server
 # measured 55512 (agent-help acceptance); the cap stays at the spec's number. Test-server sizes
 # after routing-rules-v1 and routing-decisions-classifier: default 56545, dynamic 56831,
-# dynamic with the Decisions classifier 57065 (measured 2026-10-15).
+# dynamic with the Decisions classifier 57065 (measured 2026-10-15). After model-matrix task 5.1
+# (the ``efforts`` and ``matrix`` output fields of perplexity_models, +1022 bytes each): default
+# 57567, dynamic 57853, dynamic with the Decisions classifier 58087 (measured 2026-10-18).
 BUDGET = 59779
 
 

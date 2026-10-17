@@ -1371,7 +1371,7 @@
       "id": "model-matrix",
       "title": "Model matrix: prices, accepted effort levels and input modalities, refreshed at startup",
       "priority": "P2",
-      "status": "planned",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -1391,9 +1391,103 @@
         }
       ],
       "parent": "model-routing",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "aacf315f5456b59e67c7e45372394fb99c432ccf",
+        "0ca8198ca19f3bf30a0d11ea8ef60882ad868405",
+        "bf2e745325ffe4e58f96b6d1157a68d958541a83",
+        "7b552dbb259b05472d3dc063781c7c828d7cac55",
+        "27aa9e55bf1cab88804e99e24f12535d694dc0bf",
+        "5be0d868ff12e2caac5c41b4d58a0239c2dd3a99",
+        "2ae6788478f9b2f0ec9ad772e5f727b185e8f8bc",
+        "e5d4a6f5b2d06133aeb87e685c389e18855fd023",
+        "2f6bce9bc3c2282655d9054ba2c1546134fe5f8b",
+        "ff75c718f215378872cdb78589c73a9cfc935a41",
+        "05290622bd1d4365949977c6efc60cd29988aae2",
+        "64c9c89c58003fac01b09d28c0c9be5cc4a8c357",
+        "2eaff0e3eadb4f7a1cb3d85ae25eed39579d66ed",
+        "0570787fc7adb2b9b57fad2c331d49bacde46f33"
+      ],
       "createdAt": "2026-10-16T06:24:44.131Z",
-      "touchedAt": "2026-10-16T06:24:44.132Z"
+      "touchedAt": "2026-10-17T12:58:54.076Z",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-17T08:03:37.182Z",
+          "baseSha": "0ef42b923b137547589fb0cc68f3b84ed3657feb",
+          "headSha": "bf2e745325ffe4e58f96b6d1157a68d958541a83",
+          "artifacts": [
+            "openspec/changes/model-matrix/proposal.md",
+            "openspec/changes/model-matrix/design.md",
+            "openspec/changes/model-matrix/tasks.md",
+            "openspec/changes/model-matrix/specs/model-matrix/spec.md",
+            "openspec/changes/model-matrix/specs/model-catalog/spec.md",
+            "openspec/changes/model-matrix/specs/server-runtime/spec.md",
+            "openspec/changes/model-matrix/specs/usage-recording/spec.md"
+          ],
+          "artifactDigests": [
+            {
+              "path": "openspec/changes/model-matrix/proposal.md",
+              "sha256": "872d2836cab1604b31328f075ddbdf40df5db43899806f6fc367c9119a4d40de"
+            },
+            {
+              "path": "openspec/changes/model-matrix/design.md",
+              "sha256": "e35868129dba0cdf140fe4643cc0d03b58f3fa70cb0d9d47390f76ea46ca1a49"
+            },
+            {
+              "path": "openspec/changes/model-matrix/specs/model-matrix/spec.md",
+              "sha256": "4720f54aed4762466fac8d03747e838fc9f1b0e98962d0416a8a72c9e63a382d"
+            },
+            {
+              "path": "openspec/changes/model-matrix/specs/model-catalog/spec.md",
+              "sha256": "ae52513e57d69c18fea7b003aafb007c90831973ec578d5d955063d0e7b6fee7"
+            },
+            {
+              "path": "openspec/changes/model-matrix/specs/server-runtime/spec.md",
+              "sha256": "0afae4db939521ab51cb825fc897fc47ca132d303a37a1f4cb17da67a6dab2fa"
+            },
+            {
+              "path": "openspec/changes/model-matrix/specs/usage-recording/spec.md",
+              "sha256": "7060380c9ee65ed36bee3cf280264f4fbf60f3d96fcd5399591d3ce6e2fae161"
+            }
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 review (4 Critical, 12 Important) and a narrow verification with release cross-spec questions (4 BLOCKS, 11 POLISH); all Critical, Important and BLOCKS folded"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-17T12:56:21.194Z",
+          "baseSha": "47a0e2217e95088bbb8b0b7182d69ab398b5242f",
+          "headSha": "0570787fc7adb2b9b57fad2c331d49bacde46f33",
+          "reviewer": "fresh-context general-purpose subagents: Gate 2 over the code (0 Critical, 1 Important and 6 Minor, all fixed with failing tests first and mutation checks; one signal test added) and a documentation-diff review (2 Important and 4 Minor, fixed; the main server-runtime 'Documented defaults' scenario left as is, since the matrix variables are an ADDED requirement and the scenario already omits other variables); suite 2968 passed"
+        }
+      },
+      "gateRounds": {
+        "gate1": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-17T08:03:37.182Z",
+          "lastPassAt": "2026-10-17T08:03:37.182Z"
+        },
+        "gate2": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-17T12:56:21.194Z",
+          "lastPassAt": "2026-10-17T12:56:21.194Z"
+        }
+      },
+      "release": "release-2-2-0",
+      "startedAt": "2026-10-17T08:03:45.304Z",
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-17T12:58:54.075Z"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-17T12:58:54.046Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-17T12:58:54.075Z"
     },
     {
       "id": "routing-v2",
@@ -1435,7 +1529,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 434,
+  "revision": 456,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
@@ -1870,6 +1964,35 @@
           ],
           "reviewer": "fresh-context general-purpose subagents: cross-spec review of both routing changes (6 BLOCKS, all fixed) and a final verification across both (3 Important, folded in 0f1dd8a)"
         }
+      }
+    },
+    {
+      "id": "release-2-2-0",
+      "intent": "Model matrix: prices, accepted efforts and availability, refreshed by the server",
+      "deferred": [],
+      "target": "2.2.0",
+      "crossSpecReview": {
+        "verdict": "pass",
+        "reviewedAt": "2026-10-17T08:03:38.462Z",
+        "specs": [
+          {
+            "key": "model-matrix/specs/model-catalog/spec.md",
+            "sha256": "ae52513e57d69c18fea7b003aafb007c90831973ec578d5d955063d0e7b6fee7"
+          },
+          {
+            "key": "model-matrix/specs/model-matrix/spec.md",
+            "sha256": "4720f54aed4762466fac8d03747e838fc9f1b0e98962d0416a8a72c9e63a382d"
+          },
+          {
+            "key": "model-matrix/specs/server-runtime/spec.md",
+            "sha256": "0afae4db939521ab51cb825fc897fc47ca132d303a37a1f4cb17da67a6dab2fa"
+          },
+          {
+            "key": "model-matrix/specs/usage-recording/spec.md",
+            "sha256": "7060380c9ee65ed36bee3cf280264f4fbf60f3d96fcd5399591d3ce6e2fae161"
+          }
+        ],
+        "reviewer": "fresh-context general-purpose subagent: cross-spec questions over the four model-matrix deltas against the main specs (4 BLOCKS and 11 POLISH, BLOCKS folded; POLISH on the client spec note, quality-gates wording and the proposal wording handled or declined with reason in design.md)"
       }
     }
   ],

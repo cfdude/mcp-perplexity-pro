@@ -1177,7 +1177,7 @@ async def test_the_eleven_tools_are_listed_and_each_has_an_output_schema(researc
     assert all(t.output_schema for t in tools)
 
 
-# --- 1b. costed_call has exactly its two callers (py-search-api design D6) ---------------------
+# --- 1b. costed_call has exactly its five callers (py-search-api D6, model-matrix D7) ---------
 
 
 def costed_call_callers() -> Counter:
@@ -1194,7 +1194,7 @@ def costed_call_callers() -> Counter:
     return found
 
 
-def test_costed_call_is_called_from_exactly_its_four_callers_and_defined_once():
+def test_costed_call_is_called_from_exactly_its_five_callers_and_defined_once():
     # The same generic sequence for every costed call: a third caller is a third copy of the
     # order unless it is added here on purpose. (``run_search`` and ``run_costed`` are nested
     # callers of ``costed_call``; ``interpret`` closures inside them hold no call.)
@@ -1204,6 +1204,7 @@ def test_costed_call_is_called_from_exactly_its_four_callers_and_defined_once():
             ("search.py", "run_search"): 1,
             ("decisions.py", "run_decide"): 1,
             ("embeddings.py", "run_embed"): 1,
+            ("matrix_refresh.py", "probe_request"): 1,  # the model matrix probe (unscoped)
         }
     )
     definitions = [

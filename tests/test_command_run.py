@@ -267,3 +267,66 @@ def test_an_ask_in_dynamic_mode_with_the_decisions_classifier_records_two_events
         ("perplexity_ask", "decisions", "ok"),
         ("perplexity_ask", "agent", "ok"),
     ]
+
+
+# --- model-matrix task 3.1: a one-shot command starts no refresh task ---------------------------
+
+
+def recording_client(seen, body=None):
+    from matrix_support import models_payload
+
+    def handler(request):
+        seen.append(request.url.path)
+        return httpx2.Response(200, json=body if body is not None else models_payload())
+
+    return httpx2.AsyncClient(transport=httpx2.MockTransport(handler))
+
+
+def test_a_one_shot_command_makes_no_models_request_and_writes_no_matrix(env, capsys):
+    from mcp_perplexity_pro import matrix
+
+    seen: list[str] = []
+    assert main(["usage", "--json"], http=recording_client(seen)) == 0
+    assert seen == []  # nothing upstream: no refresh, and the command itself needs none
+    assert not (env / matrix.FILENAME).exists() and not (env / matrix.LOCK_FILENAME).exists()
+
+
+def test_a_one_shot_models_command_reads_the_stored_matrix_and_writes_nothing(env, capsys):
+    from mcp_perplexity_pro import matrix
+
+    env.mkdir(parents=True)
+    path = env / matrix.FILENAME
+    matrix.write(path, matrix.load_baseline())
+    raw, mtime = path.read_bytes(), path.stat().st_mtime_ns
+    seen: list[str] = []
+    assert main(["models", "--json"], http=recording_client(seen)) == 0
+    assert seen == ["/v1/models"]  # the tool's own request, nothing for a matrix refresh
+    assert path.read_bytes() == raw and path.stat().st_mtime_ns == mtime
+    assert not (env / matrix.LOCK_FILENAME).exists()
+
+
+def test_the_schema_builder_and_help_touch_no_data_directory(env, capsys):
+    assert not env.exists()
+    command.schema_source()
+    assert not env.exists()
+    assert main(["help"], http=recording_client([])) == 0
+    assert not env.exists()
+
+
+def test_a_one_shot_models_command_reports_origin_file_from_the_stored_matrix(env, capsys):
+    from mcp_perplexity_pro import matrix
+
+    env.mkdir(parents=True)
+    path = env / matrix.FILENAME
+    stored = matrix.load_baseline().model_copy(deep=True)
+    stored.fetched_at = "2026-10-18T12:00:00Z"
+    stored.models["openai/gpt-5-nano"].efforts.accepted = ["low"]
+    matrix.write(path, stored)
+    raw, mtime = path.read_bytes(), path.stat().st_mtime_ns
+    assert main(["models", "--json"], http=recording_client([])) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["matrix"]["origin"] == "file"
+    assert doc["matrix"]["fetched_at"] == "2026-10-18T12:00:00Z"
+    nano = next(m for m in doc["models"] if m["id"] == "openai/gpt-5-nano")
+    assert nano["efforts"]["accepted"] == ["low"]
+    assert path.read_bytes() == raw and path.stat().st_mtime_ns == mtime  # read, never written
