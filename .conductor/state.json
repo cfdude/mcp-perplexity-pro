@@ -1371,7 +1371,7 @@
       "id": "model-matrix",
       "title": "Model matrix: prices, accepted effort levels and input modalities, refreshed at startup",
       "priority": "P2",
-      "status": "planned",
+      "status": "queued",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -1393,7 +1393,7 @@
       "parent": "model-routing",
       "attributedCommits": [],
       "createdAt": "2026-10-16T06:24:44.131Z",
-      "touchedAt": "2026-10-16T06:24:44.132Z"
+      "touchedAt": "2026-10-17T07:42:06.417Z"
     },
     {
       "id": "routing-v2",
@@ -1435,7 +1435,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 434,
+  "revision": 435,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",

@@ -1,0 +1,3782 @@
+[
+ {
+  "model": "anthropic/claude-fable-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00291,
+  "reasoning_tokens": 46,
+  "ran": "anthropic/claude-fable-5"
+ },
+ {
+  "model": "anthropic/claude-fable-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00261,
+  "reasoning_tokens": 40,
+  "ran": "anthropic/claude-fable-5"
+ },
+ {
+  "model": "anthropic/claude-fable-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00206,
+  "reasoning_tokens": 29,
+  "ran": "anthropic/claude-fable-5"
+ },
+ {
+  "model": "anthropic/claude-fable-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00336,
+  "reasoning_tokens": 55,
+  "ran": "anthropic/claude-fable-5"
+ },
+ {
+  "model": "anthropic/claude-fable-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00666,
+  "reasoning_tokens": 121,
+  "ran": "anthropic/claude-fable-5"
+ },
+ {
+  "model": "anthropic/claude-fable-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00431,
+  "reasoning_tokens": 74,
+  "ran": "anthropic/claude-fable-5"
+ },
+ {
+  "model": "anthropic/claude-fable-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.01126,
+  "reasoning_tokens": 212,
+  "ran": "anthropic/claude-fable-5"
+ },
+ {
+  "model": "anthropic/claude-fable-5-1",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00063,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-fable-5-1"
+ },
+ {
+  "model": "anthropic/claude-fable-5-1",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00063,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-fable-5-1"
+ },
+ {
+  "model": "anthropic/claude-fable-5-1",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00063,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-fable-5-1"
+ },
+ {
+  "model": "anthropic/claude-fable-5-1",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00063,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-fable-5-1"
+ },
+ {
+  "model": "anthropic/claude-fable-5-1",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00063,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-fable-5-1"
+ },
+ {
+  "model": "anthropic/claude-fable-5-1",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00063,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-fable-5-1"
+ },
+ {
+  "model": "anthropic/claude-fable-5-1",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00188,
+  "reasoning_tokens": 25,
+  "ran": "anthropic/claude-fable-5-1"
+ },
+ {
+  "model": "anthropic/claude-haiku-4-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 5e-05,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-4-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-4-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 34,
+  "ran": "anthropic/claude-haiku-4-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-4-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00032,
+  "reasoning_tokens": 43,
+  "ran": "anthropic/claude-haiku-4-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-4-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00026,
+  "reasoning_tokens": 33,
+  "ran": "anthropic/claude-haiku-4-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-4-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00028,
+  "reasoning_tokens": 35,
+  "ran": "anthropic/claude-haiku-4-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-4-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 35,
+  "ran": "anthropic/claude-haiku-4-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-4-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 35,
+  "ran": "anthropic/claude-haiku-4-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-haiku-5-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 27,
+  "ran": "anthropic/claude-haiku-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-4-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-5"
+ },
+ {
+  "model": "anthropic/claude-opus-4-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00102,
+  "reasoning_tokens": 20,
+  "ran": "anthropic/claude-opus-4-5"
+ },
+ {
+  "model": "anthropic/claude-opus-4-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00102,
+  "reasoning_tokens": 20,
+  "ran": "anthropic/claude-opus-4-5"
+ },
+ {
+  "model": "anthropic/claude-opus-4-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00097,
+  "reasoning_tokens": 20,
+  "ran": "anthropic/claude-opus-4-5"
+ },
+ {
+  "model": "anthropic/claude-opus-4-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00102,
+  "reasoning_tokens": 20,
+  "ran": "anthropic/claude-opus-4-5"
+ },
+ {
+  "model": "anthropic/claude-opus-4-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00102,
+  "reasoning_tokens": 20,
+  "ran": "anthropic/claude-opus-4-5"
+ },
+ {
+  "model": "anthropic/claude-opus-4-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00102,
+  "reasoning_tokens": 20,
+  "ran": "anthropic/claude-opus-4-5"
+ },
+ {
+  "model": "anthropic/claude-opus-4-6",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-6"
+ },
+ {
+  "model": "anthropic/claude-opus-4-6",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-6"
+ },
+ {
+  "model": "anthropic/claude-opus-4-6",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-6"
+ },
+ {
+  "model": "anthropic/claude-opus-4-6",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-6"
+ },
+ {
+  "model": "anthropic/claude-opus-4-6",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-6"
+ },
+ {
+  "model": "anthropic/claude-opus-4-6",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-6"
+ },
+ {
+  "model": "anthropic/claude-opus-4-6",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00027,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-6"
+ },
+ {
+  "model": "anthropic/claude-opus-4-7",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-7"
+ },
+ {
+  "model": "anthropic/claude-opus-4-7",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-7"
+ },
+ {
+  "model": "anthropic/claude-opus-4-7",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-7"
+ },
+ {
+  "model": "anthropic/claude-opus-4-7",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-7"
+ },
+ {
+  "model": "anthropic/claude-opus-4-7",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-7"
+ },
+ {
+  "model": "anthropic/claude-opus-4-7",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-7"
+ },
+ {
+  "model": "anthropic/claude-opus-4-7",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-7"
+ },
+ {
+  "model": "anthropic/claude-opus-4-8",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-8"
+ },
+ {
+  "model": "anthropic/claude-opus-4-8",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-8"
+ },
+ {
+  "model": "anthropic/claude-opus-4-8",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-8"
+ },
+ {
+  "model": "anthropic/claude-opus-4-8",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-8"
+ },
+ {
+  "model": "anthropic/claude-opus-4-8",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-8"
+ },
+ {
+  "model": "anthropic/claude-opus-4-8",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-8"
+ },
+ {
+  "model": "anthropic/claude-opus-4-8",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0003,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-4-8"
+ },
+ {
+  "model": "anthropic/claude-opus-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00071,
+  "reasoning_tokens": 16,
+  "ran": "anthropic/claude-opus-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00071,
+  "reasoning_tokens": 16,
+  "ran": "anthropic/claude-opus-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00076,
+  "reasoning_tokens": 18,
+  "ran": "anthropic/claude-opus-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00101,
+  "reasoning_tokens": 26,
+  "ran": "anthropic/claude-opus-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-opus-5-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00085,
+  "reasoning_tokens": 26,
+  "ran": "anthropic/claude-opus-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-4-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00099,
+  "reasoning_tokens": 46,
+  "ran": "anthropic/claude-sonnet-4-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00103,
+  "reasoning_tokens": 48,
+  "ran": "anthropic/claude-sonnet-4-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.001,
+  "reasoning_tokens": 46,
+  "ran": "anthropic/claude-sonnet-4-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00085,
+  "reasoning_tokens": 37,
+  "ran": "anthropic/claude-sonnet-4-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00085,
+  "reasoning_tokens": 37,
+  "ran": "anthropic/claude-sonnet-4-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.001,
+  "reasoning_tokens": 46,
+  "ran": "anthropic/claude-sonnet-4-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-6",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-4-6"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-6",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-4-6"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-6",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-4-6"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-6",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-4-6"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-6",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-4-6"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-6",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-4-6"
+ },
+ {
+  "model": "anthropic/claude-sonnet-4-6",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-4-6"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "anthropic/claude-sonnet-5-5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 21,
+  "ran": "anthropic/claude-sonnet-5-5"
+ },
+ {
+  "model": "google/gemini-3-flash-preview",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00034,
+  "reasoning_tokens": 105,
+  "ran": "google/gemini-3-flash-preview"
+ },
+ {
+  "model": "google/gemini-3-flash-preview",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-3-flash-preview"
+ },
+ {
+  "model": "google/gemini-3-flash-preview",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00024,
+  "reasoning_tokens": 72,
+  "ran": "google/gemini-3-flash-preview"
+ },
+ {
+  "model": "google/gemini-3-flash-preview",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00022,
+  "reasoning_tokens": 66,
+  "ran": "google/gemini-3-flash-preview"
+ },
+ {
+  "model": "google/gemini-3-flash-preview",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00017,
+  "reasoning_tokens": 50,
+  "ran": "google/gemini-3-flash-preview"
+ },
+ {
+  "model": "google/gemini-3-flash-preview",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 76,
+  "ran": "google/gemini-3-flash-preview"
+ },
+ {
+  "model": "google/gemini-3-flash-preview",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 75,
+  "ran": "google/gemini-3-flash-preview"
+ },
+ {
+  "model": "google/gemini-3.1-flash-lite",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-3.1-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.1-flash-lite",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-3.1-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.1-flash-lite",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00018,
+  "reasoning_tokens": 114,
+  "ran": "google/gemini-3.1-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.1-flash-lite",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 9e-05,
+  "reasoning_tokens": 54,
+  "ran": "google/gemini-3.1-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.1-flash-lite",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00022,
+  "reasoning_tokens": 138,
+  "ran": "google/gemini-3.1-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.1-flash-lite",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00026,
+  "reasoning_tokens": 163,
+  "ran": "google/gemini-3.1-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.1-flash-lite",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0002,
+  "reasoning_tokens": 128,
+  "ran": "google/gemini-3.1-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.1-pro-preview",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0019,
+  "reasoning_tokens": 152,
+  "ran": "google/gemini-3.1-pro-preview"
+ },
+ {
+  "model": "google/gemini-3.1-pro-preview",
+  "effort": "minimal",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "google/gemini-3.1-pro-preview",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00089,
+  "reasoning_tokens": 68,
+  "ran": "google/gemini-3.1-pro-preview"
+ },
+ {
+  "model": "google/gemini-3.1-pro-preview",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00146,
+  "reasoning_tokens": 116,
+  "ran": "google/gemini-3.1-pro-preview"
+ },
+ {
+  "model": "google/gemini-3.1-pro-preview",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00112,
+  "reasoning_tokens": 87,
+  "ran": "google/gemini-3.1-pro-preview"
+ },
+ {
+  "model": "google/gemini-3.1-pro-preview",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0019,
+  "reasoning_tokens": 152,
+  "ran": "google/gemini-3.1-pro-preview"
+ },
+ {
+  "model": "google/gemini-3.1-pro-preview",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0013,
+  "reasoning_tokens": 102,
+  "ran": "google/gemini-3.1-pro-preview"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00107,
+  "reasoning_tokens": 112,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 6e-05,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00085,
+  "reasoning_tokens": 88,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00116,
+  "reasoning_tokens": 122,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00094,
+  "reasoning_tokens": 98,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00152,
+  "reasoning_tokens": 162,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00139,
+  "reasoning_tokens": 148,
+  "ran": "google/gemini-3.5-flash"
+ },
+ {
+  "model": "google/gemini-3.5-flash-lite",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-3.5-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.5-flash-lite",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-3.5-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.5-flash-lite",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-3.5-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.5-flash-lite",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00021,
+  "reasoning_tokens": 78,
+  "ran": "google/gemini-3.5-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.5-flash-lite",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00031,
+  "reasoning_tokens": 120,
+  "ran": "google/gemini-3.5-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.5-flash-lite",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 96,
+  "ran": "google/gemini-3.5-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.5-flash-lite",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00036,
+  "reasoning_tokens": 139,
+  "ran": "google/gemini-3.5-flash-lite"
+ },
+ {
+  "model": "google/gemini-3.6-flash",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00096,
+  "reasoning_tokens": 120,
+  "ran": "google/gemini-3.6-flash"
+ },
+ {
+  "model": "google/gemini-3.6-flash",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 6e-05,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-3.6-flash"
+ },
+ {
+  "model": "google/gemini-3.6-flash",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00068,
+  "reasoning_tokens": 83,
+  "ran": "google/gemini-3.6-flash"
+ },
+ {
+  "model": "google/gemini-3.6-flash",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00094,
+  "reasoning_tokens": 117,
+  "ran": "google/gemini-3.6-flash"
+ },
+ {
+  "model": "google/gemini-3.6-flash",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00102,
+  "reasoning_tokens": 128,
+  "ran": "google/gemini-3.6-flash"
+ },
+ {
+  "model": "google/gemini-3.6-flash",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00071,
+  "reasoning_tokens": 87,
+  "ran": "google/gemini-3.6-flash"
+ },
+ {
+  "model": "google/gemini-3.6-flash",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00082,
+  "reasoning_tokens": 102,
+  "ran": "google/gemini-3.6-flash"
+ },
+ {
+  "model": "google/gemini-3.7-flash",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 60,
+  "ran": "google/gemini-3.7-flash"
+ },
+ {
+  "model": "google/gemini-3.7-flash",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00032,
+  "reasoning_tokens": 79,
+  "ran": "google/gemini-3.7-flash"
+ },
+ {
+  "model": "google/gemini-3.7-flash",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00036,
+  "reasoning_tokens": 89,
+  "ran": "google/gemini-3.7-flash"
+ },
+ {
+  "model": "google/gemini-3.7-flash",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00029,
+  "reasoning_tokens": 70,
+  "ran": "google/gemini-3.7-flash"
+ },
+ {
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00043,
+  "reasoning_tokens": 107,
+  "ran": "google/gemini-3.7-flash"
+ },
+ {
+  "model": "google/gemini-3.7-flash",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00028,
+  "reasoning_tokens": 69,
+  "ran": "google/gemini-3.7-flash"
+ },
+ {
+  "model": "google/gemini-3.7-flash",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00041,
+  "reasoning_tokens": 103,
+  "ran": "google/gemini-3.7-flash"
+ },
+ {
+  "model": "google/gemini-3.8-flash",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00038,
+  "reasoning_tokens": 96,
+  "ran": "google/gemini-3.8-flash"
+ },
+ {
+  "model": "google/gemini-3.8-flash",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00036,
+  "reasoning_tokens": 89,
+  "ran": "google/gemini-3.8-flash"
+ },
+ {
+  "model": "google/gemini-3.8-flash",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 81,
+  "ran": "google/gemini-3.8-flash"
+ },
+ {
+  "model": "google/gemini-3.8-flash",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0004,
+  "reasoning_tokens": 101,
+  "ran": "google/gemini-3.8-flash"
+ },
+ {
+  "model": "google/gemini-3.8-flash",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 81,
+  "ran": "google/gemini-3.8-flash"
+ },
+ {
+  "model": "google/gemini-3.8-flash",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00044,
+  "reasoning_tokens": 112,
+  "ran": "google/gemini-3.8-flash"
+ },
+ {
+  "model": "google/gemini-3.8-flash",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00047,
+  "reasoning_tokens": 119,
+  "ran": "google/gemini-3.8-flash"
+ },
+ {
+  "model": "google/gemini-4-argon",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00018,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-4-argon"
+ },
+ {
+  "model": "google/gemini-4-argon",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00018,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-4-argon"
+ },
+ {
+  "model": "google/gemini-4-argon",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00018,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-4-argon"
+ },
+ {
+  "model": "google/gemini-4-argon",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00018,
+  "reasoning_tokens": 0,
+  "ran": "google/gemini-4-argon"
+ },
+ {
+  "model": "google/gemini-4-argon",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00068,
+  "reasoning_tokens": 50,
+  "ran": "google/gemini-4-argon"
+ },
+ {
+  "model": "google/gemini-4-argon",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00056,
+  "reasoning_tokens": 38,
+  "ran": "google/gemini-4-argon"
+ },
+ {
+  "model": "google/gemini-4-argon",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00109,
+  "reasoning_tokens": 91,
+  "ran": "google/gemini-4-argon"
+ },
+ {
+  "model": "openai/gpt-5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0015,
+  "reasoning_tokens": 128,
+  "ran": "openai/gpt-5"
+ },
+ {
+  "model": "openai/gpt-5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5"
+ },
+ {
+  "model": "openai/gpt-5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00093,
+  "reasoning_tokens": 64,
+  "ran": "openai/gpt-5"
+ },
+ {
+  "model": "openai/gpt-5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00128,
+  "reasoning_tokens": 64,
+  "ran": "openai/gpt-5"
+ },
+ {
+  "model": "openai/gpt-5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00212,
+  "reasoning_tokens": 192,
+  "ran": "openai/gpt-5"
+ },
+ {
+  "model": "openai/gpt-5",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5",
+  "effort": "max",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5-mini",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5-mini"
+ },
+ {
+  "model": "openai/gpt-5-mini",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 5e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5-mini"
+ },
+ {
+  "model": "openai/gpt-5-mini",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5-mini"
+ },
+ {
+  "model": "openai/gpt-5-mini",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00014,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5-mini"
+ },
+ {
+  "model": "openai/gpt-5-mini",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0004,
+  "reasoning_tokens": 128,
+  "ran": "openai/gpt-5-mini"
+ },
+ {
+  "model": "openai/gpt-5-mini",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5-mini",
+  "effort": "max",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 5e-05,
+  "reasoning_tokens": 64,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 4e-05,
+  "reasoning_tokens": 64,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 9e-05,
+  "reasoning_tokens": 192,
+  "ran": "openai/gpt-5-nano"
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5-nano",
+  "effort": "max",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5.1",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00015,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.1"
+ },
+ {
+  "model": "openai/gpt-5.1",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0002,
+  "reasoning_tokens": 9,
+  "ran": "openai/gpt-5.1"
+ },
+ {
+  "model": "openai/gpt-5.1",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0002,
+  "reasoning_tokens": 9,
+  "ran": "openai/gpt-5.1"
+ },
+ {
+  "model": "openai/gpt-5.1",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00018,
+  "reasoning_tokens": 7,
+  "ran": "openai/gpt-5.1"
+ },
+ {
+  "model": "openai/gpt-5.1",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 12,
+  "ran": "openai/gpt-5.1"
+ },
+ {
+  "model": "openai/gpt-5.1",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5.1",
+  "effort": "max",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "openai/gpt-5.2",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.2"
+ },
+ {
+  "model": "openai/gpt-5.2",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.2"
+ },
+ {
+  "model": "openai/gpt-5.2",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.2"
+ },
+ {
+  "model": "openai/gpt-5.2",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.2"
+ },
+ {
+  "model": "openai/gpt-5.2",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.2"
+ },
+ {
+  "model": "openai/gpt-5.2",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00035,
+  "reasoning_tokens": 14,
+  "ran": "openai/gpt-5.2"
+ },
+ {
+  "model": "openai/gpt-5.2",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00058,
+  "reasoning_tokens": 30,
+  "ran": "openai/gpt-5.2"
+ },
+ {
+  "model": "openai/gpt-5.3-codex",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00025,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.3-codex"
+ },
+ {
+  "model": "openai/gpt-5.3-codex",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00064,
+  "reasoning_tokens": 12,
+  "ran": "openai/gpt-5.3-codex"
+ },
+ {
+  "model": "openai/gpt-5.3-codex",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00064,
+  "reasoning_tokens": 12,
+  "ran": "openai/gpt-5.3-codex"
+ },
+ {
+  "model": "openai/gpt-5.3-codex",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00087,
+  "reasoning_tokens": 20,
+  "ran": "openai/gpt-5.3-codex"
+ },
+ {
+  "model": "openai/gpt-5.3-codex",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00103,
+  "reasoning_tokens": 26,
+  "ran": "openai/gpt-5.3-codex"
+ },
+ {
+  "model": "openai/gpt-5.3-codex",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00207,
+  "reasoning_tokens": 63,
+  "ran": "openai/gpt-5.3-codex"
+ },
+ {
+  "model": "openai/gpt-5.3-codex",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00249,
+  "reasoning_tokens": 78,
+  "ran": "openai/gpt-5.3-codex"
+ },
+ {
+  "model": "openai/gpt-5.4",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4"
+ },
+ {
+  "model": "openai/gpt-5.4",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00029,
+  "reasoning_tokens": 7,
+  "ran": "openai/gpt-5.4"
+ },
+ {
+  "model": "openai/gpt-5.4",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00035,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-5.4"
+ },
+ {
+  "model": "openai/gpt-5.4",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00044,
+  "reasoning_tokens": 17,
+  "ran": "openai/gpt-5.4"
+ },
+ {
+  "model": "openai/gpt-5.4",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00047,
+  "reasoning_tokens": 19,
+  "ran": "openai/gpt-5.4"
+ },
+ {
+  "model": "openai/gpt-5.4",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00095,
+  "reasoning_tokens": 51,
+  "ran": "openai/gpt-5.4"
+ },
+ {
+  "model": "openai/gpt-5.4",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00047,
+  "reasoning_tokens": 19,
+  "ran": "openai/gpt-5.4"
+ },
+ {
+  "model": "openai/gpt-5.4-mini",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 4e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4-mini"
+ },
+ {
+  "model": "openai/gpt-5.4-mini",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0001,
+  "reasoning_tokens": 10,
+  "ran": "openai/gpt-5.4-mini"
+ },
+ {
+  "model": "openai/gpt-5.4-mini",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 4e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4-mini"
+ },
+ {
+  "model": "openai/gpt-5.4-mini",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 4e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4-mini"
+ },
+ {
+  "model": "openai/gpt-5.4-mini",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 12,
+  "ran": "openai/gpt-5.4-mini"
+ },
+ {
+  "model": "openai/gpt-5.4-mini",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00014,
+  "reasoning_tokens": 20,
+  "ran": "openai/gpt-5.4-mini"
+ },
+ {
+  "model": "openai/gpt-5.4-mini",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00016,
+  "reasoning_tokens": 23,
+  "ran": "openai/gpt-5.4-mini"
+ },
+ {
+  "model": "openai/gpt-5.4-nano",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4-nano"
+ },
+ {
+  "model": "openai/gpt-5.4-nano",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4-nano"
+ },
+ {
+  "model": "openai/gpt-5.4-nano",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4-nano"
+ },
+ {
+  "model": "openai/gpt-5.4-nano",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4-nano"
+ },
+ {
+  "model": "openai/gpt-5.4-nano",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.4-nano"
+ },
+ {
+  "model": "openai/gpt-5.4-nano",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 4e-05,
+  "reasoning_tokens": 13,
+  "ran": "openai/gpt-5.4-nano"
+ },
+ {
+  "model": "openai/gpt-5.4-nano",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 3e-05,
+  "reasoning_tokens": 10,
+  "ran": "openai/gpt-5.4-nano"
+ },
+ {
+  "model": "openai/gpt-5.5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0007,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-5.5"
+ },
+ {
+  "model": "openai/gpt-5.5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0007,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-5.5"
+ },
+ {
+  "model": "openai/gpt-5.5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0007,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-5.5"
+ },
+ {
+  "model": "openai/gpt-5.5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0007,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-5.5"
+ },
+ {
+  "model": "openai/gpt-5.5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0007,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-5.5"
+ },
+ {
+  "model": "openai/gpt-5.5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00082,
+  "reasoning_tokens": 15,
+  "ran": "openai/gpt-5.5"
+ },
+ {
+  "model": "openai/gpt-5.5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00088,
+  "reasoning_tokens": 17,
+  "ran": "openai/gpt-5.5"
+ },
+ {
+  "model": "openai/gpt-5.6-luna",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-luna"
+ },
+ {
+  "model": "openai/gpt-5.6-luna",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-luna"
+ },
+ {
+  "model": "openai/gpt-5.6-luna",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-luna"
+ },
+ {
+  "model": "openai/gpt-5.6-luna",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-luna"
+ },
+ {
+  "model": "openai/gpt-5.6-luna",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-luna"
+ },
+ {
+  "model": "openai/gpt-5.6-luna",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-luna"
+ },
+ {
+  "model": "openai/gpt-5.6-luna",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-luna"
+ },
+ {
+  "model": "openai/gpt-5.6-sol",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-sol"
+ },
+ {
+  "model": "openai/gpt-5.6-sol",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-sol"
+ },
+ {
+  "model": "openai/gpt-5.6-sol",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-sol"
+ },
+ {
+  "model": "openai/gpt-5.6-sol",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-sol"
+ },
+ {
+  "model": "openai/gpt-5.6-sol",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-sol"
+ },
+ {
+  "model": "openai/gpt-5.6-sol",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-sol"
+ },
+ {
+  "model": "openai/gpt-5.6-sol",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-sol"
+ },
+ {
+  "model": "openai/gpt-5.6-terra",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-terra"
+ },
+ {
+  "model": "openai/gpt-5.6-terra",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-terra"
+ },
+ {
+  "model": "openai/gpt-5.6-terra",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-terra"
+ },
+ {
+  "model": "openai/gpt-5.6-terra",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-terra"
+ },
+ {
+  "model": "openai/gpt-5.6-terra",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-terra"
+ },
+ {
+  "model": "openai/gpt-5.6-terra",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-terra"
+ },
+ {
+  "model": "openai/gpt-5.6-terra",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-5.6-terra"
+ },
+ {
+  "model": "openai/gpt-6-astra",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00057,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-astra"
+ },
+ {
+  "model": "openai/gpt-6-astra",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00057,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-astra"
+ },
+ {
+  "model": "openai/gpt-6-astra",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00057,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-astra"
+ },
+ {
+  "model": "openai/gpt-6-astra",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00057,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-astra"
+ },
+ {
+  "model": "openai/gpt-6-astra",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00057,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-astra"
+ },
+ {
+  "model": "openai/gpt-6-astra",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00137,
+  "reasoning_tokens": 14,
+  "ran": "openai/gpt-6-astra"
+ },
+ {
+  "model": "openai/gpt-6-astra",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00227,
+  "reasoning_tokens": 32,
+  "ran": "openai/gpt-6-astra"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-luna",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-luna"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00024,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00024,
+  "reasoning_tokens": 11,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6-sol",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00053,
+  "reasoning_tokens": 40,
+  "ran": "openai/gpt-6-sol"
+ },
+ {
+  "model": "openai/gpt-6.1-sol",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6.1-sol"
+ },
+ {
+  "model": "openai/gpt-6.1-sol",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6.1-sol"
+ },
+ {
+  "model": "openai/gpt-6.1-sol",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6.1-sol"
+ },
+ {
+  "model": "openai/gpt-6.1-sol",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6.1-sol"
+ },
+ {
+  "model": "openai/gpt-6.1-sol",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 0,
+  "ran": "openai/gpt-6.1-sol"
+ },
+ {
+  "model": "openai/gpt-6.1-sol",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00023,
+  "reasoning_tokens": 10,
+  "ran": "openai/gpt-6.1-sol"
+ },
+ {
+  "model": "openai/gpt-6.1-sol",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00044,
+  "reasoning_tokens": 31,
+  "ran": "openai/gpt-6.1-sol"
+ },
+ {
+  "model": "perplexity/deepseek-v4-pro-0813",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 9e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/deepseek-v4-pro-0813"
+ },
+ {
+  "model": "perplexity/deepseek-v4-pro-0813",
+  "effort": "minimal",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/deepseek-v4-pro-0813",
+  "effort": "low",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/deepseek-v4-pro-0813",
+  "effort": "medium",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/deepseek-v4-pro-0813",
+  "effort": "high",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/deepseek-v4-pro-0813",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/deepseek-v4-pro-0813",
+  "effort": "max",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/glm-5.3",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00045,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/glm-5.3"
+ },
+ {
+  "model": "perplexity/glm-5.3",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 6e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/glm-5.3"
+ },
+ {
+  "model": "perplexity/glm-5.3",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 6e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/glm-5.3"
+ },
+ {
+  "model": "perplexity/glm-5.3",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00012,
+  "reasoning_tokens": 13,
+  "ran": "perplexity/glm-5.3"
+ },
+ {
+  "model": "perplexity/glm-5.3",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 6e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/glm-5.3"
+ },
+ {
+  "model": "perplexity/glm-5.3",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00011,
+  "reasoning_tokens": 11,
+  "ran": "perplexity/glm-5.3"
+ },
+ {
+  "model": "perplexity/glm-5.3",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00019,
+  "reasoning_tokens": 32,
+  "ran": "perplexity/glm-5.3"
+ },
+ {
+  "model": "perplexity/glm-5.3-flash",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/glm-5.3-flash"
+ },
+ {
+  "model": "perplexity/glm-5.3-flash",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/glm-5.3-flash"
+ },
+ {
+  "model": "perplexity/glm-5.3-flash",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/glm-5.3-flash"
+ },
+ {
+  "model": "perplexity/glm-5.3-flash",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/glm-5.3-flash"
+ },
+ {
+  "model": "perplexity/glm-5.3-flash",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 25,
+  "ran": "perplexity/glm-5.3-flash"
+ },
+ {
+  "model": "perplexity/glm-5.3-flash",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 3e-05,
+  "reasoning_tokens": 32,
+  "ran": "perplexity/glm-5.3-flash"
+ },
+ {
+  "model": "perplexity/glm-5.3-flash",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 13,
+  "ran": "perplexity/glm-5.3-flash"
+ },
+ {
+  "model": "perplexity/kimi-k3",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00111,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/kimi-k3"
+ },
+ {
+  "model": "perplexity/kimi-k3",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00098,
+  "reasoning_tokens": 35,
+  "ran": "perplexity/kimi-k3"
+ },
+ {
+  "model": "perplexity/kimi-k3",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00104,
+  "reasoning_tokens": 39,
+  "ran": "perplexity/kimi-k3"
+ },
+ {
+  "model": "perplexity/kimi-k3",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00088,
+  "reasoning_tokens": 25,
+  "ran": "perplexity/kimi-k3"
+ },
+ {
+  "model": "perplexity/kimi-k3",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00088,
+  "reasoning_tokens": 28,
+  "ran": "perplexity/kimi-k3"
+ },
+ {
+  "model": "perplexity/kimi-k3",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/kimi-k3",
+  "effort": "max",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "perplexity/nemotron-3-ultra-550b-a55b",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0001,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3-ultra-550b-a55b"
+ },
+ {
+  "model": "perplexity/nemotron-3-ultra-550b-a55b",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 8e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3-ultra-550b-a55b"
+ },
+ {
+  "model": "perplexity/nemotron-3-ultra-550b-a55b",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 9e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3-ultra-550b-a55b"
+ },
+ {
+  "model": "perplexity/nemotron-3-ultra-550b-a55b",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 5e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3-ultra-550b-a55b"
+ },
+ {
+  "model": "perplexity/nemotron-3-ultra-550b-a55b",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 9e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3-ultra-550b-a55b"
+ },
+ {
+  "model": "perplexity/nemotron-3-ultra-550b-a55b",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 9e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3-ultra-550b-a55b"
+ },
+ {
+  "model": "perplexity/nemotron-3-ultra-550b-a55b",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 6e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3-ultra-550b-a55b"
+ },
+ {
+  "model": "perplexity/nemotron-3.5-super-120b-a12b",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3.5-super-120b-a12b"
+ },
+ {
+  "model": "perplexity/nemotron-3.5-super-120b-a12b",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3.5-super-120b-a12b"
+ },
+ {
+  "model": "perplexity/nemotron-3.5-super-120b-a12b",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3.5-super-120b-a12b"
+ },
+ {
+  "model": "perplexity/nemotron-3.5-super-120b-a12b",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3.5-super-120b-a12b"
+ },
+ {
+  "model": "perplexity/nemotron-3.5-super-120b-a12b",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3.5-super-120b-a12b"
+ },
+ {
+  "model": "perplexity/nemotron-3.5-super-120b-a12b",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3.5-super-120b-a12b"
+ },
+ {
+  "model": "perplexity/nemotron-3.5-super-120b-a12b",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 1e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/nemotron-3.5-super-120b-a12b"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 6e-05,
+  "reasoning_tokens": 13,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "perplexity/sonar",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 2e-05,
+  "reasoning_tokens": 0,
+  "ran": "perplexity/sonar"
+ },
+ {
+  "model": "xai/grok-4.20-multi-agent",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0006,
+  "reasoning_tokens": 185,
+  "ran": "xai/grok-4.20-multi-agent"
+ },
+ {
+  "model": "xai/grok-4.20-multi-agent",
+  "effort": "minimal",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-multi-agent",
+  "effort": "low",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-multi-agent",
+  "effort": "medium",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-multi-agent",
+  "effort": "high",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-multi-agent",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-multi-agent",
+  "effort": "max",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-non-reasoning",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "xai/grok-4.20-non-reasoning"
+ },
+ {
+  "model": "xai/grok-4.20-non-reasoning",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "xai/grok-4.20-non-reasoning"
+ },
+ {
+  "model": "xai/grok-4.20-non-reasoning",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "xai/grok-4.20-non-reasoning"
+ },
+ {
+  "model": "xai/grok-4.20-non-reasoning",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "xai/grok-4.20-non-reasoning"
+ },
+ {
+  "model": "xai/grok-4.20-non-reasoning",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "xai/grok-4.20-non-reasoning"
+ },
+ {
+  "model": "xai/grok-4.20-non-reasoning",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "xai/grok-4.20-non-reasoning"
+ },
+ {
+  "model": "xai/grok-4.20-non-reasoning",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00013,
+  "reasoning_tokens": 0,
+  "ran": "xai/grok-4.20-non-reasoning"
+ },
+ {
+  "model": "xai/grok-4.20-reasoning",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00053,
+  "reasoning_tokens": 159,
+  "ran": "xai/grok-4.20-reasoning"
+ },
+ {
+  "model": "xai/grok-4.20-reasoning",
+  "effort": "minimal",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-reasoning",
+  "effort": "low",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-reasoning",
+  "effort": "medium",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-reasoning",
+  "effort": "high",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-reasoning",
+  "effort": "xhigh",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.20-reasoning",
+  "effort": "max",
+  "http": 400,
+  "status": null,
+  "err": "invalid request",
+  "cost": null,
+  "reasoning_tokens": null,
+  "ran": null
+ },
+ {
+  "model": "xai/grok-4.3",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0005,
+  "reasoning_tokens": 141,
+  "ran": "xai/grok-4.3"
+ },
+ {
+  "model": "xai/grok-4.3",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00046,
+  "reasoning_tokens": 128,
+  "ran": "xai/grok-4.3"
+ },
+ {
+  "model": "xai/grok-4.3",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00042,
+  "reasoning_tokens": 112,
+  "ran": "xai/grok-4.3"
+ },
+ {
+  "model": "xai/grok-4.3",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00058,
+  "reasoning_tokens": 176,
+  "ran": "xai/grok-4.3"
+ },
+ {
+  "model": "xai/grok-4.3",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00053,
+  "reasoning_tokens": 158,
+  "ran": "xai/grok-4.3"
+ },
+ {
+  "model": "xai/grok-4.3",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00064,
+  "reasoning_tokens": 205,
+  "ran": "xai/grok-4.3"
+ },
+ {
+  "model": "xai/grok-4.3",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00052,
+  "reasoning_tokens": 157,
+  "ran": "xai/grok-4.3"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.5",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00033,
+  "reasoning_tokens": 13,
+  "ran": "xai/grok-4.5"
+ },
+ {
+  "model": "xai/grok-4.6",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00089,
+  "reasoning_tokens": 103,
+  "ran": "xai/grok-4.6"
+ },
+ {
+  "model": "xai/grok-4.6",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00064,
+  "reasoning_tokens": 60,
+  "ran": "xai/grok-4.6"
+ },
+ {
+  "model": "xai/grok-4.6",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00067,
+  "reasoning_tokens": 66,
+  "ran": "xai/grok-4.6"
+ },
+ {
+  "model": "xai/grok-4.6",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00077,
+  "reasoning_tokens": 82,
+  "ran": "xai/grok-4.6"
+ },
+ {
+  "model": "xai/grok-4.6",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00137,
+  "reasoning_tokens": 183,
+  "ran": "xai/grok-4.6"
+ },
+ {
+  "model": "xai/grok-4.6",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00076,
+  "reasoning_tokens": 80,
+  "ran": "xai/grok-4.6"
+ },
+ {
+  "model": "xai/grok-4.6",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00086,
+  "reasoning_tokens": 98,
+  "ran": "xai/grok-4.6"
+ },
+ {
+  "model": "xai/grok-4.7",
+  "effort": null,
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00119,
+  "reasoning_tokens": 62,
+  "ran": "xai/grok-4.7"
+ },
+ {
+  "model": "xai/grok-4.7",
+  "effort": "minimal",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.001,
+  "reasoning_tokens": 31,
+  "ran": "xai/grok-4.7"
+ },
+ {
+  "model": "xai/grok-4.7",
+  "effort": "low",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00557,
+  "reasoning_tokens": 792,
+  "ran": "xai/grok-4.7"
+ },
+ {
+  "model": "xai/grok-4.7",
+  "effort": "medium",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00713,
+  "reasoning_tokens": 1047,
+  "ran": "xai/grok-4.7"
+ },
+ {
+  "model": "xai/grok-4.7",
+  "effort": "high",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00804,
+  "reasoning_tokens": 1194,
+  "ran": "xai/grok-4.7"
+ },
+ {
+  "model": "xai/grok-4.7",
+  "effort": "xhigh",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.00624,
+  "reasoning_tokens": 895,
+  "ran": "xai/grok-4.7"
+ },
+ {
+  "model": "xai/grok-4.7",
+  "effort": "max",
+  "http": 200,
+  "status": "completed",
+  "err": "",
+  "cost": 0.0068,
+  "reasoning_tokens": 986,
+  "ran": "xai/grok-4.7"
+ }
+]
