@@ -1435,9 +1435,9 @@
     }
   ],
   "detourStack": [],
-  "revision": 432,
+  "revision": 434,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
-  "pmVersion": "0.51.0",
+  "pmVersion": "0.52.0",
   "platform": "claude-code",
   "releases": [
     {
@@ -1747,7 +1747,7 @@
       "target": "2.1.0",
       "crossSpecReview": {
         "verdict": "pass",
-        "reviewedAt": "2026-10-16T00:57:16.902Z",
+        "reviewedAt": "2026-10-17T07:17:29.112Z",
         "specs": [
           {
             "key": "routing-decisions-classifier/specs/cli/spec.md",
@@ -1767,7 +1767,7 @@
           },
           {
             "key": "routing-decisions-classifier/specs/routing-decisions-classifier/spec.md",
-            "sha256": "34948b2c6eacb77ea878b6182d2ecffa76c427f118f5bfc7164b5c11049335f2"
+            "sha256": "f24bcd8b87ffcf74031a33868b0f7b944b34cb04af6181645cfa9d95889dae7e"
           },
           {
             "key": "routing-decisions-classifier/specs/server-runtime/spec.md",
@@ -1806,7 +1806,70 @@
             "sha256": "e012e3cc29af957744dfb5393f83f8814e765ffbd3273d0ec4ecc226395e0bea"
           }
         ],
-        "reviewer": "fresh-context general-purpose subagents: cross-spec review of both routing changes (6 BLOCKS, all fixed) and a final verification across both (3 Important, folded in 0f1dd8a)"
+        "reviewer": "fresh-context general-purpose subagents: cross-spec review of both routing changes (6 BLOCKS, all fixed), a final verification (3 Important, folded in 0f1dd8a) and, after the single-attempt amendment of the Decisions classifier spec, a narrow re-check on 2026-10-17 (no BLOCKS; two POLISH declined: the client specs do not mention the per-call attempts override, and one stale phrase naming the rules as the only classifier)",
+        "superseded": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-16T00:57:16.902Z",
+          "specs": [
+            {
+              "key": "routing-decisions-classifier/specs/cli/spec.md",
+              "sha256": "64e52dc6dab81c83e64f105fe575823c17bfd2ad5aa16bc27145c97ddabf7d7d"
+            },
+            {
+              "key": "routing-decisions-classifier/specs/help-tool/spec.md",
+              "sha256": "e3c371cf4042d4371945ddc6108b669a024ceb6f0fbab5f2ccaadc66e2e0ea94"
+            },
+            {
+              "key": "routing-decisions-classifier/specs/model-catalog/spec.md",
+              "sha256": "0fcebe13b4c1c4597102d7ea892060bb740ff6640e2c3c2a4468f9b1cabc1f45"
+            },
+            {
+              "key": "routing-decisions-classifier/specs/routing-config/spec.md",
+              "sha256": "a6d97cdf9cde81513d049da1f9817500b4aab2591e4d0a743b32333787af8fc6"
+            },
+            {
+              "key": "routing-decisions-classifier/specs/routing-decisions-classifier/spec.md",
+              "sha256": "34948b2c6eacb77ea878b6182d2ecffa76c427f118f5bfc7164b5c11049335f2"
+            },
+            {
+              "key": "routing-decisions-classifier/specs/server-runtime/spec.md",
+              "sha256": "d2bc125d830ff197eecde6aa95a669db972a60c22f0c313eff6fc541af708145"
+            },
+            {
+              "key": "routing-decisions-classifier/specs/usage-recording/spec.md",
+              "sha256": "381614342ff8beef2ca779ad9d2abcd2202f5d1f261d9e3607bcc833a09795e0"
+            },
+            {
+              "key": "routing-rules-v1/specs/agent-ask/spec.md",
+              "sha256": "84542fcfe0e3df17751dddb803afbc8c05b2d7975c208c52f5cc97bc5cead586"
+            },
+            {
+              "key": "routing-rules-v1/specs/agent-chat/spec.md",
+              "sha256": "907be8f3eead5e51e926e35d9aa1d44f0358acc6b7d1ae8d665ad4272a04ca60"
+            },
+            {
+              "key": "routing-rules-v1/specs/help-tool/spec.md",
+              "sha256": "41363a40720a253a7c5f168a3f9f1235d962744876d6b3295a664ef5bef214cd"
+            },
+            {
+              "key": "routing-rules-v1/specs/model-catalog/spec.md",
+              "sha256": "dcafa382a40aec221b4d246da11f31a854699f5f43b9e437c0ca31f79f1dd676"
+            },
+            {
+              "key": "routing-rules-v1/specs/routing-config/spec.md",
+              "sha256": "d6326bc1ac0f24964bedbf53973dd4e0bbf099d22ba90c8eb2fe981d29ea9077"
+            },
+            {
+              "key": "routing-rules-v1/specs/routing-rules/spec.md",
+              "sha256": "dbae3106308b7f6d33cc53cc256756463ec2ec47926ae7eafc6edb4d03e2b361"
+            },
+            {
+              "key": "routing-rules-v1/specs/server-runtime/spec.md",
+              "sha256": "e012e3cc29af957744dfb5393f83f8814e765ffbd3273d0ec4ecc226395e0bea"
+            }
+          ],
+          "reviewer": "fresh-context general-purpose subagents: cross-spec review of both routing changes (6 BLOCKS, all fixed) and a final verification across both (3 Important, folded in 0f1dd8a)"
+        }
       }
     }
   ],

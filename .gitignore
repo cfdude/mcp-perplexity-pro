@@ -82,3 +82,4 @@ __pycache__/
 .conductor/session-claim.json*
 .conductor/state.json.lock*
 .conductor/state.json.tmp*
+.conductor/spend/
