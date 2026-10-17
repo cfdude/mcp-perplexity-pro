@@ -1,12 +1,13 @@
 """``perplexity_models``: the live model list with prices, plus the documented preset table."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastmcp import Context, FastMCP
 from fastmcp.tools import ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
+from mcp_perplexity_pro import matrix as model_matrix
 from mcp_perplexity_pro.catalog import PRESETS, CatalogModel, Listing, PresetSection
 from mcp_perplexity_pro.decisions import DEFAULT_MODEL as DEFAULT_DECIDER
 from mcp_perplexity_pro.settings import TIER_NAMES, Settings, dynamic_target
@@ -33,9 +34,36 @@ class RoutingSection(BaseModel):
     ] = None
 
 
+class Efforts(BaseModel):
+    accepted: Annotated[
+        list[str], Field(description="reasoning.effort levels the model took (empty if unprobed)")
+    ]
+    refused: Annotated[list[str], Field(description="Levels it refused with a 400")]
+    source: Annotated[
+        Literal["probe", "baseline", "unprobed"],
+        Field(description="How learned; unprobed means unknown"),
+    ]
+
+
+class ListedModel(CatalogModel):
+    efforts: Annotated[
+        Efforts | None,
+        Field(
+            description="Effort levels from the matrix; absent for a model it lacks",
+            exclude_if=lambda value: value is None,
+        ),
+    ] = None
+
+
+class MatrixSection(BaseModel):
+    origin: Annotated[Literal["file", "baseline"], Field(description="Stored file or baseline")]
+    fetched_at: Annotated[str, Field(description="When the matrix last read the live list (UTC)")]
+    unprobed: Annotated[int, Field(description="Available matrix models with efforts unknown")]
+
+
 class ModelsResult(BaseModel):
     models: Annotated[
-        list[CatalogModel], Field(description="Live models (after the provider filter)")
+        list[ListedModel], Field(description="Live models (after the provider filter)")
     ]
     providers: Annotated[
         list[str], Field(description="Every provider in the live list, ignoring the filter")
@@ -50,10 +78,22 @@ class ModelsResult(BaseModel):
     routing: Annotated[
         RoutingSection, Field(description="Active routing; configuration, not live data")
     ]
+    matrix: Annotated[MatrixSection, Field(description="Where the efforts come from")]
 
 
 def _price(value: float | None) -> str:
     return "-" if value is None else f"{value:g}"
+
+
+def _efforts_text(efforts: Efforts | None) -> str:
+    """``-`` when unknown, ``all`` when every level is taken, else the accepted levels and, when
+    any were refused, which."""
+    if efforts is None or efforts.source == "unprobed":
+        return "-"
+    if len(efforts.accepted) == len(model_matrix.LEVELS):
+        return "all"
+    accepted = ",".join(efforts.accepted) or "none"
+    return f"{accepted} (refused {','.join(efforts.refused)})" if efforts.refused else accepted
 
 
 def render(result: ModelsResult, provider: str | None) -> str:
@@ -71,14 +111,20 @@ def render(result: ModelsResult, provider: str | None) -> str:
     if not result.models and provider:
         lines.append(f"No model matches provider {provider!r}; real providers are listed above.")
     if result.models:
-        lines.append("id | provider | input | output | cache_read | cache_write | unit")
+        lines.append("id | provider | input | output | cache_read | cache_write | unit | efforts")
     for m in result.models:
         p = m.pricing
         lines.append(
             f"{m.id} | {m.provider or '-'} | {_price(p.input)} | {_price(p.output)} | "
-            f"{_price(p.cache_read)} | {_price(p.cache_write)} | {p.unit or '-'}"
+            f"{_price(p.cache_read)} | {_price(p.cache_write)} | {p.unit or '-'} | "
+            f"{_efforts_text(m.efforts)}"
         )
     lines.append("")
+    section_matrix = result.matrix
+    lines.append(
+        f"Matrix: {section_matrix.origin}, fetched {section_matrix.fetched_at}, "
+        f"{section_matrix.unprobed} unprobed"
+    )
     configured = ", ".join(
         f"{m.name} = preset {m.preset}"
         if m.preset
@@ -125,14 +171,40 @@ def routing_section(listing: Listing, settings: Settings) -> RoutingSection:
     )
 
 
-def build_result(listing: Listing, provider: str | None, settings: Settings) -> ModelsResult:
+def listed_model(model: CatalogModel, rows: model_matrix.Matrix) -> ListedModel:
+    """A live model with its efforts joined by id; none when the matrix lacks it or holds it
+    ``removed`` (a removed row is history, not a fact about a model the API lists)."""
+    row = rows.models.get(model.id)
+    efforts = None
+    if row is not None and row.status == "available":
+        efforts = Efforts(
+            accepted=list(row.efforts.accepted),
+            refused=[lv for lv in model_matrix.LEVELS if lv in row.efforts.refused],
+            source=row.efforts.source,
+        )
+    return ListedModel(**model.model_dump(), efforts=efforts)
+
+
+def matrix_section(snapshot: model_matrix.Loaded) -> MatrixSection:
+    rows = snapshot.matrix.models.values()
+    return MatrixSection(
+        origin=snapshot.origin,
+        fetched_at=snapshot.matrix.fetched_at,
+        unprobed=sum(1 for r in rows if r.status == "available" and r.efforts.source == "unprobed"),
+    )
+
+
+def build_result(
+    listing: Listing, provider: str | None, settings: Settings, snapshot: model_matrix.Loaded
+) -> ModelsResult:
     return ModelsResult(
-        models=listing.for_provider(provider),
+        models=[listed_model(m, snapshot.matrix) for m in listing.for_provider(provider)],
         providers=listing.providers,
         stale=listing.stale,
         age_seconds=round(listing.age_seconds, 3),
         presets=PRESETS,
         routing=routing_section(listing, settings),
+        matrix=matrix_section(snapshot),
     )
 
 
@@ -152,10 +224,13 @@ def register(server: FastMCP) -> None:
             bool, Field(description="Bypass the cache and fetch the list now")
         ] = False,
     ) -> ToolResult:
-        """List the models available to the configured key with their prices (live data), plus
-        the documented Agent API presets as a separate section."""
-        listing = await ctx.lifespan_context.catalog.get(refresh=refresh)
-        result = build_result(listing, provider, ctx.lifespan_context.settings)
+        """List the models available to the configured key with their prices (live data) and the
+        effort levels each accepts (from the matrix), plus the documented Agent API presets as a
+        separate section."""
+        app = ctx.lifespan_context
+        listing = await app.catalog.get(refresh=refresh)
+        # the stored matrix: ``refresh`` refreshes the catalog list only, never the matrix
+        result = build_result(listing, provider, app.settings, app.matrix.snapshot())
         return ToolResult(
             content=render(result, provider),
             structured_content=result.model_dump(mode="json"),

@@ -20,7 +20,7 @@
 
 ## 5. Telling the agent
 
-- [ ] 5.1 RED then GREEN: `tools/models.py` output models give each model `efforts` and the result a `matrix` object (D8; `catalog.py` untouched), `help_text.py` and the `perplexity_models` help entry describe them (every dollar figure still in the README, every example validating against the schema); tests for both scenarios of the `model-catalog` delta against a matrix holding `openai/gpt-5-nano` with `xhigh` and `max` refused, a `removed` row not listed or counted, the `unprobed` count over available rows, and `tests/test_tools_list_budget.py` on default, dynamic and dynamic-with-Decisions servers (record the byte counts and the size of one full `perplexity_models` result in `acceptance/README.md`)
+- [x] 5.1 RED then GREEN: `tools/models.py` output models give each model `efforts` and the result a `matrix` object (D8; `catalog.py` untouched), `help_text.py` and the `perplexity_models` help entry describe them (every dollar figure still in the README, every example validating against the schema); tests for both scenarios of the `model-catalog` delta against a matrix holding `openai/gpt-5-nano` with `xhigh` and `max` refused, a `removed` row not listed or counted, the `unprobed` count over available rows, and `tests/test_tools_list_budget.py` on default, dynamic and dynamic-with-Decisions servers (record the byte counts and the size of one full `perplexity_models` result in `acceptance/README.md`)
 
 ## 6. Acceptance (live)
 

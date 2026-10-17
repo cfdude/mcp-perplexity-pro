@@ -311,3 +311,22 @@ def test_the_schema_builder_and_help_touch_no_data_directory(env, capsys):
     assert not env.exists()
     assert main(["help"], http=recording_client([])) == 0
     assert not env.exists()
+
+
+def test_a_one_shot_models_command_reports_origin_file_from_the_stored_matrix(env, capsys):
+    from mcp_perplexity_pro import matrix
+
+    env.mkdir(parents=True)
+    path = env / matrix.FILENAME
+    stored = matrix.load_baseline().model_copy(deep=True)
+    stored.fetched_at = "2026-10-18T12:00:00Z"
+    stored.models["openai/gpt-5-nano"].efforts.accepted = ["low"]
+    matrix.write(path, stored)
+    raw, mtime = path.read_bytes(), path.stat().st_mtime_ns
+    assert main(["models", "--json"], http=recording_client([])) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["matrix"]["origin"] == "file"
+    assert doc["matrix"]["fetched_at"] == "2026-10-18T12:00:00Z"
+    nano = next(m for m in doc["models"] if m["id"] == "openai/gpt-5-nano")
+    assert nano["efforts"]["accepted"] == ["low"]
+    assert path.read_bytes() == raw and path.stat().st_mtime_ns == mtime  # read, never written
