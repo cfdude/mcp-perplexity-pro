@@ -22,10 +22,14 @@ it.
   `GET /v1/models`, merges (new models added, prices updated, vanished models marked `removed`)
   and writes the file atomically under a lock, at start and then every
   `PERPLEXITY_MATRIX_REFRESH` seconds (default 86400, 0 = at start only).
-- A bounded probe of NEW models only: six tiny requests per model (one per effort level), at most
-  ten models per refresh, each request recorded as a usage event, switched off with
+- A bounded probe of NEW models only (models neither the file nor the baseline knows): a control
+  request plus one tiny request per effort level, at most ten models and $0.25 per refresh, each
+  request recorded as a usage event, partial answers kept, switched off with
   `PERPLEXITY_MATRIX_PROBE=off`. A fresh install probes nothing because the baseline already knows
   every model it was built with.
+- The task runs only in a serving process (`mcp-perplexity-pro`, `perplexity-pro serve`); one-shot CLI
+  commands, the schema builder and the test servers start none, and shutdown cancels it on both
+  transports.
 - `perplexity_models` reports each model's efforts and the matrix's provenance.
 - No routing change: nothing reads the matrix to choose a model yet (that is `routing-v2`).
 
@@ -43,9 +47,11 @@ it.
 
 - Code: new `src/mcp_perplexity_pro/matrix.py` (pure file, merge and baseline logic) and
   `matrix_refresh.py` (the task and the probe); `src/mcp_perplexity_pro/data/model_matrix_baseline.json`
-  (packaged); `client.py` (a probe request that is one attempt); `settings.py`, `server.py`
-  (the task in the lifespan), `tools/models.py`, `help_text.py`; README, CHANGELOG, CLAUDE.md.
+  (packaged); `client.py` (a probe request that is one attempt with its own timeout); `costed.py` (`unscoped`,
+  a fifth `costed_call` caller); `settings.py`, `server.py` and `__main__.py` (the task, its flag and
+  its shutdown), `tools/models.py`, `help_text.py`; README, CHANGELOG, CLAUDE.md.
 - No migration (a JSON file, not a table), no new dependency, no new tool; the `tools/list` size must
   stay under 59779 bytes (new optional fields in the `perplexity_models` output).
-- Cost: a refresh is free; probing a new model is six requests of about 50 tokens (about $0.004 per
-  model on average, measured $0.197 for all 54).
+- Cost: a refresh is free; probing a new model is seven requests, $0.0036 on average and at most
+  about $0.035 in the 2026-10-17 evidence (measured $0.197 for all 54 models and six levels); a
+  refresh stops at $0.25.
