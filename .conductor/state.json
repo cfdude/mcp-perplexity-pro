@@ -1400,10 +1400,13 @@
         "5be0d868ff12e2caac5c41b4d58a0239c2dd3a99",
         "2ae6788478f9b2f0ec9ad772e5f727b185e8f8bc",
         "e5d4a6f5b2d06133aeb87e685c389e18855fd023",
-        "2f6bce9bc3c2282655d9054ba2c1546134fe5f8b"
+        "2f6bce9bc3c2282655d9054ba2c1546134fe5f8b",
+        "ff75c718f215378872cdb78589c73a9cfc935a41",
+        "05290622bd1d4365949977c6efc60cd29988aae2",
+        "64c9c89c58003fac01b09d28c0c9be5cc4a8c357"
       ],
       "createdAt": "2026-10-16T06:24:44.131Z",
-      "touchedAt": "2026-10-17T09:37:08.344Z",
+      "touchedAt": "2026-10-17T12:35:19.055Z",
       "gateReview": {
         "gate1": {
           "verdict": "pass",
@@ -1500,7 +1503,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 448,
+  "revision": 451,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
