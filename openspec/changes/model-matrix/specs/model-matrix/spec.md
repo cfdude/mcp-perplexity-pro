@@ -61,7 +61,7 @@ In a serving process (`mcp-perplexity-pro` over either transport and `perplexity
 
 #### Scenario: Periodic refresh
 - **WHEN** `PERPLEXITY_MATRIX_REFRESH` elapses (the test patches the interval)
-- **THEN** the list is fetched again, bypassing the catalog cache, and the file is updated if anything changed
+- **THEN** the list is fetched again, bypassing the catalog cache, and the file is rewritten with a new `fetched_at`
 
 #### Scenario: A one-shot command
 - **WHEN** `perplexity-pro usage` or the schema builder runs
