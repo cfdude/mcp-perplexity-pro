@@ -1,0 +1,106 @@
+{
+ "a_first_call_origin": "baseline",
+ "a_ready_seconds": 0.73,
+ "a_first_call_has_efforts": true,
+ "b_file_appeared": true,
+ "b_models": 54,
+ "b_mode": "0o600",
+ "b_unprobed": 0,
+ "b_fetched_at": "2026-10-17T09:32:38Z",
+ "b_origin_after_refresh": "file",
+ "b_model_matrix_events": 0,
+ "a_stop": [
+  0,
+  0.39
+ ],
+ "c_probed": true,
+ "c_row_efforts": {
+  "accepted": [
+   "minimal",
+   "low",
+   "medium",
+   "high",
+   "xhigh",
+   "max"
+  ],
+  "refused": {},
+  "answers": {
+   "control": 200,
+   "minimal": 200,
+   "low": 200,
+   "medium": 200,
+   "high": 200,
+   "xhigh": 200,
+   "max": 200
+  },
+  "probed_at": "2026-10-17T09:32:49Z",
+  "source": "probe"
+ },
+ "c_baseline_efforts": {
+  "accepted": [
+   "minimal",
+   "low",
+   "medium",
+   "high",
+   "xhigh",
+   "max"
+  ],
+  "refused": {},
+  "answers": {
+   "control": 200,
+   "minimal": 200,
+   "low": 200,
+   "medium": 200,
+   "high": 200,
+   "xhigh": 200,
+   "max": 200
+  },
+  "probed_at": "2026-10-17T00:00:00Z",
+  "source": "baseline"
+ },
+ "c_accepted_equal_baseline": true,
+ "c_refused_equal_baseline": true,
+ "c_lease_cleared": true,
+ "c_events": {
+  "calls": 7,
+  "errors": 0,
+  "cost_nano_usd": 0,
+  "cost_usd": "0"
+ },
+ "c_totals": {
+  "calls": 7,
+  "errors": 0,
+  "input_tokens": 224,
+  "output_tokens": 35,
+  "total_tokens": 259,
+  "cost_nano_usd": 0,
+  "cost_usd": "0",
+  "calls_cost_computed": 0,
+  "calls_cost_unknown": 0
+ },
+ "c_projects": [
+  "(none)"
+ ],
+ "c_project_rows": [],
+ "c_stop": [
+  0,
+  0.49
+ ],
+ "d_still_unprobed": true,
+ "d_model_matrix_events": 0,
+ "d_stop": [
+  0,
+  0.43
+ ],
+ "e_serves": {
+  "isError": true,
+  "origin": null
+ },
+ "e_stop": [
+  0,
+  0.39
+ ],
+ "e_warnings": [
+  "2026-10-17 02:34:09,180 WARNING mcp_perplexity_pro.matrix_refresh: model matrix refresh failed: [network_timeout] Could not reach the Perplexity API: the connection failed (ConnectError)."
+ ]
+}

@@ -1,0 +1,3 @@
+practice: none, because the work used disciplines the repo already records (real captured fixtures, mutation checks, one costed-call sequence) and added none; checked `ls docs/lessons` and `rg "costed_call\(" src` on 2026-10-17.
+tooling: none new, because the one friction met (record-gate-review recording no digest for a change directory) is filed as cfdude/pm#252, and this change recorded Gate 1 with one `--artifact` per file as a workaround.
+process: the Gate 1 review caught that an unconditional background task would start in every one-shot command and test world; recorded here, not filed as a lesson because the review gate already catches it and the fix is a flag plus a test.

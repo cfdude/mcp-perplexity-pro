@@ -48,3 +48,24 @@ routing), measured as the JSON-RPC `tools/call` response over HTTP:
 
 Each model gained `efforts` (about 100 bytes: two short lists and the source) and the result gained
 the `matrix` object; the text gained an `efforts` column and one `Matrix:` line.
+
+## Live acceptance (task 6.1), 2026-10-17
+
+Four scratch servers (`mcp-perplexity-pro --transport http` on ephemeral ports, temporary data
+directories, the real key from the environment; the live pm2 app untouched) driven by a harness
+that calls the tools over HTTP. Raw outputs: `live/summary.json` and the four server logs (the
+harness asserts the key appears in none of them).
+
+| Step | Result |
+|---|---|
+| (a) no file, default settings | the server answered `/health` 0.73 s after start; the first `perplexity_models` call returned efforts with `matrix.origin` `baseline` |
+| (b) after the first refresh | `model_matrix.json` exists, mode 0600, 54 models, `fetched_at` set, 0 models unprobed, origin `file`; the usage ledger holds no `model_matrix` event (no probe was needed: the baseline knows all 54) |
+| (c) the live probe through the server path | a file whose `openai/gpt-6-luna` row was cleared to `unprobed`: the refresh probed it, 7 events (control and six levels) with tool `model_matrix`, API `agent`, no errors, cost reported as $0 (a trivial prompt on a $0.10 per million model); the result (`accepted` all six levels, `refused` none, source `probe`, lease cleared) equals the baseline row, a live consistency check of the baseline; `perplexity_usage` groups the events under `(none)` and `perplexity_projects list` shows no project |
+| (d) `PERPLEXITY_MATRIX_PROBE=off` | the same cleared row stayed `unprobed` after the refresh and no event was recorded |
+| (e) the models endpoint unreachable (`PERPLEXITY_BASE_URL` pointing at a closed port) | the server started and stayed healthy, exactly one warning (`model matrix refresh failed: [network_timeout] ... ConnectError`), and SIGTERM exited 0 in 0.39 s; `perplexity_models` itself returns its upstream error (it needs the live list, as before this change), so the baseline matrix is not visible through any tool when the list cannot be fetched; the matrix in memory is the baseline |
+
+- SIGTERM exits took 0.39 to 0.49 s in all four runs.
+- Spend: $0 reported for the seven probe requests, so the ledger total reconciles trivially
+  (0 nano-USD); the earlier evidence run priced 54 models at $0.197.
+- Not exercised live: a new model the baseline lacks (none exists today); the unit tests cover it
+  with a mocked list.
