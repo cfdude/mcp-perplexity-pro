@@ -1403,10 +1403,12 @@
         "2f6bce9bc3c2282655d9054ba2c1546134fe5f8b",
         "ff75c718f215378872cdb78589c73a9cfc935a41",
         "05290622bd1d4365949977c6efc60cd29988aae2",
-        "64c9c89c58003fac01b09d28c0c9be5cc4a8c357"
+        "64c9c89c58003fac01b09d28c0c9be5cc4a8c357",
+        "2eaff0e3eadb4f7a1cb3d85ae25eed39579d66ed",
+        "0570787fc7adb2b9b57fad2c331d49bacde46f33"
       ],
       "createdAt": "2026-10-16T06:24:44.131Z",
-      "touchedAt": "2026-10-17T12:35:19.055Z",
+      "touchedAt": "2026-10-17T12:56:21.196Z",
       "gateReview": {
         "gate1": {
           "verdict": "pass",
@@ -1449,6 +1451,13 @@
             }
           ],
           "reviewer": "fresh-context general-purpose subagents: Gate 1 review (4 Critical, 12 Important) and a narrow verification with release cross-spec questions (4 BLOCKS, 11 POLISH); all Critical, Important and BLOCKS folded"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-17T12:56:21.194Z",
+          "baseSha": "47a0e2217e95088bbb8b0b7182d69ab398b5242f",
+          "headSha": "0570787fc7adb2b9b57fad2c331d49bacde46f33",
+          "reviewer": "fresh-context general-purpose subagents: Gate 2 over the code (0 Critical, 1 Important and 6 Minor, all fixed with failing tests first and mutation checks; one signal test added) and a documentation-diff review (2 Important and 4 Minor, fixed; the main server-runtime 'Documented defaults' scenario left as is, since the matrix variables are an ADDED requirement and the scenario already omits other variables); suite 2968 passed"
         }
       },
       "gateRounds": {
@@ -1458,6 +1467,13 @@
           "failStreak": 0,
           "lastVerdictAt": "2026-10-17T08:03:37.182Z",
           "lastPassAt": "2026-10-17T08:03:37.182Z"
+        },
+        "gate2": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-17T12:56:21.194Z",
+          "lastPassAt": "2026-10-17T12:56:21.194Z"
         }
       },
       "release": "release-2-2-0",
@@ -1503,7 +1519,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 451,
+  "revision": 454,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
