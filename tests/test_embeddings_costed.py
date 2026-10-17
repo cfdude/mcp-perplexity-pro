@@ -72,7 +72,7 @@ async def raw(app, project="alpha", model=M4, responder=None):
 async def test_the_recorded_4b_response_is_one_reported_event_with_tokens(world):
     app = await world(serve(RECORDED))
     costed = await raw(app)
-    assert costed.status == "ok"
+    assert costed.status == "ok" and costed.project == "alpha"  # model-matrix D7: still a name
     ((tool, api, status, model, rid, project, tin, ttot, nano, source),) = await events(app)
     assert (tool, api, status, model, rid, project) == (
         "perplexity_embed", "embeddings", "ok", M4, None, "alpha",

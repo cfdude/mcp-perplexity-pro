@@ -8,7 +8,7 @@
 
 ## 2. Recording without a project
 
-- [ ] 2.1 RED then GREEN: `costed.costed_call(..., unscoped=True)` per D7 (no name validation, no project resolution, `record_usage(project=None)`, `Costed.project` optional) with the existing callers unchanged; tests: an unscoped call creates no project row, its event has no project and groups under none in `perplexity_usage`, the five other callers' tests stay green; update `tests/test_contract_checks.py` for the fifth caller only together with the probe in group 4 (this task adds the keyword and its tests, the Counter test changes in 4.1); mutation-check: drop `unscoped` and watch the no-project test go red
+- [x] 2.1 RED then GREEN: `costed.costed_call(..., unscoped=True)` per D7 (no name validation, no project resolution, `record_usage(project=None)`, `Costed.project` optional) with the existing callers unchanged; tests: an unscoped call creates no project row, its event has no project and groups under none in `perplexity_usage`, the five other callers' tests stay green; update `tests/test_contract_checks.py` for the fifth caller only together with the probe in group 4 (this task adds the keyword and its tests, the Counter test changes in 4.1); mutation-check: drop `unscoped` and watch the no-project test go red
 
 ## 3. The refresh task
 
