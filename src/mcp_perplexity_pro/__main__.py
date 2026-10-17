@@ -95,7 +95,10 @@ def bootstrap(
         raise SystemExit(1) from None
 
     # 3. Upstream client; the listener opens later, inside run().
-    return build_server(settings, http or httpx2.AsyncClient(), engine), settings
+    server = build_server(
+        settings, http or httpx2.AsyncClient(), engine, matrix_refresh=serving
+    )  # the matrix refresh task runs only in a process that serves
+    return server, settings
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -140,13 +143,20 @@ def build_http_server(
 
 async def close_resources(server: FastMCP) -> None:
     """Close the caller-owned HTTP client and database engine, logging each closure."""
+    from mcp_perplexity_pro.matrix_refresh import stop_task  # fastmcp loads after bootstrap's env
+
     app = server.app  # type: ignore[attr-defined]
     try:
-        await app.http.aclose()
-        logger.info("http client closed")
+        # the model matrix refresh task first: it uses the HTTP client and the engine. Every
+        # shutdown path (HTTP, stdio signal, stdin EOF) comes through here; a CLI has no task.
+        await stop_task(app.matrix)
     finally:
-        await app.engine.dispose()
-        logger.info("engine disposed")
+        try:
+            await app.http.aclose()
+            logger.info("http client closed")
+        finally:
+            await app.engine.dispose()
+            logger.info("engine disposed")
 
 
 def run(
