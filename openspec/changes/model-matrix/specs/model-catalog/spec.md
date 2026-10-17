@@ -11,4 +11,4 @@
 
 #### Scenario: A model the matrix lacks
 - **WHEN** the live list holds an id the matrix does not yet hold
-- **THEN** it is listed with no efforts and counted as unprobed
+- **THEN** it is listed with no efforts, and the `unprobed` count (which counts `available` matrix rows, not listed ids) is unchanged

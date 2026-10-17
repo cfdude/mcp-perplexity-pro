@@ -54,45 +54,64 @@ only the serving path sets it: `bootstrap(serving=True)` passes it, `bootstrap(s
 them touches the network or the file (a test proves the CLI starts no task). The task is created in
 the lifespan after the context is exposed, held on a small mutable `MatrixState` in `AppContext`
 (`state.matrix` for the snapshot tools read, `state.task` for the task; replaced by assignment, no
-module-level state). Because stdio's teardown does not run the lifespan on a signal, `close_resources`
-and `_drain_and_close` cancel and await `state.task` BEFORE `http.aclose()` on both transports and on
-EOF; the lifespan does the same on the HTTP path, idempotently. The task catches every `Exception`
+module-level state). The matrix is loaded lazily, on the first read by `perplexity_models` or the
+task (`state.snapshot()`), never at `build_server`, so `schema_source()` and `help` touch no data
+directory and a one-shot `perplexity-pro models` reads the file (origin `file`) without writing. Because stdio's teardown does not run the lifespan on a signal, `close_resources`
+cancels and awaits `state.task` BEFORE `http.aclose()` (it is reached from the HTTP `finally`, the
+stdio signal path via `_drain_and_close`, and the EOF `finally`, so one cancel covers every path; it
+tolerates no task, as in the CLI); the lifespan does the same on the HTTP path, idempotently. The
+loop takes an injectable `sleep`, so a test drives the interval without waiting. Test servers that
+run the real serving path (`tests/fixture_server.py` calls `bootstrap()` with `serving=True`) will
+start the task against their loopback upstream and log its one warning; the shutdown-order tests
+must still hold. The task catches every `Exception`
 except `CancelledError`, logs one redacted warning and sleeps to the next interval; interval 0 runs
 once. Start logs one INFO line (settings, matrix origin).
 
 **D5. Fetch, merge, write.** Each refresh calls `Catalog.get(refresh=True)` and treats a stale
 listing (`Listing.stale`, the catalog's stale-on-failure return) as a failed fetch, so a 5xx never
 merges old data and the warning fires. The write sequence is: take `model_matrix.lock` (a new
-`fcntl.flock` helper in the pattern of `migrate.lock`, a polling wait of at most 5 s that checks for
-cancellation, run in one `asyncio.to_thread` call), re-read the file, merge the live list into THAT
-(the baseline supplies efforts for ids it knows), write, release. The lock is never held across a
+`fcntl.flock` helper in the pattern of `migrate.lock`: the lock is polled with `LOCK_NB` and
+`asyncio.sleep` for at most 5 s, in the event loop and without a thread, so a cancelled wait never
+takes or holds the lock), then ONE `asyncio.to_thread` call that re-reads the file, merges the live
+list into THAT (the baseline supplies efforts for ids it knows), writes and releases in its
+`finally`. The lock is never held across a
 network request. Merge guards: an empty list, or a list with fewer than half of the stored
 `available` ids, changes nothing and warns (a truncated reply must not mark the matrix removed).
 
-**D6. The probe.** Model selection and leases: under the lock, pick up to ten `available` models
-with efforts `unprobed` and no unexpired `probing_until`, write `probing_until` (now + 10 min) for
-them, release; probe OUTSIDE the lock; write results (and clear the lease) under the lock with a
-re-read. For a model: one control request with no effort, then one per level, sequential, through
-`PerplexityClient.probe_effort(model, level)`: `POST /v1/agent` with `{"model", "input": "Reply with
-the single word OK.", "store": false, "max_output_tokens": 300, "reasoning": {"effort": level}}`
-(none for the control), `attempts=1` (the knob added for the Decisions classifier) and a 30 s
-timeout. Each request goes through `costed_call` (D7), which records a 400, 429, 5xx or timeout as
-an event with its category and re-raises; the probe catches outside it. Interpretation: a completed
+**D6. The probe.** Selecting: under the lock, take up to ten `available` models with efforts
+`unprobed` whose `probing_until` is null or past. Per model, in order: under the lock write
+`probing_until` (now + 10 min) for that model alone, release, probe OUTSIDE the lock, then under the
+lock write the answers and clear the lease in a `finally`, so a cancel, a cap or a 429 leaves no
+lease behind. The control request (no effort) and then one request per level go sequentially
+through `PerplexityClient.probe_effort(model, level)`: `POST /v1/agent` with `{"model", "input":
+"Reply with the single word OK.", "store": false, "max_output_tokens": 300, "reasoning": {"effort":
+level}}` (none for the control), `attempts=1` (the knob added for the Decisions classifier) and a 30 s
+timeout, each through `costed_call` (D7), which records a response or an error (400, 429, 5xx,
+timeout) with its category and re-raises; the probe catches outside it. Interpretation: a completed
 200 (`agent_response_status` `ok`) is accepted; a `PerplexityError` with `status` 400 is refused, but
 only when the control completed; 429 ends the round; a 5xx, a timeout, or a 200 whose run is not
-`completed` leaves that level unanswered. Answered levels are written as partial results, so only
-the missing ones are sent next time; the model becomes `source: probe` with `probed_at` when the
-control and all six levels have answers. All six refused with a completed control is recorded as
-refusing every level (three models do). Bounds: ten models and $0.25 of reported cost per refresh,
-and a floor of 300 s for any non-zero refresh interval. Worst case from the evidence: the dearest
-model cost $0.035 for six levels, so ten such would stop at the $0.25 cap. Alternative: ask
-Perplexity (an LLM) which levels each model takes; rejected: the docs have no such table and are
-wrong about Kimi K3.
+`completed` leaves that level unanswered (a body that is still `queued` or `in_progress` has no
+terminal state to record and counts as unanswered; a synchronous run should not return one).
+Answers go to `efforts.answers` after each model, even for a model cut short, and the write is
+wrapped in `asyncio.shield` and bounded by the 5 s lock wait, so a SIGTERM or stdin EOF cannot lose
+paid answers (the file write is not a database unit of work, so `agent.shielded_write` does not
+apply). Only when the control and all six levels have answers does the model become `source:
+probe` with `probed_at` and `accepted` and `refused` filled; all six refused with a completed control
+is recorded as refusing every level (three models do). Bounds: ten models, and the reported cost so
+far is checked before each model against $0.25 (so the overshoot is at most one model); a floor of
+300 s for any non-zero refresh interval. On the 2026-10-17 evidence the dearest model cost $0.036 for
+seven requests and the ten dearest total $0.123, so the cap is a safety net that today's list cannot
+reach (its test uses priced fixtures). The probe is a deliberate exception to the client spec's
+retry-after-429 rule, as the Decisions classifier is: a retry sleep would stall a background round.
+Alternative: ask Perplexity (an LLM) which levels each model takes; rejected: the docs have no
+such table and are wrong about Kimi K3.
 
 **D7. Recording without a project.** `costed.costed_call` always names a project today (`None`
-becomes `default` and the project row is created). It gains a keyword `unscoped` (default false):
+becomes `default` and the project row is created). It gains a keyword `unscoped` (default false, which implies no project resolution whatever
+`resolve_project` says):
 no name validation, no project resolution, `record_usage(project=None)` (already supported and
-stored as a null project name and id), and `Costed.project` becomes `str | None`. The usage tool is
+stored as a null project name and id), and `Costed.project` becomes `str | None` (the existing callers always pass a name, and a test
+asserts their results still carry it). The usage tool is
 `model_matrix`; `perplexity_usage` reports these events under no project (README and help say so).
 The caller list grows to five (`matrix_refresh.py`), so `tests/test_contract_checks.py` (an exact
 Counter of four callers, and a ban on `costed_call` in `tools/*.py`) is updated in the same
@@ -113,7 +132,10 @@ acceptance.
   "openai/gpt-5-nano": {"provider": "openai", "status": "available",
     "pricing": {"input": 0.05, "output": 0.4, "cache_read": 0.005, "cache_write": null},
     "first_seen": "2026-10-17T20:11:03Z", "last_seen": "2026-10-17T20:11:03Z",
+    "probing_until": null,
     "efforts": {"accepted": ["minimal", "low", "medium", "high"], "refused": {"xhigh": 400, "max": 400},
+                "answers": {"control": 200, "minimal": 200, "low": 200, "medium": 200, "high": 200,
+                            "xhigh": 400, "max": 400},
                 "probed_at": "2026-10-17T19:40:00Z", "source": "probe"}}}}
 ```
 

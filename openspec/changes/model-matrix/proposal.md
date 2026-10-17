@@ -30,7 +30,7 @@ it.
 - The task runs only in a serving process (`mcp-perplexity-pro`, `perplexity-pro serve`); one-shot CLI
   commands, the schema builder and the test servers start none, and shutdown cancels it on both
   transports.
-- `perplexity_models` reports each model's efforts and the matrix's provenance.
+- `perplexity_models` reports each model's efforts and the matrix's origin.
 - No routing change: nothing reads the matrix to choose a model yet (that is `routing-v2`).
 
 ## Capabilities
@@ -39,7 +39,7 @@ it.
 - `model-matrix`: the file, its baseline, its refresh and merge rules, the probe, and their bounds.
 
 ### Modified Capabilities
-- `model-catalog`: `perplexity_models` reports efforts and the matrix source.
+- `model-catalog`: `perplexity_models` reports efforts and the matrix origin.
 - `server-runtime`: the two settings, the background task and its shutdown.
 - `usage-recording`: probe requests are recorded under the tool name `model_matrix` with no project.
 
@@ -53,5 +53,5 @@ it.
 - No migration (a JSON file, not a table), no new dependency, no new tool; the `tools/list` size must
   stay under 59779 bytes (new optional fields in the `perplexity_models` output).
 - Cost: a refresh is free; probing a new model is seven requests, $0.0036 on average and at most
-  about $0.035 in the 2026-10-17 evidence (measured $0.197 for all 54 models and six levels); a
+  about $0.036 in the 2026-10-17 evidence (measured $0.197 for all 54 models and six levels); a
   refresh stops at $0.25.

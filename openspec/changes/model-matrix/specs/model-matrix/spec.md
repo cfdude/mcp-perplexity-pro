@@ -12,12 +12,19 @@ The server SHALL keep `model_matrix.json` in `PERPLEXITY_DATA_DIR`, created with
 - **WHEN** the file is read
 - **THEN** it has `version` 1, a UTC `fetched_at` and a `models` mapping keyed by model id
 
-### Requirement: Each model entry holds prices, availability and efforts
-An entry SHALL hold the model's provider, its pricing (input, output, cache read and cache write per million tokens, or null), `status` (`available` or `removed`), `first_seen`, `last_seen` and its `efforts`: `accepted` and `refused` (a level mapped to its HTTP status), `probed_at` and `source` (`probe`, `baseline` or `unprobed`). A level is one effort value; `efforts` is the per-model facts.
-
 #### Scenario: A refreshed file
 - **WHEN** the server has refreshed against the live list
 - **THEN** the file parses, has `version` 1 and an entry for every listed model with its price, and its mode is 0600
+
+### Requirement: Each model entry holds prices and availability
+An entry SHALL hold the model's provider, its pricing (input, output, cache read and cache write per million tokens, or null), `status` (`available` or `removed`), `first_seen`, `last_seen`, `probing_until` (a UTC time or null) and its `efforts`.
+
+#### Scenario: An entry
+- **WHEN** a listed model is merged
+- **THEN** its entry holds the provider, the four prices or null, `status` `available`, `first_seen`, `last_seen` and `probing_until` null
+
+### Requirement: Efforts have one shape
+A model's `efforts` SHALL hold `accepted` (a list of levels), `refused` (a level mapped to its HTTP status), `answers` (the control and each answered level mapped to its HTTP status, kept while a probe is incomplete), `probed_at` and `source` (`probe`, `baseline` or `unprobed`). A level is one effort value; `efforts` is the per-model facts.
 
 #### Scenario: Efforts shape
 - **WHEN** a model's efforts were probed and it refused two levels
@@ -37,6 +44,17 @@ A baseline matrix SHALL ship inside the package with every model known when it w
 #### Scenario: A file from a newer version
 - **WHEN** the file has `version` 2
 - **THEN** the baseline is used in memory and the file is not modified
+
+### Requirement: Reading the matrix is lazy and never writes
+The in-memory matrix SHALL be loaded from the file (else the baseline) on first use, by `perplexity_models` or the refresh task, and never at server construction; only the refresh task writes the file, so a one-shot command that reads the matrix writes nothing and `perplexity-pro help` and the schema builder touch no data directory.
+
+#### Scenario: A one-shot read
+- **WHEN** `perplexity-pro models` runs against a data directory holding a matrix file
+- **THEN** its efforts come from that file, with origin `file`, and the file is not modified
+
+#### Scenario: Help touches nothing
+- **WHEN** `perplexity-pro help` runs
+- **THEN** no data directory is created or read
 
 ### Requirement: A refresh task runs in a serving process
 In a serving process (`mcp-perplexity-pro` over either transport and `perplexity-pro serve`) a background task started with the server SHALL fetch the live model list afresh (not from the catalog cache) at start and then every `PERPLEXITY_MATRIX_REFRESH` seconds (0 meaning only at start), merge it into the matrix and write the file. A one-shot command, the schema builder and the test servers SHALL start no task.
@@ -91,7 +109,7 @@ The file SHALL be written to a temporary file and replaced in one step, under an
 - **THEN** the final file holds both, and the second never wrote from a stale read
 
 ### Requirement: The lock is short and cancellable
-The lock wait SHALL be bounded at 5 seconds and end when the task is cancelled, the lock SHALL never be held across a network request, a lock that cannot be taken SHALL skip that write with one warning, and temporary files left by a killed writer SHALL be removed by the next writer.
+The lock wait SHALL be bounded at 5 seconds and end at once when the task is cancelled (the lock is polled without a thread, so a cancelled wait never takes or holds the lock), the lock SHALL never be held across a network request, a lock that cannot be taken SHALL skip that write with one warning, and temporary files left by a killed writer SHALL be removed by the next writer.
 
 #### Scenario: A lock that cannot be taken
 - **WHEN** another process holds the lock for longer than 5 seconds
@@ -106,7 +124,7 @@ The lock wait SHALL be bounded at 5 seconds and end when the task is cancelled, 
 - **THEN** the file on disk is either the old complete file or the new complete file
 
 ### Requirement: New models are probed for accepted efforts
-For each `available` model whose efforts are `unprobed`, at most ten per refresh and only when `PERPLEXITY_MATRIX_PROBE` is `new`, the task SHALL send one control request with no effort and one request per level (`minimal`, `low`, `medium`, `high`, `xhigh`, `max`), each with a fixed tiny prompt, no tools and a 30-second limit. A completed 200 means accepted; a 400 means refused, recorded with its status, but only when the control request completed.
+For each `available` model whose efforts are `unprobed`, at most ten per refresh and only when `PERPLEXITY_MATRIX_PROBE` is `new`, the task SHALL send one control request with no effort and one request per level (`minimal`, `low`, `medium`, `high`, `xhigh`, `max`), each with a fixed tiny prompt, no tools and a 30-second limit. A completed 200 means accepted; a 400 means refused, recorded with its status, but only when the control request completed. 
 
 #### Scenario: A model that refuses xhigh
 - **WHEN** a new model completes the control and the first four levels and answers 400 to `xhigh` and `max`
@@ -124,8 +142,15 @@ For each `available` model whose efforts are `unprobed`, at most ten per refresh
 - **WHEN** `PERPLEXITY_MATRIX_PROBE` is `off`
 - **THEN** no probe request is made and new models stay `unprobed`
 
+### Requirement: Paid answers are written per model and survive a cancel
+Answers SHALL be written to the file after each model's requests, including a model cut short by a cancel, a cap or a 429, shielded from cancellation and bounded by the lock wait, so answers already paid for survive a shutdown.
+
+#### Scenario: Paid answers survive a shutdown
+- **WHEN** the task is cancelled after three levels of a model were answered
+- **THEN** the file holds those three answers in `answers` and the next refresh sends only the other levels
+
 ### Requirement: A probe result needs every level answered
-A model's efforts SHALL be marked source `probe` with `probed_at` only when the control and all six levels were answered as above. Answers already received SHALL be kept in the file as partial results, and only unanswered levels are sent again at the next refresh. A 429 SHALL end that refresh's probing; a 5xx, a timeout or a run that did not complete leaves that level unanswered.
+A model's efforts SHALL be marked source `probe` with `probed_at`, and `accepted` and `refused` filled, only when the control and all six levels were answered as above. Answers already received SHALL be kept in `answers`, and only unanswered levels are sent again at the next refresh. A 429 SHALL end that refresh's probing; a 5xx, a timeout or a run that did not complete leaves that level unanswered.
 
 #### Scenario: A rate-limited level
 - **WHEN** one level answers 429
@@ -136,7 +161,7 @@ A model's efforts SHALL be marked source `probe` with `probed_at` only when the 
 - **THEN** that level is unanswered, neither accepted nor refused
 
 ### Requirement: A probe is bounded, recorded and not duplicated
-Each probe request SHALL be one attempt with no retry and SHALL be recorded as a usage event. A refresh SHALL stop probing after ten models or after $0.25 of reported cost, whichever comes first. Before probing, a task SHALL write a 10-minute lease on the models it will probe, under the lock, and SHALL skip any model whose lease is unexpired or already probed; the interval floor is 300 seconds for any non-zero `PERPLEXITY_MATRIX_REFRESH`.
+Each probe request SHALL be one attempt with no retry, and every one that returns a response or fails with an error SHALL be recorded as a usage event. A refresh SHALL stop probing after ten models or when the reported cost so far reaches $0.25, checked before each model. Before probing a model, a task SHALL write a 10-minute `probing_until` lease on it under the lock and clear it afterwards, and SHALL skip any model whose lease is unexpired or already probed.
 
 #### Scenario: Ten at most
 - **WHEN** a refresh finds 14 unprobed models
@@ -144,7 +169,11 @@ Each probe request SHALL be one attempt with no retry and SHALL be recorded as a
 
 #### Scenario: The spend cap
 - **WHEN** the reported cost of one refresh's probes reaches $0.25
-- **THEN** probing stops and the remaining models wait
+- **THEN** no further model is started and the remaining models wait
+
+#### Scenario: A lease is cleared
+- **WHEN** a model's probe ends, completes or is cut short
+- **THEN** its `probing_until` is null
 
 #### Scenario: Leased by another server
 - **WHEN** another server holds an unexpired lease on a model
@@ -155,11 +184,11 @@ Each probe request SHALL be one attempt with no retry and SHALL be recorded as a
 - **THEN** this server re-reads under the lock and does not probe it
 
 ### Requirement: Shutdown stops the task
-On shutdown, in both transports and on stdin EOF, the refresh task SHALL be cancelled and awaited before the HTTP client is closed and within the server's 10-second shutdown bound, without corrupting the file.
+On shutdown, in both transports and on stdin EOF, the refresh task SHALL be cancelled and awaited before the HTTP client is closed, adding no wait of its own, and without corrupting the file.
 
 #### Scenario: Shutdown during a probe over HTTP
 - **WHEN** the server receives SIGTERM during a probe
-- **THEN** the task is cancelled before the client closes, the process exits within 10 seconds and the matrix file is intact
+- **THEN** the task is cancelled before the client closes, the process still exits within its bound and the matrix file is intact
 
 #### Scenario: Shutdown over stdio
 - **WHEN** a stdio server's input closes during a probe
