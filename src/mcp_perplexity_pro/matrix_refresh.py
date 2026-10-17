@@ -14,6 +14,7 @@ cancel becomes one redacted warning and the matrix stays as it was. Every write 
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -35,6 +36,7 @@ TOOL = "model_matrix"  # the usage events of a probe request: no MCP tool is beh
 PROBE_MODELS_PER_REFRESH = 10
 PROBE_SPEND_CAP_NANO = 250_000_000  # $0.25, checked before each model (D6)
 LEASE = timedelta(minutes=10)
+FINISH_RETRY_WAIT = 1.0  # seconds before the one retry of a finish write that hit a busy lock
 CONTROL = "control"
 ANSWER_KEYS = (CONTROL, *matrix.LEVELS)
 
@@ -52,6 +54,12 @@ class MatrixState:
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep
     now: Callable[[], datetime] = matrix.utcnow
     task: asyncio.Task[None] | None = None
+    # Per process, never written to the file. ``pending_answers`` holds the paid-for answers of a
+    # model whose finish write failed (merged into its next lease and write); ``failed_models``
+    # holds the models whose last round ended without a completed control or with an unanswered
+    # level, so ``_select`` puts them behind the models that have not failed.
+    pending_answers: dict[str, dict[str, int]] = field(default_factory=dict)
+    failed_models: set[str] = field(default_factory=set)
     _loaded: matrix.Loaded | None = field(default=None, repr=False)
     _baseline: matrix.Matrix | None = field(default=None, repr=False)
 
@@ -181,28 +189,31 @@ async def probe_request(app: Any, model: str, level: str | None, spend: Spend) -
 
 
 async def _select(app: Any) -> list[str]:
-    """Up to ten available, unprobed, unleased model ids, read under the lock."""
+    """Up to ten available, unprobed, unleased model ids, read under the lock. Models that did
+    not finish in this process come last (still eligible), so they cannot starve the others."""
     state: MatrixState = app.matrix
     now = state.now()
+    failed = frozenset(state.failed_models)
     picked: list[str] = []
 
     def select(current: matrix.Matrix) -> None:
-        picked.extend(i for i, e in current.models.items() if _wants_probe(e, now))
-        del picked[PROBE_MODELS_PER_REFRESH:]
+        wanted = [i for i, e in current.models.items() if _wants_probe(e, now)]
+        wanted.sort(key=lambda i: i in failed)  # stable: file order inside each group
+        picked.extend(wanted[:PROBE_MODELS_PER_REFRESH])
 
     await matrix.update(app.settings.data_dir, select, now=now, baseline=state.baseline)
     return picked
 
 
-async def _take_lease(app: Any, model_id: str) -> dict[str, int] | None:
+async def _take_lease(app: Any, model_id: str, now: datetime) -> dict[str, int] | None:
     """Write a 10-minute lease on one model under the lock, re-checking the row inside it.
 
     Returns the answers already stored (a partial probe), or ``None`` when the model should not
     be probed: it was probed elsewhere, leased by another server, removed, or the lease could not
-    be written (without it a duplicate probe is possible, so none is made).
+    be written (without it a duplicate probe is possible, so none is made). Answers a failed
+    finish write of this process kept in memory are merged in, so they are not asked again.
     """
     state: MatrixState = app.matrix
-    now = state.now()
     answers: list[dict[str, int]] = []
 
     def lease(current: matrix.Matrix) -> matrix.Matrix | None:
@@ -219,7 +230,31 @@ async def _take_lease(app: Any, model_id: str) -> dict[str, int] | None:
     if result.status != "written" or result.matrix is None:
         return None
     state.adopt(result.matrix)
-    return answers[0]
+    return {**answers[0], **state.pending_answers.get(model_id, {})}
+
+
+async def _release_lease(app: Any, model_id: str, until: str) -> None:
+    """Clear this process's own lease (the stamp ``until``) on a model, under the lock; a lease
+    another server wrote has a different stamp and is left alone."""
+    state: MatrixState = app.matrix
+
+    def clear(current: matrix.Matrix) -> matrix.Matrix | None:
+        row = current.models.get(model_id)
+        if row is None or row.probing_until != until:
+            return None
+        copy = current.model_copy(deep=True)
+        copy.models[model_id].probing_until = None
+        return copy
+
+    result = await matrix.update(
+        app.settings.data_dir, clear, now=state.now(), baseline=state.baseline
+    )
+    if result.status == "written" and result.matrix is not None:
+        state.adopt(result.matrix)
+
+
+async def _retry_pause(seconds: float) -> None:
+    await asyncio.sleep(seconds)
 
 
 async def _finish(app: Any, model_id: str, answers: dict[str, int]) -> None:
@@ -244,8 +279,31 @@ async def _finish(app: Any, model_id: str, answers: dict[str, int]) -> None:
         return copy
 
     result = await matrix.update(app.settings.data_dir, finish, now=now, baseline=state.baseline)
+    if result.status == "lock_timeout":  # one retry: the answers were paid for
+        await _retry_pause(FINISH_RETRY_WAIT)
+        result = await matrix.update(
+            app.settings.data_dir, finish, now=now, baseline=state.baseline
+        )
     if result.status == "written" and result.matrix is not None:
         state.adopt(result.matrix)
+    if result.status in ("written", "unchanged"):
+        state.pending_answers.pop(model_id, None)
+        return
+    state.pending_answers[model_id] = {**state.pending_answers.get(model_id, {}), **answers}
+    logger.warning(
+        "model matrix: the answers for %s could not be written (%s); they are kept for the "
+        "next refresh of this process",
+        model_id,
+        result.status,
+    )
+
+
+def _note_round(state: MatrixState, model_id: str, answers: dict[str, int]) -> None:
+    """Remember a model whose round ended with an unanswered key (see ``failed_models``)."""
+    if all(key in answers for key in ANSWER_KEYS):
+        state.failed_models.discard(model_id)
+    else:
+        state.failed_models.add(model_id)
 
 
 async def probe_model(app: Any, model_id: str, spend: Spend) -> Literal["done", "skipped", "stop"]:
@@ -254,7 +312,15 @@ async def probe_model(app: Any, model_id: str, spend: Spend) -> Literal["done", 
     The control (no effort) goes first and every level after it, one at a time. The answers and
     the lease clearing are written in a ``finally`` and shielded, so a cancel, a 429 or an error
     never leaves a lease behind and never loses an answer already paid for."""
-    answers = await _take_lease(app, model_id)
+    state: MatrixState = app.matrix
+    now = state.now()
+    until = matrix.stamp(now + LEASE)
+    try:
+        answers = await _take_lease(app, model_id, now)
+    except BaseException:  # a cancel can land after the lease was written: clear our own stamp
+        with contextlib.suppress(Exception, asyncio.CancelledError):
+            await shielded_write(_release_lease(app, model_id, until))
+        raise
     if answers is None:
         return "skipped"
     outcome: Literal["done", "stop"] = "done"
@@ -274,6 +340,8 @@ async def probe_model(app: Any, model_id: str, spend: Spend) -> Literal["done", 
                 answers[key] = 400
             # unanswered: that level waits for the next refresh; the others are still asked
     finally:
+        if outcome == "done":  # a 429 says nothing about the model
+            _note_round(state, model_id, answers)
         await shielded_write(_finish(app, model_id, answers))
     return outcome
 

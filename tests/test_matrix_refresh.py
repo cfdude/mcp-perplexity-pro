@@ -11,12 +11,14 @@ import logging
 import os
 import signal
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import httpx2
 import pytest
-from matrix_support import MatrixWorld, Upstream, make_matrix_world, models_payload
+from agent_support import fixture
+from matrix_support import MatrixWorld, Upstream, make_matrix_world, models_payload, payload_with
 from server_support import (
     INITIALIZE,
     StderrTail,
@@ -443,3 +445,64 @@ def test_the_task_is_cancelled_before_the_client_closes_in_a_real_stdio_process(
     proc.send_signal(signal.SIGINT)
     stderr = clean_exit(proc, tail, 5.0)
     assert stderr.index("model matrix refresh stopped") < stderr.index("http client closed")
+
+
+class _ModelsAndAgent(BaseHTTPRequestHandler):
+    """The models endpoint with one model the baseline does not know, and an agent endpoint that
+    completes every request: enough for a real process to lease, probe and finish that model."""
+
+    models = json.dumps(payload_with("acme/new-1")).encode()
+    count = 0
+
+    def _reply(self, body: bytes) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        self._reply(self.models)
+
+    def do_POST(self):
+        self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        type(self).count += 1
+        body = fixture("agent_fast.json")
+        body["id"] = f"resp_signal-{type(self).count}"
+        self._reply(json.dumps(body).encode())
+
+    def log_message(self, *_args):
+        pass
+
+
+def test_stdio_signal_during_the_shielded_finish_write_lets_the_finish_land(tmp_path):
+    """The three writes of a probe round, in order: the merge, the lease, the finish. The signal
+    arrives while the third is in flight (the fixture's slow write logs when each begins); the
+    shield must let it complete, so the model is stored as probed and the file is whole."""
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _ModelsAndAgent)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        proc = start_fixture_server(
+            tmp_path,
+            "stdio",
+            PERPLEXITY_BASE_URL=f"http://127.0.0.1:{server.server_address[1]}",
+            FIXTURE_SLOW_MATRIX_WRITE="1.5",
+        )
+        tail = StderrTail(proc)
+        stdio_initialize(proc)
+        deadline = time.monotonic() + 20
+        while sum("matrix write begun" in line for line in list(tail.lines)) < 3:
+            assert time.monotonic() < deadline, "the third write never began:\n" + "".join(
+                tail.lines
+            )
+            time.sleep(0.02)
+        proc.send_signal(signal.SIGTERM)
+        stderr = clean_exit(proc, tail, 8.0)
+        assert "http client closed" in stderr
+    finally:
+        server.shutdown()
+        server.server_close()
+    loaded = matrix.load(tmp_path / "data" / matrix.FILENAME)
+    assert loaded.state == "ok"
+    row = loaded.matrix.models["acme/new-1"]
+    assert row.efforts.source == "probe" and row.probing_until is None

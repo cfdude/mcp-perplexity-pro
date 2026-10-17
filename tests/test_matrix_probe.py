@@ -426,7 +426,7 @@ async def test_a_model_probed_elsewhere_after_the_read_is_not_probed(worlds, mon
     await seed(world, NEW)
     real = matrix_refresh._take_lease
 
-    async def raced(app, model_id):
+    async def raced(app, model_id, now):
         def other_server_finishes(current):
             copy = current.model_copy(deep=True)
             efforts = copy.models[model_id].efforts
@@ -434,7 +434,7 @@ async def test_a_model_probed_elsewhere_after_the_read_is_not_probed(worlds, mon
             return copy
 
         await matrix.update(app.settings.data_dir, other_server_finishes, now=NOW)
-        return await real(app, model_id)
+        return await real(app, model_id, now)
 
     monkeypatch.setattr(matrix_refresh, "_take_lease", raced)
     await matrix_refresh.probe_new(world.app)
@@ -538,3 +538,150 @@ async def test_seventy_events_are_recorded_for_ten_models_and_usage_groups_them_
         result = await client.call_tool("perplexity_usage", {"group_by": "project"})
     groups = result.structured_content["groups"]
     assert [g["key"] for g in groups] == ["(none)"] and groups[0]["calls"] == 70
+
+
+# --- Gate 2 fixes: the lease and finish writes, and a model that never answers ------------------
+
+
+def quick_lock(monkeypatch, wait: float = 0.1) -> None:
+    """Every ``matrix.update`` waits ``wait`` seconds for the lock, and the retry pause is 0."""
+    real = matrix.update
+
+    async def quick(*args, **kwargs):
+        kwargs.setdefault("timeout", wait)
+        return await real(*args, **kwargs)
+
+    monkeypatch.setattr(matrix, "update", quick)
+    monkeypatch.setattr(matrix_refresh, "FINISH_RETRY_WAIT", 0.0)
+
+
+async def test_a_lock_timeout_during_the_lease_write_probes_nothing(worlds, monkeypatch, caplog):
+    world = await worlds(Upstream(agent=Agent()))
+    await seed(world, NEW)
+    quick_lock(monkeypatch)
+    real_select = matrix_refresh._select
+    held: list[matrix.MatrixLock] = []
+
+    async def select_then_hold(app):
+        picked = await real_select(app)
+        held.append(await matrix.acquire_lock(world.settings.data_dir))  # taken before the lease
+        return picked
+
+    monkeypatch.setattr(matrix_refresh, "_select", select_then_hold)
+    try:
+        with caplog.at_level(logging.WARNING):
+            await matrix_refresh.probe_new(world.app)
+    finally:
+        held[0].release()
+    assert world.upstream.agent_bodies == []  # without a lease the model is not probed
+    assert entry(world, NEW).probing_until is None
+    assert [r for r in caplog.records if r.levelno >= logging.WARNING]
+
+
+async def test_a_lock_timeout_during_the_finish_write_keeps_the_answers_for_the_next_refresh(
+    worlds, monkeypatch, caplog
+):
+    held: list[matrix.MatrixLock] = []
+
+    async def last_level_holds_the_lock(body, n):  # the lease is written; now block the finish
+        if level_of(body) == "max":
+            held.append(await matrix.acquire_lock(world.settings.data_dir))
+        return completed(n)
+
+    world = await worlds(Upstream(models=payload_with(NEW), agent=last_level_holds_the_lock))
+    quick_lock(monkeypatch)
+    try:
+        with caplog.at_level(logging.WARNING, logger=LOGGER):
+            await refresh(world)
+    finally:
+        held[0].release()
+    assert len(world.upstream.agent_bodies) == 7
+    assert entry(world, NEW).efforts.answers == {}  # the finish never landed
+    warned = [r for r in caplog.records if "answers" in r.getMessage()]
+    assert len(warned) == 1 and KEY not in warned[0].getMessage()
+
+    world.app.matrix.now = lambda: NOW + timedelta(minutes=11)  # the stale lease has expired
+    await refresh(world)
+    assert len(world.upstream.agent_bodies) == 7  # nothing already paid for was asked again
+    row = entry(world, NEW)
+    assert row.efforts.source == "probe" and row.efforts.accepted == LEVELS
+    assert row.probing_until is None
+    assert world.app.matrix.pending_answers == {}
+
+
+async def test_a_finish_write_that_fails_once_is_retried_and_lands(worlds, monkeypatch):
+    held: list[matrix.MatrixLock] = []
+
+    async def last_level_holds_the_lock(body, n):
+        if level_of(body) == "max":
+            held.append(await matrix.acquire_lock(world.settings.data_dir))
+        return completed(n)
+
+    world = await worlds(Upstream(models=payload_with(NEW), agent=last_level_holds_the_lock))
+    quick_lock(monkeypatch, wait=0.3)
+
+    async def pause(_seconds):  # the retry pause: free the lock, as a competing writer would
+        held[0].release()
+
+    monkeypatch.setattr(matrix_refresh, "_retry_pause", pause)
+    await refresh(world)
+    assert entry(world, NEW).efforts.source == "probe"
+    assert world.app.matrix.pending_answers == {}
+
+
+async def test_a_cancel_while_the_lease_is_being_taken_still_clears_the_lease(worlds, monkeypatch):
+    world = await worlds(Upstream(models=payload_with(NEW), agent=Agent()))
+    real_take = matrix_refresh._take_lease
+
+    async def take_then_cancel(*args, **kwargs):
+        await real_take(*args, **kwargs)  # the lease is on disk ...
+        raise asyncio.CancelledError  # ... and the cancel lands before the try block would start
+
+    monkeypatch.setattr(matrix_refresh, "_take_lease", take_then_cancel)
+    with pytest.raises(asyncio.CancelledError):
+        await refresh(world)
+    row = entry(world, NEW)
+    assert row.probing_until is None and world.upstream.agent_bodies == []
+
+
+async def test_a_cancelled_lease_never_clears_a_lease_another_server_holds(worlds):
+    other = stamp(NOW + matrix_refresh.LEASE)
+    world = await worlds(Upstream(agent=Agent()))
+    await seed(world, NEW, probing_until=other)
+    await matrix_refresh._release_lease(world.app, NEW, stamp(NOW + timedelta(minutes=1)))
+    assert entry(world, NEW).probing_until == other
+
+
+async def test_models_whose_control_never_completes_do_not_starve_the_fresh_ones(worlds):
+    bad = [f"acme/bad{i:02d}" for i in range(10)]
+    fresh = ["acme/fresh1", "acme/fresh2"]
+
+    def agent(body, n):
+        return status(500) if body["model"] in bad else completed(n)
+
+    world = await worlds(Upstream(models=payload_with(*bad, *fresh), agent=agent))
+    await refresh(world)  # the first ten in file order: every control fails
+    assert {m for m, _lv in requests_of(world)} == set(bad)
+    assert all(entry(world, i).efforts.source == "unprobed" for i in [*bad, *fresh])
+    world.upstream.agent_bodies.clear()
+    await refresh(world)
+    first_models = [m for m, lv in requests_of(world) if lv is None]
+    assert first_models[:2] == fresh  # the fresh ones go first ...
+    assert (
+        set(first_models[2:]) <= set(bad) and len(first_models) == 10
+    )  # ... bad ones still eligible
+    assert all(entry(world, i).efforts.source == "probe" for i in fresh)
+
+
+async def test_a_model_with_an_unanswered_level_goes_behind_the_fresh_ones(worlds):
+    flaky, fresh = "acme/flaky", "acme/fresh"
+    agent = Agent({(flaky, "low"): status(503)})
+    world = await worlds(Upstream(models=payload_with(flaky, fresh), agent=agent))
+    await refresh(world)
+    assert world.app.matrix.failed_models == {flaky}
+    agent.rules.clear()
+    world.upstream.agent_bodies.clear()
+    world.app.matrix.now = lambda: NOW  # (the lease was cleared: nothing to wait for)
+    await refresh(world)
+    assert entry(world, flaky).efforts.source == "probe"
+    assert world.app.matrix.failed_models == set()  # a finished model is no longer remembered
