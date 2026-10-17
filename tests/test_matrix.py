@@ -581,3 +581,106 @@ def test_matrix_imports_no_httpx_sqlalchemy_or_fastmcp():
     )
     result = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+# --- Gate 2 fixes: hostile files, a cancel before the thread, an unreadable file, dir fsync ------
+
+
+@pytest.mark.parametrize("kind", ["deep", "oversized"])
+async def test_a_deeply_nested_or_oversized_file_is_corrupt_and_renamed_aside(
+    data_dir, baseline, live, kind
+):
+    if kind == "deep":
+        content = "[" * 100_000  # json.loads raises RecursionError, not ValueError
+    else:  # a valid matrix padded past the cap: the size alone makes it corrupt
+        content = baseline.model_dump_json() + " " * (matrix.MAX_FILE_BYTES + 1)
+    path_of(data_dir).write_text(content)
+    loaded = matrix.load(path_of(data_dir), baseline)
+    assert loaded.matrix == baseline and loaded.origin == "baseline" and loaded.state == "corrupt"
+
+    result = await matrix.update(
+        data_dir, lambda m: matrix.merge(m, live, baseline, NOW).matrix, now=NOW, baseline=baseline
+    )
+    assert result.status == "written"
+    (aside,) = data_dir.glob(f"{matrix.FILENAME}.corrupt-*")
+    assert aside.read_text() == content
+    assert matrix.load(path_of(data_dir), baseline).state == "ok"
+
+
+@pytest.mark.parametrize("kind", ["mode_0000", "directory"])
+async def test_an_unreadable_file_is_not_corrupt_and_is_never_renamed_aside(
+    data_dir, baseline, live, caplog, kind
+):
+    path = path_of(data_dir)
+    if kind == "mode_0000":
+        if os.geteuid() == 0:
+            pytest.skip("root reads a 0000 file")
+        path.write_text(baseline.model_dump_json())
+        path.chmod(0o000)
+    else:
+        path.mkdir()
+    try:
+        loaded = matrix.load(path, baseline)
+        assert loaded.matrix == baseline and loaded.origin == "baseline"
+        assert loaded.state == "unreadable"
+        calls = []
+        with caplog.at_level(logging.WARNING, logger="mcp_perplexity_pro.matrix"):
+            result = await matrix.update(
+                data_dir, lambda m: calls.append(m) or m, now=NOW, baseline=baseline
+            )
+        assert result.status == "skipped" and calls == []
+        assert not list(data_dir.glob(f"{matrix.FILENAME}.corrupt-*"))
+        assert len([r for r in caplog.records if r.levelno >= logging.WARNING]) == 1
+    finally:
+        if kind == "mode_0000":
+            path.chmod(0o600)
+    if kind == "mode_0000":
+        assert matrix.load(path, baseline).state == "ok"  # the file was intact all along
+
+
+async def test_a_cancel_between_the_lock_and_the_thread_still_frees_the_lock(
+    data_dir, baseline, monkeypatch
+):
+    reached = asyncio.Event()
+
+    async def never_starts(fn, *args, **kwargs):  # the work item is queued, not yet running
+        reached.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(asyncio, "to_thread", never_starts)
+    task = asyncio.ensure_future(matrix.update(data_dir, lambda m: m, baseline=baseline))
+    await asyncio.wait_for(reached.wait(), 5)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    monkeypatch.undo()
+    lock = await matrix.acquire_lock(data_dir, timeout=0.5)  # free at once, not after a timeout
+    lock.release()
+
+
+def test_write_fsyncs_the_directory_after_the_replace_and_survives_a_refusal(
+    data_dir, baseline, monkeypatch
+):
+    import stat
+
+    real_fsync = os.fsync
+    dir_syncs: list[bool] = []
+
+    def spy(fd):
+        if stat.S_ISDIR(os.fstat(fd).st_mode):
+            dir_syncs.append(path_of(data_dir).exists())  # the replace came first
+        return real_fsync(fd)
+
+    monkeypatch.setattr(matrix.os, "fsync", spy)
+    matrix.write(path_of(data_dir), with_entry(baseline, "acme/one"))
+    assert dir_syncs == [True]
+
+    def refuse_dirs(fd):
+        if stat.S_ISDIR(os.fstat(fd).st_mode):
+            raise OSError("this platform refuses a directory fsync")
+        return real_fsync(fd)
+
+    monkeypatch.setattr(matrix.os, "fsync", refuse_dirs)
+    matrix.write(path_of(data_dir), with_entry(baseline, "acme/two"))  # must not raise
+    assert "acme/two" in matrix.load(path_of(data_dir), baseline).matrix.models
+    assert not list(data_dir.glob("*.tmp"))
