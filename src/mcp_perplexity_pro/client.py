@@ -46,6 +46,11 @@ def is_response_id(value: object) -> bool:
     return isinstance(value, str) and _RESPONSE_ID.fullmatch(value) is not None
 
 
+# The matrix probe (``probe_effort``): a fixed tiny prompt, no tools, one 30 s limit.
+PROBE_INPUT = "Reply with the single word OK."
+PROBE_MAX_OUTPUT_TOKENS = 300
+PROBE_TIMEOUT = httpx2.Timeout(30.0)
+
 _TIMEOUT_NAMES = (
     (httpx2.ConnectTimeout, "connect"),
     (httpx2.ReadTimeout, "read"),
@@ -286,6 +291,24 @@ class PerplexityClient:
         data = await self.request_json(
             "POST", path, json=body, timeout=None if background else self._agent_timeout
         )
+        return self._parse(AgentRun, data, path)
+
+    async def probe_effort(self, model: str, level: str | None) -> AgentRun:
+        """``POST /v1/agent`` with a tiny prompt and ``reasoning.effort`` ``level`` (the control
+        passes ``None`` and sends no ``reasoning``): one attempt and a 30 s limit, never stored.
+
+        A 429 is reported at once instead of slept on: the matrix probe is a background round
+        and a retry sleep would stall it (the same exception as the Decisions classifier)."""
+        path = "/v1/agent"
+        body: dict[str, Any] = {
+            "model": model,
+            "input": PROBE_INPUT,
+            "store": False,
+            "max_output_tokens": PROBE_MAX_OUTPUT_TOKENS,
+        }
+        if level is not None:
+            body["reasoning"] = {"effort": level}
+        data = await self.request_json("POST", path, json=body, timeout=PROBE_TIMEOUT, attempts=1)
         return self._parse(AgentRun, data, path)
 
     async def get_run(self, response_id: str) -> AgentRun:

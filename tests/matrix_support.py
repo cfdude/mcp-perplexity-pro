@@ -2,6 +2,7 @@
 built through ``build_server`` over a ``MockTransport`` (no network, the real server code)."""
 
 import asyncio
+import inspect
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -21,6 +22,22 @@ def models_payload() -> dict[str, Any]:
     return json.loads((FIXTURE_DIR / "models_2026-10-17.json").read_text())
 
 
+def payload_with(*ids: str, price: float = 1.0) -> dict[str, Any]:
+    """The recorded live list plus extra models the baseline does not know."""
+    payload = models_payload()
+    for model_id in ids:
+        payload["data"].append(
+            {
+                "id": model_id,
+                "object": "model",
+                "created": 0,
+                "owned_by": model_id.split("/")[0],
+                "pricing": {"input": price, "output": price, "unit": "usd_per_1m_tokens"},
+            }
+        )
+    return payload
+
+
 class Upstream:
     """A path-aware fake of the API. ``models`` is the body of ``GET /v1/models`` (or a status
     to answer with); ``gate`` holds that endpoint open until it is set; ``agent`` is a responder
@@ -32,7 +49,7 @@ class Upstream:
         models: dict[str, Any] | None = None,
         models_status: int = 200,
         gate: asyncio.Event | None = None,
-        agent: Callable[[dict[str, Any], int], httpx2.Response] | None = None,
+        agent: Callable[[dict[str, Any], int], Any] | None = None,
     ) -> None:
         self.models = models if models is not None else models_payload()
         self.models_status = models_status
@@ -61,7 +78,8 @@ class Upstream:
         if request.url.path == "/v1/agent" and self.agent is not None:
             body = json.loads(request.content)
             self.agent_bodies.append(body)
-            return self.agent(body, len(self.agent_bodies))
+            reply = self.agent(body, len(self.agent_bodies))
+            return await reply if inspect.isawaitable(reply) else reply
         return httpx2.Response(500, json={"error": {"message": f"unexpected {request.url.path}"}})
 
 
