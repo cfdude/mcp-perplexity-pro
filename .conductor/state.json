@@ -1394,10 +1394,12 @@
       "attributedCommits": [
         "aacf315f5456b59e67c7e45372394fb99c432ccf",
         "0ca8198ca19f3bf30a0d11ea8ef60882ad868405",
-        "bf2e745325ffe4e58f96b6d1157a68d958541a83"
+        "bf2e745325ffe4e58f96b6d1157a68d958541a83",
+        "7b552dbb259b05472d3dc063781c7c828d7cac55",
+        "27aa9e55bf1cab88804e99e24f12535d694dc0bf"
       ],
       "createdAt": "2026-10-16T06:24:44.131Z",
-      "touchedAt": "2026-10-17T08:03:45.306Z",
+      "touchedAt": "2026-10-17T08:18:03.818Z",
       "gateReview": {
         "gate1": {
           "verdict": "pass",
@@ -1494,7 +1496,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 442,
+  "revision": 444,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
