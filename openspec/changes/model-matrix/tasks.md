@@ -1,6 +1,6 @@
 ## 0. Before apply
 
-- [ ] 0.1 Record Gate 1 (`record-gate-review model-matrix --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact <each of proposal.md, design.md, tasks.md and the four spec.md files under openspec/changes/model-matrix>`; pm#252) after a fresh-context review of the artifacts, add the change to a release (`release release-2-2-0 --member model-matrix`, target 2.2.0) and, because the release holds several spec files, record a fresh-context cross-spec review (`record-cross-spec-review release-2-2-0`); ORDER: before group 1 and again after any amendment
+- [x] 0.1 Record Gate 1 (`record-gate-review model-matrix --gate 1 --verdict pass --base-sha <a> --head-sha <b> --reviewer ... --artifact <each of proposal.md, design.md, tasks.md and the four spec.md files under openspec/changes/model-matrix>`; pm#252) after a fresh-context review of the artifacts, add the change to a release (`release release-2-2-0 --member model-matrix`, target 2.2.0) and, because the release holds several spec files, record a fresh-context cross-spec review (`record-cross-spec-review release-2-2-0`); ORDER: before group 1 and again after any amendment
 
 ## 1. The pure matrix and the baseline
 

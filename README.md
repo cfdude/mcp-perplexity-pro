@@ -23,7 +23,7 @@ answer a single query. There was no working behavior to port, so the TypeScript 
 | `perplexity_search` | Ranked web search results as data (title, url, snippet, dates), with no model answer. Type `fast` (default, $0.001 per request) or `web` ($0.005 per request) | yes |
 | `perplexity_decide` | Typed questions about a text, answered with calibrated probabilities: a yes probability, the most probable option, or a position on an ordered rubric. One request holds up to 32 questions. About $0.02 per million input tokens, output free | yes |
 | `perplexity_embed` | Indexes saved chats, completed research reports or texts you pass as vectors in the local database, and searches them by meaning: `index`, `search`, `status`, `delete`. `index` sends the text to Perplexity. $0.004 (`pplx-embed-v1-0.6b`) or $0.03 (`pplx-embed-v1-4b`) per million tokens | `index` and `search` |
-| `perplexity_models` | Lists the models your key can use, with live prices, plus the documented Agent API presets | no |
+| `perplexity_models` | Lists the models your key can use, with live prices and accepted effort levels from the model matrix, plus the documented Agent API presets | no |
 | `perplexity_projects` | Lists projects, or deletes one and its stored records (spend history is kept) | no |
 | `perplexity_usage` | Reports what recorded upstream calls cost, grouped by tool, API, model, project or day. Read-only | no |
 | `perplexity_help` | The server's own help: an index that picks the right tool, one tool's page, or a topic. Free, no API call | no |
@@ -311,15 +311,15 @@ is the fact base for model routing.
   say Kimi K3 accepts `xhigh` and `max`, the API refuses both). A model that neither the file nor
   the baseline knows is probed once: a control request with no effort and one request per level,
   each a trivial prompt with no tools, a 400 counting as a refusal only when the control completed.
-  A probe is capped at 10 models and $0.25 of reported cost per refresh, makes one attempt per
+  A refresh starts no new model's probe after 10 models or $0.25 of reported cost (checked before each model, so it can overshoot by one model's cost), and a probe makes one attempt per
   request, and every request is recorded as a usage event with tool `model_matrix` and no project
   (`perplexity_usage` shows it under `(none)`). On 2026-10-17 probing all 54 models at six levels cost
   $0.197 in total ($0.0036 on average, at most $0.036 for one model). A fresh install of a release
   probes nothing, because the baseline already knows every model it was built with.
 - **Accepted is not effective.** The probe learns which levels the API takes, not whether a level
   changes the answer: on a trivial prompt only 3 of 9 models tried showed reasoning tokens or cost
-  moving with effort. In the 2026-10-17 probe 45 of 54 models accepted every level; the `gpt-5`
-  family and Kimi K3 refused `xhigh` and `max`, `gemini-3.1-pro-preview` refused `minimal`, and
+  moving with effort. In the 2026-10-17 probe 45 of 54 models accepted every level; `gpt-5`,
+  `gpt-5-mini`, `gpt-5-nano`, `gpt-5.1` and Kimi K3 refused `xhigh` and `max`, `gemini-3.1-pro-preview` refused `minimal`, and
   `deepseek-v4-pro`, `grok-4.20-multi-agent` and `grok-4.20-reasoning` refused every level.
 - **See it.** `perplexity_models` shows each model's efforts and the matrix's origin (`file` or
   `baseline`), when it was fetched and how many models are still unprobed. To start over, delete
@@ -1418,7 +1418,7 @@ retained.
 ### `perplexity_models`
 
 Lists the models available to the configured key, from the live `GET /v1/models`, with prices as
-the API reports them. Nothing is hardcoded, so the list and prices track Perplexity.
+the API reports them. The list and the prices are never typed by hand, so they track Perplexity; each model's accepted effort levels come from the model matrix (see "Model matrix").
 
 | Argument | Type | Default | Meaning |
 |---|---|---|---|
@@ -1784,8 +1784,13 @@ src/mcp_perplexity_pro/
   agent.py        Agent API request building and validation, response digestion, run_costed
                   and the research job observation
   costed.py       costed_call: the one costed-call sequence (project, timed call, record),
-                  shared by the Agent, Search, Decisions and Embeddings tools; cost_fields turns a
-                  recorded usage into the result's cost
+                  shared by the Agent, Search, Decisions and Embeddings tools and the model matrix
+                  probe (which records under no project); cost_fields turns a recorded usage into
+                  the result's cost
+  matrix.py       the model matrix file: load with the packaged baseline, merge, atomic write under
+                  a lock (pure, no network)
+  matrix_refresh.py  the refresh task and the effort probe of a serving process
+  data/           model_matrix_baseline.json, the matrix every install starts from (packaged)
   routing.py      which model answers an ask or chat: the routing mode, resolve() for the three
                   selectors, the instructions and description text (pure)
   help_text.py    the curated help behind perplexity_help (pure, no FastMCP; `perplexity-pro help` reuses it)
