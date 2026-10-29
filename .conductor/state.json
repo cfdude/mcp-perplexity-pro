@@ -1360,12 +1360,17 @@
           "at": "2026-10-16T06:24:43.476Z",
           "actor": "agent",
           "text": "lane: openspec, as routed. Evidence 2026-10-15: ask takes query text only; the Decisions API image input is also not built (CLAUDE.md non-goals); Perplexity docs say Nemotron 3.5 Super is text-only, so modality differs per model."
+        },
+        {
+          "at": "2026-10-29T23:30:18.068Z",
+          "actor": "agent",
+          "text": "2026-10-29 inputs: the Agent API now accepts documents as input_file (PDF, DOC, DOCX, TXT, RTF; inline file_data or a public HTTPS file_url, continued with previous_response_id) and has an image_search tool; the Decisions API accepts images (docs/research/2026-10-29-api-drift)."
         }
       ],
       "parent": "model-routing",
       "attributedCommits": [],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-10-16T06:24:43.478Z"
+      "touchedAt": "2026-10-29T23:30:18.070Z"
     },
     {
       "id": "model-matrix",
@@ -1520,16 +1525,53 @@
           "at": "2026-10-16T06:24:44.693Z",
           "actor": "agent",
           "text": "lane: openspec, as routed. Presets are bundles (docs: fast = 1 web search, low = 1 search + 1 fetch, medium = 2+2, high = 3+3); a router on an explicit model must attach comparable tools or it answers with weaker grounding than preset medium."
+        },
+        {
+          "at": "2026-10-29T23:30:17.382Z",
+          "actor": "agent",
+          "text": "2026-10-29 inputs: effort levels now fast, low, medium, high, xhigh and ultra-preview (docs/research/2026-10-29-api-drift); high runs gpt-6.1-terra; the matrix auto-added gpt-6.1-terra and marked nemotron-3-ultra removed; Decisions flash model costs half. Rob decided on 2026-10-29: do not release the matrix or dynamic routing (2.1.0 and 2.2.0 are not published); routing-v2 will replace them and the next release comes when the router is confirmed sustainable."
         }
       ],
       "parent": "model-routing",
       "attributedCommits": [],
       "createdAt": "2026-10-16T06:24:44.693Z",
-      "touchedAt": "2026-10-16T06:24:44.695Z"
+      "touchedAt": "2026-10-29T23:30:17.384Z"
+    },
+    {
+      "id": "api-drift-2026-10",
+      "title": "Follow the October 2026 Perplexity API changes: effort rename, effort level table, Decisions v1.2 and flash, pricing page",
+      "priority": "P1",
+      "status": "planned",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "relates-to",
+          "epic": "routing-v2",
+          "reason": "effort levels and the decider models are inputs to the router"
+        },
+        {
+          "type": "relates-to",
+          "epic": "media-inputs",
+          "reason": "documents and images are now accepted inputs"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "Evidence: docs/research/2026-10-29-api-drift/README.md. (1) Send effort instead of the deprecated preset (responses already return both); (2) update catalog.PRESETS and the README preset table (high now runs gpt-6.1-terra, xhigh fallback gpt-6.1-sol, new ultra-preview level, ultra removed) with the as-of date; (3) Decisions: accept pplx-decider-v1.2, pplx-decider-flash-v1.2 and the latest aliases, price flash at 10 nano-USD per input token, decide how the classifier and images use them; (4) make tests/pricing_page.py read only the first table under a heading and follow the Decisions table, re-record the excerpt; (5) Agent API 403 'requires paid credits' gets a precise error message. Live verification of (1) needs paid credit on the Perplexity account.",
+      "notes": [
+        {
+          "at": "2026-10-29T23:30:16.561Z",
+          "actor": "agent",
+          "text": "lane: openspec, as routed. Blocker for live verification: the Agent API answers 403 'requires paid credits' on 2026-10-29 (Rob adds credit in the console)."
+        }
+      ],
+      "attributedCommits": [],
+      "createdAt": "2026-10-29T23:30:16.562Z",
+      "touchedAt": "2026-10-29T23:30:16.563Z"
     }
   ],
   "detourStack": [],
-  "revision": 456,
+  "revision": 459,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
