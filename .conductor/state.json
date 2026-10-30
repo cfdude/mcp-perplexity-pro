@@ -1712,7 +1712,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 476,
+  "revision": 477,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
@@ -2209,9 +2209,6 @@
           }
         ],
         "reviewer": "fresh-context general-purpose subagent over the five api-drift-2026-10 deltas vs main specs: 3 BLOCKS (routing-config wording, artifact list, date re-dating scope) folded, POLISH folded or declined (declined: dedupe of per-tool effort scenarios, kept as owned duplicates; fallback models not in the table)"
-      },
-      "delivered": {
-        "recordedAt": "2026-10-30T01:48:04.615Z"
       }
     }
   ],
