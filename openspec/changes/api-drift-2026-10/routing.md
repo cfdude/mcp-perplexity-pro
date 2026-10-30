@@ -1,0 +1,3 @@
+practice: none, because the only practice used (a fresh-context Gate 1, a narrow re-check and a release cross-spec review on a small change) is already the documented gate procedure; checked with `rg 'cross-spec' CLAUDE.md`.
+tooling: pm#252 (`record-gate-review --artifact <directory>` records no digest; per-file `--artifact` used again, already filed upstream and commented once, no new filing).
+process: none, because every defect this change met (the date-pinning tests, the unpassable pricing guard, the capture scrub eating a versioned value) was caught by Gate 1 or the first full-suite run and fixed in the same commits (`git log d215946..cd724d3`), with no recurring or unrecorded failure.
