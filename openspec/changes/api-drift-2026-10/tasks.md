@@ -16,7 +16,7 @@
 
 ## 4. The pricing guard
 
-- [ ] 4.1 (same commit as 3.1) the pricing guard: `tests/pricing_page.py` reads the first table under each heading and still raises on a malformed row (D4), re-record `tests/fixtures/pricing_page.json` and `.meta.json` from the live page (the Decisions notes included), `tests/test_pricing.py` (`constant_prices()` over the page rows only, the row count, the capture date), a test that every `DECISIONS_PRICED_AS` target is a page row and that the page notes say what the map says, `tests/test_pricing_live.py`, `PRICES_AS_OF` to 2026-10-29 with `tests/test_usage_types.py` and the README dates moved with it; a unit test that the parser survives an extra table and fails when a needed price row is missing
+- [ ] 4.1 (same commit as 3.1) the pricing guard: `tests/pricing_page.py` reads the first table under each heading and still raises on a malformed row (D4), re-record `tests/fixtures/pricing_page.json` and `.meta.json` from the live page (the Decisions notes included), `tests/test_pricing.py` (`constant_prices()` over the page rows only, the row count, the capture date), a test that every `DECISIONS_PRICED_AS` target is a page row and that the page notes say what the map says, `tests/test_pricing_live.py`, `PRICES_AS_OF` to 2026-10-29 with every test and README date that names 2026-10-09 moved with it (derive the list with `rg '2026-10-09' tests/*.py README.md`, never from memory; known: `tests/test_usage_types.py`, `tests/test_decisions_costed.py`, `tests/test_search_costed.py`, `tests/test_usage_record.py`; make them compare against `PRICES_AS_OF` so the next re-date needs no edit); a unit test that the parser survives an extra table and fails when a needed price row is missing
 
 ## 5. Acceptance (live)
 
