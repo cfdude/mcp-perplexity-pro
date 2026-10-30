@@ -1569,10 +1569,13 @@
         "d215946983c0964c86b42cb4a136dc151444c665",
         "dad33dd4fe379b9975ab7e2043fa0a629c149931",
         "cd724d3b45166a103ad031fa70a9b407fc649cea",
-        "98519cccf764d39dc0112fed3724128393358f18"
+        "98519cccf764d39dc0112fed3724128393358f18",
+        "4be86501081629c2faf8e93b2fcc073ff779509a",
+        "3d7b11a4e0dd8c05fe059516532e0314ac715f41",
+        "6a78ceb3eed3358cc0af927ae1bc706d446f8528"
       ],
       "createdAt": "2026-10-29T23:30:16.562Z",
-      "touchedAt": "2026-10-30T01:13:26.075Z",
+      "touchedAt": "2026-10-30T01:34:25.503Z",
       "release": "release-2-3-0",
       "gateReview": {
         "gate1": {
@@ -1683,7 +1686,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 468,
+  "revision": 471,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
