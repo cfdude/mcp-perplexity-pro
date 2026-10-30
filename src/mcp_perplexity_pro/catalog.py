@@ -65,23 +65,23 @@ class PresetSection(BaseModel):
     note: str
 
 
-# Sources: https://docs.perplexity.ai/docs/agent-api/presets.md ("current preset values"), read
-# 2026-10-06 and re-read 2026-10-09. ``fast``, ``low`` and ``medium`` were also observed live
-# (2026-10-09: each resolved to openai/gpt-6-luna); ``high`` and ``xhigh`` are documentation-only,
-# never run (design.md, "Preset sources").
+# Source: https://docs.perplexity.ai/docs/agent-api/presets.md ("current preset values"), read
+# 2026-10-29 (api-drift-2026-10: ``high`` moved from openai/gpt-6-sol to openai/gpt-6.1-terra).
+# ``fast``, ``low`` and ``medium`` were also observed live (2026-10-09 and again 2026-10-29: each
+# resolved to openai/gpt-6-luna); ``high`` and ``xhigh`` are documentation-only, never run.
 PRESETS = PresetSection(
-    as_of="2026-10-06",
+    as_of="2026-10-29",
     presets=[
         Preset(name="fast", model="openai/gpt-6-luna"),
         Preset(name="low", model="openai/gpt-6-luna"),
         Preset(name="medium", model="openai/gpt-6-luna"),
-        Preset(name="high", model="openai/gpt-6-sol"),
+        Preset(name="high", model="openai/gpt-6.1-terra"),
         Preset(name="xhigh", model="anthropic/claude-opus-5-5"),
     ],
     note=(
-        "Taken from Perplexity's documentation, not from the live API. Presets are dynamic and "
-        "unversioned, so the model behind a name can change; check the resolved model in a "
-        "response."
+        "Taken from Perplexity's documentation, not from the live API. Perplexity manages the "
+        "presets and a response names one with a version (such as fast@2026-10-16.0), so the "
+        "model behind a name can change; check the resolved model in a response."
     ),
 )
 

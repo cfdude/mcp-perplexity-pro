@@ -8,7 +8,7 @@
 
 ## 2. The preset table
 
-- [ ] 2.1 RED then GREEN: `catalog.PRESETS` to the documentation of 2026-10-29 (D2), README preset table and the `perplexity_models` help entry, the tests that pin the table; the `model-catalog` delta scenario; a NEW test pins the table (none exists), then mutation-check: revert `high` to `gpt-6-sol` and watch it go red; fix the stale note in `catalog.py` that says presets are unversioned
+- [x] 2.1 RED then GREEN: `catalog.PRESETS` to the documentation of 2026-10-29 (D2), README preset table and the `perplexity_models` help entry, the tests that pin the table; the `model-catalog` delta scenario; a NEW test pins the table (none exists), then mutation-check: revert `high` to `gpt-6-sol` and watch it go red; fix the stale note in `catalog.py` that says presets are unversioned
 
 ## 3. Decisions models and prices
 

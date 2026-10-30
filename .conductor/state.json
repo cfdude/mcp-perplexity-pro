@@ -1565,9 +1565,11 @@
           "text": "lane: openspec, as routed. Blocker for live verification: the Agent API answers 403 'requires paid credits' on 2026-10-29 (Rob adds credit in the console)."
         }
       ],
-      "attributedCommits": [],
+      "attributedCommits": [
+        "d215946983c0964c86b42cb4a136dc151444c665"
+      ],
       "createdAt": "2026-10-29T23:30:16.562Z",
-      "touchedAt": "2026-10-30T00:39:42.413Z",
+      "touchedAt": "2026-10-30T00:50:58.216Z",
       "release": "release-2-3-0",
       "gateReview": {
         "gate1": {
@@ -1678,7 +1680,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 464,
+  "revision": 465,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",

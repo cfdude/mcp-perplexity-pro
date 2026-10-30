@@ -1463,7 +1463,7 @@ captured 2026-10-09; the real list changes):
   "age_seconds": 0.0,
   "presets": {
     "source": "documentation",
-    "as_of": "2026-10-06",
+    "as_of": "2026-10-29",
     "presets": [
       {"name": "fast", "model": "openai/gpt-6-luna"},
       {"name": "xhigh", "model": "anthropic/claude-opus-5-5"}
