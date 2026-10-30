@@ -10,4 +10,4 @@
 
 Inverses: a request field removed upstream (`preset` alias): already not sent; `effort` removed upstream would be a 400, passed through as an upstream error. A decider name retired upstream: 400 passes through, the price map keeps a dead name until edited (harmless, dated by `PRICES_AS_OF`).
 
-Not changed and still stale (task 7.1): README model row "Both cost the same" (line 1053) and the 1138 example; `CLAUDE.md` rows; CHANGELOG.
+Task 7.1 fixed the stale lines this sweep listed: the README model row ("Both cost the same") and the Decisions cost sentence, the `CLAUDE.md` rows and counts, and the CHANGELOG. The 1138 example stayed valid (346 input tokens x 20 nano-USD = 0.00000692, priced through `DECISIONS_PRICED_AS`).

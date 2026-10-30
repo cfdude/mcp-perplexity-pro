@@ -32,6 +32,6 @@
 
 ## 7. Documentation (after Gate 2 is clean)
 
-- [ ] 7.1 README (request field note, preset table, decider models and the flash price in the Decisions section including the model row that says both cost the same, every dollar figure that `help_text.py` shows), `CLAUDE.md` (rows and counts that changed; keep the pm block byte-identical), `CHANGELOG.md` under Unreleased, a check that every example matches the acceptance output
+- [x] 7.1 README (request field note, preset table, decider models and the flash price in the Decisions section including the model row that says both cost the same, every dollar figure that `help_text.py` shows), `CLAUDE.md` (rows and counts that changed; keep the pm block byte-identical), `CHANGELOG.md` under Unreleased, a check that every example matches the acceptance output
 - [ ] 7.2 Record Gate 2 again over the docs range after a fresh-context check of the documentation diff; verify the recorded head equals the last attributed commit before the archive task runs
 - [ ] 7.3 Archive the change (`/opsx:archive api-drift-2026-10`), then the epic disposition with `update-epic api-drift-2026-10 --status archived --outcome delivered --reason "<what shipped>" --no-deferrals` <!-- pm:lifecycle -->

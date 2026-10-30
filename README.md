@@ -21,7 +21,7 @@ answer a single query. There was no working behavior to port, so the TypeScript 
 | `perplexity_research` | Starts a deep research run in the background and returns a job id at once. Depth `medium` (default), `high` or `xhigh` | yes, when a call observes the run finish |
 | `perplexity_jobs` | Manages research runs: `list`, `status`, `result`, `cancel` | no new spend; it records the finished run's |
 | `perplexity_search` | Ranked web search results as data (title, url, snippet, dates), with no model answer. Type `fast` (default, $0.001 per request) or `web` ($0.005 per request) | yes |
-| `perplexity_decide` | Typed questions about a text, answered with calibrated probabilities: a yes probability, the most probable option, or a position on an ordered rubric. One request holds up to 32 questions. About $0.02 per million input tokens, output free | yes |
+| `perplexity_decide` | Typed questions about a text, answered with calibrated probabilities: a yes probability, the most probable option, or a position on an ordered rubric. One request holds up to 32 questions. About $0.02 per million input tokens ($0.01 for the flash model), output free | yes |
 | `perplexity_embed` | Indexes saved chats, completed research reports or texts you pass as vectors in the local database, and searches them by meaning: `index`, `search`, `status`, `delete`. `index` sends the text to Perplexity. $0.004 (`pplx-embed-v1-0.6b`) or $0.03 (`pplx-embed-v1-4b`) per million tokens | `index` and `search` |
 | `perplexity_models` | Lists the models your key can use, with live prices and accepted effort levels from the model matrix, plus the documented Agent API presets | no |
 | `perplexity_projects` | Lists projects, or deletes one and its stored records (spend history is kept) | no |
@@ -418,6 +418,12 @@ model, see "Choosing how models are picked", which costs differently from the ta
 **no spending cap**. Costs are the exact figures the
 API reported in its responses (`usage.cost_usd`, `cost_source: "reported"`), not estimates, except
 where the table says "not measured".
+
+Agent requests send the depth as the `effort` field of the request body (Perplexity deprecated
+`preset`); the depth names and the `depth` argument are unchanged. A response returns a versioned
+value such as `fast@2026-10-16.0` in its `effort` and `preset` fields; it is read, stored and shown
+as before, and the recorded preset is the name the request asked for (checked live 2026-10-29,
+`openspec/changes/api-drift-2026-10/acceptance/README.md`).
 
 | Depth | Where it is available | Observed cost per call | Evidence | Observed time |
 |---|---|---|---|---|
@@ -1050,7 +1056,7 @@ choose the threshold. A `noul` of 0.93 means the model puts 93% on yes, not that
 |---|---|---|---|
 | `state` | string, object or list | required | What to judge: non-blank text, or a non-empty JSON object or list, at most 200000 characters serialized (our cap; the API's limit is 262144 tokens). Images are not supported in v1 and are refused (an `image_url` key or a `data:image/` string anywhere in it). NaN, Infinity and nesting too deep to serialize are refused |
 | `questions` | object | required | 1 to 32 questions (our cap; the API allows 128), by a name you choose: each name non-blank text of at most 128 characters; the whole object at most 200000 characters serialized. Each question is `{type, criteria, instructions}`; see "Question shapes" |
-| `model` | `pplx-decider-v1.1-27b` or `pplx-decider-v1-27b` | `pplx-decider-v1.1-27b` | The Decisions model. Both cost the same. Always sent |
+| `model` | one of `pplx-decider-v1.1-27b`, `pplx-decider-v1-27b`, `pplx-decider-v1.2`, `pplx-decider-flash-v1.2`, `pplx-decider-latest`, `pplx-decider-flash-latest`, `perplexity/pplx-decider-latest`, `perplexity/pplx-decider-flash-latest` | `pplx-decider-v1.1-27b` | The Decisions model (eight accepted names). The default stays `pplx-decider-v1.1-27b`. The flash models cost half the others per input token (see Cost). Always sent |
 | `project` | string | `default` | The project the call is recorded under; created if absent |
 
 **Question shapes.** `instructions` is optional on every type: non-blank text, or a non-empty object
@@ -1079,8 +1085,11 @@ Output (`structuredContent`, with warnings, one line per question and one usage 
 | `warnings` | Things worth knowing about this result. A question the API returned no readable answer for is left out of `answers` with a warning |
 
 Cost. The API reports no cost, so it is **computed** from Perplexity's documented price (dated
-2026-10-29, `PRICES_AS_OF` in `pricing.py`): $0.02 per million input tokens, which is 20 nano-USD
-per input token. Output tokens are free and there is no per-request fee. `cost_source` is
+2026-10-29, `PRICES_AS_OF` in `pricing.py`): $0.02 per million input tokens (20 nano-USD per
+input token) for `pplx-decider-v1.2` and every name that selects it (`pplx-decider-v1.1-27b`, `pplx-decider-v1-27b`, `pplx-decider-latest`,
+`perplexity/pplx-decider-latest`), and $0.01 per million (10 nano-USD) for `pplx-decider-flash-v1.2` and the flash `latest` names.
+The price follows the name the request used, not the model the response reports. Output tokens are free and there is no per-request fee.
+On one identical input (2026-10-29) the v1.2 call counted 136 input tokens and the flash call 201, so a flash call is cheaper per token, not necessarily half the total. `cost_source` is
 `computed`. A call whose `input_tokens` cannot be read has an unknown cost (`cost_usd` `null`,
 `cost_source` `none`), not a cost of zero, and `perplexity_usage` counts it in
 `calls_cost_unknown`.
