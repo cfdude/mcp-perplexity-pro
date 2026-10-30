@@ -3,7 +3,14 @@
 ## ADDED Requirements
 
 ### Requirement: Agent requests name the preset as effort
-Every Agent API request the server builds (an ask, a chat send, a research submit) SHALL name its preset in the body field `effort` and SHALL NOT send `preset`, which the API keeps only as a deprecated alias. Wherever the Agent and routing specs (`agent-ask`, `agent-chat`, `agent-research`, `routing-config`) say a request names or has a preset, this body field is meant. It carries the preset name only and is unrelated to `reasoning.effort` and to the model matrix's `efforts`. The preset names (`fast`, `low`, `medium`, `high`, `xhigh`) and the tools' `depth` arguments are unchanged.
+Every Agent API request the server builds (an ask, a chat send, a research submit) SHALL name its preset in the body field `effort` and SHALL NOT send `preset`, which the API keeps only as a deprecated alias. The preset names and the tools' `depth` arguments are unchanged.
+
+### Requirement: The effort field means the preset name
+Wherever the Agent and routing specs (`agent-ask`, `agent-chat`, `agent-research`, `routing-config`) say a request names or has a preset, this body field is meant. It carries the preset name only and is unrelated to `reasoning.effort` and to the model matrix's `efforts`.
+
+#### Scenario: Reading a routing scenario
+- **WHEN** `routing-config` says a request names preset `medium` and no model
+- **THEN** the request has `effort` `medium` and no `model` key
 
 #### Scenario: An ask at a depth
 - **WHEN** a client asks with `depth` `medium`

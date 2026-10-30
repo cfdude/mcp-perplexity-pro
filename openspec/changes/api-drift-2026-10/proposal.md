@@ -34,7 +34,7 @@ All four are small; leaving them is what turns into a silent break when the alia
 - none.
 
 ### Modified Capabilities
-- `agent-ask`, `agent-chat`, `agent-research`: Agent requests carry the preset as `effort` and the scenarios that name the request's preset say so; versioned response values are read as before.
+- `routing-config` (wording only, covered by the `agent-ask` reading rule), `agent-ask`, `agent-chat`, `agent-research`: Agent requests carry the preset as `effort` and the scenarios that name the request's preset say so; versioned response values are read as before.
 - `model-catalog`: the documented preset table is as of 2026-10-29.
 - `decisions-tool`: the accepted models and their prices.
 

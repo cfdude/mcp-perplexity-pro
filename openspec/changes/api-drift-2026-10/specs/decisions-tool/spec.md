@@ -14,7 +14,7 @@
 - **THEN** the first request carries it and the second call fails with `invalid_request` naming `model`
 
 #### Scenario: Newer models and aliases
-- **WHEN** a client passes `pplx-decider-v1.2`, `pplx-decider-flash-v1.2` or `pplx-decider-latest` or `perplexity/pplx-decider-flash-latest`
+- **WHEN** a client passes each of `pplx-decider-v1.2`, `pplx-decider-flash-v1.2`, `pplx-decider-latest`, `pplx-decider-flash-latest`, `perplexity/pplx-decider-latest` and `perplexity/pplx-decider-flash-latest`
 - **THEN** each request carries the name it was given
 
 ### Requirement: Cost of a decision
@@ -27,6 +27,10 @@ The cost of a request SHALL be its input tokens at the documented price of the m
 #### Scenario: A flash model
 - **WHEN** a request naming `pplx-decider-flash-v1.2` gets a response reporting 347 input tokens
 - **THEN** the result has `cost_usd` `"0.00000347"` and the event cost 3470 nano-USD, source `computed`
+
+#### Scenario: The request's name prices the call
+- **WHEN** a request names `pplx-decider-flash-latest` and the response echoes `pplx-decider-flash-v1.2` (or another name, or none)
+- **THEN** the cost is priced at the flash rate by the request's name, and the event records the response's model when present
 
 #### Scenario: Unreadable usage
 - **WHEN** a response carries no `usage`, or an `input_tokens` that is a boolean, negative, a float or a string

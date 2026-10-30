@@ -10,7 +10,7 @@ for equal input; the live pricing page gained a table that our price parser trip
 
 ## Decisions
 
-**D1. Send `effort`, read as before.** (A research snapshot's `model` may now be a versioned preset such as `medium@2026-10-16.0`; it has no `/`, so `snapshot_model` still ignores it, and a test pins that.) Only the two request builders change (`agent.build_request`
+**D1. Send `effort`, read as before.** (A research snapshot's `model` may now be a versioned preset such as `medium@2026-10-16.0`; for a queued, in-progress or cancelled snapshot `snapshot_model` still ignores it (no `/`), and a completed snapshot keeps its model verbatim, as today; a test pins both.) Only the two request builders change (`agent.build_request`
 and the research submit). The recorded and stored `preset` already comes from the REQUEST options,
 not the response (design of py-agent-api), so versioned response values change nothing stored. We
 keep the tool argument `depth` and the column names `preset` (no migration: a rename buys nothing
@@ -52,7 +52,7 @@ to 2026-10-29 in that commit; every test and README date that names 2026-10-09 m
 ## Risks
 
 - A later removal of `preset` is why this is done now; the risk of the change itself is a request
-  the API rejects. Mitigation: a live ask, chat send and research submit at the end (task 6.1).
+  the API rejects. Mitigation: a live ask, chat send and research submit at the end (task 5.1).
 - The `latest` aliases are priced by assumption (their current target). A wrong price is a wrong
   lower bound, labelled `computed` and dated; the live decide calls compare the reported token
   counts and the recorded cost.
