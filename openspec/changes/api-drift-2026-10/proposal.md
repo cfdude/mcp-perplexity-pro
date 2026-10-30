@@ -21,7 +21,7 @@ All four are small; leaving them is what turns into a silent break when the alia
 - `perplexity_decide` accepts `pplx-decider-v1.2`, `pplx-decider-flash-v1.2`, `pplx-decider-latest`,
   `pplx-decider-flash-latest` and `perplexity/pplx-decider-latest`, besides the two names it takes
   today (the default stays `pplx-decider-v1.1-27b`), and prices each at its documented rate
-  (flash $0.01, the others $0.02 per million input tokens).
+  (flash $0.01, the others $0.02 per million input tokens, the price following the name the request used).
 - The pricing page test reads only the first table under a heading and the Decisions table of the
   new models; the recorded excerpt is re-recorded and the price constants are re-dated.
 - Out of scope, recorded: the decider default and the classifier's model (they need an evaluation:
@@ -34,7 +34,7 @@ All four are small; leaving them is what turns into a silent break when the alia
 - none.
 
 ### Modified Capabilities
-- `agent-ask`: Agent requests carry the preset as `effort`; versioned response values are read as before.
+- `agent-ask`, `agent-chat`, `agent-research`: Agent requests carry the preset as `effort` and the scenarios that name the request's preset say so; versioned response values are read as before.
 - `model-catalog`: the documented preset table is as of 2026-10-29.
 - `decisions-tool`: the accepted models and their prices.
 

@@ -10,7 +10,7 @@ for equal input; the live pricing page gained a table that our price parser trip
 
 ## Decisions
 
-**D1. Send `effort`, read as before.** Only the two request builders change (`agent.build_request`
+**D1. Send `effort`, read as before.** (A research snapshot's `model` may now be a versioned preset such as `medium@2026-10-16.0`; it has no `/`, so `snapshot_model` still ignores it, and a test pins that.) Only the two request builders change (`agent.build_request`
 and the research submit). The recorded and stored `preset` already comes from the REQUEST options,
 not the response (design of py-agent-api), so versioned response values change nothing stored. We
 keep the tool argument `depth` and the column names `preset` (no migration: a rename buys nothing
@@ -21,25 +21,33 @@ the digest reads `effort` or `preset` from a response, and a test pins that.
 documentation of 2026-10-29. `ultra-preview` is not added: no tool offers it (research depths stay
 `medium`, `high`, `xhigh`); it is an input to `routing-v2`.
 
-**D3. Decisions: accept all names, price by name, keep the default.** `decisions.MODELS` grows to
-the seven names. `pricing.DECISIONS_NANO_PER_INPUT_TOKEN` becomes a complete table keyed by model
-(20 nano-USD for every accepted name except `pplx-decider-flash-v1.2` and
-`pplx-decider-flash-latest`, 10), and `decisions_cost_nano(model, input_tokens)` takes the model; a
-name missing from the table is an unknown cost (`none`), never a silent $0.02. The `latest`
-aliases are priced as their current target (v1.2 and flash-v1.2); if Perplexity re-points an
-alias, the documented price table is the thing that changes, dated by `PRICES_AS_OF`.
-The default stays `pplx-decider-v1.1-27b`, and so does the classifier's model: on one example
-flash and v1.2 answered differently from v1.1, and a default is a behavior change that needs the
-`routing-eval-tuning` evaluation, not a guess. Images stay refused (non-goal).
-Redaction: the exemption for documented `pplx-decider-*` ids is a prefix rule, so the new names
-need no code change, but a test pins every accepted name as stored verbatim.
+**D3. Decisions: accept all names, price by the requested name, keep the default.** The live page
+documents only two rows (`pplx-decider-v1.2` $0.02, `pplx-decider-flash-v1.2` $0.01) and notes that
+the old names bill as v1.2 and the `latest` aliases at the model they select. So
+`pricing.DECISIONS_NANO_PER_INPUT_TOKEN` keeps ONLY the page's rows (the pricing guard compares it
+to the page), and a separate `DECISIONS_PRICED_AS` maps every other accepted name to a row
+(`pplx-decider-v1.1-27b`, `pplx-decider-v1-27b`, `pplx-decider-latest`,
+`perplexity/pplx-decider-latest` to v1.2; `pplx-decider-flash-latest` and
+`perplexity/pplx-decider-flash-latest` to flash-v1.2). `decisions_cost_nano(model, input_tokens)`
+resolves through it; a name in neither is an unknown cost (`none`), never a silent $0.02. The model
+priced is the one the REQUEST named (`body["model"]` in `run_decide`'s interpreter), not the one a
+response echoes, because a response may echo another name or omit it. `decisions.MODELS` is the
+eight accepted names. The default stays `pplx-decider-v1.1-27b`, and so does the classifier's
+model: on one example flash and v1.2 answered differently from v1.1, and a default is a behavior
+change that needs the `routing-eval-tuning` evaluation, not a guess. Images stay refused.
+Redaction: the exemption is a prefix rule, so the new names need no code change; a test pins every
+accepted name stored verbatim.
 
-**D4. The pricing parser reads every table under a heading.** `tests/pricing_page.py` stops after
-the first contiguous table; it now collects rows from each table under a heading and skips a row
-with no price instead of raising, while still failing when a price the code depends on is missing
-(the test's job). The fixture excerpt is re-recorded from the live page, with its `.meta.json`.
-`PRICES_AS_OF` moves to 2026-10-29 only after `tests/test_pricing_live.py` passes against the live
-page; the stored `price_table` of old events keeps its old date by design.
+**D4. The pricing parser reads the first table under each heading.** Today `extract_tables` merges
+every `|` line under a heading, so the extra billing-units table becomes data rows and raises. It
+stops at the first contiguous table per heading (as the proposal says) and still raises on a
+malformed row, so a dropped price cannot hide. The excerpt is re-recorded from the live page
+(`.meta.json` too), the count assertion in `tests/test_pricing.py` follows the new row count, and
+the Decisions notes (old names, aliases) are recorded in the excerpt and asserted by a test
+against `DECISIONS_PRICED_AS`. The pricing constants, the parser, the re-record and the test edits
+land in ONE commit, because the pricing test is red between any two of them. `PRICES_AS_OF` moves
+to 2026-10-29 in that commit; every test and README date that names 2026-10-09 moves with it
+(`tests/test_usage_types.py`, `tests/test_pricing.py`, README lines naming the date).
 
 ## Risks
 
