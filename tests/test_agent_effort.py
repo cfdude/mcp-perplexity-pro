@@ -142,15 +142,29 @@ def test_a_completed_snapshot_keeps_its_model_verbatim():
 # --- no digest code reads the response's effort or preset ----------------------------------------
 
 
-def test_no_source_reads_effort_or_preset_from_a_response():
-    pattern = re.compile(
-        r"(?:body|raw|response|resp|run|snapshot)\.get\(\s*[\"'](?:effort|preset)[\"']"
-        r"|(?:body|raw|response|resp|run|snapshot)\[\s*[\"'](?:effort|preset)[\"']\s*\]"
-    )
-    hits = [
+# A read of ``effort`` or ``preset`` from any mapping (a ``.get(...)`` or a subscript). A write
+# that builds the request (``request["effort"] = ...``) is not a read.
+EFFORT_READ = re.compile(
+    r"\.get\(\s*[\"'](?:effort|preset)[\"']|\[\s*[\"'](?:effort|preset)[\"']\s*\](?!\s*=[^=])"
+)
+
+
+def effort_reads(root: Path) -> list[str]:
+    return [
         f"{path.name}:{n}: {line.strip()}"
-        for path in sorted(SRC.rglob("*.py"))
+        for path in sorted(root.rglob("*.py"))
         for n, line in enumerate(path.read_text().splitlines(), 1)
-        if pattern.search(line)
+        if EFFORT_READ.search(line)
     ]
-    assert hits == []
+
+
+def test_no_source_reads_effort_or_preset_from_a_response():
+    assert effort_reads(SRC) == []
+
+
+def test_the_effort_read_check_sees_a_get_and_a_subscript_but_not_a_request_write(tmp_path):
+    (tmp_path / "bad.py").write_text(
+        'a = data.get("preset")\nb = x["effort"]\nc = y.get( "effort", None)\n'
+    )
+    (tmp_path / "ok.py").write_text('request["effort"] = options.preset\n')
+    assert [h.split(":")[0] for h in effort_reads(tmp_path)] == ["bad.py"] * 3

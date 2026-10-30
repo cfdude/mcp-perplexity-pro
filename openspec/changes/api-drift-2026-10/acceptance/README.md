@@ -1,7 +1,7 @@
 # Live acceptance, api-drift-2026-10 (task 5.1)
 
 Run 2026-10-29 against the real API with the funded key (key loaded from the environment of each
-command only; never printed or stored, 53 characters, sha prefix `8ec0113a`). Code under test:
+command only; never printed or stored). Code under test:
 branch `epic/api-drift-2026-10` at `49441d6`. The live pm2 app and port 8102 were not touched.
 
 Method: the `perplexity-pro` command (in-process FastMCP client, same tool code as the server) with

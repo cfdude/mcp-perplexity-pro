@@ -129,9 +129,16 @@ def test_the_parser_keeps_the_first_table_under_a_heading_and_ignores_a_later_on
 
 
 def test_the_recorded_page_still_parses_to_sixteen_prices_with_an_extra_table_appended():
-    page = EXTRA_TABLE_PAGE + "\n## Decisions API Pricing\n"
-    assert extract_tables(page)["search"][-1].startswith("| **Search API with Fast**")
-    assert len(parse_prices(EXCERPT["tables"])) == 16
+    # rebuild a full page from the recorded tables, then append a second table under Search
+    sections = []
+    for heading, key in HEADINGS.items():
+        rows = "\n".join(EXCERPT["tables"][key])
+        extra = "\n\n" + EXTRA_TABLE_PAGE.split("\n\n", 1)[1] if key == "search" else ""
+        sections.append(f"## {heading}\n\n{rows}{extra}\n")
+    page = "\n".join(sections)
+    tables = extract_tables(page)
+    assert tables == EXCERPT["tables"]
+    assert len(parse_prices(tables)) == 16
 
 
 def test_a_missing_needed_price_row_fails_the_parse():

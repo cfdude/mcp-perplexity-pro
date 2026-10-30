@@ -29,9 +29,10 @@ TERMINAL = {"completed", "failed", "cancelled", "canceled", "expired", "incomple
 ACCOUNT_KEY = re.compile(
     r"user|org|account|email|safety|customer|tenant|workspace|key_id|api_key", re.I
 )
-# The top-level domain starts with a letter, so a versioned preset (`fast@2026-10-16.0`) is not
-# taken for an address (it was, and the capture of 2026-10-29 lost its evidence to the scrub).
-EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[A-Za-z][\w.-]*")
+# The last label (the top-level domain) starts with a letter, so a versioned preset
+# (`fast@2026-10-16.0`) is not taken for an address (it was, and the capture of 2026-10-29 lost its
+# evidence to the scrub), while an inner label may start with a digit (`ops@mail.1password.com`).
+EMAIL = re.compile(r"[\w.+-]+@(?:[\w-]+\.)+[A-Za-z][\w-]*")
 PLACEHOLDER = "<scrubbed>"
 
 
