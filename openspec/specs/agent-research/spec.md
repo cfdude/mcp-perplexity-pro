@@ -36,7 +36,7 @@ Every research request SHALL set `background` true and `store` true, and the too
 
 #### Scenario: Request shape
 - **WHEN** a research run is submitted at depth `high`
-- **THEN** the request has preset `high`, `background` true and `store` true
+- **THEN** the request has `effort` `high`, `background` true and `store` true
 
 ### Requirement: Job records
 Each started run SHALL be a row of `research_jobs` (migration `0004`, ids never reused) in its project: query, depth, response id, status, model, our own start and finish times, result text and sources, the usage summary (input, output and total tokens, cost, source), whether usage was recorded, when a cancel was requested and when the provider first did not know the run. The provider's `created_at` and `completed_at` SHALL NOT be stored: the API rewrites both on every fetch.

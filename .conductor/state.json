@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "active": "api-drift-2026-10",
+  "active": null,
   "epics": [
     {
       "id": "python-rewrite-2-0",
@@ -1541,7 +1541,7 @@
       "id": "api-drift-2026-10",
       "title": "Follow the October 2026 Perplexity API changes: effort rename, effort level table, Decisions v1.2 and flash, pricing page",
       "priority": "P1",
-      "status": "active",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -1576,7 +1576,7 @@
         "1e30cbd71e15e4455fcb26afdb371d59a19629be"
       ],
       "createdAt": "2026-10-29T23:30:16.562Z",
-      "touchedAt": "2026-10-30T01:44:10.711Z",
+      "touchedAt": "2026-10-30T01:48:04.006Z",
       "release": "release-2-3-0",
       "gateReview": {
         "gate1": {
@@ -1697,11 +1697,22 @@
           "lastPassAt": "2026-10-30T01:44:10.709Z"
         }
       },
-      "startedAt": "2026-10-30T00:39:42.411Z"
+      "startedAt": "2026-10-30T00:39:42.411Z",
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-30T01:48:04.005Z",
+        "reason": "effort request field, 2026-10-29 preset table, Decisions v1.2/flash models with name-based prices, pricing guard parser fix; live-verified, Gate 2 passed; unpublished in release-2-3-0"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-30T01:48:03.979Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-30T01:48:04.005Z"
     }
   ],
   "detourStack": [],
-  "revision": 473,
+  "revision": 476,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
@@ -2198,6 +2209,9 @@
           }
         ],
         "reviewer": "fresh-context general-purpose subagent over the five api-drift-2026-10 deltas vs main specs: 3 BLOCKS (routing-config wording, artifact list, date re-dating scope) folded, POLISH folded or declined (declined: dedupe of per-tool effort scenarios, kept as owned duplicates; fallback models not in the table)"
+      },
+      "delivered": {
+        "recordedAt": "2026-10-30T01:48:04.615Z"
       }
     }
   ],

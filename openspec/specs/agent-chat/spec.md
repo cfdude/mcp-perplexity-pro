@@ -111,7 +111,7 @@ A response id that is not `resp_`-shaped SHALL be stored as none. A chained `sen
 
 #### Scenario: Depth per turn
 - **WHEN** a first turn is sent at depth `fast` and the next at depth `low`
-- **THEN** the second request names preset `low` while chaining from the first response
+- **THEN** the second request has `effort` `low` while chaining from the first response
 
 #### Scenario: Tier per turn
 - **WHEN** a first turn is sent with `tier` `light` and the next with `tier` `complex` in `custom` mode
