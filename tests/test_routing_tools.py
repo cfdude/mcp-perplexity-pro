@@ -49,7 +49,7 @@ async def test_default_ask_in_standard_mode_reports_its_routing(world):
         "classifier": None,
         "reason": None,
     }
-    assert w.bodies()[0]["model"] == "perplexity/sonar" and "preset" not in w.bodies()[0]
+    assert w.bodies()[0]["model"] == "perplexity/sonar" and "effort" not in w.bodies()[0]
 
 
 async def test_default_ask_in_custom_mode_uses_the_standard_tier(world):
@@ -86,7 +86,7 @@ async def test_a_depth_ask_reports_a_preset_route(world):
         "classifier": None,
         "reason": None,
     }
-    assert w.bodies()[0]["preset"] == "low"
+    assert w.bodies()[0]["effort"] == "low"
 
 
 async def test_an_explicit_model_wins_in_every_mode_and_is_sent_verbatim(world):

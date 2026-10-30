@@ -103,13 +103,13 @@ async def test_a_nameless_ask_is_classified_by_the_decider_and_routed(world):
         "classifier": "decisions",
         "reason": "decisions: light (0.93)",
     }
-    assert len(decide_requests(w)) == 1 and agent_bodies(w)[0]["preset"] == "fast"
+    assert len(decide_requests(w)) == 1 and agent_bodies(w)[0]["effort"] == "fast"
 
 
 async def test_a_complex_answer_runs_the_medium_preset(world):
     w, _ = await world(Switchboard(decisions=decision("complex", 0.95)))
     assert routing_of(await w.call(ASK, query=SHORT))["tier"] == "complex"
-    assert agent_bodies(w)[0]["preset"] == "medium"
+    assert agent_bodies(w)[0]["effort"] == "medium"
 
 
 async def test_two_events_one_agent_and_one_decisions_both_under_the_ask_tool(world):
@@ -217,7 +217,7 @@ async def test_a_new_chat_send_is_classified_and_recorded_under_the_chat_tool(wo
     w, _ = await world(Switchboard(decisions=decision("light", 0.9)))
     out = await send(w, title="t", message=ORDINARY, project="alpha")
     assert out["routing"]["tier"] == "light" and out["routing"]["classifier"] == "decisions"
-    assert agent_bodies(w)[0]["preset"] == "fast"
+    assert agent_bodies(w)[0]["effort"] == "fast"
     events = await w.events()
     assert sorted((e[0], e[1], e[6]) for e in events) == [
         (CHAT, "agent", "alpha"),

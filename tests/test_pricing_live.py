@@ -12,8 +12,10 @@ import json
 import httpx2
 import pytest
 from fixture_support import FIXTURE_DIR
-from pricing_page import PAGE_URL, extract_tables, parse_prices
+from pricing_page import PAGE_URL, decisions_alias_map, extract_notes, extract_tables, parse_prices
 from test_pricing import constant_prices, differences
+
+from mcp_perplexity_pro.pricing import DECISIONS_PRICED_AS
 
 pytestmark = [pytest.mark.live, pytest.mark.allow_network]
 
@@ -26,3 +28,5 @@ async def test_live_pricing_page_matches_the_constants_and_the_recorded_excerpt(
     recorded = parse_prices(json.loads((FIXTURE_DIR / "pricing_page.json").read_text())["tables"])
     assert differences(live, constant_prices()) == []
     assert differences(live, recorded) == []
+    # the notes that say which names bill as which row (design D3)
+    assert decisions_alias_map(extract_notes(response.text)) == DECISIONS_PRICED_AS

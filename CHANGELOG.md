@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Agent requests (`perplexity_ask`, `perplexity_chat`, `perplexity_research`) name the preset in the `effort` body field instead of the deprecated `preset`. Depth names and the `depth` argument are unchanged, and a response whose `effort` and `preset` are versioned (`fast@2026-10-16.0`) is read, stored and recorded as before. The documented preset table (`perplexity_models` `presets`) follows the documentation of 2026-10-29.
+- `perplexity_decide` accepts eight model names: `pplx-decider-v1.1-27b` (still the default), `pplx-decider-v1-27b`, `pplx-decider-v1.2`, `pplx-decider-flash-v1.2`, the `latest` and flash `latest` aliases and their `perplexity/` forms. The flash models cost $0.01 per million input tokens against $0.02 for the others, and the price follows the name the request used. `PRICES_AS_OF` is 2026-10-29.
+- The pricing guard parses a page that gained a second table under a heading (it reads the first table under each heading) and checks the Decisions notes against the price map of aliases.
+
 ### Added
 
 - Dynamic routing: `PERPLEXITY_ROUTING=dynamic` now starts. A call to `perplexity_ask` or `perplexity_chat` send that names no `depth`, `tier` or `model` is classified by fixed offline rules (analysis vocabulary, length, question and numbered-item counts, lookup openings) and runs the `light` tier (preset `fast`), `standard` (`perplexity/sonar`, or `PERPLEXITY_MODEL`) or `complex` (preset `medium`); `PERPLEXITY_TIER_*` replace a tier's default; `high` and `xhigh` are never selected. An explicit selector wins, a chat follow-up never runs below its chat's last tier, and `search` false uses the standard tier's model. The `routing` result gains `reason`, `classifier` (`rules`) and `selected_by` `classifier`; `tier` is valid in `custom` and `dynamic` mode; `perplexity_models` reports the tiers (`ConfiguredModel` gains `preset` and its `id` and `known` can be null). No savings figure is claimed.

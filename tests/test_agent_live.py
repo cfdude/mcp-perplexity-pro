@@ -149,7 +149,7 @@ async def run_live_check(settings: Settings, http: httpx2.AsyncClient, rec: Reco
                     turn.request, turn.response = call["request"], call["response"]
                     turn.http_status = call.get("status")
                     turn.previous_response_id = call["request"].get("previous_response_id")
-                    assert call["request"].get("preset") in ALLOWED_PRESETS, call["request"]
+                    assert call["request"].get("effort") in ALLOWED_PRESETS, call["request"]
                 if result.is_error:
                     turn.error = str(result.structured_content)
                     break  # a failed turn ends the conversation; the evidence is what it is
@@ -285,7 +285,7 @@ async def test_the_built_replay_request_equals_the_saved_sidecar_request(chat_wo
         chat_id=chat,
         message=new["content"],
         replay=True,
-        depth=request["preset"],
+        depth=request["effort"],
     )
     assert not result.is_error, result.content
     assert w.bodies() == [request]  # the shape the live API accepted, byte for byte
@@ -295,7 +295,7 @@ async def test_the_built_replay_request_equals_the_saved_sidecar_request(chat_wo
 async def test_the_built_depth_switch_request_equals_the_saved_sidecar_request(chat_world):
     meta = fixture(f"{DEPTH_SWITCH_FIXTURE}.meta.json")
     request = meta["request"]
-    assert request["preset"] == "low" and request["store"] is False
+    assert request["effort"] == "low" and request["store"] is False
     w = await chat_world(sequence(f"{DEPTH_SWITCH_FIXTURE}.json", status=meta["http_status"]))
     chat = await seed_history(
         w,

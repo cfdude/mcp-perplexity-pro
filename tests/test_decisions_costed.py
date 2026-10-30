@@ -16,6 +16,7 @@ from usage_support import DbLock, Upstream
 from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.decisions import DecideOptions, build_request, run_decide
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.pricing import PRICES_AS_OF
 from mcp_perplexity_pro.storage.engine import create_engine_for, database_path
 from mcp_perplexity_pro.storage.migrate import migrate
 from mcp_perplexity_pro.storage.session import unit_of_work
@@ -88,7 +89,7 @@ async def test_one_ok_event_with_tokens_model_and_the_computed_cost(world):
     assert (tool, api, status, model, preset, rid, project) == (
         "perplexity_decide", "decisions", "ok", "pplx-decider-v1.1-27b", None, None, "alpha",
     )  # fmt: skip
-    assert (tin, tout, ttot, nano, source, table) == (347, 3, 350, 6940, "computed", "2026-10-09")
+    assert (tin, tout, ttot, nano, source, table) == (347, 3, 350, 6940, "computed", PRICES_AS_OF)
 
 
 async def test_two_identical_calls_store_two_events(world):

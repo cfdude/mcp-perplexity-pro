@@ -7,8 +7,9 @@
   "scrubbed": "nothing: no account-specific values were present",
   "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
   "request_note": "invalid inner schema: generic invalid request",
+  "request_edit_note": "api-drift-2026-10: the request was recorded on 2026-10-09 with the field `preset`; renamed here to `effort`, the API's current name for it (`preset` is a deprecated alias). Response untouched.",
   "request": {
-    "preset": "fast",
+    "effort": "fast",
     "input": "hi",
     "response_format": {
       "type": "json_schema",

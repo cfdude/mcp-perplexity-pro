@@ -59,8 +59,8 @@ async def test_post_sends_json_body(make_settings):
         return json_response({"id": "x"})
 
     client = make_client(make_settings(), handler)
-    await client.request_json("POST", "/v1/agent", json={"preset": "fast"})
-    assert seen == [{"preset": "fast"}]
+    await client.request_json("POST", "/v1/agent", json={"effort": "fast"})
+    assert seen == [{"effort": "fast"}]
 
 
 @pytest.mark.parametrize(

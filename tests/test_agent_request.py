@@ -85,7 +85,7 @@ def test_background_research_shape_equals_the_medium_submit_sidecar_plus_store_t
 
 def test_inline_preset_low_without_filters_has_no_tools():  # no sidecar
     assert build_request(ask_options(depth="low"), "q", store=False) == {
-        "preset": "low",
+        "effort": "low",
         "input": "q",
         "store": False,
     }
@@ -93,7 +93,7 @@ def test_inline_preset_low_without_filters_has_no_tools():  # no sidecar
 
 def test_inline_no_selector_names_the_default_model_and_no_preset():  # no sidecar
     body = build_request(ask_options(), "q", store=False)
-    assert body["model"] == "perplexity/sonar" and "preset" not in body
+    assert body["model"] == "perplexity/sonar" and "effort" not in body
     assert body["tools"] == [{"type": "web_search"}] and body["max_steps"] == 3
 
 
@@ -115,7 +115,7 @@ def test_inline_explicit_model_with_search_has_one_web_search_tool_and_three_ste
 def test_inline_explicit_model_with_filters_keeps_the_filters_and_three_steps():  # no sidecar
     built = build_request(ask_options(model=MODEL, recency="week"), "q", store=False)
     assert built["tools"] == [{"type": "web_search", "filters": {"search_recency_filter": "week"}}]
-    assert built["max_steps"] == 3 and "preset" not in built
+    assert built["max_steps"] == 3 and "effort" not in built
 
 
 def test_inline_search_true_is_the_same_as_no_search_option():  # no sidecar
@@ -273,7 +273,7 @@ def test_boundaries_that_are_allowed():
         after="2026-10-01",
         before="2026-10-01",
     )
-    assert build_request(ok, "q", store=False)["preset"] == "medium"
+    assert build_request(ok, "q", store=False)["effort"] == "medium"
 
 
 @pytest.mark.parametrize("bad", ["", "   ", None, 5, [], {}])

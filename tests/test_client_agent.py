@@ -55,14 +55,14 @@ def build(make_settings):
 
 async def test_create_returns_the_recorded_fast_run(build):
     script = Script(reply("agent_fast.json"))
-    run = await build(script).create_run({"preset": "fast", "input": "q"}, background=False)
+    run = await build(script).create_run({"effort": "fast", "input": "q"}, background=False)
     raw = fixture("agent_fast.json")
     assert isinstance(run, AgentRun)
     assert (run.id, run.status, run.model) == (raw["id"], "completed", raw["model"])
     assert run.output == raw["output"] and run.usage == raw["usage"]
     request = script.requests[0]
     assert (request.method, request.url.path) == ("POST", "/v1/agent")
-    assert json.loads(request.content) == {"preset": "fast", "input": "q"}
+    assert json.loads(request.content) == {"effort": "fast", "input": "q"}
 
 
 async def test_fetch_returns_the_completed_snapshot(build):
@@ -296,7 +296,7 @@ async def test_one_log_record_with_the_request_id_and_no_query_text(build, caplo
     request_id = headers["x-request-id"]
     script = Script(reply("agent_fast.json", headers={"x-request-id": request_id}))
     await build(script).create_run(
-        {"preset": "fast", "input": "SECRET-QUERY-TEXT"}, background=False
+        {"effort": "fast", "input": "SECRET-QUERY-TEXT"}, background=False
     )
     records = [r for r in caplog.records if r.name == "mcp_perplexity_pro.client"]
     assert len(records) == 1

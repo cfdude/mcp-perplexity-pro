@@ -1541,7 +1541,7 @@
       "id": "api-drift-2026-10",
       "title": "Follow the October 2026 Perplexity API changes: effort rename, effort level table, Decisions v1.2 and flash, pricing page",
       "priority": "P1",
-      "status": "planned",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -1565,13 +1565,154 @@
           "text": "lane: openspec, as routed. Blocker for live verification: the Agent API answers 403 'requires paid credits' on 2026-10-29 (Rob adds credit in the console)."
         }
       ],
-      "attributedCommits": [],
+      "attributedCommits": [
+        "d215946983c0964c86b42cb4a136dc151444c665",
+        "dad33dd4fe379b9975ab7e2043fa0a629c149931",
+        "cd724d3b45166a103ad031fa70a9b407fc649cea",
+        "98519cccf764d39dc0112fed3724128393358f18",
+        "4be86501081629c2faf8e93b2fcc073ff779509a",
+        "3d7b11a4e0dd8c05fe059516532e0314ac715f41",
+        "6a78ceb3eed3358cc0af927ae1bc706d446f8528",
+        "1e30cbd71e15e4455fcb26afdb371d59a19629be"
+      ],
       "createdAt": "2026-10-29T23:30:16.562Z",
-      "touchedAt": "2026-10-29T23:30:16.563Z"
+      "touchedAt": "2026-10-30T01:48:04.006Z",
+      "release": "release-2-3-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-30T00:39:36.514Z",
+          "baseSha": "a98b6d1f60b3150d0dfb938dc20dbe994461d49c",
+          "headSha": "42218dc4457096984c516f81b9fe8258d902b945",
+          "artifacts": [
+            "openspec/changes/api-drift-2026-10/proposal.md",
+            "openspec/changes/api-drift-2026-10/design.md",
+            "openspec/changes/api-drift-2026-10/tasks.md",
+            "openspec/changes/api-drift-2026-10/specs/agent-ask/spec.md",
+            "openspec/changes/api-drift-2026-10/specs/agent-chat/spec.md",
+            "openspec/changes/api-drift-2026-10/specs/agent-research/spec.md",
+            "openspec/changes/api-drift-2026-10/specs/model-catalog/spec.md",
+            "openspec/changes/api-drift-2026-10/specs/decisions-tool/spec.md"
+          ],
+          "artifactDigests": [
+            {
+              "path": "openspec/changes/api-drift-2026-10/proposal.md",
+              "sha256": "00a40cf52ff32d620f426d6a07eea97d3e7d14b3466c960f83a6d7994bf8c955"
+            },
+            {
+              "path": "openspec/changes/api-drift-2026-10/design.md",
+              "sha256": "a9ae2f06602896f65aef7bd1f9ff0a7b9a692a28fdc057215eb768e783695160"
+            },
+            {
+              "path": "openspec/changes/api-drift-2026-10/specs/agent-ask/spec.md",
+              "sha256": "147137b108d70693c35c75cdbe31ae1b3cd1f2b1629e47c39976fe37d95a8e0b"
+            },
+            {
+              "path": "openspec/changes/api-drift-2026-10/specs/agent-chat/spec.md",
+              "sha256": "2c68f125e7d24d25bad3c59ae5df536ad255d2ee1dd26612670de30436360172"
+            },
+            {
+              "path": "openspec/changes/api-drift-2026-10/specs/agent-research/spec.md",
+              "sha256": "92b43940b5bc8f6444483e12c6be30daa8dfbc39a69062a48547390b7977b283"
+            },
+            {
+              "path": "openspec/changes/api-drift-2026-10/specs/model-catalog/spec.md",
+              "sha256": "417c1fb87a67a9932f0ae4efff233f7f5105c34509e127f4b37c45155dc20150"
+            },
+            {
+              "path": "openspec/changes/api-drift-2026-10/specs/decisions-tool/spec.md",
+              "sha256": "65037d6212bbdcfb5c4c9f5fe77d33a00d48560a77abbc63ce568050068fcecb"
+            }
+          ],
+          "reviewer": "fresh-context general-purpose subagents: Gate 1 (1 Critical, 6 Important), narrow re-check (1 Important), cross-spec review (3 BLOCKS, 8 POLISH); all BLOCKS and Important folded, artifacts re-validated",
+          "superseded": {
+            "verdict": "pass",
+            "reviewedAt": "2026-10-30T00:29:16.784Z",
+            "baseSha": "a98b6d1f60b3150d0dfb938dc20dbe994461d49c",
+            "headSha": "7e5e422d4ebe09adfe52a4c3623753545a539df6",
+            "artifacts": [
+              "openspec/changes/api-drift-2026-10/proposal.md",
+              "openspec/changes/api-drift-2026-10/design.md",
+              "openspec/changes/api-drift-2026-10/tasks.md",
+              "openspec/changes/api-drift-2026-10/specs/agent-ask/spec.md",
+              "openspec/changes/api-drift-2026-10/specs/agent-chat/spec.md",
+              "openspec/changes/api-drift-2026-10/specs/agent-research/spec.md",
+              "openspec/changes/api-drift-2026-10/specs/model-catalog/spec.md",
+              "openspec/changes/api-drift-2026-10/specs/decisions-tool/spec.md"
+            ],
+            "artifactDigests": [
+              {
+                "path": "openspec/changes/api-drift-2026-10/proposal.md",
+                "sha256": "00e9278a64f265189b817b752aff6c343d604ddbbc844ed31d510f4b8d584b15"
+              },
+              {
+                "path": "openspec/changes/api-drift-2026-10/design.md",
+                "sha256": "be001a14da4cedb57562df1e8f108fdaf2da9a3bf5dbb2044c99990a81a934d9"
+              },
+              {
+                "path": "openspec/changes/api-drift-2026-10/specs/agent-ask/spec.md",
+                "sha256": "fa98f9ed32d0dcfbbb928c99b0a472d019a8485d603b944fadecee9083feeae5"
+              },
+              {
+                "path": "openspec/changes/api-drift-2026-10/specs/agent-chat/spec.md",
+                "sha256": "2c68f125e7d24d25bad3c59ae5df536ad255d2ee1dd26612670de30436360172"
+              },
+              {
+                "path": "openspec/changes/api-drift-2026-10/specs/agent-research/spec.md",
+                "sha256": "92b43940b5bc8f6444483e12c6be30daa8dfbc39a69062a48547390b7977b283"
+              },
+              {
+                "path": "openspec/changes/api-drift-2026-10/specs/model-catalog/spec.md",
+                "sha256": "028de7ae581745a071539cd7b44902cd49dfb9246be5f5ec348cf47b17a43dea"
+              },
+              {
+                "path": "openspec/changes/api-drift-2026-10/specs/decisions-tool/spec.md",
+                "sha256": "fdf74aee611f125bed791a74adbb404842b8c3b417171824f2651ee9ed46116d"
+              }
+            ],
+            "reviewer": "fresh-context general-purpose subagents: Gate 1 review (1 Critical, 6 Important, 4 Minor, folded in c50cbea and 7e5e422) and a narrow re-check (1 Important, folded)"
+          }
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-30T01:44:10.709Z",
+          "baseSha": "42218dc4457096984c516f81b9fe8258d902b945",
+          "headSha": "1e30cbd71e15e4455fcb26afdb371d59a19629be",
+          "reviewer": "fresh-context general-purpose subagents: implementation review 42218dc..4be8650 (no Critical/Important; 6 Minor, 4 fixed in 3d7b11a, rest docs in 6a78ceb) and a diff review of 4be8650..6a78ceb (no Critical/Important; stray comma fixed in 1e30cbd); suite 3074 passed, ruff clean; live acceptance reconciled to the nano-USD"
+        }
+      },
+      "gateRounds": {
+        "gate1": {
+          "fails": 0,
+          "passes": 2,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-30T00:39:36.514Z",
+          "lastPassAt": "2026-10-30T00:39:36.514Z"
+        },
+        "gate2": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-30T01:44:10.709Z",
+          "lastPassAt": "2026-10-30T01:44:10.709Z"
+        }
+      },
+      "startedAt": "2026-10-30T00:39:42.411Z",
+      "disposition": {
+        "outcome": "delivered",
+        "recordedAt": "2026-10-30T01:48:04.005Z",
+        "reason": "effort request field, 2026-10-29 preset table, Decisions v1.2/flash models with name-based prices, pricing guard parser fix; live-verified, Gate 2 passed; unpublished in release-2-3-0"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-10-30T01:48:03.979Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-10-30T01:48:04.005Z"
     }
   ],
   "detourStack": [],
-  "revision": 459,
+  "revision": 477,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
@@ -2035,6 +2176,39 @@
           }
         ],
         "reviewer": "fresh-context general-purpose subagent: cross-spec questions over the four model-matrix deltas against the main specs (4 BLOCKS and 11 POLISH, BLOCKS folded; POLISH on the client spec note, quality-gates wording and the proposal wording handled or declined with reason in design.md)"
+      }
+    },
+    {
+      "id": "release-2-3-0",
+      "intent": "Perplexity API drift fixes: effort instead of preset, the 2026-10-29 preset table, new Decisions models and prices (unpublished; leapfrog to the routing-v2 release)",
+      "deferred": [],
+      "target": "2.3.0",
+      "crossSpecReview": {
+        "verdict": "pass",
+        "reviewedAt": "2026-10-30T00:39:37.150Z",
+        "specs": [
+          {
+            "key": "api-drift-2026-10/specs/agent-ask/spec.md",
+            "sha256": "147137b108d70693c35c75cdbe31ae1b3cd1f2b1629e47c39976fe37d95a8e0b"
+          },
+          {
+            "key": "api-drift-2026-10/specs/agent-chat/spec.md",
+            "sha256": "2c68f125e7d24d25bad3c59ae5df536ad255d2ee1dd26612670de30436360172"
+          },
+          {
+            "key": "api-drift-2026-10/specs/agent-research/spec.md",
+            "sha256": "92b43940b5bc8f6444483e12c6be30daa8dfbc39a69062a48547390b7977b283"
+          },
+          {
+            "key": "api-drift-2026-10/specs/decisions-tool/spec.md",
+            "sha256": "65037d6212bbdcfb5c4c9f5fe77d33a00d48560a77abbc63ce568050068fcecb"
+          },
+          {
+            "key": "api-drift-2026-10/specs/model-catalog/spec.md",
+            "sha256": "417c1fb87a67a9932f0ae4efff233f7f5105c34509e127f4b37c45155dc20150"
+          }
+        ],
+        "reviewer": "fresh-context general-purpose subagent over the five api-drift-2026-10 deltas vs main specs: 3 BLOCKS (routing-config wording, artifact list, date re-dating scope) folded, POLISH folded or declined (declined: dedupe of per-tool effort scenarios, kept as owned duplicates; fallback models not in the table)"
       }
     }
   ],

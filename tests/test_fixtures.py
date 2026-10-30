@@ -53,3 +53,9 @@ def test_sidecar_has_payload(sidecar):
 def test_key_scan_detects_a_key():
     assert find_key_shapes("x pplx-" + "A1" * 12 + " y")
     assert not find_key_shapes("pplx-short")
+
+
+def test_key_scan_exempts_documented_model_ids_but_not_a_key_dressed_as_one():
+    assert not find_key_shapes("perplexity/pplx-decider-flash-latest, pplx-embed-context-v1-0.6b")
+    assert find_key_shapes("pplx-decider-" + "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE3fG5hI7j")
+    assert find_key_shapes("pplx-decider-flash-latest" + "A1" * 12)  # a key glued to a name

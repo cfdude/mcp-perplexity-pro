@@ -7,13 +7,18 @@ from fastmcp import Client
 from sqlalchemy import text
 
 from mcp_perplexity_pro import usage as usage_module
-from mcp_perplexity_pro.pricing import DECISIONS_NANO_PER_INPUT_TOKEN, EMBEDDINGS_NANO_PER_TOKEN
+from mcp_perplexity_pro.decisions import MODELS as DECIDER_MODELS
+from mcp_perplexity_pro.pricing import (
+    DECISIONS_NANO_PER_INPUT_TOKEN,
+    DECISIONS_PRICED_AS,
+    EMBEDDINGS_NANO_PER_TOKEN,
+)
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.server import build_server
 from mcp_perplexity_pro.storage.projects import PerplexityError, validate_project_name
 from mcp_perplexity_pro.usage import MAX_TEXT, record_usage
 
-MODELS = [*EMBEDDINGS_NANO_PER_TOKEN, *DECISIONS_NANO_PER_INPUT_TOKEN]
+MODELS = [*EMBEDDINGS_NANO_PER_TOKEN, *DECIDER_MODELS]
 KEY = "pplx-" + "Zy9_" * 12  # 48 key characters
 ALNUM_KEY = "pplx-" + "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE3fG5hI7jK9lM1nO3"
 
@@ -23,8 +28,11 @@ async def rows(engine, sql="SELECT * FROM usage_events ORDER BY id"):
         return [dict(r._mapping) for r in await conn.execute(text(sql))]
 
 
-def test_the_model_list_covers_every_priced_model():
-    assert len(MODELS) == 6 and all(m.startswith("pplx-") for m in MODELS)
+def test_the_model_list_covers_every_priced_and_every_accepted_model():
+    assert len(MODELS) == 12 and len(set(MODELS)) == 12
+    # a name is ``pplx-...`` or carries the ``perplexity/`` prefix of an alias
+    assert all(m.removeprefix("perplexity/").startswith("pplx-") for m in MODELS)
+    assert {*DECISIONS_NANO_PER_INPUT_TOKEN, *DECISIONS_PRICED_AS} <= set(MODELS)
 
 
 @pytest.mark.parametrize("model", MODELS)

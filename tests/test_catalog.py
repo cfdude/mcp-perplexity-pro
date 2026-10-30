@@ -179,7 +179,7 @@ async def test_preset_section_is_documentation_and_never_mixed_into_the_list(ser
     result = await call(server)
     presets = result.structured_content["presets"]
     assert presets["source"] == "documentation"
-    assert presets["as_of"] == "2026-10-06"
+    assert presets["as_of"] == "2026-10-29"
     assert [p["name"] for p in presets["presets"]] == ["fast", "low", "medium", "high", "xhigh"]
     live_ids = {m["id"] for m in result.structured_content["models"]}
     assert not live_ids & {"fast", "low", "medium", "high", "xhigh"}

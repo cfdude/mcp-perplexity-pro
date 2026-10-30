@@ -77,16 +77,21 @@ def register(server: FastMCP) -> None:
         ] = None,
         model: Annotated[
             str,
-            Field(description="pplx-decider-v1.1-27b (default) or pplx-decider-v1-27b"),
+            Field(
+                description="pplx-decider-v1.1-27b (default), pplx-decider-v1-27b, "
+                "pplx-decider-v1.2, pplx-decider-flash-v1.2, pplx-decider-latest, "
+                "pplx-decider-flash-latest, or either latest name with a perplexity/ prefix"
+            ),
         ] = DEFAULT_MODEL,
     ) -> ToolResult:
         """Put typed questions about a text to the Decisions API and get a calibrated answer
         for each: a yes probability (noul), the most probable option with every option's
         probability (choice), or a probability-weighted position on an ordered rubric (score).
         The answers are model probabilities, not facts: you choose the threshold. Costs about
-        $0.02 per million input tokens (output is free), a few thousandths of a cent per call,
-        however many questions one call holds; a refused call costs nothing. Every request that
-        reaches the API is recorded as spend (see perplexity_usage)."""
+        $0.02 per million input tokens ($0.01 for the flash models; output is free), a few
+        thousandths of a cent per call, however many questions one call holds; a refused call
+        costs nothing. Every request that reaches the API is recorded as spend (see
+        perplexity_usage)."""
         options = DecideOptions(state=state, questions=questions, model=model)
         request = build_request(options)
         app = ctx.lifespan_context

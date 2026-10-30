@@ -5,18 +5,18 @@
       "| Tool | Price | Description |",
       "| - | :-: | - |",
       "| **`web_search` (standard)** | \\$0.0025 per invocation | Standard web search with `search_type: \"web\"`. \\$2.50 per 1,000 invocations |",
-      "| **`web_search` (Fast Search)** | \\$0.001 per invocation | The same tool with `search_type: \"fast\"`. \\$1.00 per 1,000 invocations. See [Fast Search](/docs/search/fast-search) |",
+      "| **`web_search` (Fast Search)** | \\$0.001 per invocation | The same tool with `search_type: \"fast\"`. \\$1.00 per 1,000 invocations. See [Fast Search](https://docs.perplexity.ai/docs/search/fast-search.md) |",
       "| **`image_search`** | \\$0.0025 per successful invocation | Finds structured image results with domain, format, and safe-search filters. \\$2.50 per 1,000 successful invocations |",
       "| **`fetch_url`** | \\$0.0005 per invocation | Fetches and extracts content from specific URLs |",
       "| **`people_search`** | \\$0.005 per invocation | Looks up professionals, employees, and people. \\$5 per 1,000 tool invocations |",
       "| **`finance_search`** | \\$0.005 per invocation | Retrieves financial data and market information. \\$5 per 1,000 tool invocations |",
-      "| **`sandbox`** | \\$0.03 per session | Isolated container for executing code during an Agent API request. A session covers up to 20 minutes of active use for billing purposes — this is the billing window, not a runtime cap. SDK search queries made from inside the sandbox are billed at \\$0.0025 per request (same as `web_search`). |"
+      "| **`sandbox`** | \\$0.03 per session | Isolated container for executing code during an Agent API request. A session covers up to 20 minutes of active use for billing purposes \u2014 this is the billing window, not a runtime cap. SDK search queries made from inside the sandbox are billed at \\$0.0025 per request (same as `web_search`). |"
     ],
     "search": [
       "| API | Price per 1K requests | Description |",
       "| - | :-: | - |",
-      "| **Search API** | \\$5.00 | Raw web search results with advanced filtering |",
-      "| **Search API with [Fast Search](/docs/search/fast-search)** | \\$1.00 | Lower-latency web search results. Set `search_type: \"fast\"` |"
+      "| **Search API** | \\$5.00 | Ranked web results as JSON, with page text extracted into each result's `snippet`. No model, no generated answer, no token billing. Filter by domain, language, and date, and bias results by country. |",
+      "| **Search API with [Fast Search](https://docs.perplexity.ai/docs/search/fast-search.md)** | \\$1.00 | Lower-latency results in the same response format. Set `search_type: \"fast\"` |"
     ],
     "embeddings_standard": [
       "| Model | Dimensions | Price (\\$/1M tokens) |",
@@ -33,8 +33,15 @@
     "decisions": [
       "| Model | Price (\\$/1M input tokens) | Output tokens | Per-request fee |",
       "| - | :-: | :-: | :-: |",
-      "| `pplx-decider-v1.1-27b` | \\$0.02 | Free | None |",
-      "| `pplx-decider-v1-27b` | \\$0.02 | Free | None |"
+      "| `pplx-decider-v1.2` | \\$0.02 | Free | None |",
+      "| `pplx-decider-flash-v1.2` | \\$0.01 | Free | None |"
+    ]
+  },
+  "notes": {
+    "decisions": [
+      "> [!NOTE]",
+      "> **Aliases:** `pplx-decider-latest` and `perplexity/pplx-decider-latest` select `pplx-decider-v1.2`. `pplx-decider-flash-latest` and `perplexity/pplx-decider-flash-latest` select `pplx-decider-flash-v1.2`. An alias bills at the rate of the model it selects. Requests that name `pplx-decider-v1.1-27b` or `pplx-decider-v1-27b` select `pplx-decider-v1.2` and bill at \\$0.02.",
+      "> **Billing unit:** you pay for input tokens only. The `state`, every question, and any images count as input; the response reports the exact number as `usage.input_tokens`, so you can compute the cost of a request from the response you already receive. A request with 600 input tokens costs \\$0.000012 on `pplx-decider-v1.2` and \\$0.000006 on `pplx-decider-flash-v1.2`."
     ]
   }
 }

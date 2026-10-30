@@ -32,9 +32,22 @@ def test_one_million_embeddings_tokens(model, nano):
     assert embeddings_cost_nano(model, 1_000_000) == nano
 
 
-def test_decisions_input_tokens():
-    assert decisions_cost_nano(1_000_000) == 20_000_000
-    assert decisions_cost_nano(0) == 0
+@pytest.mark.parametrize(
+    ("model", "nano"),
+    [
+        ("pplx-decider-v1.2", 20_000_000),
+        ("pplx-decider-flash-v1.2", 10_000_000),
+        ("pplx-decider-v1.1-27b", 20_000_000),
+        ("pplx-decider-v1-27b", 20_000_000),
+        ("pplx-decider-latest", 20_000_000),
+        ("perplexity/pplx-decider-latest", 20_000_000),
+        ("pplx-decider-flash-latest", 10_000_000),
+        ("perplexity/pplx-decider-flash-latest", 10_000_000),
+    ],
+)
+def test_one_million_decisions_input_tokens(model, nano):
+    assert decisions_cost_nano(model, 1_000_000) == nano
+    assert decisions_cost_nano(model, 0) == 0
 
 
 def test_agent_tools():
@@ -68,8 +81,11 @@ def test_zero_tokens_cost_nothing():
         lambda: search_cost_nano(1.5, "fast"),
         lambda: embeddings_cost_nano("pplx-embed-v1-4b", -5),
         lambda: embeddings_cost_nano(None, 5),
-        lambda: decisions_cost_nano(None),
-        lambda: decisions_cost_nano(-1),
+        lambda: decisions_cost_nano("pplx-decider-v1.2", None),
+        lambda: decisions_cost_nano("pplx-decider-v1.2", -1),
+        lambda: decisions_cost_nano("pplx-decider-nope", 5),  # a name in neither table
+        lambda: decisions_cost_nano(None, 5),
+        lambda: decisions_cost_nano(["pplx-decider-v1.2"], 5),  # unhashable
         lambda: agent_tool_cost_nano(["web_search"], 1),
         lambda: agent_tool_cost_nano("fetch_url", False),
         lambda: embeddings_cost_nano(["pplx-embed-v1-4b"], 1),  # unhashable

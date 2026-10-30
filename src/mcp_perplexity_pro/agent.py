@@ -252,7 +252,7 @@ def build_request(
     if options.model is not None:
         request["model"] = options.model
     else:
-        request["preset"] = options.preset
+        request["effort"] = options.preset  # the API's name for the preset (`preset` is deprecated)
     request["input"] = copy.deepcopy(input)
     if options.instructions is not None:
         if not isinstance(options.instructions, str):
@@ -733,7 +733,7 @@ def build_research_request(
             f"must be one of {', '.join(RESEARCH_DEPTHS)}; fast and low answers belong to "
             "perplexity_ask.",
         )
-    request: dict[str, Any] = {"preset": depth, "input": check_text("query", query)}
+    request: dict[str, Any] = {"effort": depth, "input": check_text("query", query)}
     if instructions is not None:
         if not isinstance(instructions, str):
             raise _bad("instructions", "must be a string.")

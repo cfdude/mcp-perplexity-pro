@@ -56,7 +56,7 @@ async def test_the_default_depth_request_is_the_recorded_one_plus_store_true(res
     w = await research_world()
     await w.call(TOOL, query=QUERY)
     sidecar = fixture("agent_background_submit_medium.meta.json")["request"]
-    assert sidecar == {"preset": "medium", "background": True, "input": QUERY}
+    assert sidecar == {"effort": "medium", "background": True, "input": QUERY}
     assert w.bodies() == [{**sidecar, "store": True}]
 
 
@@ -79,7 +79,7 @@ async def test_a_high_submit_request_has_no_sidecar_and_is_asserted_inline(resea
     w = await research_world()
     await w.call(TOOL, query=QUERY, depth="high")
     # NOT backed by a recording: no `high` run was ever captured (design D11)
-    expected = {"preset": "high", "background": True, "store": True, "input": QUERY}
+    expected = {"effort": "high", "background": True, "store": True, "input": QUERY}
     assert w.bodies() == [expected]
 
 
@@ -88,7 +88,7 @@ async def test_every_research_request_is_background_and_stored(research_world, d
     w = await research_world()
     await w.call(TOOL, query="q", depth=depth, instructions="be brief")
     (body,) = w.bodies()
-    assert (body["preset"], body["background"], body["store"]) == (depth, True, True)
+    assert (body["effort"], body["background"], body["store"]) == (depth, True, True)
     assert body["instructions"] == "be brief"
 
 

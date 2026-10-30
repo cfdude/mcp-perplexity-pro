@@ -7,8 +7,9 @@
   "scrubbed": "nothing: no account-specific values were present",
   "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
   "request_note": "low preset with fetch_url tool",
+  "request_edit_note": "api-drift-2026-10: the request was recorded on 2026-10-09 with the field `preset`; renamed here to `effort`, the API's current name for it (`preset` is a deprecated alias). Response untouched.",
   "request": {
-    "preset": "low",
+    "effort": "low",
     "input": "Read https://www.python.org/dev/peps/pep-0008/ and tell me in one sentence what it says about maximum line length.",
     "tools": [
       {

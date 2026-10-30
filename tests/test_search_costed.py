@@ -19,6 +19,7 @@ from usage_support import DbLock, Upstream
 
 from mcp_perplexity_pro.client import PerplexityClient
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.pricing import PRICES_AS_OF
 from mcp_perplexity_pro.search import TOOL, SearchOptions, build_request, run_search
 from mcp_perplexity_pro.storage.engine import create_engine_for, database_path
 from mcp_perplexity_pro.storage.migrate import migrate
@@ -94,7 +95,7 @@ async def test_a_fast_search_is_one_ok_event_with_the_computed_cost(world):
     assert (tool, api, status, model, preset, rid, project) == (
         TOOL, "search", "ok", None, None, raw["id"], "alpha",
     )  # fmt: skip
-    assert (nano, source, table) == (1_000_000, "computed", "2026-10-09")
+    assert (nano, source, table) == (1_000_000, "computed", PRICES_AS_OF)
 
 
 async def test_a_web_search_costs_five_million_nano(world):

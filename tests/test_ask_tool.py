@@ -139,13 +139,13 @@ async def test_a_query_of_exactly_20000_characters_is_sent(world):
 async def test_default_depth_sends_preset_fast_and_store_false(world):
     w = await world()
     await w.call(TOOL, query="q", depth="fast")
-    assert w.bodies() == [{"preset": "fast", "input": "q", "store": False}]
+    assert w.bodies() == [{"effort": "fast", "input": "q", "store": False}]
 
 
 async def test_depth_medium_names_preset_medium(world):
     w = await world()
     assert (await w.call(TOOL, query="q", depth="medium")).structured_content["depth"] == "medium"
-    assert w.bodies()[0]["preset"] == "medium"
+    assert w.bodies()[0]["effort"] == "medium"
 
 
 @pytest.mark.parametrize("depth", ["high", "xhigh"])
@@ -177,7 +177,7 @@ async def test_a_model_without_search_sends_no_tools_and_has_no_sources(world):
         await w.call(TOOL, query="q", model="openai/gpt-6-luna", search=False)
     ).structured_content
     body = w.bodies()[0]
-    assert "tools" not in body and "max_steps" not in body and "preset" not in body
+    assert "tools" not in body and "max_steps" not in body and "effort" not in body
     assert out["sources"] == [] and out["answer"]
 
 
