@@ -8,6 +8,7 @@ import pytest
 from fixture_support import FIXTURE_DIR
 from sqlalchemy import text
 
+from mcp_perplexity_pro.pricing import PRICES_AS_OF
 from mcp_perplexity_pro.storage.projects import get_or_create_project
 from mcp_perplexity_pro.storage.session import unit_of_work
 from mcp_perplexity_pro.usage import (
@@ -318,7 +319,7 @@ async def test_a_computed_event_stores_its_price_table(storage_engine):
     assert (row["cost_nano_usd"], row["cost_source"], row["price_table"]) == (
         1_000_000,
         "computed",
-        "2026-10-09",
+        PRICES_AS_OF,
     )
 
 

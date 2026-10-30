@@ -4,8 +4,15 @@
 
 import json
 
+import pytest
 from fixture_support import FIXTURE_DIR
-from pricing_page import PAGE_URL, parse_prices
+from pricing_page import (
+    HEADINGS,
+    PAGE_URL,
+    decisions_alias_map,
+    extract_tables,
+    parse_prices,
+)
 
 from mcp_perplexity_pro import pricing
 
@@ -22,6 +29,7 @@ def constant_prices() -> dict[str, int]:
         {f"search.{kind}": nano for kind, nano in pricing.SEARCH_NANO_PER_REQUEST.items()}
     )
     prices.update({f"embeddings.{m}": n for m, n in pricing.EMBEDDINGS_NANO_PER_TOKEN.items()})
+    # the page's own rows only; the other accepted names are ``DECISIONS_PRICED_AS``
     prices.update({f"decisions.{m}": n for m, n in pricing.DECISIONS_NANO_PER_INPUT_TOKEN.items()})
     return prices
 
@@ -49,10 +57,100 @@ def test_the_comparison_fails_when_a_constant_is_changed_by_hand(monkeypatch):
 
 
 def test_the_table_date_and_source_match_the_recorded_capture():
-    assert pricing.PRICES_AS_OF == SIDECAR["capture_date"] == "2026-10-09"
+    assert pricing.PRICES_AS_OF == SIDECAR["capture_date"] == "2026-10-29"
     assert pricing.PRICES_SOURCE == PAGE_URL == EXCERPT["source"]
 
 
 def test_the_observed_search_web_key_is_an_alias_of_web_search():
     assert pricing.AGENT_TOOL_ALIASES == {"search_web": "web_search"}
     assert all(target in pricing.AGENT_TOOL_NANO for target in pricing.AGENT_TOOL_ALIASES.values())
+
+
+# --- the Decisions rows and the names that bill as one of them (design D3) ------------------------
+
+
+def test_the_decisions_constants_are_exactly_the_pages_two_rows():
+    assert pricing.DECISIONS_NANO_PER_INPUT_TOKEN == {
+        "pplx-decider-v1.2": 20,
+        "pplx-decider-flash-v1.2": 10,
+    }
+    page = {k for k in parse_prices(EXCERPT["tables"]) if k.startswith("decisions.")}
+    assert page == {f"decisions.{m}" for m in pricing.DECISIONS_NANO_PER_INPUT_TOKEN}
+
+
+def test_every_priced_as_target_is_a_page_row_and_no_alias_is_a_row_itself():
+    rows = set(pricing.DECISIONS_NANO_PER_INPUT_TOKEN)
+    assert set(pricing.DECISIONS_PRICED_AS.values()) <= rows
+    assert not set(pricing.DECISIONS_PRICED_AS) & rows
+
+
+def test_the_pages_notes_say_what_the_priced_as_map_says():
+    notes = EXCERPT["notes"]["decisions"]
+    assert decisions_alias_map(notes) == pricing.DECISIONS_PRICED_AS
+
+
+def test_the_alias_reader_reads_each_sentence_of_the_note():
+    notes = ["> **Aliases:** `a` and `b/a` select `row-1`. `c` selects `row-2`. Requests that "]
+    notes[0] += "name `d` or `e` select `row-1` and bill at \\$0.02."
+    assert decisions_alias_map(notes) == {
+        "a": "row-1",
+        "b/a": "row-1",
+        "d": "row-1",
+        "e": "row-1",
+    }  # "`c` selects" is not the page's "select" form and is not read
+
+
+# --- the parser (design D4) ----------------------------------------------------------------------
+
+EXTRA_TABLE_PAGE = """\
+## Search API Pricing
+
+| API | Price per 1K requests | Description |
+| - | :-: | - |
+| **Search API** | \\$5.00 | Raw |
+| **Search API with Fast** | \\$1.00 | Fast |
+
+> [!NOTE]
+> Billing unit.
+
+| Request | Billing units | Cost |
+| - | :-: | -: |
+| One `POST /search` | 1 | \\$5.00 |
+"""
+
+
+def test_the_parser_keeps_the_first_table_under_a_heading_and_ignores_a_later_one():
+    tables = extract_tables(EXTRA_TABLE_PAGE)
+    assert [row.split("|")[1].strip() for row in tables["search"][2:]] == [
+        "**Search API**",
+        "**Search API with Fast**",
+    ]
+    assert len(tables["search"]) == 4
+
+
+def test_the_recorded_page_still_parses_to_sixteen_prices_with_an_extra_table_appended():
+    page = EXTRA_TABLE_PAGE + "\n## Decisions API Pricing\n"
+    assert extract_tables(page)["search"][-1].startswith("| **Search API with Fast**")
+    assert len(parse_prices(EXCERPT["tables"])) == 16
+
+
+def test_a_missing_needed_price_row_fails_the_parse():
+    tables = {k: list(v) for k, v in EXCERPT["tables"].items()}
+    tables["decisions"] = [row for row in tables["decisions"] if "flash" not in row]
+    with pytest.raises(ValueError, match="pplx-decider-flash-v1.2"):
+        parse_prices(tables)
+
+
+def test_a_malformed_row_still_raises():
+    tables = {k: list(v) for k, v in EXCERPT["tables"].items()}
+    tables["search"][2] = "| **Search API** | free | Raw |"
+    with pytest.raises(ValueError, match="no price"):
+        parse_prices(tables)
+
+
+@pytest.mark.parametrize("heading", sorted(set(HEADINGS.values())))
+def test_a_heading_with_no_table_fails_the_parse(heading):
+    tables = {k: list(v) for k, v in EXCERPT["tables"].items()}
+    tables[heading] = []
+    with pytest.raises(ValueError, match=heading):
+        parse_prices(tables)

@@ -9,7 +9,9 @@ REDACTED = "[redacted]"
 
 # ``pplx-`` followed by key characters. Shorter than the 20-character shape the fixture scan
 # uses, so a truncated key is caught as well. The documented Perplexity model ids
-# (``pplx-embed-v1-0.6b``, ``pplx-embed-context-v1-4b``, ``pplx-decider-v1.1-27b``) are exempt:
+# (``pplx-embed-v1-0.6b``, ``pplx-embed-context-v1-4b``, ``pplx-decider-v1.1-27b``,
+# ``pplx-decider-flash-v1.2``, ``perplexity/pplx-decider-latest``) are exempt, whatever precedes
+# the ``pplx-`` (a ``perplexity/`` prefix included):
 # the lookahead skips ``embed-``/``decider-`` followed by at most 28 id characters that end the
 # token, so a real key (alphanumeric, ~48 characters) and a partial echo of one still match.
 _KEY_SHAPED = re.compile(

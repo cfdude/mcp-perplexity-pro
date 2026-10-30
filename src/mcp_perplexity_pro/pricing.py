@@ -1,6 +1,6 @@
 """Documented Perplexity prices, in integer nano-USD (10^-9 USD), for costs the API does not report.
 
-Verified 2026-10-09 against ``PRICES_SOURCE`` (design D4). A computed cost is only ever a
+Verified 2026-10-29 against ``PRICES_SOURCE`` (design D4). A computed cost is only ever a
 fallback for a response that carries no cost of its own, and every event it prices stores
 ``PRICES_AS_OF`` so a later price change cannot silently reinterpret old rows. A test pins every
 constant to a recorded copy of the page's tables (``tests/fixtures/pricing_page.json``), and a
@@ -11,7 +11,7 @@ invocation (Agent tools) or per session (Agent ``sandbox``). Agent token prices 
 the Agent response reports its own cost.
 """
 
-PRICES_AS_OF = "2026-10-09"
+PRICES_AS_OF = "2026-10-29"
 PRICES_SOURCE = "https://docs.perplexity.ai/docs/getting-started/pricing.md"
 
 # Search API: $5.00 per 1,000 requests standard, $1.00 with ``search_type: "fast"``.
@@ -25,8 +25,22 @@ EMBEDDINGS_NANO_PER_TOKEN = {
     "pplx-embed-context-v1-4b": 50,
 }
 
-# Decisions: $0.02 per 1M input tokens, output free, no per-request fee.
-DECISIONS_NANO_PER_INPUT_TOKEN = {"pplx-decider-v1.1-27b": 20, "pplx-decider-v1-27b": 20}
+# Decisions: the page's two rows only (the guard compares this table with the page): $0.02 per 1M
+# input tokens for ``pplx-decider-v1.2``, $0.01 for ``pplx-decider-flash-v1.2``; output is free
+# and there is no per-request fee.
+DECISIONS_NANO_PER_INPUT_TOKEN = {"pplx-decider-v1.2": 20, "pplx-decider-flash-v1.2": 10}
+
+# Every other accepted Decisions name and the page row it bills as (the page's notes: the old
+# names select v1.2 and bill at $0.02; an alias bills at the model it selects). A test compares
+# this map with the recorded notes. A name in neither table has an unknown cost, never $0.02.
+DECISIONS_PRICED_AS = {
+    "pplx-decider-v1.1-27b": "pplx-decider-v1.2",
+    "pplx-decider-v1-27b": "pplx-decider-v1.2",
+    "pplx-decider-latest": "pplx-decider-v1.2",
+    "perplexity/pplx-decider-latest": "pplx-decider-v1.2",
+    "pplx-decider-flash-latest": "pplx-decider-flash-v1.2",
+    "perplexity/pplx-decider-flash-latest": "pplx-decider-flash-v1.2",
+}
 
 # Agent tools, keyed by their documented name. ``web_search`` here is the standard price; the
 # Fast Search price is ``AGENT_WEB_SEARCH_FAST_NANO``. ``sandbox`` is per session (a 20-minute
@@ -79,10 +93,14 @@ def embeddings_cost_nano(model: str, tokens: int) -> int | None:
     return _times(_lookup(EMBEDDINGS_NANO_PER_TOKEN, model), tokens)
 
 
-def decisions_cost_nano(input_tokens: int) -> int | None:
-    """Decisions: input tokens only (output is free, there is no per-request fee); both
-    documented models cost the same."""
-    return _times(DECISIONS_NANO_PER_INPUT_TOKEN["pplx-decider-v1.1-27b"], input_tokens)
+def decisions_cost_nano(model: object, input_tokens: int) -> int | None:
+    """Decisions: input tokens only (output is free, there is no per-request fee), at the rate of
+    ``model``, the name the REQUEST used: a page row, or a name that ``DECISIONS_PRICED_AS`` maps
+    to one. Any other name, or one that is not text, is unknown (``None``), never a default."""
+    if not isinstance(model, str):
+        return None
+    row = DECISIONS_PRICED_AS.get(model, model)
+    return _times(_lookup(DECISIONS_NANO_PER_INPUT_TOKEN, row), input_tokens)
 
 
 def agent_tool_cost_nano(

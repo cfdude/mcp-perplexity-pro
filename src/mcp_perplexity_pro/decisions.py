@@ -34,8 +34,19 @@ from mcp_perplexity_pro.usage import Usage, computed_usage, to_tokens
 logger = logging.getLogger(__name__)
 
 TOOL = "perplexity_decide"
-MODELS = ("pplx-decider-v1.1-27b", "pplx-decider-v1-27b")
-DEFAULT_MODEL = MODELS[0]
+# The default stays ``pplx-decider-v1.1-27b`` (a different default is a behavior change that needs
+# an evaluation, design D3); the other names are accepted and priced by ``pricing``.
+MODELS = (
+    "pplx-decider-v1.1-27b",
+    "pplx-decider-v1-27b",
+    "pplx-decider-v1.2",
+    "pplx-decider-flash-v1.2",
+    "pplx-decider-latest",
+    "pplx-decider-flash-latest",
+    "perplexity/pplx-decider-latest",
+    "perplexity/pplx-decider-flash-latest",
+)
+DEFAULT_MODEL = "pplx-decider-v1.1-27b"
 QUESTION_TYPES = ("noul", "choice", "score")
 MAX_QUESTIONS = 32  # our own cap; the API allows 128
 MAX_NAME_CHARS = 128  # our own cap
@@ -298,17 +309,18 @@ def digest(
 # --- Cost and the one costed call (design D4, D5) --------------------------------------------
 
 
-def decisions_usage(raw: object) -> Usage:
-    """The usage of one decision request: input tokens at the documented price (output is free,
-    there is no per-request fee), source ``computed``. Counts are read with ``usage.to_tokens``;
-    when ``input_tokens`` is not a valid count the cost is unknown (source ``none``), never zero.
-    The response's ``usage`` object is kept as ``raw``. Never raises."""
+def decisions_usage(raw: object, model: object) -> Usage:
+    """The usage of one decision request: input tokens at the documented price of ``model``, the
+    name the request used (output is free, there is no per-request fee), source ``computed``.
+    Counts are read with ``usage.to_tokens``; when ``input_tokens`` is not a valid count, or
+    ``model`` has no documented price, the cost is unknown (source ``none``), never zero and never
+    a default rate. The response's ``usage`` object is kept as ``raw``. Never raises."""
     try:
         mapping = raw if isinstance(raw, Mapping) else {}
         input_tokens = to_tokens(mapping.get("input_tokens"))
         output_tokens = to_tokens(mapping.get("output_tokens"))
         raw_usage = dict(raw) if isinstance(raw, Mapping) else None
-        nano = None if input_tokens is None else pricing.decisions_cost_nano(input_tokens)
+        nano = None if input_tokens is None else pricing.decisions_cost_nano(model, input_tokens)
         if nano is None:
             return Usage(input_tokens=input_tokens, output_tokens=output_tokens, raw=raw_usage)
         total = input_tokens + output_tokens if output_tokens is not None else None
@@ -343,7 +355,10 @@ async def run_decide(
 
     def interpret(response: DecisionsResponse) -> Recording:
         model = response.model if isinstance(response.model, str) else None
-        return Recording(status="ok", usage=decisions_usage(response.usage), model=model)
+        # priced by the name the request used: a response may echo another name or none
+        return Recording(
+            status="ok", usage=decisions_usage(response.usage, body.get("model")), model=model
+        )
 
     async def send() -> DecisionsResponse:
         if deadline is None:

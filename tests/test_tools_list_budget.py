@@ -15,6 +15,8 @@ from mcp_perplexity_pro.storage.migrate import migrate
 # dynamic with the Decisions classifier 57065 (measured 2026-10-15). After model-matrix task 5.1
 # (the ``efforts`` and ``matrix`` output fields of perplexity_models, +1022 bytes each): default
 # 57567, dynamic 57853, dynamic with the Decisions classifier 58087 (measured 2026-10-18).
+# api-drift-2026-10 task 3.1 (the decider model text, eight names, and the flash price): default
+# 57735, dynamic 58021, dynamic with the Decisions classifier 58255 (measured 2026-10-29, +168).
 BUDGET = 59779
 
 

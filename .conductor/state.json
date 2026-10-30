@@ -1566,10 +1566,11 @@
         }
       ],
       "attributedCommits": [
-        "d215946983c0964c86b42cb4a136dc151444c665"
+        "d215946983c0964c86b42cb4a136dc151444c665",
+        "dad33dd4fe379b9975ab7e2043fa0a629c149931"
       ],
       "createdAt": "2026-10-29T23:30:16.562Z",
-      "touchedAt": "2026-10-30T00:50:58.216Z",
+      "touchedAt": "2026-10-30T00:54:04.177Z",
       "release": "release-2-3-0",
       "gateReview": {
         "gate1": {
@@ -1680,7 +1681,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 465,
+  "revision": 466,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",

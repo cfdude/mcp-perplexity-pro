@@ -923,7 +923,7 @@ documented, and it returns individuals' professional data. The server refuses it
 `invalid_request` rather than bill an unknown amount for personal data.
 
 Cost by search type. The cost is **computed** from Perplexity's documented prices (dated
-2026-10-09, `PRICES_AS_OF` in `pricing.py`) at one request unit per call: the Search API's
+2026-10-29, `PRICES_AS_OF` in `pricing.py`) at one request unit per call: the Search API's
 response carries no usage or cost to report. A five-query request is still one billing unit.
 `cost_source` is `computed`.
 
@@ -1079,7 +1079,7 @@ Output (`structuredContent`, with warnings, one line per question and one usage 
 | `warnings` | Things worth knowing about this result. A question the API returned no readable answer for is left out of `answers` with a warning |
 
 Cost. The API reports no cost, so it is **computed** from Perplexity's documented price (dated
-2026-10-09, `PRICES_AS_OF` in `pricing.py`): $0.02 per million input tokens, which is 20 nano-USD
+2026-10-29, `PRICES_AS_OF` in `pricing.py`): $0.02 per million input tokens, which is 20 nano-USD
 per input token. Output tokens are free and there is no per-request fee. `cost_source` is
 `computed`. A call whose `input_tokens` cannot be read has an unknown cost (`cost_usd` `null`,
 `cost_source` `none`), not a cost of zero, and `perplexity_usage` counts it in
@@ -1288,7 +1288,7 @@ the action are `null`:
 | `groups`, `unindexed_chat`, `unindexed_job` | `status`: chunks per source, model, size and encoding; chat messages and completed jobs with text and no vector for the chosen combination (items whose text changed are not counted) |
 | `removed` | `delete`: chunks removed |
 
-**Cost.** Prices are Perplexity's documented figures (dated 2026-10-09, `PRICES_AS_OF` in
+**Cost.** Prices are Perplexity's documented figures (dated 2026-10-29, `PRICES_AS_OF` in
 `pricing.py`), per million input tokens, with no per-request fee:
 
 | Model | Price | Nano-USD per token |

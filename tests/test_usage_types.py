@@ -21,7 +21,7 @@ def test_computed_usage_states_its_source_and_price_table():
     usage = computed_usage(1_000_000)
     assert usage.cost_nano_usd == 1_000_000
     assert usage.cost_source == "computed"
-    assert usage.price_table == "2026-10-09" == PRICES_AS_OF
+    assert usage.price_table == PRICES_AS_OF
 
 
 def test_computed_usage_keeps_well_formed_facts():
