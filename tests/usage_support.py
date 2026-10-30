@@ -56,7 +56,7 @@ async def costed_call(
     for _ in range(calls):
         started = time.monotonic()
         try:
-            body = await client.request_json("POST", path, json={"preset": preset, "input": "q"})
+            body = await client.request_json("POST", path, json={"effort": preset, "input": "q"})
         except PerplexityError as exc:
             await record_usage(
                 engine,

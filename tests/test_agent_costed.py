@@ -85,7 +85,7 @@ async def call(app, *, project="alpha", background=False, preset="fast", **kwarg
         app,
         tool=TOOL,
         project=project,
-        body={"preset": preset, "input": "q", "store": False},
+        body={"effort": preset, "input": "q", "store": False},
         preset=preset,
         background=background,
         **kwargs,

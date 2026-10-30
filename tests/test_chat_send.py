@@ -93,7 +93,7 @@ async def test_the_first_turn_request_names_the_default_model_string_input_and_s
 async def test_a_depth_first_turn_still_names_the_preset(chat_world):
     w = await chat_world()
     await first_turn(w, depth="fast")
-    assert w.bodies() == [{"preset": "fast", "input": FIRST, "store": False}]
+    assert w.bodies() == [{"effort": "fast", "input": FIRST, "store": False}]
 
 
 async def test_a_title_is_trimmed_and_120_characters_is_accepted(chat_world):
@@ -152,7 +152,7 @@ async def test_the_second_turn_chains_from_the_first_response(chat_world):
     out = result.structured_content
     assert out["continuation"] == "chained" and out["chat_id"] == 1
     assert w.bodies()[1] == {
-        "preset": "fast",
+        "effort": "fast",
         "input": FOLLOW_UP,
         "previous_response_id": A_ID,
         "store": False,
@@ -184,7 +184,7 @@ async def test_a_different_depth_on_a_chained_turn_names_that_preset(chat_world)
     out = (
         await w.call(TOOL, action="send", chat_id=1, message="q", depth="low")
     ).structured_content
-    assert w.bodies()[1]["preset"] == "low" and w.bodies()[1]["previous_response_id"] == A_ID
+    assert w.bodies()[1]["effort"] == "low" and w.bodies()[1]["previous_response_id"] == A_ID
     assert out["depth"] == "low"
     assert (await w.rows("SELECT preset FROM chat_messages WHERE role='assistant' ORDER BY id"))[
         -1

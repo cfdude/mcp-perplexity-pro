@@ -1,0 +1,184 @@
+{
+  "background": false,
+  "completed_at": 1793321021,
+  "created_at": 1793321021,
+  "effort": "fast@2026-10-16.0",
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_023cd1ec-43e8-4990-9da7-b0f59dace303",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "queries": [
+        "What is the current stable version of Python? One sentence."
+      ],
+      "results": [
+        {
+          "date": "2026-05-27",
+          "id": 1,
+          "last_updated": "2026-10-10",
+          "snippet": "The `main` branch is currently the future Python 3.16, and is the only\nbranch that accepts new features.\nThe latest release for each Python\nversion can be found on the download page.\n...\nPython 3.16\n...\n|Branch|Schedule|Status|First release|End of life|Release manager|\n|--|--|--|--|--|--|\n|main|**PEP 826**|feature|*2027-10-06*|*2032-10*|Savannah Ostrowski|\n...\n- **bugfix:**\nOnce a version has been fully released, bug fixes and security fixes are accepted.\nNew binaries are built and released roughly every two months.\nThis phase is also called **maintenance** mode or **stable** release.",
+          "source": "web",
+          "title": "Status of Python versions",
+          "url": "https://devguide.python.org/versions/"
+        },
+        {
+          "id": 2,
+          "last_updated": "2026-10-26",
+          "snippet": "Python Release Python 3.15.0 | Python.org\n# Python 3.15.0\nNote: Python 3.15.0 has been superseded by Python 3.15.2.\n**Release date:** Oct. 9, 2026\n## This is the stable release of Python 3.15.0\nPython 3.15.0 is the newest major release of the Python programming language,\nand it contains many new features and optimisations compared to Python 3.14,\nin 5,643 commits from 1,012 contributors.",
+          "source": "web",
+          "title": "Python Release Python 3.15.0 | Python.org",
+          "url": "https://www.python.org/downloads/release/python-3150/"
+        },
+        {
+          "date": "2017-03-13",
+          "id": 3,
+          "last_updated": "2026-10-27",
+          "snippet": "# Python documentation by version\nSome previous versions of the documentation remain available online.\nUse the list below to select a version to view.\n...\n## Release versions\n### Python 3.15\n- Python 3.15.2, released on 25 October 2026\n- Python 3.15.1, released on 21 October 2026\n- Python 3.15.0, released on 9 October 2026\n### Python 3.14\n- Python 3.14.10, released on 25 October 2026\n- Python 3.14.9, released on 21 October 2026",
+          "source": "web",
+          "title": "Python documentation by version",
+          "url": "https://www.python.org/doc/versions/"
+        },
+        {
+          "date": "2026-06-10",
+          "id": 4,
+          "last_updated": "2026-10-26",
+          "snippet": "# Download the latest version for Android\n# Download the latest source release\nDownload Python 3.15.2\n...\n# Download the latest version for Windows\nOr get the standalone installer for Python 3.15.2\n...\n# Download the latest version of Python\nDownload Python 3.15.2\n...\n## Active Python releases\nPython version Maintenance status First released End of support Release schedule\n1. 3.16 pre-release Download 2027-10-06 (planned) 2032-10 PEP 826\n2. 3.15 bugfix Download 2026-10-09 2031-10 PEP 790\n...\n## Looking for a specific release?\nPython releases by version number:\n1. Python 3.15.2 Oct. 25, 2026 Download Release notes\n2. Python 3.15.1 Oct. 21, 2026 Download Release notes\n3. Python 3.15.0 Oct. 9, 2026 Download Release notes\n4. Python 3.14.10 Oct. 25, 2026 Download Release notes",
+          "source": "web",
+          "title": "Download Python",
+          "url": "https://www.python.org/downloads/"
+        },
+        {
+          "date": "2017-03-13",
+          "id": 5,
+          "last_updated": "2026-10-26",
+          "snippet": "# Python Source Releases\n- Latest Python 3 Release - Python 3.15.2\n## Stable Releases\n- Python 3.11.18 - Oct. 25, 2026 - Download Gzipped source tarball\n- Download XZ compressed source tarball\n...\n- Python 3.15.2 - Oct. 25, 2026 - Download Gzipped source tarball\n- Download XZ compressed source tarball",
+          "source": "web",
+          "title": "Python Source Releases for Source release",
+          "url": "https://www.python.org/downloads/source/"
+        },
+        {
+          "date": "2025-06-11",
+          "id": 6,
+          "last_updated": "2026-10-27",
+          "snippet": "# Download the latest version for Android\n# Download the latest source release\nDownload Python 3.15.2\n...\n# Download the latest version for Windows\nOr get the standalone installer for Python 3.15.2\n...\n# Download the latest version of Python\nDownload Python 3.15.2\n...\n## Active Python releases\nPython version Maintenance status First released End of support Release schedule\n1. 3.16 pre-release Download 2027-10-06 (planned) 2032-10 PEP 826\n2. 3.15 bugfix Download 2026-10-09 2031-10 PEP 790\n...\n## Looking for a specific release?\nPython releases by version number:\n1. Python 3.15.2 Oct. 25, 2026 Download Release notes\n2. Python 3.15.1 Oct. 21, 2026 Download Release notes\n3. Python 3.15.0 Oct. 9, 2026 Download Release notes\n4. Python 3.14.10 Oct. 25, 2026 Download Release notes",
+          "source": "web",
+          "title": "Download the latest version of Python",
+          "url": "https://www.python.org/downloads/?keys=latest+python"
+        },
+        {
+          "date": "2001-10-29",
+          "id": 7,
+          "last_updated": "2026-10-28",
+          "snippet": "# Python (programming language)\n^[40]^ As of 2026^[update]^, the Python Software Foundation supports Python 3.15.2, 3.14.10, 3.13.18, 3.12.16 and 3.11.18 that all were \"expedited security releases\"^[41]^ in October 2026, following the project's annual release cycle and five-year support policy.\nPython 3.15 the latest stable release defaults to UTF-8, unlike previous versions.\n...\n|Python|Python|\n|--|--|\n|Stable release|3.15.2^[3]^ / 26 October 2026; 2 days ago (26 October 2026)|\n...\n## History\nAs of October 2026^[update]^, Python 3.15.2 is the latest stable release, it all the other releases where \"expedited security releases\"^[41]^^[56]^ such as 3.14.10, 3.14.9 and also 3.14.8 in the same month,^[57]^ and since 3.14 official Android binary releases are available.",
+          "source": "web",
+          "title": "Python (programming language) - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Python_(programming_language)"
+        },
+        {
+          "date": "2017-03-13",
+          "id": 8,
+          "last_updated": "2026-10-26",
+          "snippet": "# Python Source Releases\n- Latest Python 3 Release - Python 3.15.2\n## Stable Releases\n- Python 3.11.18 - Oct. 25, 2026 - Download Gzipped source tarball\n- Download XZ compressed source tarball\n...\n- Python 3.15.2 - Oct. 25, 2026 - Download Gzipped source tarball\n- Download XZ compressed source tarball",
+          "source": "web",
+          "title": "Python Source Releases",
+          "url": "https://www.python.org/getit/source/"
+        },
+        {
+          "date": "2017-03-13",
+          "id": 9,
+          "last_updated": "2026-10-26",
+          "snippet": "# Python Releases for macOS\n- Latest Python 3 Release - Python 3.15.2\n## Stable Releases\n- Python 3.14.10 - Oct. 25, 2026\n- Python 3.15.2 - Oct. 25, 2026",
+          "source": "web",
+          "title": "Python Releases for macOS",
+          "url": "https://www.python.org/downloads/macos/"
+        },
+        {
+          "date": "2025-06-11",
+          "id": 10,
+          "last_updated": "2026-10-27",
+          "snippet": "# Download the latest version for Android\n# Download the latest source release\nDownload Python 3.15.2\n...\n# Download the latest version for Windows\nOr get the standalone installer for Python 3.15.2\n...\n# Download the latest version of Python\nDownload Python 3.15.2\n...\n## Active Python releases\nPython version Maintenance status First released End of support Release schedule\n1. 3.16 pre-release Download 2027-10-06 (planned) 2032-10 PEP 826\n2. 3.15 bugfix Download 2026-10-09 2031-10 PEP 790\n...\n## Looking for a specific release?\nPython releases by version number:\n1. Python 3.15.2 Oct. 25, 2026 Download Release notes\n2. Python 3.15.1 Oct. 21, 2026 Download Release notes\n3. Python 3.15.0 Oct. 9, 2026 Download Release notes\n4. Python 3.14.10 Oct. 25, 2026 Download Release notes",
+          "source": "web",
+          "title": "Download Python | Python.org",
+          "url": "https://www.python.org/downloads/?keys=latest"
+        }
+      ],
+      "type": "search_results"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "The current stable release of Python is **Python 3.15.2**.[4]",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_e05753a5-12ba-4c35-a323-43152c9b766f",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "preset": "fast@2026-10-16.0",
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_read_cost": 4e-05,
+      "currency": "USD",
+      "input_cost": 0,
+      "output_cost": 1e-05,
+      "tool_calls_cost": 0.001,
+      "tool_calls_cost_details": {
+        "search_web": 0.001
+      },
+      "total_cost": 0.00105
+    },
+    "input_tokens": 3850,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 3847,
+      "cached_tokens": 3847
+    },
+    "output_tokens": 23,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.001,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 3873
+  },
+  "user": null
+}

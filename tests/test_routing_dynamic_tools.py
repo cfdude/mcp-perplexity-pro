@@ -52,7 +52,7 @@ async def test_a_lookup_goes_to_the_fast_preset(world):
         "reason": "short lookup",
     }
     body = w.bodies()[0]
-    assert body["preset"] == "fast" and "model" not in body
+    assert body["effort"] == "fast" and "model" not in body
 
 
 async def test_an_analysis_goes_to_the_medium_preset(world):
@@ -64,7 +64,7 @@ async def test_an_analysis_goes_to_the_medium_preset(world):
         None,
     )
     assert routing["reason"] == "3 analysis terms"
-    assert w.bodies()[0]["preset"] == "medium"
+    assert w.bodies()[0]["effort"] == "medium"
 
 
 async def test_an_ordinary_question_runs_the_standard_model_shaped_like_an_explicit_model(world):
@@ -76,7 +76,7 @@ async def test_an_ordinary_question_runs_the_standard_model_shaped_like_an_expli
         "no signals",
     )
     body = w.bodies()[0]
-    assert body["model"] == "perplexity/sonar" and "preset" not in body
+    assert body["model"] == "perplexity/sonar" and "effort" not in body
     assert body["tools"] == [{"type": "web_search"}] and body["max_steps"] == 3
 
 
@@ -85,7 +85,7 @@ async def test_a_replaced_tier_runs_its_model_as_an_explicit_model_call_would(wo
     routing = routing_of(await w.call(ASK, query=ANALYSIS))
     assert (routing["tier"], routing["model"]) == ("complex", "anthropic/claude-opus-5-5")
     body = w.bodies()[0]
-    assert body["model"] == "anthropic/claude-opus-5-5" and "preset" not in body
+    assert body["model"] == "anthropic/claude-opus-5-5" and "effort" not in body
     assert body["tools"] == [{"type": "web_search"}] and body["max_steps"] == 3
     assert body["max_output_tokens"] == 4096
 
@@ -99,7 +99,7 @@ async def test_a_preset_route_request_equals_the_depth_request(world):
     await w.call(ASK, query=ANALYSIS, domains=["python.org"])
     await w.call(ASK, query=ANALYSIS, depth="medium", domains=["python.org"])
     routed, explicit = w.bodies()[2:]
-    assert routed == explicit and routed["preset"] == "medium"
+    assert routed == explicit and routed["effort"] == "medium"
 
 
 async def test_classifying_makes_no_upstream_request_and_records_one_event(world, tmp_path):
@@ -126,7 +126,7 @@ async def test_an_explicit_selector_wins_and_nothing_is_classified(world):
         "complex",
         None,
     )
-    assert [b.get("preset") for b in w.bodies()] == ["low", None, "medium"]
+    assert [b.get("effort") for b in w.bodies()] == ["low", None, "medium"]
 
 
 async def test_search_false_runs_the_standard_model_with_no_tools(world):
@@ -141,7 +141,7 @@ async def test_search_false_runs_the_standard_model_with_no_tools(world):
         "reason": "search off",
     }
     body = w.bodies()[0]
-    assert body["model"] == "perplexity/sonar" and "tools" not in body and "preset" not in body
+    assert body["model"] == "perplexity/sonar" and "tools" not in body and "effort" not in body
 
 
 async def test_search_false_with_a_preset_tier_is_refused_and_sends_nothing(world):
@@ -206,7 +206,7 @@ async def test_a_new_chat_is_classified_and_stores_the_preset(dchat):
     w = await dchat()
     out = await send(w, title="t", message=LOOKUP)
     assert out["routing"]["tier"] == "light" and out["routing"]["classifier"] == "rules"
-    assert w.bodies()[0]["preset"] == "fast"
+    assert w.bodies()[0]["effort"] == "fast"
     assert (await stored_presets(w))[0][0] == "fast"
     assert len(await w.events()) == 1
 
@@ -222,7 +222,7 @@ async def test_a_short_follow_up_to_a_complex_chat_stays_complex(dchat):
         "rules",
     )
     assert "held at complex" in routing["reason"]
-    assert [b["preset"] for b in w.bodies()] == ["medium", "medium"]
+    assert [b["effort"] for b in w.bodies()] == ["medium", "medium"]
     assert out["continuation"] == "chained"
 
 
@@ -231,7 +231,7 @@ async def test_a_longer_question_raises_the_tier(dchat):
     await send(w, title="t", message=LOOKUP)
     out = await send(w, chat_id=1, message=ANALYSIS)
     assert out["routing"]["tier"] == "complex" and "held" not in out["routing"]["reason"]
-    assert [b["preset"] for b in w.bodies()] == ["fast", "medium"]
+    assert [b["effort"] for b in w.bodies()] == ["fast", "medium"]
 
 
 async def test_the_floor_holds_at_standard_too(dchat):
@@ -247,9 +247,9 @@ async def test_an_explicit_selector_leaves_the_floor(dchat):
     await send(w, title="t", message=ANALYSIS)
     out = await send(w, chat_id=1, message=SHORT, depth="fast")
     assert (out["routing"]["selected_by"], out["routing"]["reason"]) == ("depth", None)
-    assert w.bodies()[1]["preset"] == "fast"
+    assert w.bodies()[1]["effort"] == "fast"
     out = await send(w, chat_id=1, message=SHORT, tier="light")
-    assert out["routing"]["selected_by"] == "tier" and w.bodies()[2]["preset"] == "fast"
+    assert out["routing"]["selected_by"] == "tier" and w.bodies()[2]["effort"] == "fast"
 
 
 async def test_a_model_no_tier_uses_counts_as_standard(dchat):
@@ -286,7 +286,7 @@ async def test_search_false_beats_the_floor_and_runs_the_standard_model(dchat):
         "search off",
     )
     body = w.bodies()[1]
-    assert body["model"] == "perplexity/sonar" and "tools" not in body and "preset" not in body
+    assert body["model"] == "perplexity/sonar" and "tools" not in body and "effort" not in body
 
 
 async def test_search_false_with_a_preset_tier_is_refused_before_any_lookup(dchat):
@@ -322,7 +322,7 @@ async def test_a_replay_in_dynamic_mode_also_holds_the_tier(dchat):
     await send(w, title="t", message=ANALYSIS)
     out = await send(w, chat_id=1, message=SHORT, replay=True)
     assert out["continuation"] == "replay" and out["routing"]["tier"] == "complex"
-    assert w.bodies()[1]["preset"] == "medium"
+    assert w.bodies()[1]["effort"] == "medium"
 
 
 def routing_properties(schema):
