@@ -5,13 +5,6 @@
 ### Requirement: Agent requests name the preset as effort
 Every Agent API request the server builds (an ask, a chat send, a research submit) SHALL name its preset in the body field `effort` and SHALL NOT send `preset`, which the API keeps only as a deprecated alias. The preset names and the tools' `depth` arguments are unchanged.
 
-### Requirement: The effort field means the preset name
-Wherever the Agent and routing specs (`agent-ask`, `agent-chat`, `agent-research`, `routing-config`) say a request names or has a preset, this body field is meant. It carries the preset name only and is unrelated to `reasoning.effort` and to the model matrix's `efforts`.
-
-#### Scenario: Reading a routing scenario
-- **WHEN** `routing-config` says a request names preset `medium` and no model
-- **THEN** the request has `effort` `medium` and no `model` key
-
 #### Scenario: An ask at a depth
 - **WHEN** a client asks with `depth` `medium`
 - **THEN** the request body has `effort` `medium` and no `preset` key
@@ -23,6 +16,13 @@ Wherever the Agent and routing specs (`agent-ask`, `agent-chat`, `agent-research
 #### Scenario: A chat send at a depth
 - **WHEN** a chat send names `depth` `fast`
 - **THEN** its request has `effort` `fast` and no `preset` key
+
+### Requirement: The effort field means the preset name
+Wherever the Agent and routing specs (`agent-ask`, `agent-chat`, `agent-research`, `routing-config`) say a request names or has a preset, this body field is meant. It SHALL carry the preset name only and is unrelated to `reasoning.effort` and to the model matrix's `efforts`.
+
+#### Scenario: Reading a routing scenario
+- **WHEN** `routing-config` says a request names preset `medium` and no model
+- **THEN** the request has `effort` `medium` and no `model` key
 
 ### Requirement: Versioned effort values in responses are read as before
 A response whose `effort` and `preset` fields carry a versioned value (such as `fast@2026-10-16.0`) SHALL be digested, stored and recorded exactly as one that names the plain preset: the preset recorded on usage events and chat turns is the name the request asked for, not the response's value.
