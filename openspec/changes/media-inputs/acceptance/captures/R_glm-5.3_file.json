@@ -1,0 +1,10 @@
+{
+ "status": 429,
+ "body": {
+  "error": {
+   "message": "upstream model is overloaded, please try again later",
+   "type": "overloaded",
+   "code": 429
+  }
+ }
+}

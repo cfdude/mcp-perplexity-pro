@@ -1,0 +1,80 @@
+{
+ "background": true,
+ "completed_at": 1793375350,
+ "created_at": 1793375350,
+ "effort": "medium@2026-10-22.1",
+ "error": null,
+ "frequency_penalty": 0,
+ "id": "resp_18ff3aa9-fe03-4188-a9b6-4a9a411d3e2b",
+ "incomplete_details": null,
+ "instructions": null,
+ "max_output_tokens": 300,
+ "max_tool_calls": null,
+ "metadata": {},
+ "model": "openai/gpt-6-luna",
+ "object": "response",
+ "output": [
+  {
+   "content": [
+    {
+     "annotations": [],
+     "text": "MANGO",
+     "type": "output_text"
+    }
+   ],
+   "id": "msg_72394ccc-18e8-46bf-8e38-310a6c2d3f60",
+   "role": "assistant",
+   "status": "completed",
+   "type": "message"
+  }
+ ],
+ "parallel_tool_calls": true,
+ "presence_penalty": 0,
+ "preset": "medium@2026-10-22.1",
+ "previous_response_id": null,
+ "prompt_cache_key": null,
+ "reasoning": null,
+ "safety_identifier": null,
+ "service_tier": "default",
+ "status": "completed",
+ "store": true,
+ "temperature": 1,
+ "text": {
+  "format": {
+   "type": "text"
+  }
+ },
+ "tool_choice": "auto",
+ "tools": [
+  {
+   "type": "web_search"
+  },
+  {
+   "type": "fetch_url"
+  }
+ ],
+ "top_logprobs": 0,
+ "top_p": 1,
+ "truncation": "",
+ "usage": {
+  "cost": {
+   "cache_creation_cost": 0.00018,
+   "currency": "USD",
+   "input_cost": 0,
+   "output_cost": 2e-05,
+   "total_cost": 0.0002
+  },
+  "input_tokens": 1407,
+  "input_tokens_details": {
+   "cache_creation_input_tokens": 1404,
+   "cache_read_input_tokens": 0,
+   "cached_tokens": 0
+  },
+  "output_tokens": 30,
+  "output_tokens_details": {
+   "reasoning_tokens": 22
+  },
+  "total_tokens": 1437
+ },
+ "user": null
+}

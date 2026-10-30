@@ -1,0 +1,10 @@
+{
+ "status": 400,
+ "body": {
+  "error": {
+   "message": "invalid request",
+   "type": "invalid_request",
+   "code": 400
+  }
+ }
+}

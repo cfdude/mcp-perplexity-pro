@@ -1,0 +1,92 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": 1793375353,
+  "created_at": 1793375353,
+  "effort": "fast@2026-10-16.0",
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_f6dc5351-3681-47b4-9d85-5e0d5ef0c28b",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 300,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "MANGO",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_4387f89d-749d-4b98-baf7-2a61bbd9fdbf",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "preset": "fast@2026-10-16.0",
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "fast",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [
+   {
+    "type": "web_search"
+   }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "cache_creation_cost": 0.00024,
+    "cache_read_cost": 2e-05,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0,
+    "tool_calls_cost": 0.001,
+    "tool_calls_cost_details": {
+     "search_web": 0.001
+    },
+    "total_cost": 0.00126
+   },
+   "input_tokens": 3694,
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 1911,
+    "cache_read_input_tokens": 1780,
+    "cached_tokens": 1780
+   },
+   "output_tokens": 6,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "tool_calls_details": {
+    "search_web": {
+     "cost_usd": 0.001,
+     "invocation": 1
+    }
+   },
+   "total_tokens": 3700
+  },
+  "user": null
+ },
+ "_note": "search-result items (scraped third-party text) removed; usage and the message kept"
+}

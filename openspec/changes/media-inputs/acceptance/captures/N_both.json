@@ -1,0 +1,10 @@
+{
+ "status": 400,
+ "body": {
+  "error": {
+   "message": "validation failed: input[0]: content part 1: input_file requires exactly one of file_data or file_url",
+   "type": "invalid_request",
+   "code": 400
+  }
+ }
+}

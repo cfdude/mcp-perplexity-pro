@@ -1,0 +1,10 @@
+{
+ "status": 400,
+ "body": {
+  "error": {
+   "message": "validation failed: input[0]: content part 1: invalid type \"input_video\"",
+   "type": "invalid_request",
+   "code": 400
+  }
+ }
+}
