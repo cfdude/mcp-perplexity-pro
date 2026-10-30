@@ -20,7 +20,7 @@
 
 ## 5. Acceptance (live)
 
-- [ ] 5.1 Live on a scratch instance (ephemeral port, temporary data directory, real key from the environment, never the live pm2 app): (a) ask at `fast` and `medium`, a chat send and a follow-up, a research submit at `medium` then its result, all through the `effort` body; (b) decide with `pplx-decider-v1.2`, `pplx-decider-flash-v1.2` and `pplx-decider-latest`, the recorded cost against the reported token counts; (c) `uv run pytest -m live` for `tests/test_agent_live.py`, `tests/test_client_live.py` and `tests/test_pricing_live.py` (diff and restore any fixture a live capture overwrites); (d) `perplexity_usage` reconciles the events to the nano-USD; save the outputs under `openspec/changes/api-drift-2026-10/acceptance/`; expected spend under $0.15
+- [x] 5.1 Live on a scratch instance (ephemeral port, temporary data directory, real key from the environment, never the live pm2 app): (a) ask at `fast` and `medium`, a chat send and a follow-up, a research submit at `medium` then its result, all through the `effort` body; (b) decide with `pplx-decider-v1.2`, `pplx-decider-flash-v1.2` and `pplx-decider-latest`, the recorded cost against the reported token counts; (c) `uv run pytest -m live` for `tests/test_agent_live.py`, `tests/test_client_live.py` and `tests/test_pricing_live.py` (diff and restore any fixture a live capture overwrites); (d) `perplexity_usage` reconciles the events to the nano-USD; save the outputs under `openspec/changes/api-drift-2026-10/acceptance/`; expected spend under $0.15
 
 ## 6. Gate procedure (required, per the pm conductor)
 
