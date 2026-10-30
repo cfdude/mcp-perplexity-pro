@@ -1370,7 +1370,79 @@
       "parent": "model-routing",
       "attributedCommits": [],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-10-29T23:30:18.070Z"
+      "touchedAt": "2026-10-30T16:35:28.720Z",
+      "release": "release-2-4-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-30T16:35:28.717Z",
+          "artifacts": [
+            "openspec/changes/media-inputs/acceptance/probe.md",
+            "openspec/changes/media-inputs/design.md",
+            "openspec/changes/media-inputs/proposal.md",
+            "openspec/changes/media-inputs/specs/agent-ask/spec.md",
+            "openspec/changes/media-inputs/specs/agent-chat/spec.md",
+            "openspec/changes/media-inputs/specs/cli/spec.md",
+            "openspec/changes/media-inputs/specs/help-tool/spec.md",
+            "openspec/changes/media-inputs/specs/media-attachments/spec.md",
+            "openspec/changes/media-inputs/specs/model-catalog/spec.md",
+            "openspec/changes/media-inputs/specs/model-matrix/spec.md",
+            "openspec/changes/media-inputs/tasks.md"
+          ],
+          "artifactDigests": [
+            {
+              "path": "openspec/changes/media-inputs/acceptance/probe.md",
+              "sha256": "d8dc64f95f883ac7ad1d18ce8fe3f0625f52bd5fd87896bdf1eef8acbccab838"
+            },
+            {
+              "path": "openspec/changes/media-inputs/design.md",
+              "sha256": "f236c6a17f18facee77d2a5c265a85137db1ff6ad28a63133cf76784f972ff92"
+            },
+            {
+              "path": "openspec/changes/media-inputs/proposal.md",
+              "sha256": "2f22258aed3e0aeb293423a32c7b5aba42e1e542024b12316b4124665461d0fb"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/agent-ask/spec.md",
+              "sha256": "2985e0ea7641324303b96582c73790ac25af0b4810dc3dab6843088ece0d864c"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/agent-chat/spec.md",
+              "sha256": "1e3d5d2385e2995eb45ebb45eb5e1490060099fccee9ebd843506ac701cf8751"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/cli/spec.md",
+              "sha256": "33268048ef5fa28c5a53e8cfd94d0140c3601d95cc50cc64dad72f60e52206ac"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/help-tool/spec.md",
+              "sha256": "8ee4eba1640716c9792a85c0b4d1c65c162ad54ceb19d2cd75f5b4a01788b5eb"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/media-attachments/spec.md",
+              "sha256": "97a69d2dcf88d908463ac238ec6b2db4d1d61d1e0a8b2ca71e3e47f6244e7c41"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/model-catalog/spec.md",
+              "sha256": "14f4a3edc583ae4aad3e96092b577e833ed457cafe92b7f1cf57b091a7f2a40c"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/model-matrix/spec.md",
+              "sha256": "11319ecc69f0094463df9e04b89ba5849da30e4fecebc6ae75ff533028bdb961"
+            }
+          ],
+          "reviewer": "fresh-context general-purpose subagents: five rounds (2 Critical + 11 Important, 6, 3, 3, then none; all folded; 7 final Minors folded); cross-spec reviewed with routing-v2"
+        }
+      },
+      "gateRounds": {
+        "gate1": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-30T16:35:28.717Z",
+          "lastPassAt": "2026-10-30T16:35:28.717Z"
+        }
+      }
     },
     {
       "id": "model-matrix",
@@ -1535,7 +1607,89 @@
       "parent": "model-routing",
       "attributedCommits": [],
       "createdAt": "2026-10-16T06:24:44.693Z",
-      "touchedAt": "2026-10-29T23:30:17.384Z"
+      "touchedAt": "2026-10-30T16:35:28.062Z",
+      "release": "release-2-4-0",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-10-30T16:35:28.058Z",
+          "artifacts": [
+            "openspec/changes/routing-v2/design.md",
+            "openspec/changes/routing-v2/proposal.md",
+            "openspec/changes/routing-v2/specs/agent-ask/spec.md",
+            "openspec/changes/routing-v2/specs/agent-chat/spec.md",
+            "openspec/changes/routing-v2/specs/agent-research/spec.md",
+            "openspec/changes/routing-v2/specs/help-tool/spec.md",
+            "openspec/changes/routing-v2/specs/model-catalog/spec.md",
+            "openspec/changes/routing-v2/specs/routing-config/spec.md",
+            "openspec/changes/routing-v2/specs/routing-decisions-classifier/spec.md",
+            "openspec/changes/routing-v2/specs/routing-evidence/spec.md",
+            "openspec/changes/routing-v2/specs/routing-rules/spec.md",
+            "openspec/changes/routing-v2/specs/server-runtime/spec.md",
+            "openspec/changes/routing-v2/tasks.md"
+          ],
+          "artifactDigests": [
+            {
+              "path": "openspec/changes/routing-v2/design.md",
+              "sha256": "55b4ae645e8455939388106c8fbdce9ace4c6710a17c147cdcc26d5f1b76e02f"
+            },
+            {
+              "path": "openspec/changes/routing-v2/proposal.md",
+              "sha256": "8850dc301770f8468d9746862863651a7261beb77355b4c6c133ef111990c4ab"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/agent-ask/spec.md",
+              "sha256": "ea2fed8ceab47e66b2c1c4bc0258e1780e91f7079b413a1d0eb399fafecb2502"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/agent-chat/spec.md",
+              "sha256": "57e2d2bd9ddfa9392d22204b8415a0e904bdccacfac41c71a73d8d48853d7d76"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/agent-research/spec.md",
+              "sha256": "0f9e482c5980bd1417a79bdbb4719e888c2619064ce7ec882f832971ad5e0fdb"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/help-tool/spec.md",
+              "sha256": "c9eb81eac134fac5335b9c7e20353cd38e0ac0fcd538b13d1a7d98f495c69e94"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/model-catalog/spec.md",
+              "sha256": "612e922c27de8f3242fd8391df2ed315a7b3aa1809696115ea78fd75a5286663"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/routing-config/spec.md",
+              "sha256": "ca0ac1e4462beff57e41a76176c9fdba326ed49812b1a2fb73cf88550426ae68"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/routing-decisions-classifier/spec.md",
+              "sha256": "c7cd7424abbdf6638769793970af47aec09ae5898134d3042c13958f08aeb7e2"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/routing-evidence/spec.md",
+              "sha256": "7a07192e5872917d0283023fe7a00ccff752cc98bff6e08c6f7373af2fb6a8b9"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/routing-rules/spec.md",
+              "sha256": "7861b6841bafbef0b161e12a14c9f1fa4e07c2b647c3a6bd7bc2c2a2d9a2a842"
+            },
+            {
+              "path": "openspec/changes/routing-v2/specs/server-runtime/spec.md",
+              "sha256": "7aea515b60079e457772f7768b0094baed20adf54b3d7c02270e39a21c7fd734"
+            }
+          ],
+          "reviewer": "fresh-context general-purpose subagents: four rounds (12 Important, 6, 2, then none; all folded); cross-spec reviewed with media-inputs"
+        }
+      },
+      "gateRounds": {
+        "gate1": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-10-30T16:35:28.058Z",
+          "lastPassAt": "2026-10-30T16:35:28.058Z"
+        }
+      }
     },
     {
       "id": "api-drift-2026-10",
@@ -1712,7 +1866,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 477,
+  "revision": 481,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
@@ -2209,6 +2363,87 @@
           }
         ],
         "reviewer": "fresh-context general-purpose subagent over the five api-drift-2026-10 deltas vs main specs: 3 BLOCKS (routing-config wording, artifact list, date re-dating scope) folded, POLISH folded or declined (declined: dedupe of per-tool effort scenarios, kept as owned duplicates; fallback models not in the table)"
+      }
+    },
+    {
+      "id": "release-2-4-0",
+      "intent": "Router v2 (model and effort from benchmark evidence and price) and media inputs (image and document attachments, modality matrix), unpublished; leapfrogs 2.1 to 2.3",
+      "deferred": [],
+      "target": "2.4.0",
+      "crossSpecReview": {
+        "verdict": "pass",
+        "reviewedAt": "2026-10-30T16:35:27.435Z",
+        "specs": [
+          {
+            "key": "media-inputs/specs/agent-ask/spec.md",
+            "sha256": "2985e0ea7641324303b96582c73790ac25af0b4810dc3dab6843088ece0d864c"
+          },
+          {
+            "key": "media-inputs/specs/agent-chat/spec.md",
+            "sha256": "1e3d5d2385e2995eb45ebb45eb5e1490060099fccee9ebd843506ac701cf8751"
+          },
+          {
+            "key": "media-inputs/specs/cli/spec.md",
+            "sha256": "33268048ef5fa28c5a53e8cfd94d0140c3601d95cc50cc64dad72f60e52206ac"
+          },
+          {
+            "key": "media-inputs/specs/help-tool/spec.md",
+            "sha256": "8ee4eba1640716c9792a85c0b4d1c65c162ad54ceb19d2cd75f5b4a01788b5eb"
+          },
+          {
+            "key": "media-inputs/specs/media-attachments/spec.md",
+            "sha256": "97a69d2dcf88d908463ac238ec6b2db4d1d61d1e0a8b2ca71e3e47f6244e7c41"
+          },
+          {
+            "key": "media-inputs/specs/model-catalog/spec.md",
+            "sha256": "14f4a3edc583ae4aad3e96092b577e833ed457cafe92b7f1cf57b091a7f2a40c"
+          },
+          {
+            "key": "media-inputs/specs/model-matrix/spec.md",
+            "sha256": "11319ecc69f0094463df9e04b89ba5849da30e4fecebc6ae75ff533028bdb961"
+          },
+          {
+            "key": "routing-v2/specs/agent-ask/spec.md",
+            "sha256": "ea2fed8ceab47e66b2c1c4bc0258e1780e91f7079b413a1d0eb399fafecb2502"
+          },
+          {
+            "key": "routing-v2/specs/agent-chat/spec.md",
+            "sha256": "57e2d2bd9ddfa9392d22204b8415a0e904bdccacfac41c71a73d8d48853d7d76"
+          },
+          {
+            "key": "routing-v2/specs/agent-research/spec.md",
+            "sha256": "0f9e482c5980bd1417a79bdbb4719e888c2619064ce7ec882f832971ad5e0fdb"
+          },
+          {
+            "key": "routing-v2/specs/help-tool/spec.md",
+            "sha256": "c9eb81eac134fac5335b9c7e20353cd38e0ac0fcd538b13d1a7d98f495c69e94"
+          },
+          {
+            "key": "routing-v2/specs/model-catalog/spec.md",
+            "sha256": "612e922c27de8f3242fd8391df2ed315a7b3aa1809696115ea78fd75a5286663"
+          },
+          {
+            "key": "routing-v2/specs/routing-config/spec.md",
+            "sha256": "ca0ac1e4462beff57e41a76176c9fdba326ed49812b1a2fb73cf88550426ae68"
+          },
+          {
+            "key": "routing-v2/specs/routing-decisions-classifier/spec.md",
+            "sha256": "c7cd7424abbdf6638769793970af47aec09ae5898134d3042c13958f08aeb7e2"
+          },
+          {
+            "key": "routing-v2/specs/routing-evidence/spec.md",
+            "sha256": "7a07192e5872917d0283023fe7a00ccff752cc98bff6e08c6f7373af2fb6a8b9"
+          },
+          {
+            "key": "routing-v2/specs/routing-rules/spec.md",
+            "sha256": "7861b6841bafbef0b161e12a14c9f1fa4e07c2b647c3a6bd7bc2c2a2d9a2a842"
+          },
+          {
+            "key": "routing-v2/specs/server-runtime/spec.md",
+            "sha256": "7aea515b60079e457772f7768b0094baed20adf54b3d7c02270e39a21c7fd734"
+          }
+        ],
+        "reviewer": "fresh-context general-purpose subagents: four rounds over routing-v2 and media-inputs together (7 BLOCKS then 4 then 1, all folded; last round no block; ownership: media owns modality data and the one gate, routing-v2 only selects and owns migration 0006; canonical apply order verbatim in both)"
       }
     }
   ],
