@@ -327,6 +327,37 @@ is the fact base for model routing.
   `model_matrix.json`; to stop automatic work, set `PERPLEXITY_MATRIX_REFRESH=0` and
   `PERPLEXITY_MATRIX_PROBE=off`.
 
+## Routing evidence: how to refresh and verify it
+
+`src/mcp_perplexity_pro/data/routing_evidence.json` is a hand-kept file of benchmark scores for the
+models a future router may choose (the shortlist). It is data, never code, and the server never
+writes it. This section is the upkeep procedure only; nothing in it claims that routing saves cost or
+time (that claim waits for the pre-registered evaluation).
+
+- **What a score needs.** A number from 0 to 100, the `https` page it was read from (`source_url`),
+  the date of the figure (`as_of`), whether the vendor or an independent party reported it
+  (`basis`), the harness the source names (or null) and `verified_at`, the day a person read the
+  number at that page. A score with `verified_at` null is a lead and is never used. A score
+  from the aggregator llm-stats.com is refused by the loader: it is a lead source only.
+  Data by LLM Stats (linked to https://llm-stats.com).
+- **Who re-verifies, and how often.** The owner of the shortlist re-opens every `source_url`, reads the
+  number, the benchmark version and the date, and rewrites `verified_at`. Do it whenever a model is added
+  or a vendor republishes, and at least every 90 days: a serving process in `dynamic` mode logs one
+  warning at start when `as_of` is more than 90 days old, and another when no score is verified. Routing
+  is unchanged by either warning.
+- **How to edit the table.** Put a copy named `routing_evidence.json` in the data directory
+  (`PERPLEXITY_DATA_DIR`): it takes precedence over the packaged file, so the task classes, their benchmark
+  ids (the version is part of the id, for example `terminal_bench_4_0`), the shortlist and the scores change
+  with no code change. An invalid or newer file is ignored with one warning and the packaged file is
+  used; delete the copy to go back.
+- **Where a figure comes from.** The vendor's own page or system card, or the benchmark's leaderboard,
+  never a third-party summary. `acceptance/evidence-verification.md` of the `routing-v2` change keeps
+  a quoted snippet per figure and lists what could not be verified.
+- **Drift checks.** The offline suite fails when a shortlist id or the fallback model is not a key of the
+  packaged matrix baseline (`tests/test_routing_evidence.py`), and
+  `PERPLEXITY_API_KEY=... uv run pytest -m live tests/test_routing_evidence.py` fails when one is not
+  in the live `GET /v1/models` list.
+
 ## Getting help
 
 `perplexity_help` is the first thing a calling agent should read, and it costs nothing (no API call,
