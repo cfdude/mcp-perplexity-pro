@@ -10,7 +10,13 @@ import httpx2
 import media_support as ms
 import pytest
 from agent_support import inline
-from matrix_support import MatrixWorld, Upstream, make_matrix_world, payload_with
+from matrix_support import (
+    ADDED_AFTER_THE_SWEEP,
+    MatrixWorld,
+    Upstream,
+    make_matrix_world,
+    payload_with,
+)
 from test_matrix_probe import (
     KEY,
     NOW,
@@ -31,16 +37,19 @@ from mcp_perplexity_pro.errors import PerplexityError
 NEW = "acme/new-1"
 
 
-async def silence_baseline(world: MatrixWorld) -> None:
+async def silence_baseline(world: MatrixWorld, only: set[str] | None = None) -> None:
     """The baseline leaves about ten models with an unknown or a stale-refused kind; they would
     take the ten probe slots of a refresh before the model under test. Give each such kind a
     ``retry_after`` far ahead (a stored backoff), so only the models a test adds are probed.
-    Tests about the baseline's own models pass ``quiet=False``."""
+    Tests about the baseline's own models pass ``quiet=False``; ``only`` silences just the named
+    ids (the entry added by hand after the sweep has unanswered inputs and would take a slot)."""
     later = stamp(NOW + timedelta(days=30))
 
     def quiet(current: matrix.Matrix) -> matrix.Matrix:
         copy = current.model_copy(deep=True)
-        for row in copy.models.values():
+        for model_id, row in copy.models.items():
+            if only is not None and model_id not in only:
+                continue
             for kind in matrix_refresh._wants_inputs(row, row, NOW):
                 row.inputs.retry_after[kind] = later
         return copy
@@ -536,6 +545,7 @@ async def test_a_stale_baseline_refusal_is_reprobed_after_the_merge_copies_it(wo
     world = await worlds(
         Upstream(agent=Agent({("xai/grok-4.3", "document"): bad(NAMED)})), quiet=False
     )
+    await silence_baseline(world, only={ADDED_AFTER_THE_SWEEP})  # its inputs were never swept
     late = NOW.replace(month=11, day=12)  # the baseline's refusal is from 2026-10-30
     world.app.matrix.now = lambda: late
     await refresh(world)

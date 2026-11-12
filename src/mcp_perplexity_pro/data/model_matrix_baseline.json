@@ -2204,6 +2204,52 @@
     "retry_after": {}
    }
   },
+  "openai/gpt-6.1-terra": {
+   "provider": "openai",
+   "status": "available",
+   "pricing": {
+    "input": 1,
+    "output": 5,
+    "cache_read": 0.05,
+    "cache_write": 1.25
+   },
+   "first_seen": "2026-11-11T00:00:00Z",
+   "last_seen": "2026-11-11T00:00:00Z",
+   "probing_until": null,
+   "efforts": {
+    "accepted": [
+     "minimal",
+     "low",
+     "medium",
+     "high",
+     "xhigh",
+     "max"
+    ],
+    "refused": {},
+    "answers": {
+     "control": 200,
+     "minimal": 200,
+     "low": 200,
+     "medium": 200,
+     "high": 200,
+     "xhigh": 200,
+     "max": 200
+    },
+    "probed_at": "2026-11-11T00:00:00Z",
+    "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [],
+    "refused": {},
+    "answers": {},
+    "source": "unprobed",
+    "probed_at": {},
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
+   }
+  },
   "perplexity/deepseek-v4-pro-0813": {
    "provider": "perplexity",
    "status": "available",

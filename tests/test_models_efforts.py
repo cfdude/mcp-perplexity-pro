@@ -194,9 +194,10 @@ def test_the_help_entry_describes_efforts_and_the_matrix(make_settings):
 
 
 async def test_a_full_result_for_the_whole_list_stays_small(make_world):
-    """Measured 2026-10-18: 14757 bytes of structured content for 54 models (acceptance README)."""
+    """Measured 2026-10-18: 14757 bytes of structured content for 54 models (acceptance README);
+    the baseline now holds 55 (the entry added by hand, routing-v2 2.5)."""
     import json
 
     result = await models(await make_world())
-    assert len(by_id(result)) == 54
+    assert len(by_id(result)) == len(matrix.load_baseline().models) == 55
     assert len(json.dumps(result.structured_content, separators=(",", ":"))) < 16000

@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from fixture_support import FIXTURE_DIR
+from matrix_support import ADDED_AFTER_THE_SWEEP, models_payload, swept_payload
 
 from mcp_perplexity_pro import matrix
 from mcp_perplexity_pro.catalog import CatalogModel, Pricing, to_catalog_models
@@ -44,12 +44,14 @@ REFUSE_EVERYTHING = {
 
 @pytest.fixture(scope="module")
 def fixture_payload() -> dict:
-    return json.loads((FIXTURE_DIR / "models_2026-10-17.json").read_text())
+    """The swept list of 2026-10-17: the 54 models the baseline's probed facts come from."""
+    return swept_payload()
 
 
 @pytest.fixture
 def live(fixture_payload) -> list[CatalogModel]:
-    return to_catalog_models(ModelList.model_validate(fixture_payload))
+    """The swept list plus the hand-added ``openai/gpt-6.1-terra`` (a refresh keeps it)."""
+    return to_catalog_models(ModelList.model_validate(models_payload()))
 
 
 @pytest.fixture(scope="module")
@@ -184,7 +186,7 @@ def test_every_fixture_id_is_in_the_baseline_with_efforts_and_the_fixture_prices
     fixture_payload, baseline
 ):
     entries = {m["id"]: m for m in fixture_payload["data"]}
-    assert set(baseline.models) == set(entries)
+    assert set(baseline.models) == set(entries) | {ADDED_AFTER_THE_SWEEP}
     for model_id, raw in entries.items():
         row = baseline.models[model_id]
         assert row.status == "available" and row.probing_until is None
@@ -212,7 +214,7 @@ def test_the_nine_differing_models_are_named_and_the_rest_accept_every_level(bas
     nine = REFUSE_XHIGH_AND_MAX | REFUSE_MINIMAL | REFUSE_EVERYTHING
     assert len(nine) == 9
     for model_id, entry in baseline.models.items():
-        if model_id not in nine:
+        if model_id not in nine and model_id != ADDED_AFTER_THE_SWEEP:  # that one is unprobed
             assert entry.efforts.accepted == LEVELS and entry.efforts.refused == {}, model_id
 
 
@@ -222,7 +224,10 @@ def test_the_baseline_is_read_with_importlib_resources_and_is_a_version_1_matrix
     raw = json.loads(
         files("mcp_perplexity_pro").joinpath("data/model_matrix_baseline.json").read_text()
     )
-    assert raw["version"] == 1 and len(raw["models"]) == 54
+    swept = {m["id"] for m in swept_payload()["data"]}
+    assert raw["version"] == 1 and len(swept) == 54
+    # the 54 swept models plus the one entry added by hand (routing-v2 2.5)
+    assert set(raw["models"]) == swept | {ADDED_AFTER_THE_SWEEP}
 
 
 # --- The matrix is never empty ---------------------------------------------------------------
@@ -355,14 +360,17 @@ def test_an_empty_list_changes_nothing_and_warns(baseline):
 def test_a_truncated_list_changes_nothing_and_warns(baseline, live):
     merged = matrix.merge(baseline, live[:10], baseline, NOW)
     assert not merged.applied and merged.matrix == baseline
-    assert merged.warning and "10" in merged.warning and "54" in merged.warning
+    total = len(baseline.models)
+    assert merged.warning and "10" in merged.warning and str(total) in merged.warning
 
 
 def test_exactly_half_of_the_stored_ids_is_enough(baseline, live):
-    merged = matrix.merge(baseline, live[:27], baseline, NOW)
-    assert (
-        merged.applied and sum(m.status == "removed" for m in merged.matrix.models.values()) == 27
-    )
+    stored = len(baseline.models)
+    half = -(-stored // 2)  # the smallest list that is at least half of the stored ids
+    merged = matrix.merge(baseline, live[:half], baseline, NOW)
+    assert merged.applied
+    assert sum(m.status == "removed" for m in merged.matrix.models.values()) == stored - half
+    assert not matrix.merge(baseline, live[: half - 1], baseline, NOW).applied
 
 
 def test_an_overlap_of_a_big_unrelated_list_is_still_truncation(baseline, live):
