@@ -156,7 +156,15 @@ false or media is required and no model rung exists the call fails with `invalid
 is a preset sent verbatim, so no call could reach that rung (open question 2). Note for the owner:
 `catalog.PRESETS` (2026-10-29) maps `fast`, `low`, `medium` to `openai/gpt-6-luna`, while the research
 notes say the docs name `gpt-5.6-luna`; rung (c) sends a preset name, so the discrepancy cannot
-misroute, and task 1.3 re-reads the documentation. **Owner decision 2026-11-11:** the last-resort
+misroute. **Settled by task 1.3 (documentation re-read 2026-11-11, `docs.perplexity.ai/docs/agent-api/presets`):**
+`fast`, `low` and `medium` run `openai/gpt-6-luna` (`catalog.PRESETS` is RIGHT and needs no edit); the page's
+`openai/gpt-5.6-luna` is the documented FALLBACK model of `fast` only (the research notes read the fallback as the
+model). `high` runs `openai/gpt-6.1-terra`, `xhigh` runs `anthropic/claude-opus-5-5` with fallback
+`openai/gpt-6.1-sol`; the page also lists an `ultra` preset (`anthropic/claude-opus-5-5`, no frozen configuration,
+called by name), which this change does not use. Effort and step bounds of the page: `fast` none / 1 step,
+`low` minimal / 5, `medium` medium / 15, `high` medium / 40, `xhigh` high / 300. The shipped `fallbacks`
+stay `openai/gpt-6-luna` at `low` (accepted by the matrix and re-confirmed live by task 1.1); the preset
+fallbacks above are the provider's own and are not copied. **Owner decision 2026-11-11:** the last-resort
 fallback for a task the chain cannot place is the request's own preset model (rung (c), unchanged);
 `anthropic/claude-opus-5-5` stays an allowed top-of-shortlist model; no `xhigh` automation is added
 (open questions 2 and 8).
