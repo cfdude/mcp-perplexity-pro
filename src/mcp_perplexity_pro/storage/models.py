@@ -131,6 +131,10 @@ class ChatMessage(Base):
     model: Mapped[str | None] = mapped_column(String())
     preset: Mapped[str | None] = mapped_column(String())
     sources_json: Mapped[str | None] = mapped_column(Text())
+    # the router's chat hold (design D12, migration 0006): the tier the call ran at in dynamic
+    # mode and the REQUESTED id of a router model route (``model`` holds the id the API reported)
+    tier: Mapped[str | None] = mapped_column(String())
+    routed_model: Mapped[str | None] = mapped_column(String())
 
 
 class ResearchJob(Base):

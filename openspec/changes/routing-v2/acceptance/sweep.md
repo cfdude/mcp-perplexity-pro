@@ -330,14 +330,14 @@ builder, 5.4 = router-owned wiring (one commit), 6.1 = polish only.
 ### Chat storage (5.2 migration and ORM, 5.4 write and read paths)
 
 - [ ] `storage/chats.py:25` `AssistantTurn` (gains `tier`, `routed_model`), `:63` `_messages`, `:98`, `:114` `create_chat`/`append_turn` callers, `:160` `last_route` (returns tier and routed model)
-- [ ] `storage/models.py` `ChatMessage` ORM (5.2 adds the two nullable columns)
+- [x] `storage/models.py` `ChatMessage` ORM (5.2 adds the two nullable columns) (done in 5.2, migration `0006_chat_message_route.py`)
 - [ ] `tools/chat.py:222` `last_route` (the follow-up hold of design D12), `:294` `AssistantTurn(...)` construction at the write path (5.4)
 - [ ] `tests/chat_support.py:78-87` and `tests/test_chat_storage.py:9-250` build `AssistantTurn` positionally and assert `last_route` tuples (5.4 rewrites the `last_route` assertions; the positional constructors keep working because the two new fields default to `None`)
 
 ### Migration tests (5.2)
 
-- [ ] `tests/test_chats_migration.py:214` `test_the_orm_models_match_the_migrated_tables` (ORM columns against the schema at 0003) BREAKS when the ORM gains columns: rewrite for the added columns. Its other tests build their own `upto_0003` directory and keep passing.
-- [ ] `tests/test_jobs_migration.py` (no jobs column; `head_revision()` at `:178` follows the head) and `tests/test_embeddings_migration.py` (its scratch directory is truncated at 0005, `:149` and `:180` stay true) are NOT affected: re-run, do not edit
+- [x] `tests/test_chats_migration.py:214` (rewritten in 5.2 to compare the ORM with the schema through 0006) `test_the_orm_models_match_the_migrated_tables` (ORM columns against the schema at 0003) BREAKS when the ORM gains columns: rewrite for the added columns. Its other tests build their own `upto_0003` directory and keep passing.
+- [x] `tests/test_jobs_migration.py` (re-run unedited in 5.2, green; no jobs column; `head_revision()` at `:178` follows the head) and `tests/test_embeddings_migration.py` (its scratch directory is truncated at 0005, `:149` and `:180` stay true) are NOT affected: re-run, do not edit
 - [ ] `tests/test_usage_events_migration.py:112`, `:146`, `tests/test_storage_migrate.py:31`, `:147-171`, `:204-264`, `:382` compare with `head_revision()` and follow the head by themselves: re-run, do not edit (`tests/test_storage_migrate.py:154-162` downgrades one revision at a time, so 0006's `downgrade()` must run there)
 
 ### Not readers of the tier table (checked, no change)

@@ -211,8 +211,12 @@ def test_every_column_and_foreign_key_rule_is_as_designed(settings, db, upto_000
     assert "AUTOINCREMENT" in sql_all(db, "SELECT sql FROM sqlite_master WHERE name='chats'")[0][0]
 
 
-def test_the_orm_models_match_the_migrated_tables(settings, db, upto_0003):
-    migrate(settings, script_location=upto_0003)
+def test_the_orm_models_match_the_migrated_tables(settings, db, tmp_path):
+    # through 0006: the ORM carries the two columns migration 0006 added to chat_messages
+    # (routing-v2 task 5.2); the schema tests above stay at 0003 and do not move
+    migrate(settings, script_location=truncated(tmp_path, 6, "upto-0006"))
+    migrated_messages = {r[1]: bool(r[3]) for r in table_info(db, "chat_messages")}
+    assert migrated_messages == {**MESSAGE_COLUMNS, "tier": False, "routed_model": False}
     for model, table in ((Chat, "chats"), (ChatMessage, "chat_messages")):
         migrated = {r[1]: bool(r[3]) for r in table_info(db, table)}
         assert {c.name: not c.nullable for c in model.__table__.columns} == migrated
