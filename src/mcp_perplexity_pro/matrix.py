@@ -341,7 +341,7 @@ def _checked(kinds: Iterable[str]) -> frozenset[str]:
     return kinds
 
 
-def _kind_answer(entry: ModelEntry, known: ModelEntry | None, kind: str) -> Answer:
+def kind_answer(entry: ModelEntry, known: ModelEntry | None, kind: str) -> Answer:
     inputs = entry.inputs
     if kind in inputs.accepted:
         return "yes"
@@ -369,7 +369,7 @@ def accepts(model_id: str, kinds: Iterable[str], matrix: Matrix | None = None) -
     entry = current.models.get(model_id)
     if entry is None:
         return "unknown"
-    answers = {_kind_answer(entry, base.models.get(model_id), kind) for kind in wanted}
+    answers = {kind_answer(entry, base.models.get(model_id), kind) for kind in wanted}
     if "no" in answers:
         return "no"
     return "yes" if answers == {"yes"} else "unknown"

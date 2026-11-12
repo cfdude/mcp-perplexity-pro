@@ -28,6 +28,14 @@ LOGGER = "mcp_perplexity_pro.matrix_refresh"
 NEW = "acme/new-1"
 
 
+@pytest.fixture(autouse=True)
+def _efforts_only(monkeypatch):
+    """These tests are about the effort probe (task 4.1 / 3.1): since the input probe exists, the
+    baseline's unknown kinds would add requests, so the input probe is switched off here and has
+    its own tests in ``test_matrix_input_probe.py``."""
+    monkeypatch.setattr(matrix_refresh, "_wants_inputs", lambda *args, **kwargs: [])
+
+
 # --- the fake agent -----------------------------------------------------------------------------
 
 
