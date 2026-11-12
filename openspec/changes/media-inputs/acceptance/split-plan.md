@@ -34,3 +34,12 @@ over `src/` and compares it with this file.
 No `src/` line of this change may import or name `routing_select`, `routing_evidence`, the router,
 or `chat_messages.tier`/`routed_model`; the only `routing-v2` contact points are `resolve(required_input=...)`,
 `matrix.model_not_served` (owned here) and the hint seam whose default is owned here.
+
+## Media-owned commits made under routing-v2 tasks (routing-v2 task 5.3a)
+
+Router-free scaffolding that SURVIVES an unwind (design D18, routing-v2 task 7.8). It is attributed
+to the epic `media-inputs`, not `routing-v2`, so the revert list of an unwind never contains it.
+
+| Commit | Task | What it keeps |
+|---|---|---|
+| `4c6c231d87e75dbd5f34b1fdd4e5212464e2337c` | routing-v2 5.3a | `src/mcp_perplexity_pro/call_flow.py` (the hooks `parse_attachments`, `gate_route`, `inherited_kinds`, `required_kinds`), `routing.check_selectors`, the keyword arguments `required_input` and `provisional` of `routing.resolve` (ignored by every path), the fixed call order in `tools/ask.py` and at both chat resolve sites (`tools/chat.py`), `tests/test_call_flow.py` (it also asserts that `call_flow.py` and the test name none of: the selector, the benchmark file, a held model, `routing-v2`) |
