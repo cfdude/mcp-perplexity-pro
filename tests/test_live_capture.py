@@ -349,3 +349,127 @@ def test_capture_agent_fast_effort_fixture():
     FIXTURE_DIR.mkdir(exist_ok=True)
     (FIXTURE_DIR / "agent_fast_effort.json").write_text(json.dumps(payload, indent=2) + "\n")
     (FIXTURE_DIR / "agent_fast_effort.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+
+
+# --- routing-v2 1.1 and 1.5, media-inputs 1.1: probe fixtures --------------------------------
+# Each test sends raw requests (the server code does not send `reasoning` or attachments until
+# later tasks), scrubs, key-scans every payload before writing ANY file, and writes a fixture
+# with a `.meta.json`. Run only the one you need: ``pytest -m live tests/test_live_capture.py
+# -k media`` (the first test of this file overwrites tracked fixtures).
+
+
+def _drop_search_results(body):
+    """Third-party scraped text stays out of the repo: search-result items keep their count."""
+    if isinstance(body, dict) and isinstance(body.get("output"), list):
+        body = dict(body)
+        body["output"] = [
+            {"type": item.get("type"), "results": f"<removed: {len(item.get('results') or [])}>"}
+            if isinstance(item, dict) and item.get("type") == "search_results"
+            else item
+            for item in body["output"]
+        ]
+    return body
+
+
+def _redact_request(value):
+    """The request kept in a sidecar: attachment bytes become a length marker."""
+    if isinstance(value, dict):
+        return {k: _redact_request(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_request(v) for v in value]
+    if isinstance(value, str) and len(value) > 200 and "base64," in value[:60]:
+        return value[: value.index("base64,") + 7] + f"<{len(value)} characters>"
+    if isinstance(value, str) and len(value) > 200:
+        return f"<{len(value)} characters of base64>"
+    return value
+
+
+def _send(c, auth, method, path, request):
+    started = time.monotonic()
+    if method == "GET":
+        resp = c.get(path, headers=auth)
+    else:
+        resp = c.post(path, headers=auth, json=request)
+    return resp, round(time.monotonic() - started, 3)
+
+
+def _write_probe_fixtures(pending, key):
+    for name, (payload, meta) in pending.items():
+        text = json.dumps([payload, meta])
+        hits = find_key_shapes(text)
+        assert not hits, f"key-shaped string in {name}; nothing written"
+        assert key not in text, f"live key in {name}"
+        assert "base64," not in json.dumps(payload), f"attachment bytes echoed in {name}"
+    FIXTURE_DIR.mkdir(exist_ok=True)
+    for name, (payload, meta) in pending.items():
+        (FIXTURE_DIR / f"{name}.json").write_text(json.dumps(payload, indent=2) + "\n")
+        (FIXTURE_DIR / f"{name}.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+
+
+def _probe_meta(resp, latency, request, note):
+    return {
+        "endpoint": "/v1/agent",
+        "method": "POST" if request is not None else "GET",
+        "http_status": resp.status_code,
+        "capture_date": date.today().isoformat(),
+        "content_type": resp.headers.get("content-type"),
+        "scrubbed": "account-identifying keys and addresses replaced; search results removed",
+        "note": "Response ids are kept; they identify no account. Request headers and the API "
+        "key are never recorded.",
+        "request_note": note,
+        "latency_seconds": latency,
+        "request": _redact_request(request),
+    }
+
+
+def _run_probe_specs(specs):
+    key = os.environ.get("PERPLEXITY_API_KEY")
+    if not key:
+        pytest.skip("PERPLEXITY_API_KEY is not set")
+    auth = {"Authorization": f"Bearer {key}"}
+    pending: dict[str, tuple[dict, dict]] = {}
+    with httpx2.Client(base_url=BASE_URL, timeout=httpx2.Timeout(30.0, read=120.0)) as c:
+        for name, request, note, expected in specs:
+            resp, latency = _send(c, auth, "POST", "/v1/agent", request)
+            assert resp.status_code == expected, f"{name}: HTTP {resp.status_code}"
+            removed: list[str] = []
+            body = scrub(_drop_search_results(_body(resp)), "", removed)
+            pending[name] = (body, _probe_meta(resp, latency, request, note))
+    _write_probe_fixtures(pending, key)
+
+
+def test_capture_routing_request_shape_fixtures():
+    """routing-v2 1.1: request shape with reasoning.effort, web search and max_steps, and the
+    strongest candidate at medium (about $0.04 in total)."""
+    web = [{"type": "web_search"}]
+    _run_probe_specs(
+        [
+            (
+                "agent_model_effort_web_search",
+                {
+                    "model": "openai/gpt-6-luna",
+                    "input": PROMPT,
+                    "store": False,
+                    "reasoning": {"effort": "low"},
+                    "tools": web,
+                    "max_steps": 3,
+                },
+                "routing-v2 1.1: a shortlist model at reasoning.effort low with web search",
+                200,
+            ),
+            (
+                "agent_opus55_medium_web_search",
+                {
+                    "model": "anthropic/claude-opus-5-5",
+                    "input": PROMPT,
+                    "store": False,
+                    "reasoning": {"effort": "medium"},
+                    "tools": web,
+                    "max_steps": 3,
+                    "max_output_tokens": 1500,
+                },
+                "routing-v2 1.1: the strongest candidate at medium with web search",
+                200,
+            ),
+        ]
+    )

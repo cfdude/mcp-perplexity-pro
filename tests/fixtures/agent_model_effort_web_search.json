@@ -1,0 +1,92 @@
+{
+  "background": false,
+  "completed_at": 1794452635,
+  "created_at": 1794452635,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_9206c113-4143-4754-8d4b-9d2dbc71a9d0",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+    {
+      "type": "search_results",
+      "results": "<removed: 15>"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "The current stable version of Python is **Python 3.15.2**. \ue200cite\ue202turn0search0\ue201",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_2cb10977-d8ba-4f0e-b32c-5c3e5e19bddb",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": {
+    "effort": "low",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.00055,
+      "currency": "USD",
+      "input_cost": 5e-05,
+      "output_cost": 5e-05,
+      "tool_calls_cost": 0.0025,
+      "tool_calls_cost_details": {
+        "search_web": 0.0025
+      },
+      "total_cost": 0.00315
+    },
+    "input_tokens": 4869,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 4379,
+      "cache_read_input_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 94,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.0025,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 4963
+  },
+  "user": null
+}

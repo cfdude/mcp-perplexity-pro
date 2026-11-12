@@ -1,0 +1,93 @@
+{
+  "background": false,
+  "completed_at": 1794452639,
+  "created_at": 1794452639,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_2cb167e4-cd1a-4ed5-93c1-80d766c7d6f7",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 1500,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "anthropic/claude-opus-5-5",
+  "object": "response",
+  "output": [
+    {
+      "type": "search_results",
+      "results": "<removed: 15>"
+    },
+    {
+      "content": [
+        {
+          "annotations": [],
+          "text": "The current stable version of Python is **3.15.2**, a bugfix update to Python 3.15, which came out on October 9, 2026 (Python 3.16 is only in alpha).",
+          "type": "output_text"
+        }
+      ],
+      "id": "msg_161540cf-dfb7-4610-a5fa-6afb0b625fd1",
+      "role": "assistant",
+      "status": "completed",
+      "type": "message"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": {
+    "effort": "medium",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "standard",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+    "cost": {
+      "cache_creation_cost": 0.03341,
+      "cache_read_cost": 0.00023,
+      "currency": "USD",
+      "input_cost": 3e-05,
+      "output_cost": 0.00434,
+      "tool_calls_cost": 0.0025,
+      "tool_calls_cost_details": {
+        "search_web": 0.0025
+      },
+      "total_cost": 0.04051
+    },
+    "input_tokens": 7845,
+    "input_tokens_details": {
+      "cache_creation_input_tokens": 6681,
+      "cache_read_input_tokens": 1156,
+      "cached_tokens": 1156
+    },
+    "output_tokens": 217,
+    "output_tokens_details": {
+      "reasoning_tokens": 50
+    },
+    "tool_calls_details": {
+      "search_web": {
+        "cost_usd": 0.0025,
+        "invocation": 1
+      }
+    },
+    "total_tokens": 8062
+  },
+  "user": null
+}
