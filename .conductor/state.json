@@ -1373,10 +1373,11 @@
         "9fe26e9837ed975a6cc38adef9faf5225368d6ca",
         "fecadd449d076ea532a16b13ab7c43a03c978eb7",
         "e63067eb512eda3cc1e814f341fa33fe0e9aa19d",
-        "6b76fccfef7ec88e2e4bb666bd1553e5e7a387ee"
+        "6b76fccfef7ec88e2e4bb666bd1553e5e7a387ee",
+        "4c6c231d87e75dbd5f34b1fdd4e5212464e2337c"
       ],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-11-12T04:05:19.161Z",
+      "touchedAt": "2026-11-12T05:08:37.894Z",
       "release": "release-2-4-0",
       "gateReview": {
         "gate1": {
@@ -1671,10 +1672,22 @@
         "ff0f8e7f7c5c4b4b7196a78e75e517afd7430b6b",
         "19c2e31413eaae1c66f291e38b928ec30563e0bd",
         "49bcc1c1a2facbda0c73d3c56564c365da62bbc6",
-        "4012b0c21acb31b68c9521078459bb483e946017"
+        "4012b0c21acb31b68c9521078459bb483e946017",
+        "6b083e9f8301272bf60b4606f3eb667d004f76c7",
+        "d5f78457c714c7c62e44b02e40ffbe52ef49fa86",
+        "114960fe4d187a47d4b9419b99b1688e3be95f50",
+        "b91d5fdf29345f172af0731e494a8545472679ba",
+        "ecce16df48dcc2f11122803b0af62665db43ef8a",
+        "bd2a9c66fdbdda05ad4970486545ad37e1e7a99f",
+        "899db15213890ef81e5e5c004e1e568900a03eb4",
+        "21960e4dbb48fd426a315320364e13b5eea50ed0",
+        "2c764431635a2525fc1651956559ae8b26fee609",
+        "8a7f22b29d8b1099e70a020ef0fdd1cd959e9587",
+        "a6cb7734a02a656cef807d666c76efd6db4fc5ba",
+        "0cd850bc96f20969fc4f7c17d8d8a49b69f3e1e3"
       ],
       "createdAt": "2026-10-16T06:24:44.693Z",
-      "touchedAt": "2026-11-12T03:18:14.548Z",
+      "touchedAt": "2026-11-12T05:36:14.219Z",
       "release": "release-2-4-0",
       "gateReview": {
         "gate1": {
@@ -2055,7 +2068,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 497,
+  "revision": 510,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
