@@ -11,6 +11,7 @@ import json
 from collections import Counter
 
 import pytest
+from routing_eval import coverage
 from routing_eval import promptset as ps
 from routing_eval.split import HELDOUT_PER_CLASS, MAIN_PER_CLASS, assign
 
@@ -24,6 +25,11 @@ LEGACY_COUNT = 44
 LEGACY_TIERS_SHA256 = "9ab9c89835d10e7a93698540e8091d2391b7c59320ce98047c47c321234bf756"
 
 
+# The classes the coverage gate keeps (acceptance/coverage.md, generated): the harness and these
+# tests score only those. An excluded class stays in the prompt file and is still hashed.
+KEPT = coverage.kept_classes()
+
+
 def by(split, task):
     return [p for p in EVAL if p["split"] == split and p["task"] == task]
 
@@ -31,16 +37,39 @@ def by(split, task):
 # --- sizes ------------------------------------------------------------------------------------
 
 
+def test_the_kept_list_is_a_subset_of_the_three_classes():
+    assert set(KEPT) <= set(ps.CLASSES)
+
+
 @pytest.mark.parametrize("task", ps.CLASSES)
-def test_each_class_has_15_main_and_5_heldout_prompts(task):
+def test_every_class_in_the_file_has_15_main_and_5_heldout_prompts(task):
+    # the prompt file keeps all three classes whatever the gate kept (nothing is edited)
     assert len(by("main", task)) == MAIN_PER_CLASS == 15
     assert len(by("heldout", task)) == HELDOUT_PER_CLASS == 5
 
 
-def test_the_frozen_sizes_are_45_main_and_15_heldout_overall():
+@pytest.mark.parametrize("task", KEPT)
+def test_each_kept_class_has_15_main_and_5_heldout_prompts(task):
+    assert len(by("main", task)) == MAIN_PER_CLASS == 15
+    assert len(by("heldout", task)) == HELDOUT_PER_CLASS == 5
+
+
+def test_the_frozen_file_sizes_are_45_main_and_15_heldout_overall():
     counts = Counter(p["split"] for p in EVAL)
     assert counts == {"main": 45, "heldout": 15}
     assert {p["task"] for p in EVAL} == set(ps.CLASSES)
+
+
+def test_the_scored_sizes_are_15_main_and_5_heldout_per_kept_class():
+    scored = [p for p in EVAL if p["task"] in KEPT]
+    assert (
+        Counter(p["split"] for p in scored)
+        == {
+            "main": 15 * len(KEPT),
+            "heldout": 5 * len(KEPT),
+        }
+        or not KEPT
+    )
 
 
 @pytest.mark.parametrize("split", ["main", "heldout"])

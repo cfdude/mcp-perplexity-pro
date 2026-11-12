@@ -100,6 +100,42 @@ def _number(value: Decimal) -> str:
     return f"{value:f}".rstrip("0").rstrip(".") or "0"
 
 
+def _usable(
+    matrix: matrix_mod.Matrix, model_id: str, kinds: frozenset[str], check_model: Accepts
+) -> bool:
+    entry = matrix.models.get(model_id)
+    return (
+        entry is not None
+        and entry.status == "available"
+        and (not kinds or check_model(model_id, kinds) == "yes")  # no kinds: always yes
+    )
+
+
+def eligible_models(
+    task_class: str,
+    evidence: Evidence,
+    matrix: matrix_mod.Matrix,
+    required_input: Iterable[str] = (),
+    accepts: Accepts | None = None,
+) -> list[tuple[Decimal, str]]:
+    """The shortlist models eligible for ``task_class`` as ``(class score, id)`` in shortlist
+    order: ``available``, both prices known, ``accepts == yes`` for every required kind, and a
+    verified score for every benchmark of the class. ``select`` and the coverage gate share it."""
+    kinds = frozenset(required_input)
+    check_model: Accepts = accepts or (lambda m, k: matrix_mod.accepts(m, k, matrix))
+    scored: list[tuple[Decimal, str]] = []
+    for model_id in evidence.shortlist:
+        if not _usable(matrix, model_id, kinds, check_model):
+            continue
+        pricing = matrix.models[model_id].pricing
+        if pricing.input is None or pricing.output is None:
+            continue
+        score = evidence.class_score(model_id, task_class)
+        if score is not None:
+            scored.append((score, model_id))
+    return scored
+
+
 def select(
     task_class: str,
     tier: str,
@@ -134,24 +170,10 @@ def select(
     target = TARGET_EFFORT[tier]
 
     def usable(model_id: str) -> bool:
-        entry = matrix.models.get(model_id)
-        return (
-            entry is not None
-            and entry.status == "available"
-            and (not kinds or check_model(model_id, kinds) == "yes")  # no kinds: always yes
-        )
+        return _usable(matrix, model_id, kinds, check_model)
 
     # Step 1: the eligible shortlist models and their class scores.
-    scored: list[tuple[Decimal, str]] = []
-    for model_id in evidence.shortlist:
-        if not usable(model_id):
-            continue
-        pricing = matrix.models[model_id].pricing
-        if pricing.input is None or pricing.output is None:
-            continue
-        score = evidence.class_score(model_id, task_class)
-        if score is not None:
-            scored.append((score, model_id))
+    scored = eligible_models(task_class, evidence, matrix, kinds, check_model)
 
     if scored:
         # Steps 3 and 4: contenders within the margin; the lowest blended price wins, ties go to
