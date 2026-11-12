@@ -1,0 +1,79 @@
+{
+ "status": 200,
+ "latency_s": 1.23,
+ "request": {
+  "model": "anthropic/claude-haiku-5-5",
+  "input": "What word did I ask you to remember? One word.",
+  "previous_response_id": "resp_a69b2519-b953-4172-a8ec-46f1840fc444",
+  "store": false,
+  "max_output_tokens": 200
+ },
+ "body": {
+  "background": false,
+  "completed_at": 1794452106,
+  "created_at": 1794452106,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_c51a5a65-5cf2-4d9f-92cb-817146d06979",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 200,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "anthropic/claude-haiku-5-5",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "PAPAYA",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_e6b73491-29db-4d0a-94ce-db6687af1a03",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "standard",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "currency": "USD",
+    "input_cost": 1e-05,
+    "output_cost": 0,
+    "total_cost": 1e-05
+   },
+   "input_tokens": 72,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 8,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 80
+  },
+  "user": null
+ }
+}

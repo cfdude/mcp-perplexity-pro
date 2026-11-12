@@ -1,0 +1,78 @@
+{
+ "status": 200,
+ "latency_s": 1.98,
+ "request": {
+  "model": "openai/gpt-6-luna",
+  "input": "And what was the word again? One word.",
+  "previous_response_id": "resp_c51a5a65-5cf2-4d9f-92cb-817146d06979",
+  "store": false
+ },
+ "body": {
+  "background": false,
+  "completed_at": 1794452107,
+  "created_at": 1794452107,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_a32b14b5-9af9-40a3-a0cf-c22dedec13e2",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "PAPAYA",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_1db0d5f9-18a6-41ca-aff2-0b05315bfdfb",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "currency": "USD",
+    "input_cost": 1e-05,
+    "output_cost": 1e-05,
+    "total_cost": 2e-05
+   },
+   "input_tokens": 81,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 22,
+   "output_tokens_details": {
+    "reasoning_tokens": 13
+   },
+   "total_tokens": 103
+  },
+  "user": null
+ }
+}
