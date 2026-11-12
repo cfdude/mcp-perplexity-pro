@@ -31,6 +31,7 @@ from mcp_perplexity_pro.embeddings import ProjectLocks
 from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
 from mcp_perplexity_pro.help_text import TOOLS
 from mcp_perplexity_pro.matrix_refresh import MatrixState, start_task, stop_task
+from mcp_perplexity_pro.media import drop_attachment_input_values
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.routing import instructions_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
@@ -199,7 +200,8 @@ class ErrorContractMiddleware(Middleware):
             busy = storage_busy_error()
             return error_result(busy.category, str(busy))
         if isinstance(exc, ValidationError):  # FastMCP's: arguments failed schema validation
-            message = redact_text(str(exc), self._secrets)
+            # an `attachments` error never quotes the rejected value (a path, a URL, bytes)
+            message = redact_text(drop_attachment_input_values(str(exc)), self._secrets)
             return error_result(
                 "invalid_request", with_help_hint("invalid_request", message, context)
             )

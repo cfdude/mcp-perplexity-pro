@@ -19,8 +19,46 @@ _KEY_SHAPED = re.compile(
 )
 
 
+MEDIA_REMOVED = "[media removed]"
+
+# A ``data:`` URI body runs from after ``data:`` to the first character outside this class
+# (whitespace, quotes and brackets end it). Not preceded by a letter or digit, so ``metadata:x``
+# is left alone. One character class under one ``+``: no backtracking.
+_DATA_URI = re.compile(r"(?<![A-Za-z0-9])(data:)[A-Za-z0-9+/=;,.%_-]+", re.IGNORECASE)
+# A bare run of the STANDARD base64 alphabet (not ``_`` or ``-``, so a ``pplx-``/``Qq7_`` key prefix
+# stays for key redaction). A candidate is replaced only when it also looks like encoded bytes.
+_BASE64_RUN = re.compile(r"[A-Za-z0-9+/=]{200,}")
+_UPPER = re.compile(r"[A-Z]")
+_LOWER = re.compile(r"[a-z]")
+_DIGIT = re.compile(r"[0-9]")
+
+
+def _base64_run(match: re.Match[str]) -> str:
+    run = match.group(0)
+    if (
+        _UPPER.search(run)
+        and _LOWER.search(run)
+        and _DIGIT.search(run)
+        and run.count("/") * 16 <= len(run)
+    ):
+        return MEDIA_REMOVED
+    return run
+
+
+def scrub_media(text: str) -> str:
+    """Replace ``data:`` URI bodies and bare base64 runs with ``[media removed]`` (one linear
+    scan each), so an error that quotes a request never carries a file's bytes."""
+    if "data:" in text.lower():
+        text = _DATA_URI.sub(lambda m: m.group(1) + MEDIA_REMOVED, text)
+    return _BASE64_RUN.sub(_base64_run, text)
+
+
 def redact_text(text: str, secrets: Iterable[str] = ()) -> str:
-    """Remove each configured secret and any key-shaped token from ``text``."""
+    """Remove media, each configured secret and any key-shaped token from ``text``.
+
+    Media goes first, before key removal and before any caller truncates, so a base64 run that
+    straddles a later cut is already gone."""
+    text = scrub_media(text)
     for secret in sorted((s for s in secrets if s), key=len, reverse=True):
         text = text.replace(secret, REDACTED)
     return _KEY_SHAPED.sub(REDACTED, text)
