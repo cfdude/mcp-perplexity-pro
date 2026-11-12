@@ -135,3 +135,28 @@ Side finding for the maintainer: `perplexity/nemotron-3-ultra-550b-a55b` is in `
 the baseline as `available`, but the Agent API answers any request for it with `400 validation
 failed: model \"perplexity/nemotron-3-ultra-550b-a55b\" is not supported`, also for a plain text
 input (checked 2026-10-30). It is not an attachment issue, and the matrix has no way to say "listed but not servable".
+
+## Re-capture into the repo, 2026-11-11 (task 1.1)
+
+`tests/test_live_capture.py::test_capture_media_fixtures` re-recorded the fixtures of design "Fixtures to
+capture" (one cheap model, `openai/gpt-6-luna`, each; `store` false, `max_output_tokens` 150) through
+`tests/media_support.py`; run twice, total spend about 0.001 USD (the 400s and the failed run cost nothing). Pinned
+by `tests/test_media_fixtures.py`. New observations, all on 2026-11-11:
+
+- Image data URI, PDF `file_data`, DOC (macOS `textutil`), DOCX (built by `zipfile`), RTF and an HTTPS PDF URL are
+  all 200 `completed` on `openai/gpt-6-luna` and the answer comes from the attachment (`Red`, `MANGO`, `KIWI`).
+- A BARE RTF (`{\rtf1\ansi The secret word is KIWI}`) was accepted (200) but its text was NOT read (the answer was
+  "Please"); the same text in the shape `textutil` writes (header, font table, `\pard`) is read ("KIWI"). The API
+  accepts the type either way, so the matrix probe and the type allowlist are unaffected; `media_support.rtf()`
+  writes the textutil shape.
+- The three 400s are unchanged from 2026-10-30: `invalid request` for an image to `perplexity/deepseek-v4-pro-0813`;
+  `the selected model route does not support this document type or source` for a document to `xai/grok-4.3`;
+  `filename extension does not match document media type` for PDF bytes named `.docx`; `invalid type "input_audio"`
+  for an audio part. NOTE the refusal text of `xai/grok-4.3` is now `the selected model route does not support this
+  document type or source`, which is the `NAMED_REFUSALS` string of task 2.1 (the 2026-10-30 sweep recorded it
+  shortened).
+- `anthropic/claude-opus-5` with a PDF is still a 200 with run status `failed` and error `code` `refusal`, no usage,
+  but the message is now `the model declined this request under its content policy` (2026-10-30:
+  `document processing failed: refusal`). Match on `code` `refusal`, never on the message text.
+- A document chain of three turns (PDF, text follow-up by `previous_response_id`, a second hop) answers `MANGO` on both
+  follow-ups: the file survives two hops with `store` false.
