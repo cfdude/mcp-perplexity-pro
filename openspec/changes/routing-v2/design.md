@@ -111,8 +111,7 @@ or hold `routing-v2`). LLM Stats (llm-stats.com) is a LEAD source only: its Comm
 redistribution, none of its rows is verified, and it lists no Sonar model, so nothing from it is copied into
 `data/routing_evidence.json` or the repo; an owner-run offline worksheet (task 2.2) prints vendor-reported
 figures with their `source_url` as leads, and a human verifies each at the vendor or benchmark source before
-`verified_at` is written. Attribution wherever a lead from it is mentioned: Source: LLM Stats
-(llm-stats.com), retrieved 2026-11-12.
+`verified_at` is written. Attribution wherever a lead from it is mentioned: Data by LLM Stats (linked to https://llm-stats.com).
 
 **D3. Selection algorithm (pure; `routing_select.select(...)`).** Inputs, all passed as arguments:
 the task class, the tier, the tool (`ask`, `chat`, `research`), the evidence, a matrix snapshot

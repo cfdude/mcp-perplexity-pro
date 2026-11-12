@@ -1863,10 +1863,30 @@
         "declined": []
       },
       "completedAt": "2026-10-30T01:48:04.005Z"
+    },
+    {
+      "id": "routing-local-evidence",
+      "title": "Optional local daily refresh of vendor-reported benchmark scores from LLM Stats (user's own free key), labelled secondary evidence",
+      "priority": "P3",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "relates-to",
+          "epic": "routing-v2",
+          "reason": "supplies evidence the router reads; only worth building if routing-v2 passes its evaluation"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "Owner direction 2026-11-11: LLM Stats Community plan (250/day, 50/min) allows a user to pull scores with their own free key; nothing is shipped or committed, so no redistribution; README carries the credit line 'Data by LLM Stats'; pull once a day into a temporary file in the data dir that is overwritten daily. Open decision: whether vendor-reported scores may drive routing (recommended: yes, opt-in, labelled basis vendor, used only where no verified figure exists, with a wider margin to be tested by the routing-evaluation harness).",
+      "attributedCommits": [],
+      "createdAt": "2026-11-12T02:14:51.317Z",
+      "touchedAt": "2026-11-12T02:14:51.319Z"
     }
   ],
   "detourStack": [],
-  "revision": 481,
+  "revision": 482,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
