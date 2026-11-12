@@ -311,5 +311,889 @@
     "expected": "complex",
     "mark": "clear",
     "task": "coding"
+  },
+  {
+    "id": "c01",
+    "text": "What is the output of this snippet? Reply with only the output.\n```python\nprint(len([x for x in range(10) if x % 3 == 0]))\n```",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 4,
+        "tolerance": 0
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "c02",
+    "text": "What is the output of this snippet? Reply with only the output.\n```python\nprint(sum(range(1, 6)))\n```",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 15,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c03",
+    "text": "What is the output of this snippet? Reply with only the output.\n```python\nprint(\"abc\"[::-1])\n```",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "cba"
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "c04",
+    "text": "What is the output of this snippet? Reply with only the output.\n```python\nx = [1, 2, 3]\nx.append(4)\nprint(len(x))\n```",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 4,
+        "tolerance": 0
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "c05",
+    "text": "What is the output of this snippet? Reply with only the output.\n```python\nprint(2 ** 10)\n```",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 1024,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c06",
+    "text": "What is the output of this snippet? Reply with only the output.\n```python\nprint(len(\"hello world\".split()))\n```",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 2,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c07",
+    "text": "What is the output of this snippet? Reply with only the output.\n```javascript\nconsole.log([1, 2, 3].map(n => n * 2).join(\",\"))\n```",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "2,4,6"
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "c08",
+    "text": "What is the output of this snippet? Reply with only the output.\n```python\nprint(10 // 3, 10 % 3)\n```",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "regex",
+        "pattern": "\\b3\\s+1\\b"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c09",
+    "text": "In the source code of a binary search over a sorted array, what is the time complexity? Reply with only the big-O expression.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "regex",
+        "pattern": "O\\(\\s*(lg|log)\\b"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c10",
+    "text": "Which exception does Python show in the traceback when you call int('abc')? Reply with only the exception name.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "ValueError"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c11",
+    "text": "What exception type appears in the traceback when you index a Python list out of range? Reply with only the exception name.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "IndexError"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c12",
+    "text": "In a regex, which metacharacter matches any single character except a newline? Reply with only the character.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "."
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c13",
+    "text": "In a regex, which quantifier means zero or more of the preceding element? Reply with only the character.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "*"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c14",
+    "text": "During a code review, what does the acronym DRY stand for? Reply with only the three words.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "regex",
+        "pattern": "don['’]?t\\s+repeat\\s+yourself"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c15",
+    "text": "While debugging a web app, which HTTP status code means Not Found? Reply with only the number.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 404,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c16",
+    "text": "While debugging a database connection, what is PostgreSQL's default port? Reply with only the number.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 5432,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "c17",
+    "text": "Refactor this function to use a list comprehension:\n```python\ndef squares(xs):\n    out = []\n    for x in xs:\n        out.append(x * x)\n    return out\n```",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "rubric": [
+        "returns a function that uses a list comprehension",
+        "keeps the same behavior (the list of squares in order)",
+        "no longer builds the list with a loop and append",
+        "the code is valid Python"
+      ]
+    },
+    "split": "main"
+  },
+  {
+    "id": "c18",
+    "text": "Write a regex that matches a US ZIP code of five digits, optionally followed by a dash and four digits, and explain it briefly.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "rubric": [
+        "the pattern matches exactly five digits",
+        "the pattern allows an optional dash and four more digits",
+        "the pattern is anchored or bounded so partial matches are avoided, or the answer says why that matters",
+        "gives a short explanation of the parts"
+      ]
+    },
+    "split": "main"
+  },
+  {
+    "id": "c19",
+    "text": "Explain what a unit test is and give one tiny example in Python.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "rubric": [
+        "says a unit test checks a small piece of code in isolation",
+        "says it is automated and uses assertions",
+        "the example uses assert, unittest or pytest",
+        "the example is valid Python"
+      ]
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "c20",
+    "text": "Review this code and say what happens for an empty list:\n```python\ndef avg(xs):\n    return sum(xs) / len(xs)\n```",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "coding",
+    "eval": {
+      "rubric": [
+        "says it raises ZeroDivisionError for an empty list",
+        "suggests a guard or other handling",
+        "says what the function should return or raise instead"
+      ]
+    },
+    "split": "main"
+  },
+  {
+    "id": "r01",
+    "text": "What is the probability of drawing an ace from a standard 52-card deck? Give it as a decimal rounded to three places.",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 0.077,
+        "tolerance": 0.001
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "r02",
+    "text": "What is the probability that a fair coin lands heads three times in a row? Give it as a decimal.",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 0.125,
+        "tolerance": 0.0005
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r03",
+    "text": "Solve the equation 3x + 7 = 25. Reply with only the value of x.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 6,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r04",
+    "text": "Solve the equation x^2 - 5x + 6 = 0. Reply with only the larger root.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 3,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r05",
+    "text": "What is the integral of 2x from 0 to 3? Reply with only the number.",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 9,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r06",
+    "text": "Evaluate the integral of x^2 from 0 to 2. Give a decimal rounded to two places.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 2.67,
+        "tolerance": 0.01
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r07",
+    "text": "Find the larger eigenvalue of the matrix [[2, 0], [0, 5]]. Reply with only the number.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 5,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r08",
+    "text": "Find the sum of the eigenvalues of the matrix [[1, 2], [3, 4]]. Reply with only the number.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 5,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r09",
+    "text": "What is the probability of rolling a sum of 7 with two fair six-sided dice? Give it as a decimal rounded to three places.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 0.167,
+        "tolerance": 0.001
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "r10",
+    "text": "Solve the equation 2^x = 64. Reply with only x.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 6,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r11",
+    "text": "What is the probability of getting exactly one head in two fair coin flips? Give it as a decimal.",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 0.5,
+        "tolerance": 0.0005
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r12",
+    "text": "Solve the equation 5(x - 2) = 3x + 4. Reply with only x.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 7,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r13",
+    "text": "Compute the integral of cos(x) from 0 to pi/2. Reply with only the number.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 1,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r14",
+    "text": "A bag has 3 red and 2 blue marbles. What is the probability of drawing two red marbles without replacement? Give it as a decimal.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 0.3,
+        "tolerance": 0.0005
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "r15",
+    "text": "What is the eigenvalue of the matrix [[3, 0], [0, 3]]? Reply with only the number.",
+    "expected": "light",
+    "mark": "borderline",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 3,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r16",
+    "text": "Logic puzzle: Alice is taller than Bob, and Bob is taller than Carol. Who is the shortest? Reply with only the name.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Carol"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "r17",
+    "text": "Prove that the sum of two odd integers is even.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "rubric": [
+        "writes the two odd integers as 2a+1 and 2b+1 (or an equivalent form)",
+        "adds them to get 2(a+b+1) (or an equivalent form)",
+        "concludes that the sum is even because it is twice an integer"
+      ]
+    },
+    "split": "main"
+  },
+  {
+    "id": "r18",
+    "text": "Prove that there are infinitely many prime numbers.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "rubric": [
+        "assumes a finite list of all primes",
+        "builds the product of that list plus one",
+        "shows the new number has a prime factor outside the list, a contradiction",
+        "concludes that the primes are infinite"
+      ]
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "r19",
+    "text": "Derive the formula for the sum of the first n positive integers.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "rubric": [
+        "states the result n(n+1)/2",
+        "justifies it by pairing terms, by induction or by adding the sum to itself reversed",
+        "the algebra shown is correct"
+      ]
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "r20",
+    "text": "Explain why the probability of two independent events both occurring is the product of their probabilities.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "reasoning",
+    "eval": {
+      "rubric": [
+        "states what independence means",
+        "states that P(A and B) = P(A) x P(B) for independent events",
+        "gives a concrete example such as two coin flips or two dice"
+      ]
+    },
+    "split": "main"
+  },
+  {
+    "id": "b01",
+    "text": "What is the capital of Australia? Reply with only the city name.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Canberra"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b02",
+    "text": "Who was the first woman to win a Nobel Prize? Reply with only her surname.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Curie"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b03",
+    "text": "When did the Apollo 11 mission land on the Moon? Reply with only the year.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 1969,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b04",
+    "text": "Where is the headquarters of the United Nations located? Reply with only the city.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "regex",
+        "pattern": "new york"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b05",
+    "text": "What is the chemical symbol for gold? Reply with only the symbol.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Au"
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "b06",
+    "text": "Who painted the Mona Lisa? Reply with only the painter's surname.",
+    "expected": "standard",
+    "mark": "borderline",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "regex",
+        "pattern": "vinci"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b07",
+    "text": "What is the longest river in Africa? Reply with only its name.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Nile"
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "b08",
+    "text": "In which year did the Titanic sink? Reply with only the year.",
+    "expected": "standard",
+    "mark": "borderline",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 1912,
+        "tolerance": 0
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b09",
+    "text": "What is the tallest mountain in the world above sea level? Reply with only its name.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Everest"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b10",
+    "text": "Which element has the atomic number 1? Reply with only the element name.",
+    "expected": "standard",
+    "mark": "borderline",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Hydrogen"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b11",
+    "text": "What is the official language of Brazil? Reply with only the language.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Portuguese"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b12",
+    "text": "Who was the first President of the United States? Reply with only the surname.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Washington"
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "b13",
+    "text": "What is the currency of Japan? Reply with only the currency name.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Yen"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b14",
+    "text": "Which ocean is the largest? Reply with only its name.",
+    "expected": "standard",
+    "mark": "borderline",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Pacific"
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "b15",
+    "text": "What is the boiling point of water at sea level in degrees Celsius? Reply with only the number.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 100,
+        "tolerance": 0
+      }
+    },
+    "split": "heldout"
+  },
+  {
+    "id": "b16",
+    "text": "What is the smallest country in the world by area? Reply with only its name.",
+    "expected": "light",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "check": {
+        "kind": "regex",
+        "pattern": "vatican"
+      }
+    },
+    "split": "main"
+  },
+  {
+    "id": "b17",
+    "text": "Summarize in two or three sentences why the western Roman Empire fell in 476.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "rubric": [
+        "names Odoacer or the removal of the last western emperor, Romulus Augustulus",
+        "gives at least one cause such as invasions, economic strain or political instability",
+        "uses at most three sentences",
+        "does not say the eastern Roman Empire also fell in 476"
+      ]
+    },
+    "split": "main"
+  },
+  {
+    "id": "b18",
+    "text": "Explain in a short paragraph what the Great Barrier Reef is and where it is.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "rubric": [
+        "says it is a coral reef system",
+        "places it off the coast of Queensland, Australia",
+        "uses at most six sentences"
+      ]
+    },
+    "split": "main"
+  },
+  {
+    "id": "b19",
+    "text": "Give a short overview of how a bill becomes law in the United States.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "rubric": [
+        "says both the House and the Senate must pass the bill",
+        "says the President signs or vetoes it",
+        "mentions that Congress can override a veto with a two-thirds vote",
+        "mentions the committee stage"
+      ]
+    },
+    "split": "main"
+  },
+  {
+    "id": "b20",
+    "text": "Describe what the Rosetta Stone is and why it mattered for reading hieroglyphs.",
+    "expected": "standard",
+    "mark": "clear",
+    "task": "browsing",
+    "eval": {
+      "rubric": [
+        "says it carries one decree in three scripts, including Greek and hieroglyphs",
+        "says the Greek text helped scholars decipher the hieroglyphs",
+        "names Champollion",
+        "says it was found in 1799"
+      ]
+    },
+    "split": "main"
   }
 ]

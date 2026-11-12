@@ -1,0 +1,72 @@
+[
+  {
+    "id": "p1",
+    "task": "coding",
+    "text": "What is the output of this snippet? Reply with only the output.\n```python\nprint(max([3, 9, 4]))\n```",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 9,
+        "tolerance": 0
+      }
+    }
+  },
+  {
+    "id": "p2",
+    "task": "coding",
+    "text": "Which exception appears in the traceback when you read a missing key from a Python dict with square brackets? Reply with only the exception name.",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "KeyError"
+      }
+    }
+  },
+  {
+    "id": "p3",
+    "task": "reasoning",
+    "text": "Solve the equation 4x - 3 = 21. Reply with only the value of x.",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 6,
+        "tolerance": 0
+      }
+    }
+  },
+  {
+    "id": "p4",
+    "task": "reasoning",
+    "text": "What is the probability of rolling a 6 on one fair six-sided die? Give it as a decimal rounded to three places.",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 0.167,
+        "tolerance": 0.001
+      }
+    }
+  },
+  {
+    "id": "p5",
+    "task": "browsing",
+    "text": "What is the capital of Canada? Reply with only the city name.",
+    "eval": {
+      "check": {
+        "kind": "exact",
+        "value": "Ottawa"
+      }
+    }
+  },
+  {
+    "id": "p6",
+    "task": "browsing",
+    "text": "In which year did the French Revolution begin? Reply with only the year.",
+    "eval": {
+      "check": {
+        "kind": "number",
+        "value": 1789,
+        "tolerance": 0
+      }
+    }
+  }
+]

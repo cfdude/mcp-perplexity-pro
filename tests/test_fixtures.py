@@ -8,7 +8,8 @@ from fixture_support import FIXTURE_DIR, REQUIRED_META_KEYS, find_key_shapes
 
 # ``routing_prompts.json`` is the labeled prompt set of the rules classifier (routing-rules-v1):
 # written by hand, not recorded from an API, so it has no sidecar. It is still key-scanned.
-HAND_WRITTEN = {"routing_prompts.json"}
+# ``routing_eval_pilot.json`` (routing-v2 3.2) is the 6-prompt pilot set, hand-written the same way.
+HAND_WRITTEN = {"routing_prompts.json", "routing_eval_pilot.json"}
 PAYLOADS = sorted(
     p
     for p in FIXTURE_DIR.glob("*.json")
