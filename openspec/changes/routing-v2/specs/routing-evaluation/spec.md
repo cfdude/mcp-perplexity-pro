@@ -17,19 +17,31 @@ The branch SHALL carry a reproducible evaluation (harness `tests/routing_eval/`,
 - **WHEN** a commit that touches `src/` lands after the head recorded in the report
 - **THEN** the report is stale, the merge gate fails, and a new numbered run within the remaining budget is needed
 
-### Requirement: The merge gate is a test that runs in CI
-A test SHALL parse `acceptance/evaluation.md`, assert the verdict `MERGE ALLOWED` and assert that the recorded head equals `HEAD` or that no `src/` file changed between them, and it SHALL run in CI on the pull request. It MAY be skipped only when the report is absent AND the tree carries no routing-owned artifact: no `routing_select.py`, no `routing_evidence.py`, no `data/routing_evidence.json` and no migration `0006`.
+### Requirement: The merge gate is a marked test that runs in CI
+A test marked `merge_gate` SHALL assert that `acceptance/evaluation.md` says `MERGE ALLOWED` and that the `src/` tree hash of its recorded head equals HEAD's. The marker is deselected by `addopts`, a dedicated CI step `-m merge_gate` runs it on pull requests, and it SHALL be skipped when the tree holds none of `routing_select.py`, `routing_evidence.py`, `data/routing_evidence.json` and a `0006` migration, whatever the report says.
+
+#### Scenario: Full history
+- **WHEN** CI runs the step
+- **THEN** the checkout has full history so the recorded head's tree can be read
+
+#### Scenario: Unit tests stay in the suite
+- **WHEN** the default suite runs
+- **THEN** the parser, generator and skip-logic tests on temporary trees run, and the gate itself does not
 
 #### Scenario: Router present, no report
 - **WHEN** the tree holds `routing_select.py` and `acceptance/evaluation.md` does not exist
-- **THEN** the test fails
+- **THEN** the `merge_gate` test fails
+
+#### Scenario: The commit hook
+- **WHEN** the pre-commit hook runs the default suite
+- **THEN** no `merge_gate` test runs
 
 #### Scenario: Media alone
-- **WHEN** the routed selection has been unwound (none of the four routing-owned artifacts exists) and no report exists
-- **THEN** the test is skipped and CI stays green
+- **WHEN** the routed selection has been unwound (none of the four routing-owned artifacts exists), whether or not a report exists
+- **THEN** the test is skipped, its file stays, and CI stays green
 
 #### Scenario: Source changed after the report
-- **WHEN** `git diff --name-only <recorded head> HEAD -- src/` lists a file
+- **WHEN** the `src/` tree hash of HEAD differs from the recorded head's
 - **THEN** the test fails
 
 ### Requirement: The thresholds are written down before any run
@@ -37,7 +49,7 @@ The thresholds SHALL be committed in this spec, in `tests/routing_eval/threshold
 
 #### Scenario: The registered values
 - **WHEN** the thresholds are registered
-- **THEN** they are T0 at least 15 main and 5 held-out prompts per class, at least half of each class machine-checkable; T1a decision p95 under 5 ms; T1b 0 added network calls; T2a median added wall time under 50 ms; T2b live latency ratio against the status quo at most 1.10; T2c cold start under 100 ms; T3a `tools/list` at most 59779; T3b `routing` object at most 400 bytes; T3c `input` byte-identical
+- **THEN** they are T0 at least 15 main and 5 held-out prompts per kept class, at least half of each subset machine-checkable; T1a decision p95 under 5 ms; T1b 0 added network calls; T2a median added wall time under 50 ms; T2b live latency ratio against the status quo at most 1.10; T2c cold start under 100 ms; T3a `tools/list` at most 59779; T3b `routing` object at most 400 bytes; T3c `input` byte-identical
 
 #### Scenario: The registered quality and cost values
 - **WHEN** the thresholds are registered
@@ -128,7 +140,11 @@ T3c SHALL pass only when the routed upstream request's `input` is byte-identical
 - **THEN** each is at most 59779 bytes
 
 ### Requirement: Four arms are measured with the same request shape
-The live run SHALL send every prompt through four arms of one request shape, each under its own `project`: routed, strongest (the named model `anthropic/claude-opus-5-5`, never derived from the evidence), cheapest (lowest blended price among available shortlist models, ties to the smaller id) and status quo (`perplexity/sonar`, the default route at commit d2798cd, explicit shape, no `reasoning`). Cost, input, cached and output tokens, search-call count and latency SHALL be recorded per request.
+The live run SHALL send every prompt through four arms of one request shape, each under its own `project`: routed, strongest (the named model `anthropic/claude-opus-5-5`), cheapest (lowest blended price among available shortlist models, ties to the smaller id) and status quo (`perplexity/sonar`, the default route at commit d2798cd, explicit shape, no `reasoning`). Strongest and cheapest SHALL get the effort D5 gives for the prompt's tier, clipped to their accepted levels or none.
+
+#### Scenario: Recorded per request
+- **WHEN** a request is sent
+- **THEN** a recording transport in the harness stores its cost, tokens, cached tokens, search calls, effort and latency
 
 #### Scenario: Strongest is a named model
 - **WHEN** the evidence is edited so another model scores highest
@@ -203,26 +219,38 @@ T5e SHALL require the strongest arm's overall quality to exceed the cheapest arm
 - **THEN** the run is INVALID and no quality threshold is used
 
 ### Requirement: A later run is confirmed on the held-out subset
-The first numbered run SHALL score the `main` subset only. Any run after a change of margin, mapping, shortlist or evidence SHALL also score the `heldout` subset, and its PASS SHALL require the held-out routed-minus-strongest and routed-minus-status-quo mean differences to be at least the registered margin (point estimates) and the cost thresholds to hold on it.
+The first numbered run SHALL score the `main` subset only. Any later run (a change of margin, mapping, shortlist or evidence, or a rerun after a `src/` fix) SHALL also score the `heldout` subset, and its PASS SHALL require each held-out paired difference (routed minus strongest, routed minus status quo) to be no worse than minus the registered margin and the cost thresholds to hold on it.
 
 #### Scenario: First run
 - **WHEN** run 1 is scored
 - **THEN** no `heldout` prompt is sent
 
 #### Scenario: Tuned run
-- **WHEN** run 2 follows a margin change
+- **WHEN** run 2 follows a margin change or a `src/` fix
 - **THEN** the held-out subset is scored and a held-out shortfall makes the verdict DO NOT MERGE
 
 ### Requirement: Live spend is budgeted, piloted and bounded
-All live work of the branch SHALL together stay under 10 USD, with the evaluation caps summing below it. A 6-prompt PILOT outside the labeled set SHALL measure cost per arm before registration, counts toward the budget and informs the caps only. The harness SHALL set `max_output_tokens` and stop before a request whose upper bound would exceed its cap.
+All live work of the branch SHALL together stay under 10 USD, with the evaluation caps summing below it. A 6-prompt PILOT, run from a throwaway script outside the repo on prompts outside the labeled set, SHALL estimate cost per arm and the paired variance only and project one `main` run, one held-out run and one routed re-run. Registration SHALL state the false-fail probability and pick n so it is at most 10 percent within the budget.
 
-#### Scenario: The proposed caps
+#### Scenario: Output bound
+- **WHEN** the harness runs
+- **THEN** it sets `max_output_tokens` and stops before a request whose upper bound would exceed its cap
+
+#### Scenario: The caps come from the pilot
 - **WHEN** the caps are registered
-- **THEN** pilot 0.50, strongest 4.00, routed 1.20, status quo 0.60, cheapest 0.30, judge 0.10 and a reserve of 1.20 for held-out and unknown-cost re-runs sum to 7.90, and the other live work is stated at 1.30, below the total of 10.00
+- **THEN** they start from pilot 0.80, strongest 4.00, routed 1.20, status quo 0.60, cheapest 0.30, judge 0.10 and reserve 1.20 (sum 8.20), the pilot's projection may change them, the other live work is itemised at 1.30, and the total stays below 10.00
+
+#### Scenario: The caps come from the pilot
+- **WHEN** the caps are registered
+- **THEN** they start from pilot 0.80, strongest 4.00, routed 1.20, status quo 0.60, cheapest 0.30, judge 0.10 and reserve 1.20 (sum 8.20), the pilot's projection may change them, the other live work is itemised at 1.30, and the total stays below 10.00
 
 #### Scenario: The pilot says it does not fit
 - **WHEN** the pilot projects the strongest arm above its cap
 - **THEN** the harness stops before registration and the owner decides (a larger cap, up to the owner's standing cap, or the minimum set)
+
+#### Scenario: Registration states n
+- **WHEN** the pilot's variance gives an n above what the budget supports
+- **THEN** registration records that and stops for the owner
 
 #### Scenario: A cap is reached
 - **WHEN** an arm's next request could exceed its cap
@@ -297,7 +325,7 @@ When the verdict is not `MERGE ALLOWED`, the routed selection, its evidence file
 
 #### Scenario: Migration 0006 is not needed
 - **WHEN** `media-inputs` ships without `routing-v2`
-- **THEN** the revision head is `0005` and no media code reads `chat_messages.tier`, `chat_messages.routed_model` or `research_jobs.effort`
+- **THEN** the revision head is `0005` and no media code reads `chat_messages.tier`, `chat_messages.routed_model`
 
 #### Scenario: The gate without the router
 - **WHEN** `media-inputs` ships without `routing-v2`

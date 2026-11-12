@@ -53,8 +53,8 @@ Not verified and therefore not specified as fact: the response to an over-size b
 ## Decisions
 
 **D1. One parameter, `attachments: list[str]`.** The tools-list budget is the scarce resource
-(`tests/test_tools_list_budget.py`, cap 59779 bytes; after `routing-v2` the headroom is 1394, 968
-and 734 bytes for the default, dynamic and dynamic-with-Decisions servers, see D14). Three shapes were weighed:
+(`tests/test_tools_list_budget.py`, cap 59779 bytes; after `routing-v2` the headroom is 1744, 1318
+and 1084 bytes for the default, dynamic and dynamic-with-Decisions servers, see D14). Three shapes were weighed:
 
 | Shape | Schema cost (estimate, measured in task 3.3) | CLI cost |
 |---|---|---|
@@ -262,8 +262,8 @@ final `build_request` signature (which `routing-v2` 5.3 changes to carry `reason
 Hint precedence has ONE owner: task 2.3 puts `attachment_hint` below the model-gone hint of `routing-v2` D17 (a not-served 400 is about the model, not the attachment); `routing-v2` 5.6 only stubs the media hint in its own test.
 
 **D14. Budget and apply order.** The cap 59779 never rises; if the final measure cannot fit,
-work stops and the owner decides. After `routing-v2` the headroom is 1394 (default), 968 (dynamic)
-and 734 bytes (dynamic with Decisions). The Gate 1 reviewer's build of the plausible additions came
+work stops and the owner decides. After `routing-v2` the headroom is 1744 (default), 1318 (dynamic)
+and 1084 bytes (dynamic with Decisions). The Gate 1 reviewer's build of the plausible additions came
 to about 288 (parameter) + 164 (description sentence) + 387 (a per-model `inputs` object in the
 `perplexity_models` output schema) = about 1371, which does not fit. So: (a) `perplexity_models`
 gets ONE short string field per model (about 120 bytes), never an object, and the count of unknown
@@ -276,17 +276,17 @@ touches (coordinated by task wording; if routing-v2's trim has not landed, ours 
 
 | Server | Headroom after routing-v2 | With both trims (450 + 300) | Our gross growth cap | Left (estimate) |
 |---|---|---|---|---|
-| default | 1394 | 2144 | 900 | about 1240 |
-| dynamic | 968 | 1718 | 900 | about 820 |
-| dynamic with Decisions | 734 | 1484 | 900 | about 580 |
+| default | 1744 | 2494 | 900 | about 1594 |
+| dynamic | 1318 | 2068 | 900 | about 1168 |
+| dynamic with Decisions | 1084 | 1834 | 900 | about 934 |
 
 Ceilings in force at each commit: until task 3.3 only the 59779 cap is asserted (`tests/test_tools_list_budget.py` holds no per-server ceiling, so `routing-v2`'s own growth cannot break it); `routing-v2` 6.2 only RECORDS figures; after 3.3 and `routing-v2` 6.4 the final per-server ceilings, taken from our table and never above 59779, are in force. This resolves the ordering problem that a measure before the chat parameter would understate our growth: the measure is 3.3, which runs after 3.1 (`tasks.md` step (4) and task 3.3).
 
-Estimates (734 + 750 - 900 = 584 for the tightest server); the task 3.3 measurement replaces them.
+Estimates (1084 + 750 - 900 = 934 for the tightest server); the task 3.3 measurement replaces them.
 Standalone budget (if `routing-v2` is unmerged after its evaluation, `routing-v2` D18): the headroom on the unchanged base is 2044 (default), 1758 (dynamic) and 1524 (dynamic with Decisions) bytes, so our gross growth of at most 900 bytes fits with at least 624 left and no trim; task 3.3 then sets this change's own ceilings.
 
-**Model-not-served predicate and the split.** This change owns `matrix.model_not_served(status, message)` and `matrix.is_named_refusal(status, message)`; `routing-v2` D17 consumes the first so that no second classifier of "the model is gone" exists, and a retired model's 400 `validation failed: model ... is not supported` outranks the attachment hint. Nothing here depends on `routing-v2`'s migration `0006`; task 0.4 lists the routing-dependent wording to amend if `routing-v2` is not merged.
-Apply order (canonical, identical in `routing-v2` and the proposal): (1) routing-v2 1.1 to 1.5 and media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0, 2, 3 and 4, then 5.1 to 5.3a; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4 and 7.1, and media 5.1; (6) the CODE FREEZE: routing-v2 8.1, 8.2, 8.3 and 8.5 and media 6.1 to 6.5 (Gate 2 over code), then routing-v2 7.1a, the offline unwind rehearsal; (7) routing-v2 7.1b and 7.2 to 7.7, the in-branch evaluation (7.8 only if it fails), any `src/` commit after 7.6 requiring a new numbered run; (8) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, then routing-v2 8.4 and 8.6; media 7.1), then the docs-only reviews routing-v2 9.2 and media 7.2; (9) routing-v2 9.3, the merge gate, then 9.4, the worktree cleanup, and the archives (routing-v2 9.5, media 7.3).
+**Model-not-served predicate and the split.** This change owns `matrix.model_not_served(status, message, model)` and `matrix.is_named_refusal(status, message)`; `routing-v2` D17 consumes the first so that no second classifier of "the model is gone" exists, and a retired model's 400 `validation failed: model ... is not supported` outranks the attachment hint. Nothing here depends on `routing-v2`'s migration `0006`; task 0.4 lists the routing-dependent wording to amend if `routing-v2` is not merged.
+Apply order (canonical, identical in `routing-v2` and the proposal): (0) first the worktree (routing-v2 0.4), then routing-v2 0.1 and media 0.1, 0.3, 0.4, 0.5 (media 0.2 with the first commit of its scripts, and only if `pyproject.toml` lacks the exclude); (1) routing-v2 1.1 and 1.3 to 1.5 and media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 2, 3 and 4, then 5.1 to 5.3a; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4, 7.1 and 7.4 (with its dry run of T1 to T3), and media 5.1; (6) the CODE FREEZE: routing-v2 8.1, 8.2, 8.3 and 8.5 and media 6.1 to 6.5 over ONE head (both Gate 2 verdicts recorded at it), then routing-v2 7.1a, the offline unwind rehearsal; (7) routing-v2 7.1b, 7.2, 7.3 and 7.5 to 7.7, the in-branch evaluation (7.8 only if it fails), any `src/` commit after 7.6 requiring a new numbered run; (8) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, then routing-v2 8.4 and 8.6; media 7.1), then the docs-only reviews routing-v2 9.2 and media 7.2; (9) routing-v2 9.3, the merge gate, then 9.4, the worktree cleanup, and the archives (routing-v2 9.5, media 7.3).
 
 **D10. Chat.** `inherited_kinds(chat)` is the set of kinds named by the stored attachment notes; a chained send
 uses `new_kinds | inherited_kinds` as the required kinds for the router and the gate. A chained follow-up sends only the new text and new attachments plus
@@ -303,7 +303,7 @@ stored, as today; an incomplete answer's attachments are not noted.
 **D11. Research: the API allows it; this change defers it.** The probe `P18` (2026-10-30) ran a
 background `effort: medium` request with a PDF part and it completed with the right answer, so
 nothing on the API side blocks it. It stays out for three reasons that are ours, not the API's:
-(a) budget: after `routing-v2` and our trim (D14) the dynamic-with-Decisions server has about 580
+(a) budget: after `routing-v2` and our trim (D14) the dynamic-with-Decisions server has about 934
 bytes left, and a third `attachments` parameter on `perplexity_research` costs about 330 bytes plus
 a description sentence, so it needs a further trim; (b) retention: research runs are `store` true by necessity, so the
 provider keeps the uploaded document, which the research description and README would have to say

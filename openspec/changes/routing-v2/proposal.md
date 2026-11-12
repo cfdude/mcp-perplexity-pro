@@ -43,13 +43,12 @@ things, we keep it in a branch and do not merge". The proof is an in-branch eval
   `MERGE ALLOWED` report. The shipped evidence has no scores, so the router cannot pass until figures are
   sourced and verified (an unverified run is INVALID); on FAIL the routed selection stays unmerged and
   `media-inputs` can merge alone (nothing is tagged without an owner decision).
-- A deterministic, pure selector picks `(model, effort)` for a nameless ask, chat send or research
-  run: a task class from the prompt (coding, reasoning or browsing), the eligible shortlist models
+- A deterministic, pure selector picks `(model, effort)` for a nameless ask or chat send: a task class from the prompt (coding, reasoning or browsing), the eligible shortlist models
   (available in the matrix, scored on the class, and answering `yes` to the matrix's `accepts` for the required input kinds), the best
   score, every model within a named margin (3 points proposed) of it, and the cheapest of those by
   the matrix price.
-- The effort comes from the tier the classifier already computes, capped per tool (ask and chat stay
-  within `low` and `medium`; research may reach `high`), and is clipped to the levels the model
+- The effort comes from the tier the classifier already computes, capped at `medium` (a call has a 120 s
+  timeout; `high` and `xhigh` are never automatic), and is clipped to the levels the model
   accepts. For ask and chat the tiers `standard` and `complex` therefore differ only in what is
   recorded.
 - A fallback chain when no model is eligible: `openai/gpt-6-luna` at `low`, then the tier's
@@ -66,13 +65,11 @@ things, we keep it in a branch and do not merge". The proof is an in-branch eval
   explicit selector changes it; the tier (a named one included) is
   stored per assistant message beside `routed_model`, the requested id the hold uses (the stored `model`
   is the API-reported id and can differ). Migration `0006` adds `chat_messages.tier`,
-  `chat_messages.routed_model` and `research_jobs.effort` (all nullable; the downgrade uses `DROP
+  `chat_messages.routed_model` (both nullable; the downgrade uses `DROP
   COLUMN` so it cannot cascade into stored vectors).
-- `perplexity_research.depth` becomes optional with no default (an omitted depth is no longer the
-  same as an explicit `medium`); in `dynamic` mode an omitted depth is routed, and a routed job stores
-  depth `routed`, its level in `research_jobs.effort` and a null preset in usage events; the jobs
-  tool and `JobInfo` show `routed` with the model and effort. When no model is eligible, research
-  falls back to the tier's preset, never to `gpt-6-luna`.
+- Research is unchanged (owner decision 2026-11-12, scope down): in `dynamic` mode `perplexity_research` keeps its
+  preset, with no routed depth, no stored effort and no optional `depth`; routed research selection is deferred
+  to the registered epic `routing-research`, and the evaluation claim covers `ask` and chat send only.
 - A named `tier` in `dynamic` mode skips the tier classifier but the offline rules still give the task
   class; `selected_by` is `tier`.
 - One hook with `media-inputs`, which owns the modality facts (the matrix `inputs` record, `accepts`,
@@ -99,10 +96,9 @@ things, we keep it in a branch and do not merge". The proof is an in-branch eval
 ### Modified Capabilities
 - `routing-config`: `dynamic` mode runs the router; tiers become effort tiers; tier variables pin models; "The tier argument", "The classifier field can be decisions", "Usage records the resolved model" (the "routing adds no migration" clause goes), the `routing` object, the instructions text, the follow-up hold and its storage; two requirements removed.
 - `routing-rules`: a task class and its two fixed vocabularies, offline.
-- `routing-decisions-classifier`: the classifier runs for `search` false calls, never for research, and a named tier has no classifier.
-- `agent-ask`: a routed model call may carry `reasoning.effort`; the depth rule, "Ask tool" and "Agent requests name the preset as effort" (the research scenario).
+- `routing-decisions-classifier`: the classifier runs for `search` false calls, and a named tier has no classifier.
+- `agent-ask`: a routed model call may carry `reasoning.effort`; the depth rule, "Ask tool" and "Agent requests name the preset as effort".
 - `agent-chat`: "Chat tool" (description sentence), "Chat storage" (the new column), "Send starts a chat" (dynamic wording) and the stored tier.
-- `agent-research`: "Research tool" (optional `depth`), "The model is known only from a finished run", "Job records", "Recording follows the recorder contract", "Submit that returns another status" (preset null for a routed submit), routed research and its job columns.
 - `server-runtime`: "Dynamic mode configuration" (pins; `PERPLEXITY_MODEL` ignored).
 - `model-matrix`: the forced, rate-limited, single-flight refresh after a retired model (added requirement; `media-inputs` owns the rest of the capability and the `model_not_served` predicate).
 - `help-tool`: "The index and routing topic describe dynamic mode".
@@ -112,22 +108,20 @@ things, we keep it in a branch and do not merge". The proof is an in-branch eval
 
 - Code (at apply time): new `routing_select.py` (pure) and `routing_evidence.py` (loader and
   `EvidenceState`), edits to `routing.py`, `rules.py`, `settings.py`, `agent.py` (`reasoning` in a
-  model request; the preset of a routed job), `server.py` (`AppContext.evidence`), `__main__.py`
-  (startup warnings, readers of the removed tier table), `command.py` (research `--depth` default),
-  `tools/{ask,chat,research,models,jobs}.py` (research submit preset at `research.py` lines 158, 183 and 186), `storage/chats.py` (`AssistantTurn`, `last_route`), `pyproject`/packaging test for the data file, `routing_decisions.py` (`wants_decider`), `help_text.py`, `matrix_refresh.py` (`refresh_now`, the retirement rate limit), `catalog.py` (the held listing without a fetch), `routing_select.py` (family key, tombstones, exclusion), `costed.py` and `agent.py` (an optional `model=` so a failed call's usage event names the model), the three tools (the single retry and its hint),
+  model request), `server.py` (`AppContext.evidence`), `__main__.py`
+  (startup warnings, readers of the removed tier table), `tools/{ask,chat,models}.py`, `storage/chats.py` (`AssistantTurn`, `last_route`), `pyproject`/packaging test for the data file, `routing_decisions.py` (`wants_decider`), `help_text.py`, `matrix_refresh.py` (`refresh_now`, the retirement rate limit), `catalog.py` (the held listing without a fetch), `routing_select.py` (family key, tombstones, exclusion), `costed.py` and `agent.py` (an optional `model=` so a failed call's usage event names the model), the ask and chat tools (the single retry and its hint),
   `storage` (migration `0006`, models), data file
   `src/mcp_perplexity_pro/data/routing_evidence.json`; tests (`tests/test_routing.py`,
-  `tests/test_routing_dynamic_tools.py`, `tests/test_chats_migration.py:214` and `tests/test_jobs_migration.py:249`, the ORM-against-schema
-  tests that the new columns break, `tests/test_research_tool.py:322`, the research schema default)
+  `tests/test_routing_dynamic_tools.py`, `tests/test_chats_migration.py:214`, the ORM-against-schema
+  test that the new columns break)
   and fixtures; README, CHANGELOG, CLAUDE.md.
-- Migration `0006`: `chat_messages.tier`, `chat_messages.routed_model` and `research_jobs.effort`, nullable, reversible; the downgrade
+- Migration `0006`: `chat_messages.tier` and `chat_messages.routed_model`, nullable, reversible; the downgrade
   needs SQLite 3.35.0, already required by `RETURNING` in `storage/embeddings.py`.
-- Tools-list size: the cap 59779 never rises. This change's growth targets are 650, 790 and 790 bytes over
+- Tools-list size: the cap 59779 never rises. This change's growth targets are 300, 440 and 440 bytes over
   57735, 58021 and 58255 (default, dynamic, dynamic with Decisions; design D14 budgets each field); task
   6.2 records the figures, 6.3 trims at least 450 bytes in other tools' descriptions, and 6.4 installs the
   FINAL per-server ceilings from the combined table that media 3.3 writes.
-- Live work: a request-shape probe (a model with `reasoning.effort` and the web search tool, in
-  the background, for research), a probe of what the API answers for a retired model id, source
+- Live work: a request-shape probe (a model with `reasoning.effort` and the web search tool), a probe of what the API answers for a retired model id, source
   verification of every evidence figure, and the in-branch evaluation (pilot 7.1b and tasks 7.2 to 7.7,
   under 10 USD for all live work of the branch) whose report decides the merge.
 - Tests and harness: `tests/routing_eval/` (thresholds, microbenchmarks, paired overhead, three-arm live
@@ -135,4 +129,4 @@ things, we keep it in a branch and do not merge". The proof is an in-branch eval
 - Boundary with `media-inputs` (applied in parallel): this change owns selection (evidence, eligibility,
   effort, fallbacks, the hold rule); `media-inputs` owns the modality facts in the matrix, the
   attachment parameters, the refusal wording and the gate on the final route (explicit model, pin,
-  tier model and default route; a held model is kept only when the matrix answers `yes`, and the router substitutes only `yes` models). CANONICAL APPLY ORDER: (1) routing-v2 1.1 to 1.5 and media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0, 2, 3 and 4, then 5.1 to 5.3a; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4 and 7.1, and media 5.1; (6) the CODE FREEZE: routing-v2 8.1, 8.2, 8.3 and 8.5 and media 6.1 to 6.5 (Gate 2 over code), then routing-v2 7.1a, the offline unwind rehearsal; (7) routing-v2 7.1b and 7.2 to 7.7, the in-branch evaluation (7.8 only if it fails), any `src/` commit after 7.6 requiring a new numbered run; (8) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, then routing-v2 8.4 and 8.6; media 7.1), then the docs-only reviews routing-v2 9.2 and media 7.2; (9) routing-v2 9.3, the merge gate, then 9.4, the worktree cleanup, and the archives (routing-v2 9.5, media 7.3). A stub `matrix.accepts` answering `unknown` is the fallback if that order is impossible. If the evaluation fails, task 7.8 unwinds the routed selection and `media-inputs` ships alone (design D18 lists exactly what it took from this change: nothing from migration `0006`, the `required_input` call into `resolve` and the held-model and router-substitution wording).
+  tier model and default route; a held model is kept only when the matrix answers `yes`, and the router substitutes only `yes` models). CANONICAL APPLY ORDER: (0) first the worktree (routing-v2 0.4), then routing-v2 0.1 and media 0.1, 0.3, 0.4, 0.5 (media 0.2 with the first commit of its scripts, and only if `pyproject.toml` lacks the exclude); (1) routing-v2 1.1 and 1.3 to 1.5 and media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 2, 3 and 4, then 5.1 to 5.3a; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4, 7.1 and 7.4 (with its dry run of T1 to T3), and media 5.1; (6) the CODE FREEZE: routing-v2 8.1, 8.2, 8.3 and 8.5 and media 6.1 to 6.5 over ONE head (both Gate 2 verdicts recorded at it), then routing-v2 7.1a, the offline unwind rehearsal; (7) routing-v2 7.1b, 7.2, 7.3 and 7.5 to 7.7, the in-branch evaluation (7.8 only if it fails), any `src/` commit after 7.6 requiring a new numbered run; (8) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, then routing-v2 8.4 and 8.6; media 7.1), then the docs-only reviews routing-v2 9.2 and media 7.2; (9) routing-v2 9.3, the merge gate, then 9.4, the worktree cleanup, and the archives (routing-v2 9.5, media 7.3). A stub `matrix.accepts` answering `unknown` is the fallback if that order is impossible. If the evaluation fails, task 7.8 unwinds the routed selection and `media-inputs` ships alone (design D18 lists exactly what it took from this change: nothing from migration `0006`, the `required_input` call into `resolve` and the held-model and router-substitution wording).

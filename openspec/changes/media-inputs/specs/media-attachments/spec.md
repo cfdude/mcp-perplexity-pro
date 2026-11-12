@@ -401,7 +401,7 @@ A 400 from the API on a call that carried attachments or inherited kinds SHALL s
 
 #### Scenario: The model is gone, not the attachment refused
 - **WHEN** the API answers 400 `validation failed: model ... is not supported` (true for `matrix.model_not_served`) to a call that carried a PNG
-- **THEN** the model-gone text of `routing-v2` replaces the attachment hint, and the matrix is not told the kind was refused
+- **THEN** the attachment hint is suppressed and the text says `model <id> is not served` (with `routing-v2` present its text naming live same-family models replaces it), and the matrix is not told the kind was refused
 
 #### Scenario: A document type the route refuses
 - **WHEN** the API answers 400 `the selected model route does not support this document type or source`

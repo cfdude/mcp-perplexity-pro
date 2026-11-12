@@ -21,5 +21,5 @@ The output schema's added field SHALL have a description of at most 30 character
 - **THEN** the difference attributable to the field is at most 120 bytes
 
 #### Scenario: Output size
-- **WHEN** a call lists 54 models
+- **WHEN** a call lists the 54 models of the 2026-10-17 listing (a listing with one more entry adds at most that entry's bytes)
 - **THEN** the structured content grows by at most 1700 bytes and the text table by at most 1800

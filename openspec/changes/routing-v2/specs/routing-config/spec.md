@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Routing mode
-The server SHALL read `PERPLEXITY_ROUTING` (case-insensitive), one of `standard` (the default), `custom` and `dynamic`, and apply it to `perplexity_ask`, to `perplexity_chat` send and, in `dynamic` mode only, to `perplexity_research` when it names no `depth`. In `standard` and `custom` mode `perplexity_research` SHALL be unchanged, because its depths are presets and not models. An unknown value SHALL fail startup naming the variable and the three accepted values.
+The server SHALL read `PERPLEXITY_ROUTING` (case-insensitive), one of `standard` (the default), `custom` and `dynamic`, and apply it to `perplexity_ask` and to `perplexity_chat` send only. `perplexity_research` SHALL be unchanged in every mode, because its depths are presets and not models. An unknown value SHALL fail startup naming the variable and the three accepted values.
 
 #### Scenario: Default mode
 - **WHEN** the server starts with only the API key set
@@ -14,7 +14,7 @@ The server SHALL read `PERPLEXITY_ROUTING` (case-insensitive), one of `standard`
 - **THEN** startup fails naming `PERPLEXITY_ROUTING`, the value `auto` and the accepted values `standard`, `custom` and `dynamic`
 
 #### Scenario: Research is unaffected
-- **WHEN** `perplexity_research` is called in `standard` or `custom` mode
+- **WHEN** `perplexity_research` is called in any mode, `dynamic` included
 - **THEN** its request names a preset exactly as before and carries no routing
 
 ### Requirement: A routed call is shaped like an explicit model call
@@ -86,7 +86,7 @@ A call that breaks more than one routing rule SHALL be refused with the first of
 - **THEN** the message names both, says to pass one or neither, and says that with neither the model and effort are picked from the prompt
 
 ### Requirement: Dynamic mode routes by a classifier
-In `dynamic` mode a call that names no `depth`, `tier` or `model` SHALL be classified over the call's text (the ask's query, the chat send's message, the research query) by the configured classifier, the rules of `routing-rules` unless a change adds another (a research query is ALWAYS classified by the rules, never by the Decisions classifier), which supplies the tier; the task class SHALL always come from the rules, offline. The router of `routing-evidence` SHALL then choose the model and the effort. With the rules classifier the classification makes no upstream request. Presets SHALL be used only by the router's last fallback rung.
+In `dynamic` mode a call that names no `depth`, `tier` or `model` SHALL be classified over the call's text (the ask's query, the chat send's message) by the configured classifier, the rules of `routing-rules` unless a change adds another, which supplies the tier; the task class SHALL always come from the rules, offline. The router of `routing-evidence` SHALL then choose the model and the effort. With the rules classifier the classification makes no upstream request. Presets SHALL be used only by the router's last fallback rung.
 
 #### Scenario: A lookup goes light
 - **WHEN** an ask in `dynamic` mode asks `What is the latest stable Python release?`
@@ -101,7 +101,7 @@ In `dynamic` mode a call that names no `depth`, `tier` or `model` SHALL be class
 - **THEN** the task class still comes from the rules and the call makes no upstream request beyond the one Decisions request
 
 ### Requirement: Dynamic tiers need no configuration
-In `dynamic` mode the three tiers SHALL be effort tiers of the router and need no configuration. `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX`, each optional and validated as a model id when set, SHALL pin that tier's calls to that model used verbatim: the router SHALL not choose the model, the effort SHALL still follow the tier (clipped to the pinned model's accepted levels when the matrix knows it), and no score SHALL be consulted. A pin applies to routed research too, and the attachment gate of `media-attachments` (`accepts` of the final route) applies to a pinned model as to any other: `no` is refused, `unknown` is sent. `PERPLEXITY_MODEL` SHALL be ignored in `dynamic` mode with one startup warning naming it, as in `custom` mode. Presets `high` and `xhigh` SHALL never be selected automatically for ask or chat, and `xhigh` never for research.
+In `dynamic` mode the three tiers SHALL be effort tiers of the router and need no configuration. `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD` and `PERPLEXITY_TIER_COMPLEX`, each optional and validated as a model id when set, SHALL pin that tier's calls to that model used verbatim: the router SHALL not choose the model, the effort SHALL still follow the tier (clipped to the pinned model's accepted levels when the matrix knows it), and no score SHALL be consulted. The attachment gate of `media-attachments` (`accepts` of the final route) applies to a pinned model as to any other: `no` is refused, `unknown` is sent. `PERPLEXITY_MODEL` SHALL be ignored in `dynamic` mode with one startup warning naming it, as in `custom` mode. Presets `high` and `xhigh` SHALL never be selected automatically.
 
 #### Scenario: Nothing configured
 - **WHEN** the server starts in `dynamic` mode with only the API key set
@@ -266,15 +266,11 @@ Where `routing-config` says the `routing` object's `classifier` is the classifie
 - **THEN** `selected_by` is `router` and `classifier` is `decisions`
 
 ### Requirement: Usage records the resolved model
-The usage event of a routed call SHALL record the model the API reports, as it does today, and SHALL NOT change the usage schema. A call that ran a model route SHALL record and report preset null, a routed research run included: no code path SHALL fall back to a default preset name. Migration `0006` adds stored columns only (`chat_messages.tier`, `chat_messages.routed_model` and `research_jobs.effort`).
+The usage event of a routed call SHALL record the model the API reports, as it does today, and SHALL NOT change the usage schema. A call that ran a model route SHALL record and report preset null, no code path SHALL fall back to a default preset name. Migration `0006` adds stored columns only (`chat_messages.tier` and `chat_messages.routed_model`).
 
 #### Scenario: Default call is recorded
 - **WHEN** an ask in `standard` mode completes
 - **THEN** one usage event exists whose model is the one the response reports
-
-#### Scenario: A routed research run records no preset
-- **WHEN** a routed research job is observed finished
-- **THEN** its usage event has preset null and the model the response reports
 
 ### Requirement: The instructions text
 The MCP `instructions` SHALL be rendered at startup from the settings and state the mode, the standard model or the three tiers with what each runs (a model id, or in `dynamic` mode `router` for a tier the server chooses a model for), when to pass `tier`, `depth` or `model`, that `high` and `xhigh` belong to `perplexity_research`, and that `perplexity_help` explains the tools. The text SHALL contain no secret and SHALL be identical for the life of the process. `perplexity_help` repeats the routing mode but is a pointer and a topic, not a fifth channel of "The calling agent is told the configuration".
@@ -312,7 +308,7 @@ In `dynamic` mode a call SHALL fail in this order: selector and tier errors, the
 
 #### Scenario: A reclassified tier whose pin refuses the kind
 - **WHEN** the Decisions classifier reclassifies a call with an image to a tier whose `PERPLEXITY_TIER_*` pin the matrix says refuses `image`
-- **THEN** the call fails with `invalid_request` and no request naming a model is sent
+- **THEN** the gate hook is called with the FINAL route (the pinned model) after the second resolve, and the end-to-end refusal is `media-inputs` task 2.3's scenario
 
 #### Scenario: Router refusal before the Decisions request
 - **WHEN** the Decisions classifier is configured and the router would refuse the call

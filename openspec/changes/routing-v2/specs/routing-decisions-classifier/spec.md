@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: The classifier runs only when it is needed
-The classifier SHALL run only for a call in dynamic mode with the Decisions classifier that names no `depth`, `tier` or `model` and whose options and project name validated, and for research never (research is classified by the rules alone, so a research submit makes no Decisions request). A call with `search` false is classified like any other, because every router route is a model route. An invalid call makes no Decisions request.
+The classifier SHALL run only for a call in dynamic mode with the Decisions classifier that names no `depth`, `tier` or `model` and whose options and project name validated. A call with `search` false is classified like any other, because every router route is a model route. An invalid call makes no Decisions request.
 
 #### Scenario: Explicit selector
 - **WHEN** a call in this mode names `depth` `fast`

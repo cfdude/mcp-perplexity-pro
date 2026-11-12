@@ -25,7 +25,7 @@ Every Agent API request the server builds (an ask, a chat send, a research submi
 - **THEN** the request body has `effort` `medium` and no `preset` key
 
 #### Scenario: A research submit
-- **WHEN** a client submits research with no depth outside `dynamic` mode
+- **WHEN** a client submits research with no depth
 - **THEN** the background request has `effort` `medium` and no `preset` key
 
 #### Scenario: A chat send at a depth

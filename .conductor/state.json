@@ -1883,10 +1883,30 @@
       "attributedCommits": [],
       "createdAt": "2026-11-12T02:14:51.317Z",
       "touchedAt": "2026-11-12T02:14:51.319Z"
+    },
+    {
+      "id": "routing-research",
+      "title": "Routed model and effort for background research jobs",
+      "priority": "P3",
+      "status": "later",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "relates-to",
+          "epic": "routing-v2",
+          "reason": "research keeps its preset in routing-v2; routed research needs its own evaluation, a research_jobs.effort column and probing whether the API accepts a named model for background runs"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "Deferred from routing-v2 on 2026-11-11: the routing evaluation covers ask and chat send only, and routed research would ship with nothing measuring its cost. Scope when picked up: routed selection, research_jobs.effort and depth routed, optional research depth, a probe of named-model background runs, and a capped research sample under its own cost and quality thresholds.",
+      "attributedCommits": [],
+      "createdAt": "2026-11-12T02:30:43.432Z",
+      "touchedAt": "2026-11-12T02:30:43.433Z"
     }
   ],
   "detourStack": [],
-  "revision": 482,
+  "revision": 483,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",

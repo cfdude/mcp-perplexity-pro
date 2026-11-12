@@ -4,6 +4,7 @@ Method: docs read from https://docs.llm-stats.com (`*.md` pages), OpenAPI read f
 https://api.llm-stats.com/stats/openapi.json, then read-only live calls (about 45 data responses
 against a 250/day quota). The key was read inside each call and never printed or stored.
 Perplexity's `/v1/models` stays the only availability authority; LLM Stats is a metadata layer joined onto it.
+Data by LLM Stats (linked to https://llm-stats.com).
 
 ## Verdict
 
@@ -17,7 +18,7 @@ It is still useful as a cross-check and a pre-fill (modalities, "what benchmark 
 
 ## 1. Auth, plan, limits (live `GET /v1/account`, costs no quota)
 
-- Base URL `https://api.llm-stats.com/stats/v1`; header `Authorization: Bearer <key>` (keys `sk_ze_...`).
+- Base URL `https://api.llm-stats.com/stats/v1`; header `Authorization: Bearer <key>` (key prefix not recorded here).
 - Live plan: `community`, `plan_version 2`, `daily_quota 250`, `burst_per_minute 50`, `history_months 6`,
   `attribution_required: true`, `redistribution_allowed: false`.
 - **Gotcha: live numbers differ from the docs.** Docs (plans-and-quotas) say Community = 500/day and 60/min;
@@ -31,19 +32,17 @@ It is still useful as a cross-check and a pre-fill (modalities, "what benchmark 
 
 ## 2. Terms (licence and attribution)
 
-Sources: https://docs.llm-stats.com/api-reference/plans-and-quotas.md and .../attribution.md.
-The API terms page (https://llm-stats.com/legal/api-terms) returned 404 to me, so the docs are the only text I read.
+Sources: the plans-and-quotas and attribution pages of docs.llm-stats.com (the API terms page returned 404, so
+these pages are the only text read; the wording below is a paraphrase).
 
-- Community: Redistribution "Not permitted"; Attribution "Required for public display".
-- "Neither Community nor Builder lets you resell, sublicense, or ship the dataset (or a substantial extract...)".
-- Attribution page: "Attribution is not a license"; redistribution "requires a Commercial agreement".
-- Public display needs a visible credit naming "LLM Stats" (badge, source link, or plain text
-  `Source: LLM Stats (llm-stats.com), retrieved <date>.`), same screen as the data, linking llm-stats.com.
-- Redistribution is Commercial only, "per contract" (price not published).
+- The Community plan does not permit redistribution, and public display needs a visible credit that links to
+  llm-stats.com. Neither plan allows reselling, sublicensing or shipping the dataset or a substantial extract.
+- Attribution is stated not to be a licence; redistribution needs a commercial agreement, priced per contract.
+- Attribution line used in this repository: `Data by LLM Stats (linked to https://llm-stats.com)`.
 
 Consequence: a committed `routing_evidence.json` holding LLM Stats scores, shipped on PyPI, is a dataset extract
-shipped in a product. Even a handful of rows for 9 models is a judgment call the terms do not bless; I would not ship
-it without written permission. Using the numbers privately to decide what to look up elsewhere is fine.
+shipped in a product, so none of its rows is copied into the repo or the package. Using the numbers privately to
+decide what to look up elsewhere is fine.
 
 ## 3. Coverage for routing-v2 (live)
 
@@ -65,24 +64,14 @@ theirs `swe-bench-verified`, `terminal-bench-2.1`, `gpqa`, `browsecomp` (hyphens
 LLM Stats has `gpqa-biology/-chemistry/-physics` but no `gpqa-diamond`. Using `gpqa` for `gpqa_diamond` is a
 benchmark substitution, not a mapping.
 
-Scores (LLM Stats scale 0..1; S = `is_self_reported` true; `verified_by_llmstats` false on every row):
+Counts only (no row or score is reproduced here; none of the rows is verified by LLM Stats, and most are
+self-reported by the vendor). Of the 9 shortlist models examined, the number reporting each benchmark:
+`swe-bench-verified` 0, `terminal-bench-2.1` 1, `gpqa` 0, `browsecomp` 0, `swe-bench-pro` 3,
+`terminal-bench-4.0` 6, `deepswe-1.1` 6; `perplexity/sonar` has no match.
 
-| Model (their id) | swe-bench-verified | terminal-bench-2.1 | gpqa | browsecomp | Other coding benchmarks they hold |
-|---|---|---|---|---|---|
-| openai/gpt-6-luna | none | none | none | none | deepswe-1.1 0.666 S |
-| anthropic/claude-haiku-5-5 | none | none | none | none | swe-bench-pro 0.648, terminal-bench-4.0 0.392 (S) |
-| perplexity/sonar | no match | no match | no match | no match | - |
-| google/gemini-3.8-flash | none | 0.894 S (source: deepmind.google/models/evals-methodology/gemini-3-8-flash/, scored_at 2026-11-11) | none | none | terminal-bench-4.0 0.191, deepswe-1.1 0.737 |
-| anthropic/claude-sonnet-5-5 | none | none | none | none | swe-bench-pro 0.813, terminal-bench-4.0 0.706, deepswe-1.1 0.71 (S) |
-| openai/gpt-6.1-sol | none | none | none | none | deepswe-1.1 0.7522 S |
-| openai/gpt-6.1-terra | none | none | none | none | terminal-bench-4.0 0.503 S |
-| anthropic/claude-opus-5-5 | none | none | none | none | swe-bench-pro 0.899, terminal-bench-4.0 0.664, deepswe-1.1 0.742 |
-| xai/grok-4.7 | none | none | none | none | terminal-bench-4.0 0.38, deepswe-1.1 0.71 (S) |
-
-Result: of 9 shortlist models x 4 benchmarks = 36 cells, **1 cell is filled** (gemini-3.8-flash on terminal-bench-2.1),
-self-reported by Google. The newest models report a newer generation of benchmarks (Terminal-Bench 4.0, SWE-Bench Pro,
-DeepSWE) instead of the ids in design.md. No class would have an eligible model under the "every listed benchmark
-verified" rule.
+Result: of 9 shortlist models x 4 benchmarks = 36 cells, **1 cell is filled**. The newest models report a newer
+generation of benchmarks (Terminal-Bench 4.0, SWE-Bench Pro, DeepSWE) instead of the ids in the first draft of
+design.md. No class would have an eligible model under the "every listed benchmark verified" rule.
 
 Across all 55 Perplexity models (51 matched), models with a score for: swe-bench-verified 14, terminal-bench-2.1 14,
 gpqa 26 (pull stopped at 6 pages: 240 of ~265 models, so this is a lower bound), browsecomp 17, terminal-bench-4.0 19,
@@ -99,7 +88,7 @@ with identical rows (swe-bench-verified: total 372 for 124 models), so full pull
 
 ## 3a. The join from Perplexity's 55 models (`/v1/models` set = baseline's 54 + live `openai/gpt-6.1-terra`)
 
-Rule (family + version normalisation, implemented in the scratchpad script): drop the provider prefix; lower-case; treat
+Rule (family + version normalisation, implemented in a throwaway script): drop the provider prefix; lower-case; treat
 `.` and `-` as equal; ignore a trailing date (`-YYYYMMDD` or `-YYYY-MM-DD`), `-preview`, or `-beta-NNNN`; require the
 maker org to match when the Perplexity provider is the maker (for `perplexity/*` hosted open models the maker is
 deepseek/zai-org/moonshotai/nvidia, so match by slug only).
@@ -141,10 +130,8 @@ If LLM Stats is used at all, use it offline, by the owner, as a lead generator a
 - The output is a worksheet, not a shipped file: a human opens each `source_url`, confirms the figure and harness, and only
   then writes `verified_at` in our file. That keeps the "verified" rule honest and keeps LLM Stats data out of the package.
 - Record in the script run: date, response `x-request-id`s, and the benchmark/model ids used. There is no snapshot checksum
-  on Community (snapshots are Builder). A dated local copy of the JSON in `acceptance/` is the only pin; do not commit LLM
-  Stats rows to a public repo, per section 2.
-- Attribution if any LLM Stats-derived number ever appears in docs: plain text `Source: LLM Stats (llm-stats.com), retrieved <date>.`
-  next to the data. Needed even for Community internal-then-published use.
+  on Community (snapshots are Builder). Do not commit any LLM Stats rows or copy of its JSON (section 2).
+- Attribution wherever a lead from LLM Stats is mentioned in docs: `Data by LLM Stats (linked to https://llm-stats.com)`.
 - Runtime lookups: no. They add a key requirement, latency, a quota that Community cuts to 250/day, and a licence problem.
 
 Mapping to our "verified" rule: LLM Stats `is_self_reported: true` is our `basis: vendor`; `false` could be `independent`
@@ -169,6 +156,4 @@ So the live probe remains authoritative; use LLM Stats only as an advisory hint,
 
 ## Files
 
-Raw responses (no key) in the session scratchpad:
-`/private/tmp/claude-501/-Users-rsherman-Servers-mcp-perplexity-pro/0dc2ae42-68b1-4a59-bd08-52a41ae14168/scratchpad/ls/`
-(`allmodels.jsonl`, `b.json`, `gm_*.json`, `sc_*.jsonl`, `match.json`, `match.py`, `cov2.py`).
+Raw responses were kept outside the repository and are not committed.

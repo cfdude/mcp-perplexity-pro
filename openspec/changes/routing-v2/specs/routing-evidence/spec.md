@@ -98,7 +98,7 @@ A model's score for a task class SHALL be the arithmetic mean of its verified sc
 - **THEN** selection uses the new membership with no code change
 
 ### Requirement: Selection is deterministic, pure and offline
-The selector SHALL be a pure function of the task class, the tier, the tool (`ask`, `chat` or `research`), `search`, the matrix snapshot, the evidence, the required input kinds and the margin passed to it (no network, database, file, clock or randomness), with the same result in every process. Contenders are eligible models within the margin of the best score, in exact decimal arithmetic; the lowest blended price (3 parts input, 1 part output) wins, then the higher score, then the smaller id.
+The selector SHALL be a pure function of the task class, the tier, the tool (`ask` or `chat`), `search`, the matrix snapshot, the evidence, the required input kinds and the margin passed to it (no network, database, file, clock or randomness), with the same result in every process. Contenders are eligible models within the margin of the best score, in exact decimal arithmetic; the lowest blended price (3 parts input, 1 part output) wins, then the higher score, then the smaller id.
 
 #### Scenario: Cheaper within the margin
 - **WHEN** the margin is 3 and model A scores 80 at a blended 6.0 while model B scores 78 at a blended 1.0
@@ -155,7 +155,7 @@ The margin SHALL default to 3 points and be overridable by `PERPLEXITY_ROUTER_MA
 - **THEN** the server starts and logs one warning naming the variable
 
 ### Requirement: The tier gives a target effort that the model's accepted levels clip
-The target level SHALL be `low` for tier `light`, `medium` for `standard`, and for `complex` `medium` in ask and chat and `high` in research; `xhigh` is never automatic. The level sent SHALL be the highest accepted level not above the target, else the lowest accepted, else none (no level accepted, never probed, or absent from the matrix, a pin included). The tier SHALL NOT change the chosen model, so for ask and chat `standard` and `complex` differ only in the classification recorded.
+The target level SHALL be `low` for tier `light`, `medium` for `standard`, and for `complex` `medium`; `high` and `xhigh` are never automatic. The level sent SHALL be the highest accepted level not above the target, else the lowest accepted, else none (no level accepted, never probed, or absent from the matrix, a pin included). The tier SHALL NOT change the chosen model, so `standard` and `complex` differ only in the classification recorded.
 
 #### Scenario: Accepted target
 - **WHEN** the tier is `standard`, the tool is ask and the chosen model accepts `medium`
@@ -180,10 +180,6 @@ The target level SHALL be `low` for tier `light`, `medium` for `standard`, and f
 #### Scenario: Ask and chat cap
 - **WHEN** a `complex` prompt is routed for ask or chat
 - **THEN** the effort is at most `medium`
-
-#### Scenario: Research reaches high
-- **WHEN** a `complex` prompt is routed for research
-- **THEN** the target is `high` and `xhigh` is not chosen
 
 #### Scenario: Tier does not pick the model
 - **WHEN** the same prompt text is routed once as tier `light` and once as `complex`
@@ -219,13 +215,6 @@ When no model is eligible, ask and chat SHALL try `fallbacks.default` (`openai/g
 #### Scenario: Unverified evidence
 - **WHEN** the evidence holds no verified score
 - **THEN** every nameless call falls back
-
-### Requirement: Research falls back to its preset
-When no model is eligible for a routed research run, the router SHALL use the documented preset of its tier (`medium` for `light` and `standard`, `high` for `complex`) and never `fallbacks.default`, so a deep run is never silently replaced by a cheap model.
-
-#### Scenario: Research never falls back to the default model
-- **WHEN** no shortlist model is eligible for a routed research run and `openai/gpt-6-luna` is `available`
-- **THEN** the run names preset `medium` (or `high` for a `complex` prompt) and no model
 
 ### Requirement: The preset rung has conditions
 The preset rung SHALL name no model and SHALL be allowed only when `search` is not false (a preset always searches) and, when media is required, only when the matrix says the tier's preset accepts every required kind (`preset_accepts(preset, kinds) == yes`); otherwise it is not allowed.
@@ -291,7 +280,7 @@ A routed call's `reason` SHALL be at most 120 ASCII characters built from consta
 - **THEN** the reason names the class and the rule and does not contain `hunter2`
 
 ### Requirement: A retired model is replaced once, on the best same-family shortlist model
-When a call on a server-chosen model (the router, a named-tier router route, the fallback model rung or a held chat model) is rejected with an answer `matrix.model_not_served` recognises, the server SHALL tombstone the id for 300 seconds, request one bounded refresh and retry once on the best remaining eligible same-family shortlist model, else on the chain fallback (research: the tier's preset). The retry is the only extra request. It follows only a rejection before the request was accepted.
+When a call on a server-chosen model (the router, a named-tier router route, the fallback model rung or a held chat model) is rejected with an answer `matrix.model_not_served` recognises, the server SHALL tombstone the id for 300 seconds, request one bounded refresh and retry once on the best remaining eligible same-family shortlist model, else on the chain fallback. The retry is the only extra request. It follows only a rejection before the request was accepted.
 
 #### Scenario: Same-family peer on the shortlist
 - **WHEN** the chosen `vendor/haiku-5` is answered 400 not supported and the shortlist also holds a live, eligible `vendor/haiku-6`
@@ -381,16 +370,20 @@ No score or text from LLM Stats (llm-stats.com), or any aggregator whose terms f
 - **WHEN** the README or a design note mentions a lead from LLM Stats
 - **THEN** the line `Data by LLM Stats (linked to https://llm-stats.com)` accompanies it
 
-### Requirement: The class table is final only after a coverage gate
-The task-class benchmark ids SHALL be chosen at sourcing from what vendors report for the shortlist, and the table SHALL be final only when at least 5 of the 8 shortlist models have verified scores for every benchmark of at least 2 of the 3 classes. When the gate fails the outcome SHALL be recorded early as `evidence too thin: router cannot be evaluated` and the owner decides: shrink the classes or hold the change.
+### Requirement: The class table is final only after an offline coverage gate
+Task 2.6 SHALL compute OFFLINE, from `data/routing_evidence.json` and the labeled set, the per-class share of prompts the router would choose, and generate `acceptance/coverage.md`. A class is kept only with at least 75 percent and at least 3 eligible shortlist models; a failing class SHALL be removed from the table, the default mapping and the "each class" of T0, T5b and the INVALID rule before 2.6 closes.
+
+#### Scenario: A class fails
+- **WHEN** `browsing` has 2 eligible models and 40 percent router choice
+- **THEN** it is removed before 2.6 closes, its prompts leave the set and run the fallback chain, and the other classes keep their thresholds
 
 #### Scenario: Gate met
-- **WHEN** 5 shortlist models have every benchmark of `browsing` and `reasoning` verified
-- **THEN** the table is final and the code freeze may proceed
+- **WHEN** every kept class has at least 3 eligible models and 75 percent router choice
+- **THEN** `coverage.md` is generated and the code freeze may proceed
 
-#### Scenario: Gate failed
-- **WHEN** only 3 shortlist models have a class fully verified
-- **THEN** `acceptance/coverage.md` records `evidence too thin: router cannot be evaluated` and no evaluation spend occurs until the owner decides
+#### Scenario: Too thin
+- **WHEN** fewer than 2 classes pass
+- **THEN** `coverage.md` records `evidence too thin: router cannot be evaluated` and no evaluation spend occurs until the owner decides
 
 #### Scenario: Not Diamond
 - **WHEN** a source reports GPQA only as a 448-question set
