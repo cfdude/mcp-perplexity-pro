@@ -49,14 +49,14 @@ Shape (version 1); a benchmark's version is part of its id, so identity is the i
 {
   "version": 1,
   "as_of": "YYYY-MM-DD",
-  "task_classes": {"coding": {"benchmarks": ["swe_bench_verified", "terminal_bench_2_1"]},
+  "task_classes": {"coding": {"benchmarks": ["swe_bench_pro", "terminal_bench_4_0"]},
                    "reasoning": {"benchmarks": ["gpqa_diamond"]},
                    "browsing": {"benchmarks": ["browsecomp"]}},
-  "benchmarks": {"terminal_bench_2_1": {"name": "Terminal-Bench 2.1"}},
+  "benchmarks": {"terminal_bench_4_0": {"name": "Terminal-Bench 4.0"}},
   "shortlist": ["<model id>", "..."],
   "fallbacks": {"default": {"model": "openai/gpt-6-luna", "effort": "low"}},
   "models": {"<model id>": {
-      "scores": {"terminal_bench_2_1": {"score": 0.0, "source_url": "https://...", "as_of": "YYYY-MM-DD",
+      "scores": {"terminal_bench_4_0": {"score": 0.0, "source_url": "https://...", "as_of": "YYYY-MM-DD",
                                         "basis": "independent", "harness": "text or null",
                                         "verified_at": "YYYY-MM-DD or null"}}}}
 }
@@ -85,9 +85,9 @@ benchmark of the class is not eligible for the class.
 
 | Task class | Benchmark ids (version inside the id) | Combined as | Chosen by (rules, in this order) |
 |---|---|---|---|
-| `coding` | `swe_bench_verified`, `terminal_bench_2_1` | mean | a fenced block or a phrase of the coding vocabulary |
-| `reasoning` | `gpqa_diamond` | the score | a word of the reasoning vocabulary |
-| `browsing` (also the default) | `browsecomp` | the score | everything else, because every routed call is web-grounded |
+| `coding` | ids chosen at sourcing from what vendors report for the shortlist; candidates `swe_bench_pro` and `terminal_bench_4_0` | mean of the chosen ids | a fenced block or a phrase of the coding vocabulary |
+| `reasoning` | candidate `gpqa_diamond`, only if a vendor reports Diamond (never the 448-question `gpqa`) | the score | a word of the reasoning vocabulary |
+| `browsing` (also the default) | candidate `browsecomp` | the score | everything else, because every routed call is web-grounded |
 
 The two vocabularies are listed in full in the `routing-rules` delta (the code reads them from
 `rules.py`, pinned by `tests/test_rules.py` and the labeled set). Generic words (`function`, `bug`)
@@ -96,6 +96,23 @@ light `browsing` lookup. **Owner decision 2026-11-11:** the mapping above and th
 drafted. Owner edits after that: benchmark ids, class membership, the vocabularies and the margin, each
 editable only until the pre-registration of D18 (task 7.2); an edit after a scored run starts a new
 numbered evaluation run.
+
+**Owner decision 2026-11-12 (editable at 7.2, like the table): the coding benchmark ids are chosen at
+sourcing.** The first draft named `swe_bench_verified` and `terminal_bench_2_1`, which the shortlist mostly
+does not report (`acceptance/llm-stats-investigation.md`: newer models report `terminal-bench-4.0`,
+`swe-bench-pro` and `deepswe-1.1`; 1 of 36 shortlist-by-benchmark cells was filled). The coding class
+therefore takes the ids that vendors actually report for the shortlist (candidates `swe_bench_pro` and
+`terminal_bench_4_0`); `reasoning` stays `gpqa_diamond` only if a vendor reports Diamond (LLM Stats' `gpqa`
+is a 448-question set, not Diamond, and is never substituted); `browsing` stays `browsecomp`. COVERAGE GATE
+(task 2.6, before the code freeze): the class table is final only when at least 5 of the 8 shortlist
+models have verified scores for EVERY benchmark of at least 2 of the 3 classes; otherwise the outcome is
+recorded early as "evidence too thin: router cannot be evaluated" and the owner decides (shrink the classes,
+or hold `routing-v2`). LLM Stats (llm-stats.com) is a LEAD source only: its Community plan forbids
+redistribution, none of its rows is verified, and it lists no Sonar model, so nothing from it is copied into
+`data/routing_evidence.json` or the repo; an owner-run offline worksheet (task 2.2) prints vendor-reported
+figures with their `source_url` as leads, and a human verifies each at the vendor or benchmark source before
+`verified_at` is written. Attribution wherever a lead from it is mentioned: Source: LLM Stats
+(llm-stats.com), retrieved 2026-11-12.
 
 **D3. Selection algorithm (pure; `routing_select.select(...)`).** Inputs, all passed as arguments:
 the task class, the tier, the tool (`ask`, `chat`, `research`), the evidence, a matrix snapshot
@@ -272,7 +289,7 @@ truncated at 0005, so its `"0005"` assertions stay true); the tests that compare
 (`test_jobs_migration.py`, `test_usage_events_migration.py`, `test_storage_migrate.py`) follow the head
 by themselves and are re-run, not edited.
 
-**D13. Sustainability: what happens when the catalog changes.** The router reads the matrix at call
+**D13. Sustainability: what happens when the catalog changes.** (Availability authority: Perplexity's `/v1/models` is the ONLY one. LLM Stats has no deprecation or availability field; its `/v1/updates` may be mentioned as an optional lead for NEW models only and is not built.) The router reads the matrix at call
 time (the in-memory snapshot refreshed by the existing task), so none of these needs a release:
 
 | Change | Router behaviour | Guard |

@@ -370,3 +370,28 @@ The failed call's usage event SHALL carry the failed model (an optional `model` 
 - **WHEN** a not-served 400 is recorded
 - **THEN** its event has no usage and cost unknown, and the assumption that it is unbilled is the one task 1.5 checks
 
+### Requirement: A third-party aggregator is a lead, never the evidence
+No score or text from LLM Stats (llm-stats.com), or any aggregator whose terms forbid redistribution, SHALL be copied into `data/routing_evidence.json` or the repository. An owner-run offline worksheet MAY print vendor-reported figures with their `source_url` as leads; a score enters the file only after a human verified it at the vendor or benchmark source and wrote `verified_at`. A mention of a lead carries `Source: LLM Stats (llm-stats.com), retrieved <date>`.
+
+#### Scenario: A lead is not a score
+- **WHEN** the worksheet prints a vendor-reported figure for a shortlist model
+- **THEN** no file under `src/` changes until a human has opened the source and recorded `verified_at`
+
+#### Scenario: Attribution
+- **WHEN** the README or a design note mentions a lead from LLM Stats
+- **THEN** the line `Source: LLM Stats (llm-stats.com), retrieved <date>` accompanies it
+
+### Requirement: The class table is final only after a coverage gate
+The task-class benchmark ids SHALL be chosen at sourcing from what vendors report for the shortlist, and the table SHALL be final only when at least 5 of the 8 shortlist models have verified scores for every benchmark of at least 2 of the 3 classes. When the gate fails the outcome SHALL be recorded early as `evidence too thin: router cannot be evaluated` and the owner decides: shrink the classes or hold the change.
+
+#### Scenario: Gate met
+- **WHEN** 5 shortlist models have every benchmark of `browsing` and `reasoning` verified
+- **THEN** the table is final and the code freeze may proceed
+
+#### Scenario: Gate failed
+- **WHEN** only 3 shortlist models have a class fully verified
+- **THEN** `acceptance/coverage.md` records `evidence too thin: router cannot be evaluated` and no evaluation spend occurs until the owner decides
+
+#### Scenario: Not Diamond
+- **WHEN** a source reports GPQA only as a 448-question set
+- **THEN** it is not entered as `gpqa_diamond`

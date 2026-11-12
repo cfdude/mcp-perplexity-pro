@@ -379,3 +379,15 @@ For a kind that is not `attempted`, `accepts` and `models_accepting` SHALL use t
 #### Scenario: Preset
 - **WHEN** `preset_accepts("low", {"image"})` and `preset_accepts("low", {"document"})` are called
 - **THEN** the first is `yes` and the second `unknown`
+
+### Requirement: No third-party catalog decides acceptance
+`accepts`, `models_accepting` and `preset_accepts` SHALL read only the matrix's own lists (a probe or the packaged sweep). A third-party aggregator's modalities (LLM Stats: text, image, audio and video only, per maker, no document modality) MAY be printed by the acceptance scripts as an advisory cross-check and SHALL NOT be stored in the matrix or make any answer `yes`.
+
+#### Scenario: An aggregator claims image support
+- **WHEN** an aggregator lists `image` for a model whose matrix inputs are unanswered
+- **THEN** `accepts(model, {"image"})` is `unknown`
+
+#### Scenario: No document modality
+- **WHEN** the cross-check runs for the `document` kind
+- **THEN** it prints nothing for it, because the aggregator has no document modality
+

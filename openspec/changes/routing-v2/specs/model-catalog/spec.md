@@ -45,3 +45,14 @@ The catalog SHALL expose the live model ids of the listing it already holds in m
 #### Scenario: Only the API listing
 - **WHEN** a forced refresh runs
 - **THEN** the only request it makes is the models listing endpoint already used by the catalog
+
+### Requirement: Perplexity's listing is the sole availability authority
+Availability, removal and price SHALL be taken only from the API's own models listing. A third-party aggregator (LLM Stats) has no deprecation or availability field and SHALL NOT decide any of them; its updates feed MAY be mentioned as an optional lead for NEW models only and is not built here.
+
+#### Scenario: Aggregator says a model exists
+- **WHEN** an aggregator lists a model that the API listing does not
+- **THEN** the model is not available, not shortlisted and never routed
+
+#### Scenario: A removal
+- **WHEN** the API listing drops a model
+- **THEN** it is `removed` whatever an aggregator says

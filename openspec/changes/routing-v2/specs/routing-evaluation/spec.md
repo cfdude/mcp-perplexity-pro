@@ -237,7 +237,11 @@ All live work of the branch SHALL together stay under 10 USD, with the evaluatio
 - **THEN** the bound is the larger of 1.5 times the pilot's largest cost for that arm and the cost of `max_output_tokens` plus 50000 input tokens at the model's prices
 
 ### Requirement: An evaluation with no verified evidence is invalid, never a pass
-The shipped evidence has empty scores, so with it the router always falls back and cannot beat the baseline. The harness SHALL refuse to score a live run unless, in EACH class, verified scores make the router, not the fallback chain, choose for at least 75 percent of that class's prompts; otherwise the run is INVALID. If, with verified evidence, T4a, T4b, T4c, T5a, T5b or T5d FAIL, the outcome SHALL be DO NOT MERGE the routed selection.
+The shipped evidence has empty scores, so the router always falls back and cannot beat the baseline. A failed coverage gate of `routing-evidence` makes the run INVALID with no request, and the harness SHALL refuse to score unless the router, not the fallback, chooses for at least 75 percent of EACH class. If, with verified evidence, T4a, T4b, T4c, T5a, T5b or T5d FAIL, the outcome SHALL be DO NOT MERGE the routed selection.
+
+#### Scenario: Coverage gate failed
+- **WHEN** `acceptance/coverage.md` records `evidence too thin: router cannot be evaluated`
+- **THEN** the run is INVALID, no live request is sent, and the owner decides before any spend
 
 #### Scenario: The shipped state
 - **WHEN** the harness starts against the packaged evidence with empty scores
