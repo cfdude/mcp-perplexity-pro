@@ -30,6 +30,7 @@ from sqlalchemy import select
 
 from mcp_perplexity_pro.costed import Recording, costed_call
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.matrix import LEVELS
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
 from mcp_perplexity_pro.routing import Route
@@ -210,13 +211,25 @@ def build_request(
     store: bool,
     background: bool = False,
     previous_response_id: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> dict[str, Any]:
     """Validate ``options`` and build the ``POST /v1/agent`` body (design D2).
 
     Pure: no network, no database. ``input`` is a non-blank string, or the replay list of
     message items. ``store`` is always sent explicitly. Raises ``invalid_request`` naming the
     first option that is wrong.
+
+    ``reasoning_effort`` is the model level the router chose (routing-v2 design D10): when given
+    the body carries ``reasoning: {"effort": level}`` next to the ``model``, and when ``None``
+    (every preset, explicit-model and configured-model call) it carries no ``reasoning`` key. It
+    is distinct from the top-level ``effort``, which names a preset. A level with a preset route
+    or outside ``matrix.LEVELS`` is a caller bug, not a user error, so it raises ``ValueError``.
     """
+    if reasoning_effort is not None:
+        if options.model is None:
+            raise ValueError("reasoning_effort needs a model route; a preset names no model")
+        if reasoning_effort not in LEVELS:
+            raise ValueError(f"reasoning_effort must be one of {LEVELS}")
     if isinstance(input, str):
         valid_input = bool(input.strip())
     else:
@@ -274,6 +287,8 @@ def build_request(
         request["max_steps"] = EXPLICIT_MODEL_MAX_STEPS
     elif tool is not None:
         request["tools"] = [tool]  # replaces the preset's own tools (design D2)
+    if reasoning_effort is not None:
+        request["reasoning"] = {"effort": reasoning_effort}
     if options.json_schema is not None:
         schema = options.json_schema
         if not isinstance(schema, dict) or schema.get("type") != "object":
