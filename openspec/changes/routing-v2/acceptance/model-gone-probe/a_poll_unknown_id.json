@@ -1,0 +1,12 @@
+{
+ "status": 404,
+ "latency_s": 0.2,
+ "request": null,
+ "body": {
+  "error": {
+   "message": "resource not found",
+   "type": "not_found",
+   "code": 404
+  }
+ }
+}

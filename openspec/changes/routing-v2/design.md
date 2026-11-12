@@ -373,11 +373,25 @@ into `exclude` and `live_ids`. A model that keeps answering 400 while the listin
 eligible again after 300 seconds, so it costs at most one failed call and one retry per model per 300
 seconds per process. Assumption, tested and probed: a not-served 400 is UNBILLED (the body has no usage
 block); task 1.5 checks it, the failed event is stored with unknown cost, and a test asserts the event
-carries no usage.
+carries no usage. **Probed 2026-11-11 (task 1.5, `acceptance/model-gone-probe.md`):** the not-served answer IS the 400
+`validation failed: model "<id>" is not supported` that `media-inputs` recorded (a nonexistent family version, a
+removed id and a listed-but-unserved id all answer it, in 0.16 s, with no usage block and no response id); no 404
+or 410 ever appeared; a poll of an unknown response id is the 404 `resource not found`, which names no model. The
+account ledger cannot be read through the API, so "unbilled" is inferred from the missing usage block and the
+sub-second answer, not verified against an invoice.
 Effort refusals are a different failure. A 400 on a request that carried `reasoning.effort` and that
 `matrix.is_effort_refusal` recognises (its text captured by task 1.5; if the captured body is only the
 generic `invalid request`, the predicate is "a 400 on a request that carried `reasoning`, that is neither
-not-served nor a named modality refusal") is NOT a retirement: `model_not_served` must not match it. The
+not-served nor a named modality refusal"). **Captured 2026-11-11 (task 1.5): the body IS only the generic `invalid request` (400 `invalid_request`,
+no usage, no id, 0.7 to 0.9 s) for `openai/gpt-5-nano` at `xhigh` and `max`, `google/gemini-3.1-pro-preview` at
+`minimal` and `perplexity/deepseek-v4-pro-0813` at `low`, so `matrix.is_effort_refusal` is exactly that fallback
+predicate (a 400 whose message is `invalid request` on a request that carried `reasoning`) and nothing more specific
+exists.** A level outside the API's vocabulary is a different, NAMED 400 (`validation failed: effort must be one of:
+none minimal low medium high xhigh max`), never sent by the router. Residual risk, accepted: the generic
+`invalid request` is also how a model that cannot read images refuses an image, so a request that carried both
+`reasoning` and an attachment could be misread as an effort refusal; the media gate makes the router pick only models
+the matrix says accept the kinds, so the case needs a stale matrix, and the cost is one wasted retry plus a wrong
+process-local level mark is NOT a retirement: `model_not_served` must not match it. The
 server retries once on the SAME model WITHOUT `reasoning` and marks that level refused for that model in
 this process (the holder), so D5's clip then picks another accepted level or none. The one retry of a
 call is shared by the two rules. The chat `continuation_hint` (advice to resend with `replay`) is not

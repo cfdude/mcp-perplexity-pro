@@ -1,0 +1,20 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-11-11",
+  "content_type": "application/json",
+  "scrubbed": "account-identifying keys and addresses replaced; search results removed",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "routing-v2 1.5(b): a level the matrix records as refused for the model",
+  "latency_seconds": 0.816,
+  "request": {
+    "model": "openai/gpt-5-nano",
+    "input": "hi",
+    "store": false,
+    "max_output_tokens": 50,
+    "reasoning": {
+      "effort": "xhigh"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+ "status": 400,
+ "latency_s": 0.16,
+ "request": {
+  "model": "openai/gpt-99-luna",
+  "input": "hi",
+  "store": false,
+  "max_output_tokens": 50
+ },
+ "body": {
+  "error": {
+   "message": "validation failed: model \"openai/gpt-99-luna\" is not supported",
+   "type": "invalid_request",
+   "code": 400
+  }
+ }
+}

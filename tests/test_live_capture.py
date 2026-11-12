@@ -473,3 +473,35 @@ def test_capture_routing_request_shape_fixtures():
             ),
         ]
     )
+
+
+def test_capture_model_gone_fixtures():
+    """routing-v2 1.5: what the API answers for a model it does not serve and for an effort
+    level it refuses (both 400s, no run, nothing billed that we can see)."""
+    _run_probe_specs(
+        [
+            (
+                "agent_model_not_served_400",
+                {
+                    "model": "openai/gpt-99-luna",
+                    "input": "hi",
+                    "store": False,
+                    "max_output_tokens": 50,
+                },
+                "routing-v2 1.5(a): a real family stem with a version nobody serves",
+                400,
+            ),
+            (
+                "agent_effort_refused_400",
+                {
+                    "model": "openai/gpt-5-nano",
+                    "input": "hi",
+                    "store": False,
+                    "max_output_tokens": 50,
+                    "reasoning": {"effort": "xhigh"},
+                },
+                "routing-v2 1.5(b): a level the matrix records as refused for the model",
+                400,
+            ),
+        ]
+    )

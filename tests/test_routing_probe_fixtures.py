@@ -41,3 +41,34 @@ def test_strongest_candidate_medium_figures_for_the_pilot():
     assert usage["tool_calls_details"]["search_web"]["invocation"] >= 1
     assert usage["cost"]["total_cost"] > 0
     assert meta["latency_seconds"] > 0
+
+
+def test_a_model_the_api_does_not_serve_is_a_400_naming_the_model():
+    body, meta = _load("agent_model_not_served_400")
+    assert meta["http_status"] == 400
+    assert meta["request"]["model"] == "openai/gpt-99-luna"
+    error = body["error"]
+    assert error["type"] == "invalid_request" and error["code"] == 400
+    assert error["message"] == 'validation failed: model "openai/gpt-99-luna" is not supported'
+    # rejected before a run exists: no usage block, no id
+    assert "usage" not in body and "id" not in body
+    assert meta["latency_seconds"] < 2
+
+
+def test_an_unknown_response_id_poll_is_a_404_that_names_no_model():
+    body, meta = _load("agent_get_unknown_404")
+    assert meta["http_status"] == 404
+    assert body["error"]["message"] == "resource not found"
+    assert "model" not in body["error"]["message"]
+
+
+def test_an_effort_refusal_is_the_generic_invalid_request_400():
+    body, meta = _load("agent_effort_refused_400")
+    assert meta["http_status"] == 400
+    assert meta["request"]["reasoning"] == {"effort": "xhigh"}
+    error = body["error"]
+    # NOT the named 'validation failed' text of an unknown model or an unknown level: nothing in
+    # the body says it is the level, so is_effort_refusal can only use the fallback rule of D17
+    assert error["message"] == "invalid request"
+    assert error["type"] == "invalid_request"
+    assert "usage" not in body and "id" not in body

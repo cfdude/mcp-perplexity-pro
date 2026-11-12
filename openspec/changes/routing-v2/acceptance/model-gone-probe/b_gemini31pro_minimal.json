@@ -1,0 +1,20 @@
+{
+ "status": 400,
+ "latency_s": 0.71,
+ "request": {
+  "model": "google/gemini-3.1-pro-preview",
+  "input": "hi",
+  "store": false,
+  "max_output_tokens": 50,
+  "reasoning": {
+   "effort": "minimal"
+  }
+ },
+ "body": {
+  "error": {
+   "message": "invalid request",
+   "type": "invalid_request",
+   "code": 400
+  }
+ }
+}

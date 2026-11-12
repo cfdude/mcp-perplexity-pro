@@ -1,0 +1,20 @@
+{
+ "status": 400,
+ "latency_s": 0.67,
+ "request": {
+  "model": "perplexity/deepseek-v4-pro-0813",
+  "input": "hi",
+  "store": false,
+  "max_output_tokens": 50,
+  "reasoning": {
+   "effort": "low"
+  }
+ },
+ "body": {
+  "error": {
+   "message": "invalid request",
+   "type": "invalid_request",
+   "code": 400
+  }
+ }
+}

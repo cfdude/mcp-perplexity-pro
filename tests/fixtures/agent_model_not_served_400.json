@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "validation failed: model \"openai/gpt-99-luna\" is not supported",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

@@ -1,0 +1,20 @@
+{
+ "status": 400,
+ "latency_s": 0.16,
+ "request": {
+  "model": "openai/gpt-6-luna",
+  "input": "hi",
+  "store": false,
+  "max_output_tokens": 50,
+  "reasoning": {
+   "effort": "turbo"
+  }
+ },
+ "body": {
+  "error": {
+   "message": "validation failed: effort must be one of: none minimal low medium high xhigh max",
+   "type": "invalid_request",
+   "code": 400
+  }
+ }
+}
