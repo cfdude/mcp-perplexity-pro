@@ -104,8 +104,8 @@ does not report (`acceptance/llm-stats-investigation.md`: newer models report `t
 therefore takes the ids that vendors actually report for the shortlist (candidates `swe_bench_pro` and
 `terminal_bench_4_0`); `reasoning` stays `gpqa_diamond` only if a vendor reports Diamond (LLM Stats' `gpqa`
 is a 448-question set, not Diamond, and is never substituted); `browsing` stays `browsecomp`. COVERAGE GATE
-(task 2.6, offline, before the code freeze; the rule is in D18): the class table is final only for the classes
-that pass it, and a failing class is removed. LLM Stats (llm-stats.com) is a LEAD source only: its Community plan forbids
+(task 2.6, offline, before the code freeze; the rule is in D18): only the classes that pass it are scored, and a
+failing class is excluded from scoring. LLM Stats (llm-stats.com) is a LEAD source only: its Community plan forbids
 redistribution, none of its rows is verified, and it lists no Sonar model, so nothing from it is copied into
 `data/routing_evidence.json` or the repo; an owner-run offline worksheet (task 2.2) prints vendor-reported
 figures with their `source_url` as leads, and a human verifies each at the vendor or benchmark source (a quoted snippet per figure in
@@ -276,7 +276,7 @@ alone. `media-inputs` adds its own fields after it; the headroom it can use on t
 (dynamic with Decisions) is 1084 bytes plus the trim below. Task 6.3 trims at least 450 bytes (field
 descriptions of `perplexity_chat`, `perplexity_jobs` and `perplexity_embed`, measured before and
 after, wording kept accurate) BEFORE any media schema growth, so the room for `media-inputs` is at
-least 1184 bytes on that server; media 3.3 then measures all three servers after its chat
+least 1534 bytes on that server; media 3.3 then measures all three servers after its chat
 parameter lands, trims at least 300 bytes more, applies its STOP rule and writes the combined table,
 and task 6.4 installs the final per-server ceilings from that table (never above the cap). The
 dynamic sentence keeps its 70-byte cap per tool.
@@ -433,8 +433,7 @@ Statistics: paired, one-sided non-inferiority. For each comparison the per-promp
 bootstrapped (10000 resamples, fixed seed, stratified by class) and the 5th percentile of the mean is the
 95 percent lower bound; it must be at least minus the margin. The margins are chosen against the noise:
 with a per-prompt standard deviation of the paired difference of about 0.25, the bound sits about 0.06
-below the mean at n = 45 and about 0.11 below at n = 15, so margins of 0.10 overall and 0.15 per class let
-true parity pass while a real loss of 0.10 or more fails. They are owner-editable; point estimates alone
+below the mean at n = 45 and about 0.11 below at n = 15, so wider margins make true parity pass more often; whether the registered margins of 0.10 overall and 0.15 per class do so is computed at 7.2 for the frozen sizes, not assumed (the figures here are illustrative). They are owner-editable; point estimates alone
 (the first draft) would have passed a 0.05 loss that is indistinguishable from noise at this n.
 Judge: `perplexity_decide` `choice` questions with arm labels removed, answers shuffled by a fixed seed, one
 recorded judge model, and the `check` label and expected value never shown to it; validity is kappa, not raw
@@ -450,11 +449,13 @@ the pooled blind set each run. Per-request counts (tokens, cached tokens, search
 recording `httpx2` transport inside the harness, so no `src/` field is added after the freeze.
 Coverage gate and honest fallback rule: the shipped evidence has EMPTY scores, so the router always falls
 back and cannot beat the baseline. Task 2.6 computes OFFLINE, from `data/routing_evidence.json` and the
-labeled set, the per-class share of prompts the router (not the fallback) would choose, and the class table
-is final only with at least 75 percent in EVERY class kept and at least 3 eligible shortlist models in it; a
-failing class is REMOVED from the table, the default task-class mapping and every "each class" of T0, T5b
-and the INVALID rule before 2.6 closes (its prompts leave the set and run the fallback chain), and with fewer
-than 2 classes left the outcome is "evidence too thin: router cannot be evaluated" and the owner decides.
+labeled set, the per-class share of prompts the router (not the fallback) would choose, and a class is
+kept only with at least 75 percent and at least 3 eligible shortlist models; `coverage.md` lists the KEPT
+classes and every other class is EXCLUDED FROM SCORING (the harness and the set test filter to the list; `rules.py`,
+the prompt-set file and the frozen hashes are not edited; its prompts stay in the file and run the fallback chain;
+if `browsing`, the class of "everything else", is excluded, that default takes the fallback chain; a class absent
+from `task_classes` or with an empty benchmark list is ineligible for every model, and the loader rejects an
+empty list), and with fewer than 2 classes kept the outcome is "evidence too thin: router cannot be evaluated" and the owner decides.
 `coverage.md` is generated, not written by hand. The harness repeats the check and marks a run INVALID if
 it fails. If, with verified evidence, T4a, T4b, T4c, T5a, T5b or T5d fail, the outcome is DO NOT MERGE the
 routed selection.
@@ -470,10 +471,10 @@ cost for that arm and the cost of `max_output_tokens` plus 50000 input tokens at
 pre-registration, counts toward the budget and estimates cost per arm and the paired variance only (its
 quality results never move a threshold). It projects one `main` run, one held-out run and one routed re-run
 and states how many full runs the budget supports; if that is fewer than 2 (or the strongest arm projects over
-its cap) the owner decides before registration. Registration (7.2) states the false-fail probability, that
-is the chance that true parity fails a lower-bound test, and picks n so it is at most 10 percent within the
-budget (n at least (2.93 sigma / margin)^2 for the pilot's sigma); if that is not achievable within the
-budget, it records so and stops for the owner. A request with unknown cost is re-sent once from the reserve;
+its cap) the owner decides before registration. Registration (7.2) computes the false-fail probability, that
+is the chance that true parity fails a lower-bound test, for the FROZEN sizes (45 overall, 15 per class) and each
+registered margin from the pilot's variance; if it exceeds 10 percent the owner chooses before any scored run:
+widen the margins, or extend the set in a new frozen commit. A request with unknown cost is re-sent once from the reserve;
 only a second unknown makes that arm INVALID. Cost is reconciled to the nano-USD against the harness's own
 client-side sums of each response, not only `perplexity_usage`.
 Code freeze, a DELIBERATE exception to "Gate 2 after docs" for this change: the report is valid only for the
@@ -508,9 +509,9 @@ Dependency analysis (what `media-inputs` consumed from this change, and what unw
   5.3a onward; media 3.1 replaces its body). 5.4 is router-owned. Media 1.5, 2.3 and 3.1 build on 5.3a only.
 - On unwind the attachment gate checks `route.model` (or `route.preset` through `preset_accepts`) of the
   EXISTING resolve; no held-model or router-substitution rule survives.
-- Media-owned fallback for a retired model: `model_not_served` suppresses `attachment_hint` and yields the
-  plain text `model <id> is not served`, at two sites, the `media-attachments` hint requirements and media
-  task 2.3 (media 0.4 lists them); routing's richer text with live same-family candidates goes with the router.
+- Retired-model hint seam: media task 2.3 implements `model_not_served` suppressing `attachment_hint` with the
+  plain text `model <id> is not served` as the DEFAULT of a hint seam (also the `media-attachments` scenario);
+  routing 5.6(g) overrides it with live same-family candidates, so an unwind reverts only the override.
 - Budget: standalone, media's gross growth (at most 900 bytes) fits under the cap with headroom of 2044,
   1758 and 1524 bytes (59779 minus 57735, 58021 and 58255); 7.8 re-measures the three servers and keeps only
   the cap 59779, and media 3.3 sets its own ceilings.

@@ -88,7 +88,7 @@ The set SHALL be `tests/fixtures/routing_prompts.json`, extended in task 3.2: ea
 
 #### Scenario: The split is frozen early
 - **WHEN** task 3.1 has labeled the tasks
-- **THEN** the `split` values are assigned and their hash recorded before the router exists, and no later commit changes them
+- **THEN** the `split` values are assigned and their hash recorded before the router exists, and no commit after the first scored run changes them
 
 ### Requirement: The routing decision is cheap and adds no network call
 The harness SHALL time `routing.resolve` plus `routing_select.select` offline over every prompt under three evidence states (shipped empty, verified, worst-case synthetic), and T1a passes only when p95 is under 5 ms in each. T1b passes only when a routed ask makes the same number of upstream requests as the ask naming the chosen model, none of them a models listing.
@@ -230,15 +230,15 @@ The first numbered run SHALL score the `main` subset only. Any later run (a chan
 - **THEN** the held-out subset is scored and a held-out shortfall makes the verdict DO NOT MERGE
 
 ### Requirement: Live spend is budgeted, piloted and bounded
-All live work of the branch SHALL together stay under 10 USD, with the evaluation caps summing below it. A 6-prompt PILOT, run from a throwaway script outside the repo on prompts outside the labeled set, SHALL estimate cost per arm and the paired variance only and project one `main` run, one held-out run and one routed re-run. Registration SHALL state the false-fail probability and pick n so it is at most 10 percent within the budget.
+All live work of the branch SHALL together stay under 10 USD, with the evaluation caps summing below it. A 6-prompt PILOT, run from a throwaway script outside the repo on prompts outside the labeled set, SHALL estimate cost per arm and the paired variance only and project one `main`, one held-out and one routed re-run. Registration SHALL compute the false-fail probability for the frozen sizes and each margin from that variance.
+
+#### Scenario: False-fail above 10 percent
+- **WHEN** the computation for 45 prompts overall, 15 per class and a registered margin gives more than 10 percent
+- **THEN** the owner chooses before any scored run: widen the margins, or extend the set in a new frozen commit
 
 #### Scenario: Output bound
 - **WHEN** the harness runs
 - **THEN** it sets `max_output_tokens` and stops before a request whose upper bound would exceed its cap
-
-#### Scenario: The caps come from the pilot
-- **WHEN** the caps are registered
-- **THEN** they start from pilot 0.80, strongest 4.00, routed 1.20, status quo 0.60, cheapest 0.30, judge 0.10 and reserve 1.20 (sum 8.20), the pilot's projection may change them, the other live work is itemised at 1.30, and the total stays below 10.00
 
 #### Scenario: The caps come from the pilot
 - **WHEN** the caps are registered

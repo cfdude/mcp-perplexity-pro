@@ -76,7 +76,11 @@ A score SHALL be a number from 0 to 100 with an `https` `source_url`, an `as_of`
 - **THEN** the model has no score for the class's benchmark and is not eligible for `coding`
 
 ### Requirement: Classes reference known benchmarks
-A task class SHALL list only benchmark ids that exist in `benchmarks`; a file where one does not is invalid.
+A task class SHALL list at least one benchmark id and only ids that exist in `benchmarks`; a file where one does not, or where a class lists none, is invalid.
+
+#### Scenario: A class lists no benchmark
+- **WHEN** the `reasoning` class has an empty benchmark list
+- **THEN** the file is invalid and the packaged evidence is used with one warning
 
 #### Scenario: A class lists an unknown benchmark
 - **WHEN** the `coding` class lists `terminal_bench_9` and `benchmarks` has no such id
@@ -370,12 +374,16 @@ No score or text from LLM Stats (llm-stats.com), or any aggregator whose terms f
 - **WHEN** the README or a design note mentions a lead from LLM Stats
 - **THEN** the line `Data by LLM Stats (linked to https://llm-stats.com)` accompanies it
 
-### Requirement: The class table is final only after an offline coverage gate
-Task 2.6 SHALL compute OFFLINE, from `data/routing_evidence.json` and the labeled set, the per-class share of prompts the router would choose, and generate `acceptance/coverage.md`. A class is kept only with at least 75 percent and at least 3 eligible shortlist models; a failing class SHALL be removed from the table, the default mapping and the "each class" of T0, T5b and the INVALID rule before 2.6 closes.
+### Requirement: A class is scored only after an offline coverage gate
+Task 2.6 SHALL compute OFFLINE, from `data/routing_evidence.json` and the labeled set, the per-class share of prompts the router would choose, and generate `acceptance/coverage.md` with a list of KEPT classes. A class is kept only with at least 75 percent and at least 3 eligible shortlist models; every other class SHALL be excluded from scoring (the harness and the set test filter to the kept list; `rules.py`, the prompt-set file and the frozen hashes are not edited).
 
 #### Scenario: A class fails
 - **WHEN** `browsing` has 2 eligible models and 40 percent router choice
-- **THEN** it is removed before 2.6 closes, its prompts leave the set and run the fallback chain, and the other classes keep their thresholds
+- **THEN** it is excluded from scoring, its prompts stay in the file and run the fallback chain, and the other classes keep their thresholds
+
+#### Scenario: The default class is excluded
+- **WHEN** `browsing`, the class of "everything else", is excluded
+- **THEN** those prompts take the fallback chain
 
 #### Scenario: Gate met
 - **WHEN** every kept class has at least 3 eligible models and 75 percent router choice
@@ -385,6 +393,11 @@ Task 2.6 SHALL compute OFFLINE, from `data/routing_evidence.json` and the labele
 - **WHEN** fewer than 2 classes pass
 - **THEN** `coverage.md` records `evidence too thin: router cannot be evaluated` and no evaluation spend occurs until the owner decides
 
+#### Scenario: Class absent from the evidence falls back
+- **WHEN** a prompt's class is absent from `task_classes` or lists no benchmark
+- **THEN** no model is eligible for it and the fallback chain runs with a reason naming the class
+
 #### Scenario: Not Diamond
 - **WHEN** a source reports GPQA only as a 448-question set
 - **THEN** it is not entered as `gpqa_diamond`
+
