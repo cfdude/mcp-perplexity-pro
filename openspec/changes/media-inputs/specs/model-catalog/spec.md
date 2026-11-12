@@ -6,8 +6,8 @@
 `perplexity_models` SHALL give each listed model its inputs as ONE short string field (for example `image,document` or `image (refused document)`, empty when unknown) and the same in its text table, and SHALL NOT add an object, a per-kind field or a matrix-section count to the output schema (the count of models with unknown inputs appears in the text only). A model not in the matrix SHALL be listed with the empty string.
 
 #### Scenario: Inputs shown
-- **WHEN** a client calls `perplexity_models` against a server whose matrix records `perplexity/deepseek-v4-pro-0813` as refusing images and accepting documents
-- **THEN** that model's inputs string reads `document (refused image)`
+- **WHEN** a client calls `perplexity_models` against a server whose matrix records `xai/grok-4.3` as refusing documents and accepting nothing else it knows of (image unknown)
+- **THEN** that model's inputs string reads `(refused document)` with nothing before it, and for a model that accepts images and refuses documents it reads `image (refused document)`
 
 #### Scenario: A model the matrix lacks
 - **WHEN** the live list holds an id the matrix does not hold

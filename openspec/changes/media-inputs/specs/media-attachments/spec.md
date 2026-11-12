@@ -327,11 +327,11 @@ A log record about an attachment SHALL hold at most its position, kind, media ty
 An explicit `model` SHALL be checked against the model matrix (`accepts(model, kinds)` of `model-matrix`). When the matrix records that the model refuses a kind the call carries, the call SHALL fail with `invalid_request` naming `model` and the kind and listing up to five models the matrix records as accepting it, and no request SHALL be made.
 
 #### Scenario: Known refusal
-- **WHEN** the matrix records `perplexity/deepseek-v4-pro-0813` as refusing images and a client asks with that model and a PNG path
-- **THEN** the call fails with `invalid_request` naming `model` and `image`, listing accepting models, and no request reaches the API
+- **WHEN** the matrix records `xai/grok-4.3` as refusing documents (a named route refusal) and a client asks with that model and a PDF path
+- **THEN** the call fails with `invalid_request` naming `model` and `document`, listing accepting models, and no request reaches the API
 
 #### Scenario: Text-only call
-- **WHEN** a client asks with no attachments and a model that refuses images
+- **WHEN** a client asks with no attachments and a model that refuses documents
 - **THEN** the call is unaffected
 
 ### Requirement: An unknown model is let through
@@ -398,6 +398,10 @@ A 400 from the API on a call that carried attachments or inherited kinds SHALL s
 #### Scenario: A model that cannot read images
 - **WHEN** the API answers 400 `invalid request` to a call that carried a PNG and the matrix did not know the model
 - **THEN** the call fails with `invalid_request`, the text keeps the API's message and adds that the model may not accept images and that `perplexity_models` lists accepted inputs
+
+#### Scenario: The model is gone, not the attachment refused
+- **WHEN** the API answers 400 `validation failed: model ... is not supported` (true for `matrix.model_not_served`) to a call that carried a PNG
+- **THEN** the model-gone text of `routing-v2` replaces the attachment hint, and the matrix is not told the kind was refused
 
 #### Scenario: A document type the route refuses
 - **WHEN** the API answers 400 `the selected model route does not support this document type or source`

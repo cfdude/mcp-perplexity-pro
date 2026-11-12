@@ -34,7 +34,7 @@ difference is named (`docs/lessons/docs-lie-probe-the-api-first.md`).
 | file extension that does not match the bytes' type | `filename` `doc.docx` on PDF bytes | 400 `filename extension does not match document media type` |
 | bad base64 | `file_data` `!!!notbase64!!!` | 400 `invalid file_data base64` |
 | both `file_data` and `file_url` | | 400 `input_file requires exactly one of file_data or file_url` |
-| a model that cannot read images | `perplexity/deepseek-v4-pro-0813`, `perplexity/glm-5.3`, `xai/grok-4.20-reasoning` | 400, body `invalid request` (the generic body that several unrelated mistakes share) |
+| a model that cannot read images | `perplexity/deepseek-v4-pro-0813`, `perplexity/glm-5.3`, `xai/grok-4.20-reasoning` | 400, body `invalid request` (the generic body that several unrelated mistakes share; recorded as UNKNOWN, not refused, since 2026-11-11: `xai/grok-4.7` returned it on 2026-10-30 and accepted the same image on 2026-11-11) |
 | a document on a route that cannot read it | `xai/grok-4.20-reasoning`, `xai/grok-4.3` | 400 `the selected model route does not support this document type or source` |
 | a model the Agent API does not serve | `perplexity/nemotron-3-ultra-550b-a55b` | 400 `validation failed: model ... is no[t available]` for any input |
 
@@ -136,8 +136,8 @@ any router sees them (D2).  `model_matrix.json` has no modality field today
 only, and `/v1/models` lists id, owner and pricing only; the docs/research note carries
 modalities as prose from 2026-10-15). So: an `inputs` record shaped like `efforts` (accepted,
 refused, answers, probed_at, source), version staying 1 (an absent key reads `unprobed`; `ModelEntry`
-already ignores extra keys), the baseline filled from the sweep (image: 47 accepted, 6 refused, 1 unprobed; document: 44
-accepted, 5 refused, 5 unprobed, `acceptance/probe.md`), new models probed by the refresh
+already ignores extra keys), the baseline filled from the sweep (image: 48 accepted, 0 refused, 6 unprobed; document: 45
+accepted, 3 refused, 6 unprobed, after the 2026-11-11 amendment: generic `invalid request` is unknown and `xai/grok-4.7` is the dated re-probe of `acceptance/grok-4-7-investigation.md`; `acceptance/probe.md` records the raw 2026-10-30 sweep), new models probed by the refresh
 that already probes efforts. The probe is two more requests per new model (a 48 by 48 PNG and a
 one-line PDF) through `probe_request`'s `costed_call`, so the `record_usage` sites stay two. A
 probe asks "does the API answer 200", never "is the answer right": a model that runs out of its 150
@@ -154,8 +154,7 @@ to a model in the set or the call fails `invalid_request`.
 
 Probe design (Gate 1). `accepts` reads the per-kind lists only; `source` is a label. The refresh's
 selector `_wants_probe` gains a second test: an `available` model with a kind unknown (and past its
-`retry_after`) or refused for more than 14 days (a refusal is one generic `400 invalid request`,
-shared with unrelated mistakes, so it is a likely answer, not a proof, and expires). One per-kind predicate, `attempted` (an answer, or a non-null `retry_after`, or an `attempts` count
+`retry_after`) or refused for more than 24 hours (`REFUSAL_TTL`, owner-editable; only a NAMED modality refusal is ever recorded as refused, because the generic `400 invalid request` is shared with text-only models and unrelated mistakes, and one model, `xai/grok-4.7`, flipped from refused to accepted between 2026-10-30 and 2026-11-11, so a refusal is a likely answer, not a proof, and expires quickly). One per-kind predicate, `attempted` (an answer, or a non-null `retry_after`, or an `attempts` count
 above 0 that never resets, while `unanswered_rounds` is only the backoff counter), is used by the
 merge, `accepts` and `_wants_probe`: the baseline fills or answers a kind only when the stored kind is
 not attempted. Baseline answers count as known only then. Each input probe has its OWN same-round control (the effort probe's control
@@ -176,7 +175,7 @@ bounds it (the README states only these measured figures). `incomplete` counts a
 inputs only; the effort probe is unchanged. Upgrade: `merge` copies the baseline's answer into an existing entry for each kind that is not attempted (`matrix.py` only fills efforts for NEW ids today, so without
 this a deployed file would show an empty `models_accepting` and re-probe 54 models), and
 `accepts` falls back to the baseline per unattempted kind at read time. The baseline's 400 rule: `is
-not supported` means unknown, any other 400 refused (tests pin 47/6/1 and 44/5/5). The version stays 1: an older server
+not supported` means unknown, a generic `invalid request` means unknown, a NAMED modality refusal (`matrix.NAMED_REFUSALS`, predicate `is_named_refusal`) is refused, and a 429 is never a refusal (a 16 by 16 image drew a misleading 429 `upstream model is overloaded` on every xAI image-capable model on 2026-11-11); tests pin 48/0/6 and 45/3/6, with the grok-4.7 override. The version stays 1: an older server
 sharing the data directory ignores `inputs` (the entry model drops unknown keys) and loses it on its
 next write; the newer server re-probes at about $0.02 per model at worst, and the README says so.
 A bump to 2 would instead make older servers fall back to the baseline entirely, which loses more.
@@ -283,7 +282,10 @@ touches (coordinated by task wording; if routing-v2's trim has not landed, ours 
 Ceilings in force at each commit: until task 3.3 only the 59779 cap is asserted (`tests/test_tools_list_budget.py` holds no per-server ceiling, so `routing-v2`'s own growth cannot break it); `routing-v2` 6.2 only RECORDS figures; after 3.3 and `routing-v2` 6.4 the final per-server ceilings, taken from our table and never above 59779, are in force. This resolves the ordering problem that a measure before the chat parameter would understate our growth: the measure is 3.3, which runs after 3.1 (`tasks.md` step (4) and task 3.3).
 
 Estimates (734 + 750 - 900 = 584 for the tightest server); the task 3.3 measurement replaces them.
-Apply order (canonical, identical in `routing-v2` and the proposal): (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit).
+Standalone budget (if `routing-v2` is unmerged after its evaluation, `routing-v2` D18): the headroom on the unchanged base is 2044 (default), 1758 (dynamic) and 1524 (dynamic with Decisions) bytes, so our gross growth of at most 900 bytes fits with at least 624 left and no trim; task 3.3 then sets this change's own ceilings.
+
+**Model-not-served predicate and the split.** This change owns `matrix.model_not_served(status, message)` and `matrix.is_named_refusal(status, message)`; `routing-v2` D17 consumes the first so that no second classifier of "the model is gone" exists, and a retired model's 400 `validation failed: model ... is not supported` outranks the attachment hint. Nothing here depends on `routing-v2`'s migration `0006`; task 0.4 lists the routing-dependent wording to amend if `routing-v2` is not merged.
+Apply order (canonical, identical in `routing-v2` and the proposal): (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) routing-v2 7.1 to 7.7, the in-branch evaluation (7.8 only if the evaluation fails); (7) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, only after 7.6 reports); (8) routing-v2 9.3, the merge gate, then the archive 9.4.
 
 **D10. Chat.** `inherited_kinds(chat)` is the set of kinds named by the stored attachment notes; a chained send
 uses `new_kinds | inherited_kinds` as the required kinds for the router and the gate. A chained follow-up sends only the new text and new attachments plus
@@ -340,7 +342,7 @@ committed as binary files except where a magic-byte test needs one.
   retrieval).
 - **The matrix is wrong or stale.** A model gains or loses support, or a refusal was one generic
   400 caused by something else. Mitigation: only `no` refuses locally; `unknown` goes to the API and
-  its 400 is hinted; a `refused` kind is re-probed after 14 days (so it is NOT fixed by "the next
+  its 400 is hinted; a `refused` kind is re-probed after 24 hours (so it is NOT fixed by "the next
   refresh": until the TTL passes, a wrong `no` blocks the call locally, and the caller's recourse
   is another model or waiting for the re-probe). The sweep had gaps (the account's rate limit,
   header `x-ratelimit-limit: 3`; `overloaded` 429s; a failed run); those kinds are unknown in the

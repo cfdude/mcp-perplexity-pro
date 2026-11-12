@@ -28,3 +28,20 @@
 #### Scenario: An unlisted id is still used
 - **WHEN** a configured model id is `known` false
 - **THEN** calls still send it as configured, because the catalog can lag and a typo is reported by the API on the first call
+
+## ADDED Requirements
+
+### Requirement: The held listing is readable without a fetch
+The catalog SHALL expose the live model ids of the listing it already holds in memory (none when it holds none) without making a request, so that selection never adds a network call. A forced refresh SHALL read only the API's own models listing and SHALL NOT read or scrape documentation.
+
+#### Scenario: No listing held
+- **WHEN** the process has not fetched a listing and the selector asks for the live ids
+- **THEN** it receives none, makes no request, and applies no listing filter
+
+#### Scenario: Listing held
+- **WHEN** a listing is held that lacks a shortlist id
+- **THEN** the accessor omits that id and no request is made
+
+#### Scenario: Only the API listing
+- **WHEN** a forced refresh runs
+- **THEN** the only request it makes is the models listing endpoint already used by the catalog

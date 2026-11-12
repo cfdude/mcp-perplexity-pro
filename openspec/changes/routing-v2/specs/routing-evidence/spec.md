@@ -129,11 +129,15 @@ The selector SHALL be a pure function of the task class, the tier, the tool (`as
 - **THEN** the results are equal
 
 ### Requirement: Eligibility
-A model SHALL be eligible for a class when it is shortlisted, `available` in the matrix, has both prices, the matrix says it accepts every required kind (`accepts(model, kinds) == yes`, always true for an empty set) and has a verified score for every benchmark of the class.
+A model SHALL be eligible for a class when it is shortlisted, `available` in the matrix, not retired in this process within the last 300 seconds, listed in the catalog listing the process already holds in memory (when it holds one: selection never fetches it), has both prices, the matrix says it accepts every required kind (`accepts(model, kinds) == yes`, always true for an empty set) and has a verified score for every benchmark of the class.
 
 #### Scenario: Each condition excludes
-- **WHEN** a model is off the shortlist, `removed`, unpriced, is not `yes` for a required kind (`no`, `unknown` or unprobed) or lacks a class score
+- **WHEN** a model is off the shortlist, `removed`, tombstoned by a retirement, absent from the held live listing, unpriced, is not `yes` for a required kind (`no`, `unknown` or unprobed) or lacks a class score
 - **THEN** it is not eligible, each condition on its own
+
+#### Scenario: A shortlist id missing from the live listing
+- **WHEN** the matrix still says `available` but the catalog listing held in memory no longer lists a shortlist id
+- **THEN** the selector skips it at call time and makes no network request to learn that
 
 ### Requirement: The margin is named and configurable
 The margin SHALL default to 3 points and be overridable by `PERPLEXITY_ROUTER_MARGIN`, a number from 0 to 20; any other value SHALL fail startup naming the variable. The variable SHALL be ignored with one warning outside `dynamic` mode and not validated there.
@@ -281,3 +285,41 @@ A routed call's `reason` SHALL be at most 120 ASCII characters built from consta
 #### Scenario: Reason content
 - **WHEN** a prompt containing the string `hunter2` is routed
 - **THEN** the reason names the class and the rule and does not contain `hunter2`
+
+### Requirement: A retired model is replaced once, on the best same-family shortlist model
+When a call on a server-chosen model fails with an answer `matrix.model_not_served` recognises, the server SHALL tombstone the id for 300 seconds, request one bounded refresh and retry once on the best remaining eligible same-family shortlist model, else on the chain fallback (research: the tier's preset). The retry is the only extra request.
+
+#### Scenario: Same-family peer on the shortlist
+- **WHEN** the chosen `vendor/haiku-5` is answered 400 not supported and the shortlist also holds a live, eligible `vendor/haiku-6`
+- **THEN** the call is retried once on `vendor/haiku-6`, and the result's reason says `model_retired:vendor/haiku-5`
+
+#### Scenario: No same-family model on the shortlist
+- **WHEN** the chosen model is retired and no other shortlist model shares its family
+- **THEN** the call is retried once on `fallbacks.default` (or the preset rung when that is not allowed), `selected_by` is `fallback` and the reason says `model_retired:` and the id
+
+#### Scenario: A live successor off the shortlist
+- **WHEN** the live listing holds `vendor/haiku-7`, which is not on the shortlist, and `vendor/haiku-5` is retired
+- **THEN** `vendor/haiku-7` is never chosen and one warning names it as a candidate for the shortlist
+
+#### Scenario: The retry also fails
+- **WHEN** the retry model answers not supported too
+- **THEN** the call fails with the model-gone hint, and no second refresh or retry occurs
+
+#### Scenario: Family key
+- **WHEN** the ids `anthropic/claude-haiku-5-5`, `anthropic/claude-haiku-6` and `openai/gpt-6.1-luna` are keyed
+- **THEN** the first two share `anthropic/claude-haiku` and the third is `openai/gpt-luna`
+
+#### Scenario: Presets and the classifier are outside the rule
+- **WHEN** a preset call or a Decisions classifier request fails not supported
+- **THEN** no refresh and no retry occurs for it
+
+### Requirement: A retirement is recorded and costs nothing but its one retry
+The retirement SHALL be recorded: the failed call's usage event as for any failure (status from the category, no usage), one log line naming the retired id, whether the refresh ran, was rate-limited or failed, and the replacement, and the retry's own usage event. The retry SHALL add no probe request, no documentation fetch and no `tools/list` byte.
+
+#### Scenario: Two events reconcile
+- **WHEN** a routed ask is retried after a retirement
+- **THEN** `perplexity_usage` holds one failed event for the retired model and one `ok` event for the replacement, and no other event
+
+#### Scenario: Tombstone expires
+- **WHEN** 301 seconds pass after a retirement and the live listing again lists the id
+- **THEN** the id is eligible again

@@ -152,14 +152,26 @@ The baseline SHALL give every model an `inputs` record from the live sweep of 20
 
 #### Scenario: The sweep counts
 - **WHEN** the baseline is loaded
-- **THEN** images are accepted for 47 models, refused for 6 and unknown for 1, and documents are accepted for 44, refused for 5 and unknown for 5
+- **THEN** images are accepted for 48 models, refused for 0 and unknown for 6, and documents are accepted for 45, refused for 3 and unknown for 6 (the sweep's generic `invalid request` 400s are unknown, and `xai/grok-4.7` carries the dated 2026-11-11 re-probe)
 
 ### Requirement: The baseline's answer rules
-In the baseline, a 200 whose run status is `completed` or `incomplete` SHALL be `accepted`; a 400 whose message says `validation failed: model ... is not supported` is UNKNOWN (the model is not served; it did not refuse the kind); any other 400 is `refused` with its status; a persistent 429, an `overloaded` answer or a failed run leaves the kind unknown.
+In the baseline, a 200 whose run status is `completed` or `incomplete` SHALL be `accepted`; a 400 for which `is_named_refusal` is true SHALL be `refused` with its status; every other answer (a not-served 400, the generic `invalid request`, a 429, an `overloaded` answer, a failed run) SHALL leave the kind unknown.
 
 #### Scenario: A baseline fact
 - **WHEN** the baseline is loaded
-- **THEN** `perplexity/deepseek-v4-pro-0813` has `image` refused with 400 and `document` accepted, source `baseline`
+- **THEN** `xai/grok-4.3` has `document` refused with 400 (a named route refusal) and `image` unknown, source `baseline`, and `perplexity/deepseek-v4-pro-0813` has `image` unknown (its sweep answer was the generic body) and `document` accepted
+
+#### Scenario: A 429 is never a refusal
+- **WHEN** a sweep row answered 429 `upstream model is overloaded` (the misleading answer a 16 by 16 image drew on 2026-11-11 for every xAI image-capable model)
+- **THEN** that kind is unknown
+
+#### Scenario: A generic 400 is unknown
+- **WHEN** the baseline is built from a sweep row whose image answer is 400 `invalid request`
+- **THEN** that kind is unknown, not refused, with no `probed_at`
+
+#### Scenario: grok-4.7 is not recorded as refused
+- **WHEN** the baseline is loaded
+- **THEN** `xai/grok-4.7` has `image` and `document` accepted with `probed_at` 2026-11-11 (the re-probe of `acceptance/grok-4-7-investigation.md`, which supersedes the 2026-10-30 row for that one model), and `xai/grok-4.3`, `xai/grok-4.20-reasoning` and `xai/grok-4.20-multi-agent` keep `document` refused (re-confirmed 2026-11-11)
 
 #### Scenario: Incomplete is accepted
 - **WHEN** the baseline is loaded
@@ -170,14 +182,14 @@ In the baseline, a 200 whose run status is `completed` or `incomplete` SHALL be 
 - **THEN** `perplexity/nemotron-3-ultra-550b-a55b` has both kinds unknown, not refused
 
 ### Requirement: Eligibility for an input probe is per kind
-An `available` model SHALL be selected for an input probe when, with `PERPLEXITY_MATRIX_PROBE` `new`, a kind is unknown and its own `retry_after` has passed or is null, or a kind is `refused`, its own `probed_at` is more than 14 days old and its own `retry_after` has passed or is null. Selection also respects the lease and the ten-model and $0.25 limits.
+An `available` model SHALL be selected for an input probe when, with `PERPLEXITY_MATRIX_PROBE` `new`, a kind is unknown and its own `retry_after` has passed or is null, or a kind is `refused`, its own `probed_at` is more than 24 hours old (`REFUSAL_TTL`, owner-editable) and its own `retry_after` has passed or is null. Selection also respects the lease and the ten-model and $0.25 limits.
 
 #### Scenario: Baseline answers count
 - **WHEN** a model has both kinds answered by the baseline
 - **THEN** it is not selected for an input probe
 
 #### Scenario: A refused kind in backoff
-- **WHEN** a kind was refused 15 days ago but its `retry_after` is still in the future
+- **WHEN** a kind was refused 2 days ago but its `retry_after` is still in the future
 - **THEN** it is not selected
 
 #### Scenario: One unknown kind
@@ -216,8 +228,16 @@ The probe request SHALL be a fixed 48 by 48 PNG or one-line PDF with a fixed pro
 For input probes only, a 200 whose run status is `completed` or `incomplete` SHALL mean accepted, without checking the answer, and the usage event of an `incomplete` run is recorded with the status `agent_response_status` gives it (`unexpected_response`); the effort probe's rule is unchanged. A 400 SHALL mean refused only when the control completed. A 5xx, a timeout or a 200 whose run `failed` SHALL leave the kind unanswered. A 429 SHALL end that refresh's probing.
 
 #### Scenario: A new model that cannot read images
-- **WHEN** a new model completes the control, accepts the document and answers 400 to the image
-- **THEN** its inputs list `document` accepted and `image` refused with 400, source `probe`
+- **WHEN** a new model completes the control, accepts the document and answers 400 `invalid request` to the image
+- **THEN** its inputs list `document` accepted and `image` unknown (unanswered), source `probe`, because the generic body is not a named refusal
+
+#### Scenario: A named refusal
+- **WHEN** a new model completes the control and answers 400 `the selected model route does not support this document type or source` to the document
+- **THEN** its `document` is refused with 400, source `probe`
+
+#### Scenario: A 429 is never a refusal
+- **WHEN** an image probe answers 429 `upstream model is overloaded` (the misleading answer a 16 by 16 image drew on 2026-11-11)
+- **THEN** the kind is unanswered, never refused, and probing stops for that refresh
 
 #### Scenario: A rate-limited kind
 - **WHEN** the image request answers 429
@@ -231,6 +251,36 @@ For input probes only, a 200 whose run status is `completed` or `incomplete` SHA
 - **WHEN** a document probe answers 200 with run status `failed` and error `refusal`
 - **THEN** the kind is unanswered, neither accepted nor refused
 
+### Requirement: A probe answers only a named refusal as refused
+`matrix.py` SHALL hold the closed list `NAMED_REFUSALS` and the pure predicate `is_named_refusal(status, message)`; the baseline rules and the input probe SHALL both call it, so a 400 is `refused` only when it is true (for a probe, also only after a completed control) and every other 400 and every 429 leaves the kind unanswered.
+
+#### Scenario: Generic body
+- **WHEN** `is_named_refusal(400, "invalid request")` is called
+- **THEN** the result is false
+
+#### Scenario: Named route refusal
+- **WHEN** `is_named_refusal(400, "the selected model route does not support this document type or source")` is called
+- **THEN** the result is true
+
+#### Scenario: Not a 400
+- **WHEN** `is_named_refusal(429, "upstream model is overloaded, please try again later")` is called
+- **THEN** the result is false
+
+### Requirement: One predicate says a model is not served
+`matrix.py` SHALL hold the pure predicate `model_not_served(status, message)`, true for an HTTP 400 whose message says `validation failed: model ... is not supported`, and for an HTTP 404 or 410. The baseline rules and the input probe SHALL call it (a not-served answer is unknown for a kind, never refused), and `routing-v2` SHALL call the same predicate to recognise a retired model, so that no second classifier of "the model is gone" exists.
+
+#### Scenario: The unsupported-model 400
+- **WHEN** `model_not_served(400, 'validation failed: model "perplexity/nemotron-3-ultra-550b-a55b" is not supported')` is called
+- **THEN** the result is true
+
+#### Scenario: A generic 400 is not served-ness
+- **WHEN** `model_not_served(400, "invalid request")` is called
+- **THEN** the result is false
+
+#### Scenario: Gone statuses
+- **WHEN** `model_not_served(404, "model not found")` and `model_not_served(410, "gone")` are called
+- **THEN** both are true, and `model_not_served(429, "upstream model is overloaded")` is false
+
 ### Requirement: Unanswered kinds back off per kind
 A kind left unanswered in a round SHALL add one to ITS `unanswered_rounds` whether or not the model's other kind was answered in that round; at two its `retry_after` SHALL be set 7 days ahead, its count SHALL reset, and no probe of that model for that kind SHALL be sent before then. Only an answer for THAT kind resets its count.
 
@@ -243,14 +293,14 @@ A kind left unanswered in a round SHALL add one to ITS `unanswered_rounds` wheth
 - **THEN** the document kind still reaches its backoff
 
 ### Requirement: A refusal is not permanent
-A `refused` kind SHALL be probed again once ITS `probed_at` is more than 14 days old, under the same limits, and the result replaces the old one. A refusal is inferred from an HTTP 400 whose generic body (`invalid request`) several unrelated mistakes share, so it is a likely answer and not a proof; the local gate uses `no` until a re-probe replaces it, which is why the re-probe exists.
+A `refused` kind SHALL be probed again once ITS `probed_at` is more than 24 hours old (the named constant `REFUSAL_TTL`, owner-editable), under the same limits, and the result replaces the old one; until then the local gate uses `no`.
 
 #### Scenario: A stale refusal is re-probed
-- **WHEN** a model's `image` was refused 15 days ago and a refresh runs
+- **WHEN** a model's `document` was refused 25 hours ago and a refresh runs
 - **THEN** one image request is sent after a same-round control, and an accepted answer moves the kind to `accepted`
 
 #### Scenario: A fresh refusal is not
-- **WHEN** the refusal is 3 days old
+- **WHEN** the refusal is 3 hours old
 - **THEN** no request is sent for it
 
 ### Requirement: Input answers have their own bookkeeping

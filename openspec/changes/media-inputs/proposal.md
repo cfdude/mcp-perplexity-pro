@@ -58,9 +58,11 @@ that and ships images and documents only.
   the 450 that `routing-v2` makes) keeps the tools list under its unchanged cap, which is never
   raised: if the final measure cannot fit, work stops and the owner decides.
 - Matrix probes for inputs have their own same-round control, per-kind eligibility, a 7-day backoff
-  after two unanswered rounds and a 14-day re-probe of refusals (a refusal is one generic 400, not a
-  proof).
-- **Apply order** (canonical, identical in `routing-v2`): (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit).
+  after two unanswered rounds and a 24-hour re-probe of refusals (owner-editable); only a NAMED modality
+  refusal is recorded as refused, never the generic 400 `invalid request` or a 429 (2026-11-11 investigation:
+  `xai/grok-4.7` accepts image and document, the 2026-10-30 refusal was stale).
+- This change also owns the single predicate `matrix.model_not_served` (a 400 `validation failed: model ... is not supported`, a 404 or a 410) that `routing-v2` uses to refresh and retry after a retired model, and the named-refusal predicate `matrix.is_named_refusal`. It is independently shippable: `routing-v2`'s merge depends on its own in-branch evaluation, and if that fails this change ships alone, taking nothing from migration `0006` (task 0.4 and `routing-v2` design D18 list the routing-dependent wording to amend).
+- **Apply order** (canonical, identical in `routing-v2`): (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) routing-v2 7.1 to 7.7, the in-branch evaluation (7.8 only if the evaluation fails); (7) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, only after 7.6 reports); (8) routing-v2 9.3, the merge gate, then the archive 9.4.
 
 ## Capabilities
 

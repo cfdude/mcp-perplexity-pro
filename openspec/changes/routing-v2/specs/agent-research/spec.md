@@ -155,3 +155,14 @@ A routed job SHALL store depth `routed` (the `depth` column is `NOT NULL`, and a
 #### Scenario: Migration reversibility
 - **WHEN** migration `0006` is downgraded
 - **THEN** the `research_jobs` rows remain, the `effort` column is gone and `embedding_chunks` rows for jobs remain
+
+### Requirement: A routed research submit follows the retirement rule at submit only
+When a routed research submit fails with an answer that `matrix.model_not_served` recognises, the server SHALL request one bounded refresh and retry the submit once on the best remaining same-family shortlist model, else on the tier's preset (never `openai/gpt-6-luna`); a named `depth` is a preset and is unaffected; a job already stored is not touched. The failed submit's event and the retry's event are both recorded, and the job row stores the model that was submitted successfully.
+
+#### Scenario: Routed submit retried
+- **WHEN** a routed submit names a retired model and the retry succeeds on the tier's preset
+- **THEN** one failed event and one event of the retry exist, the job has depth `routed` or the preset's depth as `routing-config` says for a preset fallback, and no second retry is made
+
+#### Scenario: Named depth unaffected
+- **WHEN** a client names `depth` `high`
+- **THEN** no retirement logic runs

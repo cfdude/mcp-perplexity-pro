@@ -317,3 +317,29 @@ In `dynamic` mode a call SHALL fail in this order: selector and tier errors, the
 #### Scenario: Router refusal before the Decisions request
 - **WHEN** the Decisions classifier is configured and the router would refuse the call
 - **THEN** the call fails with the router's `invalid_request` and no Decisions request is made
+
+### Requirement: A named or configured model that is gone is reported, never replaced
+When a call naming `model`, or running a pin or a `standard` or `custom` mode model, fails with an answer `matrix.model_not_served` recognises, the server SHALL request the bounded refresh and SHALL NOT retry or substitute. The error keeps its category and its text adds that nothing was substituted, up to five live same-family models newest first and, for a pin or mode model, its variable; this hint outranks the schema, continuation and attachment hints.
+
+#### Scenario: An explicit model is gone
+- **WHEN** an ask names `model` `vendor/haiku-5` and the API answers 400 not supported while the live listing holds `vendor/haiku-6`
+- **THEN** the call fails with `invalid_request` whose text names `vendor/haiku-6`, says nothing was substituted, and no second request is made
+
+#### Scenario: A pin is gone
+- **WHEN** `PERPLEXITY_TIER_LIGHT` pins a retired model and a light call runs
+- **THEN** the call fails with the same text naming `PERPLEXITY_TIER_LIGHT`, and the pin is not replaced
+
+#### Scenario: Attachments do not hide it
+- **WHEN** the failing call carried a PNG
+- **THEN** the model-gone text is given and not the attachment hint
+
+#### Scenario: Nothing listed
+- **WHEN** the catalog cannot be read and the process holds no listing
+- **THEN** the error says it could not list same-family models and points to `perplexity_models`
+
+### Requirement: A retired model shows in the routing reason
+When the server retried a call after a retirement, the result's `routing.reason` SHALL begin with `model_retired:` followed by the retired id, within the 120-character rule and without any prompt text, and `selected_by` SHALL remain `router` or `fallback`.
+
+#### Scenario: Reason content
+- **WHEN** a routed call was retried after `vendor/haiku-5` retired
+- **THEN** the reason starts with `model_retired:vendor/haiku-5` and the whole reason is at most 120 ASCII characters

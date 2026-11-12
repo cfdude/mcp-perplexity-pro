@@ -10,8 +10,10 @@ models whose prices differ by a factor of 100 and whose published scores often s
 points of each other, so the cheapest adequate model is a different model for coding, reasoning and
 browsing prompts. The matrix (`model-matrix`) already holds prices, availability and accepted effort
 levels, so the one missing input is benchmark evidence. Rob decided on 2026-10-29 not to publish the
-matrix or dynamic routing (2.1.0 and 2.2.0 are unpublished) until this router replaces them and an
-evaluation (`routing-eval-tuning`) shows it picks well.
+matrix or dynamic routing (2.1.0 and 2.2.0 are unpublished) until this router replaces them. On
+2026-11-11 he made the proof a condition of merging this change: routing must deliver value, not bloat (no added
+delay, no added tokens, real usage savings from cheaper models on lighter work), and "if we can't prove those
+things, we keep it in a branch and do not merge". The proof is an in-branch evaluation (`routing-evaluation`).
 
 ## What Changes
 
@@ -21,6 +23,21 @@ evaluation (`routing-eval-tuning`) shows it picks well.
   without a source and date is refused at load. This change ships the schema, the loader and the
   procedure, not the figures: every figure is TO BE SOURCED and verified live (tasks 2.x) before the
   router may be switched on.
+- A model-gone refresh (design D17): when a call to a server-chosen model fails with the API's answer that
+  the model is no longer served (the one classifier `matrix.model_not_served`, owned by `media-inputs`), the
+  server refreshes the catalog from the API's own `/v1/models` (single-flight, at most once per 5 minutes per
+  process, no probes, no documentation scraping), skips the retired id at selection time, and retries the call
+  ONCE on the best same-family shortlist model, else the chain fallback; the result's `routing.reason` says
+  `model_retired:<id>`. An explicit `model`, a pin and a mode model that are gone are reported with the live
+  same-family candidates named, never replaced.
+- A merge-blocking, pre-registered evaluation (design D18, capability `routing-evaluation`): a fixed labeled
+  set (at least 12 coding, 12 reasoning and 12 browsing prompts, pinned by hash), thresholds written before
+  any run (decision p95 under 5 ms; no added network call; median added wall time under 50 ms; no added input
+  tokens and a `routing` object of at most 400 bytes; cost at most 0.75 of an always-strongest baseline and at
+  most 4.0 of an always-cheapest one; quality within 0.05 overall and 0.10 per class of the strongest model),
+  live spend under 5 USD, and a report `acceptance/evaluation.md` with a PASS or FAIL line per threshold.
+  The shipped evidence has no scores, so the router cannot pass until figures are sourced and verified
+  (an unverified run is INVALID); on FAIL the routed selection stays unmerged and `media-inputs` ships alone.
 - A deterministic, pure selector picks `(model, effort)` for a nameless ask, chat send or research
   run: a task class from the prompt (coding, reasoning or browsing), the eligible shortlist models
   (available in the matrix, scored on the class, and answering `yes` to the matrix's `accepts` for the required input kinds), the best
@@ -60,12 +77,19 @@ evaluation (`routing-eval-tuning`) shows it picks well.
 - Out of scope, recorded: the decider default and the classifier default (`rules`) stay, because
   `pplx-decider-v1.2` and `flash-v1.2` answered differently from `v1.1` and need the
   `routing-eval-tuning` evaluation; escalation (`routing-escalation`); a router backend
-  (`routing-router-api-backend`); a headline savings number; media inputs themselves.
+  (`routing-router-api-backend`); any savings figure in a document before the evaluation report passes (after
+  it passes, documents may quote the measured figures); `xhigh` automation (owner, 2026-11-11); adding
+  `xai/grok-4.7` to the shortlist (a later round); media inputs themselves.
+- Owner decisions of 2026-11-11 (design D2, D6, open questions 2, 3 and 8): the benchmark mapping and the
+  3-point margin as drafted; the shortlist swaps `xai/grok-4.7` for `openai/gpt-6.1-terra` (live in
+  `/v1/models` on 2026-11-11, needs a baseline entry, task 2.5); the last resort for a task the chain
+  cannot place is the request's own preset model; `anthropic/claude-opus-5-5` stays allowed.
 
 ## Capabilities
 
 ### New Capabilities
-- `routing-evidence`: the evidence file, the shortlist, the selection algorithm, effort choice, the fallback chain and the modality hook.
+- `routing-evidence`: the evidence file, the shortlist, the selection algorithm, effort choice, the fallback chain, the modality hook and the retired-model retry.
+- `routing-evaluation`: the pre-registered, merge-blocking evaluation (thresholds, labeled set, harness, budget, report, honest fallback rule, the split with `media-inputs`).
 
 ### Modified Capabilities
 - `routing-config`: `dynamic` mode runs the router; tiers become effort tiers; tier variables pin models; "The tier argument", "The classifier field can be decisions", "Usage records the resolved model" (the "routing adds no migration" clause goes), the `routing` object, the instructions text, the follow-up hold and its storage; two requirements removed.
@@ -75,8 +99,9 @@ evaluation (`routing-eval-tuning`) shows it picks well.
 - `agent-chat`: "Chat tool" (description sentence), "Chat storage" (the new column), "Send starts a chat" (dynamic wording) and the stored tier.
 - `agent-research`: "Research tool" (optional `depth`), "The model is known only from a finished run", "Job records", "Recording follows the recorder contract", "Submit that returns another status" (preset null for a routed submit), routed research and its job columns.
 - `server-runtime`: "Dynamic mode configuration" (pins; `PERPLEXITY_MODEL` ignored).
+- `model-matrix`: the forced, rate-limited, single-flight refresh after a retired model (added requirement; `media-inputs` owns the rest of the capability and the `model_not_served` predicate).
 - `help-tool`: "The index and routing topic describe dynamic mode".
-- `model-catalog`: the `perplexity_models` routing section reports the router and its evidence.
+- `model-catalog`: the `perplexity_models` routing section reports the router and its evidence; the held listing is readable without a fetch.
 
 ## Impact
 
@@ -84,7 +109,7 @@ evaluation (`routing-eval-tuning`) shows it picks well.
   `EvidenceState`), edits to `routing.py`, `rules.py`, `settings.py`, `agent.py` (`reasoning` in a
   model request; the preset of a routed job), `server.py` (`AppContext.evidence`), `__main__.py`
   (startup warnings, readers of the removed tier table), `command.py` (research `--depth` default),
-  `tools/{ask,chat,research,models,jobs}.py` (research submit preset at `research.py` lines 158, 183 and 186), `storage/chats.py` (`AssistantTurn`, `last_route`), `pyproject`/packaging test for the data file, `routing_decisions.py` (`wants_decider`), `help_text.py`,
+  `tools/{ask,chat,research,models,jobs}.py` (research submit preset at `research.py` lines 158, 183 and 186), `storage/chats.py` (`AssistantTurn`, `last_route`), `pyproject`/packaging test for the data file, `routing_decisions.py` (`wants_decider`), `help_text.py`, `matrix_refresh.py` (`refresh_now`, the retirement rate limit), `catalog.py` (the held listing without a fetch), `routing_select.py` (family key, tombstones, exclusion), `agent.py` and the three tools (the single retry and its hint),
   `storage` (migration `0006`, models), data file
   `src/mcp_perplexity_pro/data/routing_evidence.json`; tests (`tests/test_routing.py`,
   `tests/test_routing_dynamic_tools.py`, `tests/test_chats_migration.py:214` and `tests/test_jobs_migration.py:249`, the ORM-against-schema
@@ -97,9 +122,12 @@ evaluation (`routing-eval-tuning`) shows it picks well.
   6.2 records the figures, 6.3 trims at least 450 bytes in other tools' descriptions, and 6.4 installs the
   FINAL per-server ceilings from the combined table that media 3.3 writes.
 - Live work: a request-shape probe (a model with `reasoning.effort` and the web search tool, in
-  the background, for research), source verification of every evidence figure, and the evaluation
-  gate with `routing-eval-tuning`.
+  the background, for research), a probe of what the API answers for a retired model id, source
+  verification of every evidence figure, and the in-branch evaluation (tasks 7.2 to 7.7, under 5 USD
+  in total) whose report decides the merge.
+- Tests and harness: `tests/routing_eval/` (thresholds, microbenchmarks, paired overhead, three-arm live
+  runner, judge), the extended `tests/fixtures/routing_prompts.json`, `acceptance/evaluation.md`.
 - Boundary with `media-inputs` (applied in parallel): this change owns selection (evidence, eligibility,
   effort, fallbacks, the hold rule); `media-inputs` owns the modality facts in the matrix, the
   attachment parameters, the refusal wording and the gate on the final route (explicit model, pin,
-  tier model and default route; a held model is kept only when the matrix answers `yes`, and the router substitutes only `yes` models). CANONICAL APPLY ORDER: (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit). A stub `matrix.accepts` answering `unknown` is the fallback if that order is impossible.
+  tier model and default route; a held model is kept only when the matrix answers `yes`, and the router substitutes only `yes` models). CANONICAL APPLY ORDER: (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) routing-v2 7.1 to 7.7, the in-branch evaluation (7.8 only if the evaluation fails); (7) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, only after 7.6 reports); (8) routing-v2 9.3, the merge gate, then the archive 9.4. A stub `matrix.accepts` answering `unknown` is the fallback if that order is impossible. If the evaluation fails, task 7.8 unwinds the routed selection and `media-inputs` ships alone (design D18 lists exactly what it took from this change: nothing from migration `0006`, the `required_input` call into `resolve` and the held-model and router-substitution wording).

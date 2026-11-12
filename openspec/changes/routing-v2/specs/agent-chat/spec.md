@@ -90,3 +90,14 @@ In `dynamic` mode each stored assistant message SHALL record the tier its call r
 #### Scenario: Old rows
 - **WHEN** a chat written before the migration is continued in `dynamic` mode
 - **THEN** its previous tier is recovered from the stored preset as `routing-config` says
+
+### Requirement: A held chat model that has been retired is rerouted once
+When a chat follow-up holds a model and its call fails with an answer that `matrix.model_not_served` recognises, the server SHALL treat the held model as its own earlier choice: one refresh, one retry as `routing-evidence` says, and the reply's `routed_model` SHALL store the model that actually answered. A chained retry SHALL keep its `previous_response_id`. An explicit `model` on the follow-up is reported, never replaced.
+
+#### Scenario: Held model retired
+- **WHEN** a follow-up holds `vendor/haiku-5` and the API answers 400 not supported
+- **THEN** the send is retried once on the selector's replacement, the stored `routed_model` of the new turn is the replacement, and a later follow-up holds the replacement
+
+#### Scenario: Chain kept
+- **WHEN** the retried send was chained
+- **THEN** the retry request carries the same `previous_response_id`

@@ -29,8 +29,11 @@ this change.
 - Keep every explicit selector exactly as it is.
 
 **Non-Goals:**
-- No savings or quality claim (`routing-eval-tuning` is the only place one is made); no escalation
-  or retry one tier up; no router API backend; no change to the classifier defaults; no media inputs.
+- No savings, speed or quality claim in any document until the in-branch evaluation (D18) reports PASS
+  on every pre-registered threshold; after it does, documents may quote the measured figures with the
+  report as the source. No escalation or retry one tier up (the model-gone retry of D17 is one retry of
+  the same call, not an escalation); no router API backend; no change to the classifier defaults; no
+  media inputs.
 - No invented benchmark number: this change ships the schema and the procedure, not the figures.
 
 ## Decisions
@@ -89,14 +92,18 @@ benchmark of the class is not eligible for the class.
 The two vocabularies are listed in full in the `routing-rules` delta (the code reads them from
 `rules.py`, pinned by `tests/test_rules.py` and the labeled set). Generic words (`function`, `bug`)
 and language names are excluded on purpose: `What is the latest stable Python release?` must stay a
-light `browsing` lookup. Draft margin: **3 points** (D4). Owner edits: benchmark ids, class
-membership, the vocabularies.
+light `browsing` lookup. **Owner decision 2026-11-11:** the mapping above and the margin of **3 points** (D4) are approved as
+drafted. Owner edits after that: benchmark ids, class membership, the vocabularies and the margin, each
+editable only until the pre-registration of D18 (task 7.2); an edit after a scored run starts a new
+numbered evaluation run.
 
 **D3. Selection algorithm (pure; `routing_select.select(...)`).** Inputs, all passed as arguments:
 the task class, the tier, the tool (`ask`, `chat`, `research`), the evidence, a matrix snapshot
 (`matrix.Matrix`), `required_input` (a frozenset drawn from `{"image", "document"}`, default empty = text only), the margin and
 `search`. Steps:
-1. Eligible = shortlist models that are `available` in the matrix, have both prices non-null, answer
+1. Eligible = shortlist models that are `available` in the matrix, are not tombstoned by a retirement
+   (D17) and, when the process already holds a catalog listing in memory, are listed in it (selection
+   never fetches the listing), have both prices non-null, answer
    `yes` to `matrix.accepts(model, required_input)` (always true for an empty set; `no`, `unknown`
    and unprobed are never substituted), and have a verified score for every benchmark of the class.
 2. If Eligible is empty, take the fallback chain (D6).
@@ -137,7 +144,10 @@ false or media is required and no model rung exists the call fails with `invalid
 is a preset sent verbatim, so no call could reach that rung (open question 2). Note for the owner:
 `catalog.PRESETS` (2026-10-29) maps `fast`, `low`, `medium` to `openai/gpt-6-luna`, while the research
 notes say the docs name `gpt-5.6-luna`; rung (c) sends a preset name, so the discrepancy cannot
-misroute, and task 1.3 re-reads the documentation.
+misroute, and task 1.3 re-reads the documentation. **Owner decision 2026-11-11:** the last-resort
+fallback for a task the chain cannot place is the request's own preset model (rung (c), unchanged);
+`anthropic/claude-opus-5-5` stays an allowed top-of-shortlist model; no `xhigh` automation is added
+(open questions 2 and 8).
 
 **D7. Modality: one source of truth, owned by `media-inputs`.** The model matrix is the single
 source of modality facts: `media-inputs` adds a per-model `inputs` record and the pure functions
@@ -299,7 +309,7 @@ least 1184 bytes on that server; media 3.3 then measures all three servers after
 parameter lands, trims at least 300 bytes more, applies its STOP rule and writes the combined table,
 and task 6.4 installs the final per-server ceilings from that table (never above the cap). The
 dynamic sentence keeps its 70-byte cap per tool.
-The longer instructions text is not part of `tools/list`.
+The longer instructions text is not part of `tools/list`. D17 and D18 add no schema bytes (the retirement note is an existing string, the hint is error text, the evaluation adds no tool field).
 
 **D15. Observability.** The `reason` (at most 120 ASCII characters, constants and counts only, never
 prompt text) names the task class, the number of contenders and the rule, for example `coding; 3
@@ -332,12 +342,138 @@ validation path) and follows the same order with the hold of D12. `wants_decider
 neither, the tier is picked from the prompt") says the model and effort are picked instead, with its
 tests.
 
+**D17. A retired model forces one bounded refresh and one retry (owner requirement 2026-11-11).**
+Model names are stable families (`luna`, `sonar`, `haiku`, `gemini`) while version numbers retire, so a
+shortlist id can stop being served between two scheduled matrix refreshes. Trigger: a model-bearing
+upstream request whose failure satisfies `matrix.model_not_served(status, message)` (owned by
+`media-inputs` task 2.1, the same classifier its baseline rules and input probe use: the API's 400
+`validation failed: model ... is not supported`, and a 404 or 410; this change adds no second
+classifier). Steps, in order, for one call:
+1. The failed call is recorded as today (`costed_call` records the failure, category from the status, no
+   usage), and the failed id is tombstoned in process memory for 300 seconds (`GONE_TTL`), so selection
+   skips it even when the listing still shows it.
+2. `MatrixState.refresh_now(failed_id)` runs: single-flight (concurrent failures share one fetch), and
+   rate-limited to at most one listing fetch of ANY origin per 300 seconds per process
+   (`FORCED_REFRESH_MIN_INTERVAL`, a named constant, not a setting); inside the window it returns at once and
+   the existing snapshot is used. It reads only the API's own `/v1/models` through the existing
+   `Catalog.get(refresh=True)` (no documentation is read or scraped), merges with the existing rules (a
+   vanished id becomes `removed`; an empty or under-half listing changes nothing, which is what keeps an
+   outage from emptying the matrix), sends NO probe request and spends nothing. A failed fetch is
+   recorded and consumes the window, so an outage cannot loop.
+3. Retry, only for a model the SERVER chose (router, the fallback model rung, a held chat model), exactly
+   once: the pure selector runs again with the failed id excluded and the live ids known; it prefers the
+   best remaining shortlist model of the same family (family key: the provider plus the name tokens that
+   are not version tokens, so `anthropic/claude-haiku-5-5` and `anthropic/claude-haiku-6` share
+   `anthropic/claude-haiku`; version tokens match `^v?[0-9]+([.][0-9]+)*$`; the newest live version is the
+   one with the greatest numeric tuple, ties to the smaller id), chosen by the normal D3 rules; with no
+   such model, the chain fallback of D6 (research: the tier's preset). A live successor that is NOT on
+   the shortlist has no evidence and is never routed: it is named in a log warning and in the error
+   hint so the owner can add it (this is how a retirement turns into a one-line shortlist edit). The
+   retry request is the only extra upstream call; if it too says not served, there is no second refresh
+   and no second retry: the call fails with the hint.
+4. The result's `routing.reason` says `model_retired:<id>` (the retired id, within the 120-character rule)
+   and `selected_by` stays `router` or `fallback`; the usage log holds two events, the failed one and the
+   retry, so `perplexity_usage` reconciles.
+
+Composition: an explicit `model`, a `PERPLEXITY_TIER_*` pin and a mode default model (`standard`,
+`custom`) are named by the caller or the operator and are NEVER silently replaced: the refresh still
+runs (it is free and bounded) but there is no retry; the error keeps its category by status
+(`invalid_request` for the 400) and its text gains `Model <id> is no longer served; nothing was
+substituted. Live models of the same family: <up to five ids, newest first>` (or says none are listed),
+and for a pin or default also names the variable. This hint outranks `schema_hint`, `continuation_hint` and
+`media-inputs`' `attachment_hint`, because "not supported" is about the model, not the attachment. A held
+chat model is the router's own earlier choice, so it follows the router rule; the reply stores the model
+that actually answered as `routed_model`, so the next follow-up holds that one. A preset
+(`depth`, or the fallback preset rung) is a name the API resolves, never an id the matrix lists: no refresh
+and no retry. The Decisions classifier's model is outside this rule (its failure already falls back to the
+rules). Research: a routed background submit follows the router rule at submit only (one refresh, one
+retry, then the tier's preset, never `gpt-6-luna`); a job already submitted is not touched. A chained
+chat turn retried on another model keeps its `previous_response_id` (the API keeps the chain across a
+model switch, `media-inputs` probes S3 and S4, task 1.4 re-probes it). What it costs: nothing beyond
+the one retry call; no schema bytes (the reason is an existing string; the hint is error text).
+Honest limit: because the shortlist normally holds one version per family, the same-family step usually
+finds nothing and the retry lands on the chain fallback; the value is that the call succeeds and the
+successor is named.
+
+**D18. The measuring stick: an in-branch, merge-blocking evaluation (owner requirement 2026-11-11).** Rob:
+routing must deliver value, not bloat; no added user-facing delay or token overhead; it must be fast and
+efficient and produce usage savings (cheaper models for lighter work); "if we can't prove those things,
+we keep it in a branch and do not merge". The evaluation therefore lives in this change (spec
+`routing-evaluation`; harness in `tests/routing_eval/`; report `acceptance/evaluation.md`), replaces the
+old publishing-gate hand-off to `routing-eval-tuning`, and blocks the merge. Thresholds, proposed by the
+author and EDITABLE BY THE OWNER, like the D2 table, until the pre-registration commit of task 7.2:
+
+| Id | Threshold | Why this value |
+|---|---|---|
+| T0 | at least 12 prompts per class (coding, reasoning, browsing), pinned by hash | the owner's minimum; at n = 12 per class one prompt moves a class mean by 0.083, which is why T5b is looser than T5a |
+| T1a | `resolve` plus `select` p95 under 5 ms | the work is a pure function over small tables, so 5 ms is two orders above what it should cost and still invisible next to a 1 to 120 s model call |
+| T1b | 0 added network calls on the default and rules paths | the router reads in-memory snapshots; any fetch in the call path is added delay by construction |
+| T2a | median added wall time under 50 ms (paired, same stub upstream) | below human notice (about 100 ms) with a 2x margin; the stub isolates the server's own overhead from model speed |
+| T2b | live median latency ratio, routed against strongest arm, at most 1.10 | cheaper models should not be slower; 10 percent allows live noise |
+| T2c | cold start under 100 ms | the evidence file and matrix are read once per process, lazily |
+| T3a | `tools/list` at most 59779 on the three servers | the existing cap, which never rises |
+| T3b | `routing` object at most 400 bytes | the `reason` is capped at 120 characters and the object holds seven short fields; 400 leaves 2x headroom |
+| T3c | `input` byte-identical, only `model` and `reasoning.effort` differ | zero added input tokens |
+| T4a | routed cost at most 0.75 times the always-strongest arm | the owner's "at least 25 percent lower" |
+| T4b | routed cost at most 4.0 times the always-cheapest arm | stops the trivial win of "pick the strongest cheaper model": routing must stay near the floor on light work |
+| T5a | routed mean quality at least strongest minus 0.05 | 0.05 is about 1.8 prompts of 36; tight enough to mean parity, loose enough for judge noise |
+| T5b | per-class routed quality at least strongest minus 0.10 | one class has 12 prompts, so 0.10 is about one prompt |
+| T5c | judge agrees with the checks on at least 0.90 of the checkable answers | a judge that disagrees with ground truth cannot decide parity |
+
+Method: one labeled set (`tests/fixtures/routing_prompts.json`, extended, 36 prompts or more, each with a
+check or a rubric, no model-written code executed), three arms with identical request shape (routed,
+strongest = highest mean of verified class scores, cheapest = lowest blended price), cost from usage
+events, quality from checks and a blind `perplexity_decide` judge (labels removed, order shuffled by a
+fixed seed, judge model recorded). Live spend is capped at 5 USD for all runs together (arms 2.50 +
+1.00 + 0.50, judge 0.50, reserve 0.50). Honest fallback rule: the shipped evidence has EMPTY scores, so
+the router always falls back and cannot beat the baseline; the evaluation refuses to score a run unless
+sourced and verified scores (tasks 2.2 and 2.3) make the router, not the fallback, choose for at least 75
+percent of the set (otherwise INVALID). If, with verified evidence, T4a, T4b, T5a or T5b fail, the outcome
+is DO NOT MERGE the routed selection. Re-runs: thresholds never change; a change of margin, mapping,
+shortlist or evidence after a run is a new numbered run reported beside the earlier ones, and the 5 USD
+budget bounds how many can happen. Split: if the stick fails, `media-inputs` still ships alone.
+
+Dependency analysis (what `media-inputs` consumed from this change, and what unwinding takes), computed
+from the two task lists:
+- Migration `0006`: NOT used by `media-inputs` (it adds no column and asserts nothing about `0006`,
+  its task 3.2), so dropping `0006` changes nothing there; the revision head returns to `0005`.
+- `routing.resolve(required_input=...)`, the order of D16 and the provisional resolve (routing 5.4):
+  consumed by media 1.5, 2.3 and 3.1 (the parse, the gate order, the two chat resolve sites). On unwind
+  the gate stays and its call into the router goes: the gate then checks `route.model` (or `route.preset`
+  through `preset_accepts`) of the EXISTING resolve, and there is no held-model or router-substitution
+  rule. `inherited_kinds` is media's own function (media 3.1 replaced the empty hook), so it stays.
+- `agent.build_request` optional `reasoning` argument (routing 5.3): media 1.4 composes with it; harmless
+  to keep, removed with its tests if the whole of 5.3 is reverted.
+- The 450-byte description trim (6.3) and the per-server ceilings (6.4): standalone, media's gross growth
+  (at most 900 bytes) fits under the cap with headroom of 2044, 1758 and 1524 bytes on the three servers
+  (59779 minus 57735, 58021 and 58255), so media's own task 3.3 needs no trim and sets its own ceilings.
+- The single `CLAUDE.md` tools-list edit (routing 9.1) moves to media 7.1 when routing is dropped.
+- Spec text in `media-inputs` that names the router, a held model or `routing-v2` D12 (the
+  `media-attachments` requirements "A held model is kept only when it can take the kinds" and the
+  router scenarios of "An unknown model is let through" and of the model-selection requirement, the
+  `agent-chat` requirements that store `tier` and `routed_model` and name router input, and design D13a)
+  becomes conditional and is amended by task 7.8; media task 0.4 marks them.
+- The terra baseline entry of task 2.5 (55 models) is reverted to 54 with its count test.
+- The model-gone predicate is `media-inputs`' (task 2.1), so it is NOT unwound; only the retry (5.6)
+  goes with the router.
+
+The canonical apply order puts `media-inputs` 1.4, 1.5, 2.3 and 3.1 on top of routing 5.4, so the unwind
+is a revert of the routing-attributed commits (the epic's `--attribute-commit` list is the exact set) in
+reverse landing order, followed by the edits above; a persistent data directory must never be
+opened by this branch (a database at revision `0006` is refused by a build that stops at `0005`).
+
 ## Shortlist proposal (models only; scores are not proposed)
 
-Eight ids, all present in `data/model_matrix_baseline.json` (checked 2026-10-30), spread across
-price bands and providers so each task class has several candidates; the evaluation may drop or add
-any of them. `openai/gpt-6.1-terra` (the `high` preset's model) is not in the baseline dated
-2026-10-17 and is therefore not proposed until the live matrix lists it.
+Eight ids, spread across price bands and providers so each task class has several candidates; the
+evaluation may drop or add any of them. **Owner decision 2026-11-11:** `xai/grok-4.7` is replaced by
+`openai/gpt-6.1-terra` (the `high` preset's model), which the LIVE `/v1/models` listing of 2026-11-11
+confirms. Seven ids are in `data/model_matrix_baseline.json` (checked 2026-10-30); `openai/gpt-6.1-terra` is
+NOT, so it needs a baseline entry with its live price read at apply time (task 2.5; its `inputs` are
+`unprobed`, because the 2026-10-30 sweep did not cover it) before the offline drift test of task 2.4 can
+pass. `xai/grok-4.7` stays out of this round. Its 2026-10-30 media refusal was stale: the probe of
+2026-11-11 (`media-inputs/acceptance/grok-4-7-investigation.md`) shows it accepting image and document, and the
+repo research rates it strong on coding and agentic work at 2 / 6 USD per 1M. It is a candidate for a
+LATER shortlist round, and is not added now.
 
 | Model id | Input / output per 1M | Why it is a candidate |
 |---|---|---|
@@ -345,9 +481,9 @@ any of them. `openai/gpt-6.1-terra` (the `high` preset's model) is not in the ba
 | `anthropic/claude-haiku-5-5` | 0.1 / 0.5 | same price band, different provider |
 | `perplexity/sonar` | 0.25 / 2.5 | the standard-mode default and web-native |
 | `google/gemini-3.8-flash` | 0.75 / 3.75 | mid-price flash model |
-| `xai/grok-4.7` | 2 / 6 | mid-price, another provider |
 | `anthropic/claude-sonnet-5-5` | 2 / 10 | mid-price Anthropic |
 | `openai/gpt-6.1-sol` | 2 / 10 | mid-price OpenAI; named by the owner as an `xhigh`-class fallback (rung removed, D6) |
+| `openai/gpt-6.1-terra` | live price at apply time (task 2.5) | OpenAI, the `high` preset's model; replaces `xai/grok-4.7` (owner, 2026-11-11) |
 | `anthropic/claude-opus-5-5` | 4 / 20 | the `xhigh` preset's documented model; top of the price range |
 
 ## Risks / Trade-offs
@@ -356,7 +492,7 @@ any of them. `openai/gpt-6.1-terra` (the `high` preset's model) is not in the ba
   carries source, date and basis; verification is a live task; evidence age is surfaced.
 - **Benchmark mismatch.** A benchmark is a proxy and vendors report different ones, so the class
   mapping can pick a model that is good on the benchmark and weak on the prompt. Mitigation: the
-  evaluation is the publishing gate; the mapping is data the owner can change.
+  evaluation of D18 is the merge gate; the mapping is data the owner can change.
 - **Weaker grounding on a model route than on a preset** (D10). Mitigation: measured in the
   evaluation; a tier-based step budget is the lever.
 - **The research model route may be refused by the API** (D11); the probe comes first.
@@ -372,15 +508,27 @@ any of them. `openai/gpt-6.1-terra` (the `high` preset's model) is not in the ba
   it is dropped when `removed`, an explicit selector overrides it, and the evaluation may revisit it.
 - **Vendor-reported versus independent scores** can differ by many points; D3 treats them equally.
   Open question 5.
+- **The router may not beat the baseline** (the owner's stick, D18). With empty shipped scores it
+  cannot; with sourced scores it may still lose on cost or quality. Mitigation: the evaluation is
+  merge-blocking and pre-registered; failure leaves the branch unmerged and `media-inputs` shippable.
+- **A small prompt set is noisy** (12 per class): a class mean moves 0.083 per prompt. Mitigation:
+  T5b is looser than T5a, the judge is validated (T5c), and more prompts may be added before
+  pre-registration.
+- **Retirement handling can mask a mistake**: a retry on the fallback hides a stale shortlist.
+  Mitigation: the reason says `model_retired:<id>`, a warning names the live successor, and the
+  retry happens once with a rate-limited refresh, never a loop (D17).
 
 ## Migration Plan
 
-0. CANONICAL APPLY ORDER across the two changes (`media-inputs` owns the modality facts): (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit). If that order is impossible, a stub `matrix.accepts` returning `unknown` (nothing substituted, nothing refused) lets this change land alone, and `media-inputs` replaces it.
+0. CANONICAL APPLY ORDER across the two changes (`media-inputs` owns the modality facts): (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) routing-v2 7.1 to 7.7, the in-branch evaluation (7.8 only if the evaluation fails); (7) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, only after 7.6 reports); (8) routing-v2 9.3, the merge gate, then the archive 9.4. If that order is impossible, a stub `matrix.accepts` returning `unknown` (nothing substituted, nothing refused) lets this change land alone, and `media-inputs` replaces it.
 1. Land specs and code behind `dynamic` mode only; `standard` (the default) and `custom` do not change.
 2. Ship the evidence file with empty `scores`; dynamic mode then routes to the fallback and
    logs one warning that no verified evidence is loaded.
-3. Source and verify the figures live (tasks 2.x), then run the evaluation with `routing-eval-tuning`.
-4. Only a passing evaluation allows the release; until then 2.1.0 to 2.3.0 stay unpublished.
+3. Source and verify the figures live (tasks 2.x), then pre-register and run the in-branch evaluation
+   (D18, tasks 7.2 to 7.6).
+4. Only a report with every threshold PASS allows the merge and the release; until then 2.1.0 to 2.3.0
+   stay unpublished and the branch stays unmerged. On FAIL or INVALID, task 7.8 unwinds the routed
+   selection and `media-inputs` ships alone.
 5. Rollback: remove the evidence override file and use `standard` mode; migration `0006` downgrades.
 
 ## Open Questions
@@ -389,16 +537,20 @@ any of them. `openai/gpt-6.1-terra` (the `high` preset's model) is not in the ba
    this design reads that as "the shortlist ships in the package like the baseline and is overridable
    from the data directory". Recommendation: keep it, and do not derive a shortlist from the whole
    baseline (54 models would need 54 verified scores).
-2. **Fallback targets, and the dropped `xhigh` rung.** The owner's note says `fast` falls back to
+2. **RESOLVED 2026-11-11 (owner): fallback targets and the dropped `xhigh` rung.** The owner's note says `fast` falls back to
    `openai/gpt-5.6-luna` and `xhigh` to `openai/gpt-6.1-sol`; `catalog.PRESETS` says `fast` is
    `openai/gpt-6-luna` and `xhigh` is `anthropic/claude-opus-5-5`. No call can reach an `xhigh`
    fallback (never automatic; an explicit `depth` `xhigh` is verbatim), so the rung is removed.
    Recommendation: keep `gpt-6-luna` at `low` as the default rung, the preset as the last, re-read
    the documentation in task 1.3; if the owner wants `xhigh` handled, add a unavailable-preset rule
-   for an explicit `depth` `xhigh` in a separate change.
-3. **Standard and complex in ask and chat.** They differ only by recorded tier (same model, same
+   for an explicit `depth` `xhigh` in a separate change. Answer: keep it; the last resort for a task
+   the chain cannot place is the request's own preset model (rung (c)); `anthropic/claude-opus-5-5`
+   is an allowed top-of-shortlist model; no `xhigh` automation.
+3. **RESOLVED 2026-11-11 (owner, with the `xhigh` decision): standard and complex in ask and chat.** They differ only by recorded tier (same model, same
    effort). Recommendation: accept it until the evaluation shows `complex` ask prompts need `high`
-   (the cap exists for the 120 s timeout).
+   (the cap exists for the 120 s timeout). Answer: accepted as drafted; no `xhigh` or `high` is added
+   for ask and chat, and the evaluation of D18 reports quality per class, so a `complex` shortfall
+   would show there.
 4. **Step budget per tier.** Recommendation: keep 3 until the evaluation measures grounding, then
    raise it for `complex` if answers cite fewer sources than preset `medium`.
 5. **Vendor versus independent scores.** Recommendation: equal treatment now; if the evaluation shows
@@ -407,7 +559,8 @@ any of them. `openai/gpt-6.1-terra` (the `high` preset's model) is not in the ba
    the alternative is a fourth `general` class with MMLU-Pro, which needs another benchmark verified.
 7. **Light tier margin.** Should a lookup accept a wider margin and so a cheaper model?
    Recommendation: no, until the evaluation shows lookups are over-served.
-8. **`xhigh` for automatic research.** Recommendation: not automatic (`RESEARCH_AUTO_MAX = high`);
-   the owner may raise it per the cost range stated for research.
+8. **RESOLVED 2026-11-11 (owner): `xhigh` for automatic research.** Recommendation: not automatic (`RESEARCH_AUTO_MAX = high`);
+   the owner may raise it per the cost range stated for research. Answer: not automatic; do not add
+   `xhigh` automation.
 9. **Decisions classifier choosing the task class.** Recommendation: no; the rules supply the class
    offline, and the Decisions default stays `pplx-decider-v1.1-27b` until its evaluation.
