@@ -35,6 +35,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-fable-5-1": {
@@ -70,6 +90,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-haiku-4-5": {
@@ -105,6 +145,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-haiku-5-5": {
@@ -140,6 +200,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-opus-4-5": {
@@ -175,6 +255,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-opus-4-6": {
@@ -210,6 +310,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-opus-4-7": {
@@ -245,6 +365,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-opus-4-8": {
@@ -280,6 +420,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-opus-5": {
@@ -315,6 +475,23 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-opus-5-5": {
@@ -350,6 +527,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-sonnet-4-5": {
@@ -385,6 +582,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-sonnet-4-6": {
@@ -420,6 +637,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-sonnet-5": {
@@ -455,6 +692,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "anthropic/claude-sonnet-5-5": {
@@ -490,6 +747,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-3-flash-preview": {
@@ -525,6 +802,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-3.1-flash-lite": {
@@ -560,6 +857,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-3.1-pro-preview": {
@@ -596,6 +913,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-3.5-flash": {
@@ -631,6 +968,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-3.5-flash-lite": {
@@ -666,6 +1023,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-3.6-flash": {
@@ -701,6 +1078,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-3.7-flash": {
@@ -736,6 +1133,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-3.8-flash": {
@@ -771,6 +1188,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "google/gemini-4-argon": {
@@ -806,6 +1243,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5": {
@@ -842,6 +1299,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5-mini": {
@@ -878,6 +1355,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5-nano": {
@@ -914,6 +1411,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.1": {
@@ -950,6 +1467,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.2": {
@@ -985,6 +1522,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.3-codex": {
@@ -1020,6 +1577,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.4": {
@@ -1055,6 +1632,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.4-mini": {
@@ -1090,6 +1687,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.4-nano": {
@@ -1125,6 +1742,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.5": {
@@ -1160,6 +1797,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.6-luna": {
@@ -1195,6 +1852,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.6-sol": {
@@ -1230,6 +1907,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-5.6-terra": {
@@ -1265,6 +1962,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-6-astra": {
@@ -1300,6 +2017,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-6-luna": {
@@ -1335,6 +2072,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-6-sol": {
@@ -1370,6 +2127,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "openai/gpt-6.1-sol": {
@@ -1405,6 +2182,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "perplexity/deepseek-v4-pro-0813": {
@@ -1440,6 +2237,23 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "perplexity/glm-5.3": {
@@ -1475,6 +2289,17 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [],
+    "refused": {},
+    "answers": {},
+    "source": "unprobed",
+    "probed_at": {},
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "perplexity/glm-5.3-flash": {
@@ -1510,6 +2335,23 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "perplexity/kimi-k3": {
@@ -1546,6 +2388,23 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "perplexity/nemotron-3-ultra-550b-a55b": {
@@ -1581,6 +2440,17 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [],
+    "refused": {},
+    "answers": {},
+    "source": "unprobed",
+    "probed_at": {},
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "perplexity/nemotron-3.5-super-120b-a12b": {
@@ -1616,6 +2486,23 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "perplexity/sonar": {
@@ -1651,6 +2538,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "xai/grok-4.20-multi-agent": {
@@ -1686,6 +2593,23 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [],
+    "refused": {
+     "document": 400
+    },
+    "answers": {
+     "document": 400
+    },
+    "source": "baseline",
+    "probed_at": {
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "xai/grok-4.20-non-reasoning": {
@@ -1721,6 +2645,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "xai/grok-4.20-reasoning": {
@@ -1756,6 +2700,23 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [],
+    "refused": {
+     "document": 400
+    },
+    "answers": {
+     "document": 400
+    },
+    "source": "baseline",
+    "probed_at": {
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "xai/grok-4.3": {
@@ -1791,6 +2752,23 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [],
+    "refused": {
+     "document": 400
+    },
+    "answers": {
+     "document": 400
+    },
+    "source": "baseline",
+    "probed_at": {
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "xai/grok-4.5": {
@@ -1826,6 +2804,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "xai/grok-4.6": {
@@ -1861,6 +2859,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-10-30T00:00:00Z",
+     "document": "2026-10-30T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   },
   "xai/grok-4.7": {
@@ -1896,6 +2914,26 @@
     },
     "probed_at": "2026-10-17T00:00:00Z",
     "source": "baseline"
+   },
+   "inputs": {
+    "accepted": [
+     "image",
+     "document"
+    ],
+    "refused": {},
+    "answers": {
+     "image": 200,
+     "document": 200
+    },
+    "source": "baseline",
+    "probed_at": {
+     "image": "2026-11-11T00:00:00Z",
+     "document": "2026-11-11T00:00:00Z"
+    },
+    "last_attempt_at": {},
+    "attempts": {},
+    "unanswered_rounds": {},
+    "retry_after": {}
    }
   }
  }

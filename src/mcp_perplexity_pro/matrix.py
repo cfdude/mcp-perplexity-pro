@@ -7,6 +7,9 @@ Pure and synchronous apart from the lock wait: no network, no engine, no FastMCP
 * ``load`` (the file, else the packaged baseline; a corrupt or newer file is never trusted);
 * ``merge`` (a live model list into a matrix, with the guards that keep a truncated reply from
   marking models removed);
+* the input facts (``Inputs``: which of ``image`` and ``document`` a model accepts) and the one
+  pure interface everything else reads them through: ``accepts``, ``models_accepting`` and
+  ``preset_accepts``, plus the two classifiers ``model_not_served`` and ``is_named_refusal``;
 * ``write`` (a ``mkstemp`` file in the data directory replaced in one step, mode 0600);
 * ``acquire_lock`` and ``update`` (the lock ``model_matrix.lock`` is polled with ``LOCK_NB`` and
   ``asyncio.sleep`` in the event loop, never in a thread, so a cancelled wait cannot take or hold
@@ -20,9 +23,11 @@ from __future__ import annotations
 
 import asyncio
 import fcntl
+import functools
 import json
 import logging
 import os
+import re
 import tempfile
 import threading
 import time
@@ -48,6 +53,20 @@ FILE_MODE = 0o600
 MAX_FILE_BYTES = 4 * 1024 * 1024
 BASELINE_RESOURCE = "data/model_matrix_baseline.json"
 LEVELS = ("minimal", "low", "medium", "high", "xhigh", "max")
+KINDS = ("image", "document")
+# The only 400 bodies that mean "this model's route refuses that kind of input". The generic
+# ``invalid request`` is NOT in the list: it is also what other failures say, so a kind it
+# answered stays unknown. A probe may add a string here, nothing else may.
+NAMED_REFUSALS = ("the selected model route does not support this document type or source",)
+_NOT_SERVED = re.compile(
+    r"validation failed: model\b.*\bis not supported", re.IGNORECASE | re.DOTALL
+)
+# Presets whose input kinds were verified live (2026-10-30); every other combination is unknown.
+VERIFIED_PRESET_KINDS = {
+    "fast": frozenset({"image", "document"}),
+    "low": frozenset({"image"}),
+    "medium": frozenset({"image", "document"}),
+}
 
 Status = Literal["available", "removed"]
 Source = Literal["probe", "baseline", "unprobed"]
@@ -80,6 +99,37 @@ class Efforts(BaseModel):
     source: Source = "unprobed"
 
 
+class Inputs(BaseModel):
+    """The facts about the input kinds a model accepts (``image`` and ``document``; text is
+    implicit). A kind is KNOWN when it is in ``accepted`` or ``refused``; ``source`` only labels
+    where the newest answer came from and nothing reads it to decide. The per-kind objects are
+    keyed by kind and absent means null or zero: ``attempts`` counts the requests sent for a kind
+    and never resets, ``unanswered_rounds`` is the backoff counter and may reset."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    accepted: list[str] = Field(default_factory=list)
+    refused: dict[str, int] = Field(default_factory=dict)
+    answers: dict[str, int] = Field(default_factory=dict)
+    source: Source = "unprobed"
+    probed_at: dict[str, str] = Field(default_factory=dict)
+    last_attempt_at: dict[str, str] = Field(default_factory=dict)
+    attempts: dict[str, int] = Field(default_factory=dict)
+    unanswered_rounds: dict[str, int] = Field(default_factory=dict)
+    retry_after: dict[str, str] = Field(default_factory=dict)
+
+
+def attempted(inputs: Inputs, kind: str) -> bool:
+    """The ONE predicate that says a kind was attempted: it has an answer, or a ``retry_after``,
+    or ``attempts`` above 0. The merge, ``accepts`` and the probe selector all use it."""
+    return (
+        kind in inputs.accepted
+        or kind in inputs.refused
+        or inputs.retry_after.get(kind) is not None
+        or inputs.attempts.get(kind, 0) > 0
+    )
+
+
 class ModelEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -90,6 +140,7 @@ class ModelEntry(BaseModel):
     last_seen: str
     probing_until: str | None = None
     efforts: Efforts = Field(default_factory=Efforts)
+    inputs: Inputs = Field(default_factory=Inputs)
 
 
 class Matrix(BaseModel):
@@ -127,6 +178,13 @@ def utcnow() -> datetime:
 def load_baseline() -> Matrix:
     """The matrix packaged with the code (read with ``importlib.resources``)."""
     return Matrix.model_validate_json(files(__package__).joinpath(BASELINE_RESOURCE).read_text())
+
+
+@functools.cache
+def cached_baseline() -> Matrix:
+    """The packaged baseline, read once. Callers never modify it (``accepts`` and friends only
+    read), so the shared object is safe; a test that changes the file clears this cache."""
+    return load_baseline()
 
 
 # --- load -------------------------------------------------------------------------------------
@@ -196,6 +254,31 @@ def _pricing(live: Any) -> Pricing:
     return Pricing(**{k: getattr(pricing, k, None) for k in Pricing.model_fields})
 
 
+def _fill_inputs(entry: ModelEntry, known: ModelEntry | None) -> None:
+    """Copy the baseline's answer for each kind that is NOT ``attempted`` in ``entry`` and that
+    the baseline answers: that kind's answer only (never any bookkeeping of any kind, so a fill
+    is not an attempt and a baseline-unknown kind keeps its backoff)."""
+    if known is None:
+        return
+    mine, base = entry.inputs, known.inputs
+    had_answers = bool(mine.accepted or mine.refused)
+    for kind in KINDS:
+        if attempted(mine, kind):
+            continue
+        if kind in base.accepted:
+            mine.accepted = [k for k in KINDS if k in {*mine.accepted, kind}]
+        elif kind in base.refused:
+            mine.refused[kind] = base.refused[kind]
+        else:
+            continue
+        if kind in base.answers:
+            mine.answers[kind] = base.answers[kind]
+        if kind in base.probed_at:
+            mine.probed_at[kind] = base.probed_at[kind]
+        if not had_answers:  # the label follows the lists: only a fill into an empty entry
+            mine.source = "baseline"
+
+
 def merge(current: Matrix, live: Iterable[LiveModel], baseline: Matrix, now: datetime) -> Merged:
     """Merge a live model list into ``current`` (the input is never modified).
 
@@ -231,6 +314,7 @@ def merge(current: Matrix, live: Iterable[LiveModel], baseline: Matrix, now: dat
                 last_seen=seen,
                 probing_until=None,
                 efforts=known.efforts.model_copy(deep=True) if known else Efforts(),
+                inputs=known.inputs.model_copy(deep=True) if known else Inputs(),
             )
         else:
             entry.status = "available"
@@ -238,9 +322,95 @@ def merge(current: Matrix, live: Iterable[LiveModel], baseline: Matrix, now: dat
             entry.last_seen = seen
             if item.provider:
                 entry.provider = item.provider
+            _fill_inputs(entry, baseline.models.get(model_id))
     for model_id in stored_available - listed.keys():
         models[model_id].status = "removed"
     return Merged(Matrix(version=VERSION, fetched_at=seen, models=models), True)
+
+
+# --- the pure interface: what a model accepts -------------------------------------------------
+
+Answer = Literal["yes", "no", "unknown"]
+
+
+def _checked(kinds: Iterable[str]) -> frozenset[str]:
+    kinds = frozenset(kinds)
+    bad = kinds - set(KINDS)
+    if bad:
+        raise ValueError(f"unknown input kind {sorted(bad)[0]!r}; kinds are image and document")
+    return kinds
+
+
+def _kind_answer(entry: ModelEntry, known: ModelEntry | None, kind: str) -> Answer:
+    inputs = entry.inputs
+    if kind in inputs.accepted:
+        return "yes"
+    if kind in inputs.refused:
+        return "no"
+    if known is not None and not attempted(inputs, kind):  # the read-time baseline fallback
+        if kind in known.inputs.accepted:
+            return "yes"
+        if kind in known.inputs.refused:
+            return "no"
+    return "unknown"
+
+
+def accepts(model_id: str, kinds: Iterable[str], matrix: Matrix | None = None) -> Answer:
+    """``yes`` when every kind is accepted, ``no`` when any is refused, else ``unknown``.
+
+    Pure: reads ``matrix`` (the baseline when ``None``), never writes, never raises for an id (only
+    a kind outside ``image`` and ``document`` raises ``ValueError``). A kind that is not
+    ``attempted`` falls back to the baseline's answer for the same id. No kinds is ``yes``."""
+    wanted = _checked(kinds)
+    if not wanted:
+        return "yes"
+    base = cached_baseline()
+    current = matrix if matrix is not None else base
+    entry = current.models.get(model_id)
+    if entry is None:
+        return "unknown"
+    answers = {_kind_answer(entry, base.models.get(model_id), kind) for kind in wanted}
+    if "no" in answers:
+        return "no"
+    return "yes" if answers == {"yes"} else "unknown"
+
+
+def models_accepting(kinds: Iterable[str], matrix: Matrix | None = None) -> set[str]:
+    """The ``available`` model ids for which ``accepts`` is ``yes``; never one whose kind is
+    unknown, never a ``removed`` one. No kinds gives every ``available`` model."""
+    wanted = _checked(kinds)
+    current = matrix if matrix is not None else cached_baseline()
+    return {
+        model_id
+        for model_id, entry in current.models.items()
+        if entry.status == "available" and accepts(model_id, wanted, current) == "yes"
+    }
+
+
+def preset_accepts(preset: str, kinds: Iterable[str]) -> Answer:
+    """``yes`` for the combinations verified live on 2026-10-30, ``unknown`` for every other and
+    never ``no``. No kinds is ``yes``."""
+    wanted = _checked(kinds)
+    if not wanted:
+        return "yes"
+    return "yes" if wanted <= VERIFIED_PRESET_KINDS.get(preset, frozenset()) else "unknown"
+
+
+def model_not_served(status: int, message: str, model: str | None = None) -> bool:
+    """True for the 400 ``validation failed: model ... is not supported``, and for a 404 or 410
+    only when ``message`` names the requested ``model`` (so a job poll's 404 never matches). The
+    one classifier of a gone model: the baseline rules, the input probe and the router call it."""
+    if status == 400:
+        return bool(_NOT_SERVED.search(message))
+    if status in (404, 410):
+        return bool(model) and model in message
+    return False
+
+
+def is_named_refusal(status: int, message: str) -> bool:
+    """True only for a 400 whose whole message is in ``NAMED_REFUSALS``; the generic
+    ``invalid request``, a 429 and any other 400 are never a refusal."""
+    return status == 400 and message.strip() in NAMED_REFUSALS
 
 
 # --- write ------------------------------------------------------------------------------------
