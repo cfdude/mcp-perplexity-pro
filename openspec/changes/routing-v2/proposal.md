@@ -31,13 +31,18 @@ things, we keep it in a branch and do not merge". The proof is an in-branch eval
   `model_retired:<id>`. An explicit `model`, a pin and a mode model that are gone are reported with the live
   same-family candidates named, never replaced.
 - A merge-blocking, pre-registered evaluation (design D18, capability `routing-evaluation`): a fixed labeled
-  set (at least 12 coding, 12 reasoning and 12 browsing prompts, pinned by hash), thresholds written before
-  any run (decision p95 under 5 ms; no added network call; median added wall time under 50 ms; no added input
-  tokens and a `routing` object of at most 400 bytes; cost at most 0.75 of an always-strongest baseline and at
-  most 4.0 of an always-cheapest one; quality within 0.05 overall and 0.10 per class of the strongest model),
-  live spend under 5 USD, and a report `acceptance/evaluation.md` with a PASS or FAIL line per threshold.
-  The shipped evidence has no scores, so the router cannot pass until figures are sourced and verified
-  (an unverified run is INVALID); on FAIL the routed selection stays unmerged and `media-inputs` ships alone.
+  set (at least 15 main and 5 held-out prompts per class, at least half machine-checkable, split frozen
+  early, pinned by hash), four arms (routed; the named model `anthropic/claude-opus-5-5`; the cheapest
+  shortlist model; the STATUS QUO route of commit d2798cd), and thresholds written before any run: decision
+  p95 under 5 ms and no added network call; median added wall time under 50 ms; no added input tokens and a
+  `routing` object of at most 400 bytes; cost at most 0.75 of the strongest arm, at most 4.0 of the cheapest
+  and at most 1.00 of the status quo; quality by a paired non-inferiority test (95 percent lower bound at
+  least -0.10 overall, -0.15 per class, -0.10 against the status quo) with a blind, label-free judge
+  validated by Cohen's kappa. Live work stays under 10 USD in all, after a 6-prompt pilot; the code is
+  frozen with Gate 2 recorded before the evaluation, and a CI test refuses the merge without a fresh
+  `MERGE ALLOWED` report. The shipped evidence has no scores, so the router cannot pass until figures are
+  sourced and verified (an unverified run is INVALID); on FAIL the routed selection stays unmerged and
+  `media-inputs` can merge alone (nothing is tagged without an owner decision).
 - A deterministic, pure selector picks `(model, effort)` for a nameless ask, chat send or research
   run: a task class from the prompt (coding, reasoning or browsing), the eligible shortlist models
   (available in the matrix, scored on the class, and answering `yes` to the matrix's `accepts` for the required input kinds), the best
@@ -109,7 +114,7 @@ things, we keep it in a branch and do not merge". The proof is an in-branch eval
   `EvidenceState`), edits to `routing.py`, `rules.py`, `settings.py`, `agent.py` (`reasoning` in a
   model request; the preset of a routed job), `server.py` (`AppContext.evidence`), `__main__.py`
   (startup warnings, readers of the removed tier table), `command.py` (research `--depth` default),
-  `tools/{ask,chat,research,models,jobs}.py` (research submit preset at `research.py` lines 158, 183 and 186), `storage/chats.py` (`AssistantTurn`, `last_route`), `pyproject`/packaging test for the data file, `routing_decisions.py` (`wants_decider`), `help_text.py`, `matrix_refresh.py` (`refresh_now`, the retirement rate limit), `catalog.py` (the held listing without a fetch), `routing_select.py` (family key, tombstones, exclusion), `agent.py` and the three tools (the single retry and its hint),
+  `tools/{ask,chat,research,models,jobs}.py` (research submit preset at `research.py` lines 158, 183 and 186), `storage/chats.py` (`AssistantTurn`, `last_route`), `pyproject`/packaging test for the data file, `routing_decisions.py` (`wants_decider`), `help_text.py`, `matrix_refresh.py` (`refresh_now`, the retirement rate limit), `catalog.py` (the held listing without a fetch), `routing_select.py` (family key, tombstones, exclusion), `costed.py` and `agent.py` (an optional `model=` so a failed call's usage event names the model), the three tools (the single retry and its hint),
   `storage` (migration `0006`, models), data file
   `src/mcp_perplexity_pro/data/routing_evidence.json`; tests (`tests/test_routing.py`,
   `tests/test_routing_dynamic_tools.py`, `tests/test_chats_migration.py:214` and `tests/test_jobs_migration.py:249`, the ORM-against-schema
@@ -123,11 +128,11 @@ things, we keep it in a branch and do not merge". The proof is an in-branch eval
   FINAL per-server ceilings from the combined table that media 3.3 writes.
 - Live work: a request-shape probe (a model with `reasoning.effort` and the web search tool, in
   the background, for research), a probe of what the API answers for a retired model id, source
-  verification of every evidence figure, and the in-branch evaluation (tasks 7.2 to 7.7, under 5 USD
-  in total) whose report decides the merge.
+  verification of every evidence figure, and the in-branch evaluation (pilot 7.1b and tasks 7.2 to 7.7,
+  under 10 USD for all live work of the branch) whose report decides the merge.
 - Tests and harness: `tests/routing_eval/` (thresholds, microbenchmarks, paired overhead, three-arm live
   runner, judge), the extended `tests/fixtures/routing_prompts.json`, `acceptance/evaluation.md`.
 - Boundary with `media-inputs` (applied in parallel): this change owns selection (evidence, eligibility,
   effort, fallbacks, the hold rule); `media-inputs` owns the modality facts in the matrix, the
   attachment parameters, the refusal wording and the gate on the final route (explicit model, pin,
-  tier model and default route; a held model is kept only when the matrix answers `yes`, and the router substitutes only `yes` models). CANONICAL APPLY ORDER: (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) routing-v2 7.1 to 7.7, the in-branch evaluation (7.8 only if the evaluation fails); (7) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, only after 7.6 reports); (8) routing-v2 9.3, the merge gate, then the archive 9.4. A stub `matrix.accepts` answering `unknown` is the fallback if that order is impossible. If the evaluation fails, task 7.8 unwinds the routed selection and `media-inputs` ships alone (design D18 lists exactly what it took from this change: nothing from migration `0006`, the `required_input` call into `resolve` and the held-model and router-substitution wording).
+  tier model and default route; a held model is kept only when the matrix answers `yes`, and the router substitutes only `yes` models). CANONICAL APPLY ORDER: (1) routing-v2 1.1 to 1.5 and media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0, 2, 3 and 4, then 5.1 to 5.3a; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4 and 7.1, and media 5.1; (6) the CODE FREEZE: routing-v2 8.1, 8.2, 8.3 and 8.5 and media 6.1 to 6.5 (Gate 2 over code), then routing-v2 7.1a, the offline unwind rehearsal; (7) routing-v2 7.1b and 7.2 to 7.7, the in-branch evaluation (7.8 only if it fails), any `src/` commit after 7.6 requiring a new numbered run; (8) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, then routing-v2 8.4 and 8.6; media 7.1), then the docs-only reviews routing-v2 9.2 and media 7.2; (9) routing-v2 9.3, the merge gate, then 9.4, the worktree cleanup, and the archives (routing-v2 9.5, media 7.3). A stub `matrix.accepts` answering `unknown` is the fallback if that order is impossible. If the evaluation fails, task 7.8 unwinds the routed selection and `media-inputs` ships alone (design D18 lists exactly what it took from this change: nothing from migration `0006`, the `required_input` call into `resolve` and the held-model and router-substitution wording).

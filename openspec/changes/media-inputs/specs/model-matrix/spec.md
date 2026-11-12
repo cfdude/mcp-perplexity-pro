@@ -37,7 +37,7 @@ For each `available` model whose efforts are `unprobed`, at most ten per refresh
 - **THEN** the refresh sends it no effort level, only the input probe
 
 ### Requirement: A probe is bounded, recorded and not duplicated
-Each probe request SHALL be one attempt with no retry, and every one that returns a response or fails with an error SHALL be recorded as a usage event. A refresh SHALL stop probing after ten models or when the reported cost so far reaches $0.25, checked before each model. Before probing a model, a task SHALL write a 10-minute `probing_until` lease on it under the lock and clear it afterwards, and SHALL skip any model whose lease is unexpired or already probed.
+Each probe request SHALL be one attempt with no retry, and every one that returns a response or fails with an error SHALL be recorded as a usage event. A refresh SHALL stop starting models after ten models, or once the recorded cost so far (a lower bound: an event with unknown cost counts as zero) is at or above $0.25, checked before each model; a model already started finishes its own requests, so a round can exceed $0.25 by one model's worst case. Before probing a model, a task SHALL write a 10-minute `probing_until` lease on it under the lock and clear it afterwards, and SHALL skip any model whose lease is unexpired or already probed.
 
 #### Scenario: Ten at most
 - **WHEN** a refresh finds 14 models that need probing
@@ -144,15 +144,15 @@ The matrix file version SHALL stay 1. An entry with no `inputs` SHALL read as no
 - **THEN** its top-level `version` is still 1
 
 ### Requirement: The packaged baseline records the 2026-10-30 sweep
-The baseline SHALL give every model an `inputs` record from the live sweep of 2026-10-30 (one image and one document request per model, `store` false). Every answered kind carries source `baseline` and `probed_at` `2026-10-30T00:00:00Z`.
+The baseline SHALL give each of the 54 swept models an `inputs` record from the live sweep of 2026-10-30 (one image and one document request per model, `store` false), every answered kind carrying source `baseline` and `probed_at` `2026-10-30T00:00:00Z`. An entry added later (for example by `routing-v2` task 2.5) carries unanswered inputs and no sweep date; the one dated exception is `xai/grok-4.7` (2026-11-11).
 
 #### Scenario: Every model has inputs
 - **WHEN** the baseline is loaded
-- **THEN** all 54 entries hold an `inputs` record
+- **THEN** all 54 swept entries hold an `inputs` record from the sweep, and any entry added later holds `inputs` with nothing answered
 
 #### Scenario: The sweep counts
 - **WHEN** the baseline is loaded
-- **THEN** images are accepted for 48 models, refused for 0 and unknown for 6, and documents are accepted for 45, refused for 3 and unknown for 6 (the sweep's generic `invalid request` 400s are unknown, and `xai/grok-4.7` carries the dated 2026-11-11 re-probe)
+- **THEN** among the 54 swept models images are accepted for 48, refused for 0 and unknown for 6, and documents are accepted for 45, refused for 3 and unknown for 6 (the sweep's generic `invalid request` 400s are unknown, and `xai/grok-4.7` carries the dated 2026-11-11 re-probe); the count tests filter to the swept ids, so later additions do not move them
 
 ### Requirement: The baseline's answer rules
 In the baseline, a 200 whose run status is `completed` or `incomplete` SHALL be `accepted`; a 400 for which `is_named_refusal` is true SHALL be `refused` with its status; every other answer (a not-served 400, the generic `invalid request`, a 429, an `overloaded` answer, a failed run) SHALL leave the kind unknown.
@@ -225,7 +225,7 @@ The probe request SHALL be a fixed 48 by 48 PNG or one-line PDF with a fixed pro
 - **THEN** it carries one `input_image` part, `store` false, `max_output_tokens` 150 and no tools
 
 ### Requirement: An input probe answers by HTTP status
-For input probes only, a 200 whose run status is `completed` or `incomplete` SHALL mean accepted, without checking the answer, and the usage event of an `incomplete` run is recorded with the status `agent_response_status` gives it (`unexpected_response`); the effort probe's rule is unchanged. A 400 SHALL mean refused only when the control completed. A 5xx, a timeout or a 200 whose run `failed` SHALL leave the kind unanswered. A 429 SHALL end that refresh's probing.
+For input probes only, a 200 whose run status is `completed` or `incomplete` SHALL mean accepted, without checking the answer (an `incomplete` event is recorded as `unexpected_response`); the effort probe's rule is unchanged. A 400 SHALL mean refused only when the control completed AND `is_named_refusal` is true. Every other 400, a 5xx, a timeout, a 429 and a 200 whose run `failed` SHALL leave the kind unanswered, and a 429 SHALL end that refresh's probing.
 
 #### Scenario: A new model that cannot read images
 - **WHEN** a new model completes the control, accepts the document and answers 400 `invalid request` to the image
@@ -251,35 +251,31 @@ For input probes only, a 200 whose run status is `completed` or `incomplete` SHA
 - **WHEN** a document probe answers 200 with run status `failed` and error `refusal`
 - **THEN** the kind is unanswered, neither accepted nor refused
 
-### Requirement: A probe answers only a named refusal as refused
-`matrix.py` SHALL hold the closed list `NAMED_REFUSALS` and the pure predicate `is_named_refusal(status, message)`; the baseline rules and the input probe SHALL both call it, so a 400 is `refused` only when it is true (for a probe, also only after a completed control) and every other 400 and every 429 leaves the kind unanswered.
-
-#### Scenario: Generic body
-- **WHEN** `is_named_refusal(400, "invalid request")` is called
-- **THEN** the result is false
-
-#### Scenario: Named route refusal
-- **WHEN** `is_named_refusal(400, "the selected model route does not support this document type or source")` is called
-- **THEN** the result is true
-
-#### Scenario: Not a 400
-- **WHEN** `is_named_refusal(429, "upstream model is overloaded, please try again later")` is called
-- **THEN** the result is false
-
 ### Requirement: One predicate says a model is not served
-`matrix.py` SHALL hold the pure predicate `model_not_served(status, message)`, true for an HTTP 400 whose message says `validation failed: model ... is not supported`, and for an HTTP 404 or 410. The baseline rules and the input probe SHALL call it (a not-served answer is unknown for a kind, never refused), and `routing-v2` SHALL call the same predicate to recognise a retired model, so that no second classifier of "the model is gone" exists.
+`matrix.py` SHALL hold `model_not_served(status, message, model=None)`, true for a 400 saying `validation failed: model ... is not supported` and for a 404 or 410 only when the message names the requested `model`. The baseline rules, the input probe and `routing-v2` SHALL all call it, so no second classifier of a gone model exists.
 
 #### Scenario: The unsupported-model 400
-- **WHEN** `model_not_served(400, 'validation failed: model "perplexity/nemotron-3-ultra-550b-a55b" is not supported')` is called
+- **WHEN** `model_not_served(400, 'validation failed: model "perplexity/nemotron-3-ultra-550b-a55b" is not supported', "perplexity/nemotron-3-ultra-550b-a55b")` is called
 - **THEN** the result is true
 
 #### Scenario: A generic 400 is not served-ness
 - **WHEN** `model_not_served(400, "invalid request")` is called
 - **THEN** the result is false
 
-#### Scenario: Gone statuses
-- **WHEN** `model_not_served(404, "model not found")` and `model_not_served(410, "gone")` are called
-- **THEN** both are true, and `model_not_served(429, "upstream model is overloaded")` is false
+#### Scenario: A 404 about something else
+- **WHEN** `model_not_served(404, "response not found", "vendor/m")` is called, as for a job poll
+- **THEN** the result is false, and with a message naming `vendor/m` a 404 or a 410 is true
+
+### Requirement: One predicate says a refusal is named
+`matrix.py` SHALL hold `is_named_refusal(status, message)`, true only for a 400 whose message is in the closed list `NAMED_REFUSALS`, which is exactly `the selected model route does not support this document type or source` until a probe adds a string. The baseline rules and the input probe SHALL call it, and a 429 or any other 400 is never a refusal.
+
+#### Scenario: Named route refusal
+- **WHEN** `is_named_refusal(400, "the selected model route does not support this document type or source")` is called
+- **THEN** the result is true
+
+#### Scenario: Generic body and overload
+- **WHEN** `is_named_refusal(400, "invalid request")` and `is_named_refusal(429, "upstream model is overloaded")` are called
+- **THEN** both are false
 
 ### Requirement: Unanswered kinds back off per kind
 A kind left unanswered in a round SHALL add one to ITS `unanswered_rounds` whether or not the model's other kind was answered in that round; at two its `retry_after` SHALL be set 7 days ahead, its count SHALL reset, and no probe of that model for that kind SHALL be sent before then. Only an answer for THAT kind resets its count.
@@ -293,15 +289,19 @@ A kind left unanswered in a round SHALL add one to ITS `unanswered_rounds` wheth
 - **THEN** the document kind still reaches its backoff
 
 ### Requirement: A refusal is not permanent
-A `refused` kind SHALL be probed again once ITS `probed_at` is more than 24 hours old (the named constant `REFUSAL_TTL`, owner-editable), under the same limits, and the result replaces the old one; until then the local gate uses `no`.
+A `refused` kind SHALL be probed again once ITS `probed_at` is more than 24 hours old (the named constant `REFUSAL_TTL`, owner-editable), under the same limits, and an answer replaces the old one; until then the local gate uses `no`. A re-probe left unanswered (429, 5xx, timeout, failed run) SHALL leave the old refusal and its `probed_at` as they were, stamp `last_attempt_at` and count toward that kind's `unanswered_rounds`.
 
 #### Scenario: A stale refusal is re-probed
 - **WHEN** a model's `document` was refused 25 hours ago and a refresh runs
-- **THEN** one image request is sent after a same-round control, and an accepted answer moves the kind to `accepted`
+- **THEN** one document request is sent after a same-round control, and an accepted answer moves the kind to `accepted`
 
 #### Scenario: A fresh refusal is not
 - **WHEN** the refusal is 3 hours old
 - **THEN** no request is sent for it
+
+#### Scenario: An unanswered re-probe keeps the refusal
+- **WHEN** a 25-hour-old refusal is re-probed and the request answers 429
+- **THEN** the kind stays refused with its old `probed_at`, `last_attempt_at` is stamped and no request is repeated in the same refresh window
 
 ### Requirement: Input answers have their own bookkeeping
 The refresh task SHALL keep the answers, failed models and pending writes of input probes apart from the effort probe's (their own keys and sets, `inputs.answers` in the file), so a round that failed to finish efforts does not mark inputs failed and the reverse.
@@ -318,7 +318,7 @@ Input probes SHALL be recorded as usage events with tool `model_matrix` and no p
 - **THEN** one usage event with tool `model_matrix` and no project is stored for it, and the refresh's cost total includes it
 
 ### Requirement: Input probe cost is bounded by the cap check
-A model's input probe SHALL cost one control and at most two kind requests, and the $0.25 check before each model SHALL bound a round, because ten models at the worst cases would cost about $0.24 before any control or effort request.
+A model's input probe SHALL cost one control and at most two kind requests, and the $0.25 check before each model SHALL decide whether another model is started (it is a check before a model, not a ceiling on the total), because ten models at the worst cases would cost about $0.24 before any control or effort request.
 
 #### Scenario: The cap check bounds the round
 - **WHEN** the reported cost of one refresh's probes (effort and input together) reaches $0.25 before a model starts

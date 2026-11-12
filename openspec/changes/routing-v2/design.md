@@ -5,7 +5,7 @@
 Dynamic mode today: `rules.classify(text)` (or the Decisions classifier) returns a tier, and
 `routing.dynamic_route` maps the tier to preset `fast`, `PERPLEXITY_MODEL` or preset `medium`
 (`settings.dynamic_target`). The matrix (`matrix.py`, `matrix_refresh.py`, baseline
-`data/model_matrix_baseline.json`, 54 models) holds, per model, `status`, per-million prices and the
+`data/model_matrix_baseline.json`, 54 swept models plus any entry added later with unprobed inputs) holds, per model, `status`, per-million prices and the
 accepted `reasoning.effort` levels. The Agent API takes a preset as the body field `effort` (a bundle
 of model and tools) or a `model` (plus our web search tool and a step budget of 3, plus, new here,
 `reasoning.effort`, the shape `client.probe_effort` already sends). Vocabulary: a *task class* is
@@ -99,7 +99,7 @@ numbered evaluation run.
 
 **D3. Selection algorithm (pure; `routing_select.select(...)`).** Inputs, all passed as arguments:
 the task class, the tier, the tool (`ask`, `chat`, `research`), the evidence, a matrix snapshot
-(`matrix.Matrix`), `required_input` (a frozenset drawn from `{"image", "document"}`, default empty = text only), the margin and
+(`matrix.Matrix`), `required_input` (a frozenset drawn from `{"image", "document"}`, default empty = text only), `exclude` (a frozenset of ids the caller derives from the retirement holder of D17, so `select` reads no state), the margin and
 `search`. Steps:
 1. Eligible = shortlist models that are `available` in the matrix, are not tombstoned by a retirement
    (D17) and, when the process already holds a catalog listing in memory, are listed in it (selection
@@ -131,7 +131,7 @@ send the same effort and the same model; they differ only in what is recorded an
 
 **D6. Fallback chain (every rung checked against the matrix before use).** Ask and chat: (a) the
 chosen model at the lowest accepted level when none is at or below the target (inside D5); (b)
-`fallbacks.default` (`openai/gpt-6-luna`, `low`) when `available` and `accepts(...) == yes`; its `low`
+`fallbacks.default` (`openai/gpt-6-luna`, `low`) when `available`, not excluded or tombstoned, listed in the held listing (D17) and `accepts(...) == yes`; its `low`
 is clipped like any level (the highest accepted level not above `low`, else no `reasoning`; not the
 lowest accepted, because the rung exists to be cheap); (c) the documented preset of the tier (`fast`,
 `low`, `medium`), allowed only when `search` is not false and, when media is required, only when
@@ -161,8 +161,8 @@ same functions; when nothing satisfies the set it raises `invalid_request` namin
 `media-attachments`' `accepts` check on an explicit model, a pin, a tier model or the default route:
 `no` refuses and `unknown` is sent. A held model and the router's own choice are never gated into
 `unknown`: a held model is kept only when `accepts == yes` for the required kinds (else the router
-chooses afresh), and the router substitutes only models answering `yes`. Task 5.4 adds the parameter
-(default empty) and uses the real `accepts` and `preset_accepts` (media 2.1 lands first in the
+chooses afresh), and the router substitutes only models answering `yes`. Task 5.3a (router-free, media-owned scaffolding) adds the parameter
+(default empty) and 5.4 uses the real `accepts` and `preset_accepts` (media 2.1 lands first in the
 canonical order); media 2.3 later passes the real kinds, and `inherited_kinds` is a hook
 returning the empty set until media 3.1.
 
@@ -319,7 +319,7 @@ within 3.0 pts; cheapest`, or `held`, `pinned`, or the fallback rung. `perplexit
 
 **D16. How `resolve` gets its inputs, and the ask two-phase resolve.** `routing.resolve` stays pure:
 it gains keyword arguments `evidence` (the loaded evidence), `matrix` (a `matrix.Matrix`), `tool`,
-`required_input` and `provisional`; the tools read `app.evidence.snapshot()` and
+`required_input` and `provisional` (the last two and the call order below are the router-free scaffolding of task 5.3a; the router logic is 5.4); the tools read `app.evidence.snapshot()` and
 `app.matrix.snapshot().matrix` and pass them, so a test passes small literals and needs no file or
 network. The order inside a call in `dynamic` mode: (1) selector conflicts and tier errors, as in
 every mode; (1b) the attachment parse of `media-attachments` (kinds and size; it yields the required
@@ -338,129 +338,215 @@ second resolve changed the route (a pinned model for the reclassified tier), the
 before validation and again after the Decisions call; steps (2) and (3) replace the first call, step
 (4) the second. `tools/chat.py` has two resolve sites (`chat.py:245`, the send path, and `:588`, the
 validation path) and follows the same order with the hold of D12. `wants_decider` loses its `search` condition
-(a `search` false call is routed like any other). The refusal text at `routing.py:134` ("with
+(a `search` false call is routed like any other). The refusal text at `routing.py:138` ("with
 neither, the tier is picked from the prompt") says the model and effort are picked instead, with its
 tests.
 
 **D17. A retired model forces one bounded refresh and one retry (owner requirement 2026-11-11).**
 Model names are stable families (`luna`, `sonar`, `haiku`, `gemini`) while version numbers retire, so a
 shortlist id can stop being served between two scheduled matrix refreshes. Trigger: a model-bearing
-upstream request whose failure satisfies `matrix.model_not_served(status, message)` (owned by
-`media-inputs` task 2.1, the same classifier its baseline rules and input probe use: the API's 400
-`validation failed: model ... is not supported`, and a 404 or 410; this change adds no second
-classifier). Steps, in order, for one call:
+upstream request REJECTED before the API accepted it, whose answer satisfies
+`matrix.model_not_served(status, message, model)` (owned by `media-inputs` task 2.1, the same classifier its
+baseline rules and input probe use: the API's 400 `validation failed: model ... is not supported`, and a
+404 or 410 only when the message names the requested id, so a job poll's 404 or a proxy 404 never matches;
+this change adds no second classifier). A timeout, a 5xx or any failure after acceptance is never retried
+by this rule (the request may already be billed). Steps, in order, for one call:
 1. The failed call is recorded as today (`costed_call` records the failure, category from the status, no
-   usage), and the failed id is tombstoned in process memory for 300 seconds (`GONE_TTL`), so selection
-   skips it even when the listing still shows it.
+   usage) but now carrying the failed model: `costed_call` and `agent.run_costed` gain an optional
+   `model=` argument (default None) that the failure `record_usage` passes through, so the usage log
+   shows WHICH model failed. `record_usage(` keeps exactly its two lines in `costed.py`, and the five
+   callers of `costed_call` stay five (`tests/test_contract_checks.py`, the five-caller assertion near
+   line 1197, is unaffected by a keyword). The sweep lists `costed.py`, `agent.run_costed` and its three
+   routed callers (ask, chat send, research submit, which pass `model=`) and the other four
+   `costed_call` callers (`search.run_search`, `decisions.run_decide`, `embeddings.run_embed`,
+   `matrix_refresh.probe_request`), which keep the default. The failed id is tombstoned for 300 seconds
+   (`GONE_TTL`).
 2. `MatrixState.refresh_now(failed_id)` runs: single-flight (concurrent failures share one fetch), and
    rate-limited to at most one listing fetch of ANY origin per 300 seconds per process
-   (`FORCED_REFRESH_MIN_INTERVAL`, a named constant, not a setting); inside the window it returns at once and
-   the existing snapshot is used. It reads only the API's own `/v1/models` through the existing
+   (`FORCED_REFRESH_MIN_INTERVAL`, a named constant, not a setting): the scheduled refresh, a
+   `perplexity_models` refresh and a FAILED fetch all stamp the window, so inside it `refresh_now` returns at
+   once and the snapshot is used. It reads only the API's own `/v1/models` through the existing
    `Catalog.get(refresh=True)` (no documentation is read or scraped), merges with the existing rules (a
-   vanished id becomes `removed`; an empty or under-half listing changes nothing, which is what keeps an
-   outage from emptying the matrix), sends NO probe request and spends nothing. A failed fetch is
-   recorded and consumes the window, so an outage cannot loop.
-3. Retry, only for a model the SERVER chose (router, the fallback model rung, a held chat model), exactly
-   once: the pure selector runs again with the failed id excluded and the live ids known; it prefers the
-   best remaining shortlist model of the same family (family key: the provider plus the name tokens that
-   are not version tokens, so `anthropic/claude-haiku-5-5` and `anthropic/claude-haiku-6` share
+   vanished id becomes `removed`; an empty or under-half listing changes nothing, which keeps an outage
+   from emptying the matrix) and NEVER calls `probe_new` or any probe: it spends nothing and writes no
+   usage event. A failed fetch is recorded and consumes the window, so an outage cannot loop.
+3. Retry, only for a model the SERVER chose (the router, a named-tier router route, the fallback model rung,
+   a held chat model), exactly once: the pure selector runs again with `exclude` (a frozenset the caller
+   builds from the holder below, so `select` stays pure) and the live ids known; it prefers the best
+   remaining shortlist model of the same family (family key: the provider plus the name tokens that are not
+   version tokens, so `anthropic/claude-haiku-5-5` and `anthropic/claude-haiku-6` share
    `anthropic/claude-haiku`; version tokens match `^v?[0-9]+([.][0-9]+)*$`; the newest live version is the
-   one with the greatest numeric tuple, ties to the smaller id), chosen by the normal D3 rules; with no
-   such model, the chain fallback of D6 (research: the tier's preset). A live successor that is NOT on
-   the shortlist has no evidence and is never routed: it is named in a log warning and in the error
-   hint so the owner can add it (this is how a retirement turns into a one-line shortlist edit). The
-   retry request is the only extra upstream call; if it too says not served, there is no second refresh
-   and no second retry: the call fails with the hint.
-4. The result's `routing.reason` says `model_retired:<id>` (the retired id, within the 120-character rule)
-   and `selected_by` stays `router` or `fallback`; the usage log holds two events, the failed one and the
-   retry, so `perplexity_usage` reconciles.
-
+   one with the greatest numeric tuple, ties to the smaller id), chosen by the normal D3 rules; with none,
+   the chain fallback of D6 (research: the tier's preset). The exclusion, the held-listing filter and the
+   tombstones apply to `fallbacks.default` too: a retired fallback model falls through to the preset rung.
+   A live successor that is NOT on the shortlist has no evidence and is never routed: it is named in a log
+   warning and in the error hint so the owner can add it. The retry request is the only extra upstream
+   call; if it too says not served there is no second refresh and no second retry: the call fails with the
+   hint.
+4. The result's `routing.reason` begins `model_retired:<id>` (the id cut to 64 characters, the rest clipped
+   so the reason stays within 120). `selected_by` keeps the failed route's value (`router`, or `tier` for a
+   named-tier route) when the retry ran on a same-family model, and is `fallback` when it ran on the chain
+   fallback. The usage log holds two events, the failed one (its model the retired id) and the retry.
+State: one small mutable holder on `AppContext` (the `MatrixState` pattern: a frozen context holding a
+reference to a mutable object), built with an injected monotonic clock, holds the tombstones (id to
+expiry), the window stamp and the refused-effort marks (below). `select` never reads it; the caller turns it
+into `exclude` and `live_ids`. A model that keeps answering 400 while the listing still shows it is
+eligible again after 300 seconds, so it costs at most one failed call and one retry per model per 300
+seconds per process. Assumption, tested and probed: a not-served 400 is UNBILLED (the body has no usage
+block); task 1.5 checks it, the failed event is stored with unknown cost, and a test asserts the event
+carries no usage.
+Effort refusals are a different failure. A 400 on a request that carried `reasoning.effort` and that
+`matrix.is_effort_refusal` recognises (its text captured by task 1.5; if the captured body is only the
+generic `invalid request`, the predicate is "a 400 on a request that carried `reasoning`, that is neither
+not-served nor a named modality refusal") is NOT a retirement: `model_not_served` must not match it. The
+server retries once on the SAME model WITHOUT `reasoning` and marks that level refused for that model in
+this process (the holder), so D5's clip then picks another accepted level or none. The one retry of a
+call is shared by the two rules. The chat `continuation_hint` (advice to resend with `replay`) is not
+shown for either answer, and its wording is otherwise unchanged.
 Composition: an explicit `model`, a `PERPLEXITY_TIER_*` pin and a mode default model (`standard`,
-`custom`) are named by the caller or the operator and are NEVER silently replaced: the refresh still
-runs (it is free and bounded) but there is no retry; the error keeps its category by status
-(`invalid_request` for the 400) and its text gains `Model <id> is no longer served; nothing was
-substituted. Live models of the same family: <up to five ids, newest first>` (or says none are listed),
-and for a pin or default also names the variable. This hint outranks `schema_hint`, `continuation_hint` and
-`media-inputs`' `attachment_hint`, because "not supported" is about the model, not the attachment. A held
-chat model is the router's own earlier choice, so it follows the router rule; the reply stores the model
-that actually answered as `routed_model`, so the next follow-up holds that one. A preset
-(`depth`, or the fallback preset rung) is a name the API resolves, never an id the matrix lists: no refresh
-and no retry. The Decisions classifier's model is outside this rule (its failure already falls back to the
-rules). Research: a routed background submit follows the router rule at submit only (one refresh, one
-retry, then the tier's preset, never `gpt-6-luna`); a job already submitted is not touched. A chained
-chat turn retried on another model keeps its `previous_response_id` (the API keeps the chain across a
-model switch, `media-inputs` probes S3 and S4, task 1.4 re-probes it). What it costs: nothing beyond
-the one retry call; no schema bytes (the reason is an existing string; the hint is error text).
-Honest limit: because the shortlist normally holds one version per family, the same-family step usually
-finds nothing and the retry lands on the chain fallback; the value is that the call succeeds and the
-successor is named.
+`custom`) are named by the caller or the operator and are NEVER silently replaced: the refresh still runs
+(free, bounded) but there is no retry; the error keeps its category by status and its text gains `Model
+<id> is no longer served; nothing was substituted. Live models of the same family: <up to five ids, newest
+first>` (or says none are listed), and for a pin or mode model names the variable. This hint outranks
+`schema_hint`, `continuation_hint` and `media-inputs`' `attachment_hint`; media 2.3 is the ONE owner of that
+precedence (it places the real `attachment_hint` below the model-gone hint), and routing 5.6 only stubs the
+media hint. A held chat model is the router's own earlier choice, so it follows the router rule and the
+reply stores the model that actually answered as `routed_model`. A preset is a name the API resolves, not an
+id the matrix lists: no refresh, no retry. The Decisions classifier's model is outside the rule (its failure
+already falls back to the rules). Research: a routed background submit follows the router rule at submit
+only (one refresh, one retry, then the tier's preset, never `gpt-6-luna`); a research run that ends on the
+tier's preset is an ORDINARY preset job (depth the preset's depth, `effort` null, the event's preset set),
+and only a run that ran a model has depth `routed`. A chained chat turn retried on another model keeps its
+`previous_response_id` (the API keeps the chain across a model switch, `media-inputs` probes S3 and S4,
+task 1.4 re-probes it). Cost: nothing beyond the one retry call; no schema bytes.
+Honest limit, ACCEPTED by the owner 2026-11-11: the shortlist normally holds one version per family, so the
+same-family step usually finds nothing and the retry lands on the chain fallback; the value is that the call
+succeeds and the successor is named.
 
 **D18. The measuring stick: an in-branch, merge-blocking evaluation (owner requirement 2026-11-11).** Rob:
 routing must deliver value, not bloat; no added user-facing delay or token overhead; it must be fast and
 efficient and produce usage savings (cheaper models for lighter work); "if we can't prove those things,
 we keep it in a branch and do not merge". The evaluation therefore lives in this change (spec
 `routing-evaluation`; harness in `tests/routing_eval/`; report `acceptance/evaluation.md`), replaces the
-old publishing-gate hand-off to `routing-eval-tuning`, and blocks the merge. Thresholds, proposed by the
-author and EDITABLE BY THE OWNER, like the D2 table, until the pre-registration commit of task 7.2:
+old publishing-gate hand-off to `routing-eval-tuning`, and blocks the merge. Four arms, one request
+shape, each under its own `project`: ROUTED; STRONGEST, the named model `anthropic/claude-opus-5-5`
+(global, pre-registered, deliberately NOT derived from the evidence, which would be circular because the
+evidence is the thing under test); CHEAPEST (lowest blended price among available shortlist models, ties to
+the smaller id by the D3 rule); and STATUS QUO, the route a nameless call takes today (`perplexity/sonar`,
+`standard` mode, explicit-model shape, no `reasoning`, as of commit d2798cd), so the evaluation answers "is
+it better than what we ship now", not only "is it better than the most expensive thing". The latency and
+token baselines (T2a, T3c) are the same prompt with `model` set to the model the routed call chose (a
+"configured model" has no meaning in `dynamic` mode). Thresholds, proposed by the author and EDITABLE BY THE
+OWNER, like the D2 table, until the pre-registration commit of task 7.2:
 
 | Id | Threshold | Why this value |
 |---|---|---|
-| T0 | at least 12 prompts per class (coding, reasoning, browsing), pinned by hash | the owner's minimum; at n = 12 per class one prompt moves a class mean by 0.083, which is why T5b is looser than T5a |
-| T1a | `resolve` plus `select` p95 under 5 ms | the work is a pure function over small tables, so 5 ms is two orders above what it should cost and still invisible next to a 1 to 120 s model call |
-| T1b | 0 added network calls on the default and rules paths | the router reads in-memory snapshots; any fetch in the call path is added delay by construction |
-| T2a | median added wall time under 50 ms (paired, same stub upstream) | below human notice (about 100 ms) with a 2x margin; the stub isolates the server's own overhead from model speed |
-| T2b | live median latency ratio, routed against strongest arm, at most 1.10 | cheaper models should not be slower; 10 percent allows live noise |
+| T0 | at least 15 main and 5 held-out prompts per class, at least half of each subset machine-checkable | the owner's 12 raised so a class has 15 paired points; held-out frozen after task 3.1 so tuning cannot see it |
+| T1a | `resolve` plus `select` p95 under 5 ms in each of three evidence states (shipped empty, verified, worst-case synthetic) | a pure function over small tables; the worst case has every baseline model scored and within the margin |
+| T1b | 0 added network calls on the default and rules paths | the router reads in-memory snapshots; any fetch in the call path is added delay |
+| T2a | median added wall time under 50 ms (paired, same stub upstream, each evidence state) | below human notice with a 2x margin; the stub isolates the server's own overhead |
+| T2b | live median latency, routed against status quo, at most 1.10 | cheaper models should not be slower than today; 10 percent allows live noise |
 | T2c | cold start under 100 ms | the evidence file and matrix are read once per process, lazily |
 | T3a | `tools/list` at most 59779 on the three servers | the existing cap, which never rises |
-| T3b | `routing` object at most 400 bytes | the `reason` is capped at 120 characters and the object holds seven short fields; 400 leaves 2x headroom |
-| T3c | `input` byte-identical, only `model` and `reasoning.effort` differ | zero added input tokens |
-| T4a | routed cost at most 0.75 times the always-strongest arm | the owner's "at least 25 percent lower" |
-| T4b | routed cost at most 4.0 times the always-cheapest arm | stops the trivial win of "pick the strongest cheaper model": routing must stay near the floor on light work |
-| T5a | routed mean quality at least strongest minus 0.05 | 0.05 is about 1.8 prompts of 36; tight enough to mean parity, loose enough for judge noise |
-| T5b | per-class routed quality at least strongest minus 0.10 | one class has 12 prompts, so 0.10 is about one prompt |
-| T5c | judge agrees with the checks on at least 0.90 of the checkable answers | a judge that disagrees with ground truth cannot decide parity |
+| T3b | `routing` object at most 400 bytes, a `model_retired:` reason included | `reason` is capped at 120 characters; 400 leaves 2x headroom |
+| T3c | `input` byte-identical, only `reasoning.effort` differs | zero added input tokens |
+| T4a | routed cost at most 0.75 times the strongest arm | the owner's "at least 25 percent lower" |
+| T4b | routed cost at most 4.0 times the cheapest arm | stops the trivial win of picking a strong cheaper model: routing must stay near the floor on light work |
+| T4c | routed cost at most 1.00 times the status quo | routing must not cost more than shipping nothing |
+| T5a | 95 percent lower bound of paired routed minus strongest, overall, at least -0.10 | see the statistics paragraph |
+| T5b | the same bound per class at least -0.15 | n is 15 per class, so the bound is wider |
+| T5d | the same bound, routed minus status quo, overall, at least -0.10 | routing must not be worse than today |
+| T5c | Cohen's kappa of the judge against the checks, on the checkable half, at least 0.70 | a judge that disagrees with ground truth cannot decide parity |
+| T5e | strongest minus cheapest overall at least 0.15, else INVALID | a flat set cannot show parity |
 
-Method: one labeled set (`tests/fixtures/routing_prompts.json`, extended, 36 prompts or more, each with a
-check or a rubric, no model-written code executed), three arms with identical request shape (routed,
-strongest = highest mean of verified class scores, cheapest = lowest blended price), cost from usage
-events, quality from checks and a blind `perplexity_decide` judge (labels removed, order shuffled by a
-fixed seed, judge model recorded). Live spend is capped at 5 USD for all runs together (arms 2.50 +
-1.00 + 0.50, judge 0.50, reserve 0.50). Honest fallback rule: the shipped evidence has EMPTY scores, so
-the router always falls back and cannot beat the baseline; the evaluation refuses to score a run unless
-sourced and verified scores (tasks 2.2 and 2.3) make the router, not the fallback, choose for at least 75
-percent of the set (otherwise INVALID). If, with verified evidence, T4a, T4b, T5a or T5b fail, the outcome
-is DO NOT MERGE the routed selection. Re-runs: thresholds never change; a change of margin, mapping,
-shortlist or evidence after a run is a new numbered run reported beside the earlier ones, and the 5 USD
-budget bounds how many can happen. Split: if the stick fails, `media-inputs` still ships alone.
-
+Statistics: paired, one-sided non-inferiority. For each comparison the per-prompt score differences are
+bootstrapped (10000 resamples, fixed seed, stratified by class) and the 5th percentile of the mean is the
+95 percent lower bound; it must be at least minus the margin. The margins are chosen against the noise:
+with a per-prompt standard deviation of the paired difference of about 0.25, the bound sits about 0.06
+below the mean at n = 45 and about 0.11 below at n = 15, so margins of 0.10 overall and 0.15 per class let
+true parity pass while a real loss of 0.10 or more fails. They are owner-editable; point estimates alone
+(the first draft) would have passed a 0.05 loss that is indistinguishable from noise at this n.
+Judge: `perplexity_decide` `choice` questions with arm labels removed, answers shuffled by a fixed seed, one
+recorded judge model, and the `check` label and expected value never shown to it; validity is kappa, not raw
+agreement (raw agreement is inflated when most answers are right); the report gives the judge's mean score
+per arm and flags an arm whose judge score differs from its check score by more than 0.10.
+Held-out: run 1 scores the `main` subset only; any run after a change of margin, mapping, shortlist or
+evidence also scores `heldout`, and its PASS needs the held-out point differences at least the margin and the
+cost ratios to hold on it. Reuse: a later run reuses the strongest, cheapest and status-quo answers by
+request-body hash (those arms do not depend on the router), and the routed answers only for prompts whose
+chosen model and effort are unchanged; the judge re-scores the pooled blind set each run.
+Honest fallback rule: the shipped evidence has EMPTY scores, so the router always falls back and cannot beat
+the baseline; the evaluation refuses to score a run unless sourced and verified scores (tasks 2.2 and 2.3)
+make the router, not the fallback, choose for at least 75 percent of EACH class (not of the set as a
+whole: a fully falling-back class would hide behind two good ones); otherwise INVALID. If, with verified
+evidence, T4a, T4b, T4c, T5a, T5b or T5d fail, the outcome is DO NOT MERGE the routed selection.
+Budget: all live work of the branch (probes, 7.1, pilot, runs, re-runs) stays under 10 USD (the owner's
+standing cap is 50 USD; this is the branch's stated figure). Proposed caps: pilot 0.50, strongest 4.00,
+routed 1.20, status quo 0.60, cheapest 0.30, judge 0.10 (a decider prices input tokens at 20 nano-USD),
+reserve 1.20 (held-out run and re-sends of unknown-cost requests) = 7.90; other live work 1.30 (media 1.1
+and 5.1, probes 1.x, 7.1, the figure-sourcing research of 2.2) = 9.20, under 10.00. The harness sets
+`max_output_tokens` and stops before a request whose upper bound would exceed its cap (the larger of 1.5
+times the pilot's largest cost for that arm and the cost of `max_output_tokens` plus 50000 input tokens at
+the model's prices). A 6-prompt PILOT outside the labeled set runs before pre-registration, measures cost per
+arm, counts toward the budget and informs the caps only (its quality results never move a threshold); if it
+projects the strongest arm over its cap the owner decides before registration. A request with unknown cost
+is re-sent once from the reserve; only a second unknown makes that arm INVALID. Cost is reconciled to the
+nano-USD against the harness's own client-side sums of each response, not only `perplexity_usage`. Also
+recorded per arm: search-call count, cached tokens and output tokens.
+Code freeze, a DELIBERATE exception to "Gate 2 after docs" for this change: the report is valid only for the
+`src/` it measured, so `src/` is frozen and Gate 2 over the CODE is recorded BEFORE pre-registration (media
+5.1 and 6.1 to 6.5, routing 7.1 and 8.1, 8.2, 8.3, 8.5, then the offline unwind rehearsal 7.1a); the
+documentation and the harness under `tests/routing_eval/` follow, and each change's final review is
+docs-only (routing 9.2, media 7.2). Any `src/` commit after the report requires a new numbered run within
+the remaining budget. The merge gate is mechanical: a test run in CI on the pull request parses
+`acceptance/evaluation.md`, asserts `MERGE ALLOWED` and that its recorded head equals HEAD or no `src/` file
+changed since it; it may be skipped only when the report is absent and the tree holds none of
+`routing_select.py`, `routing_evidence.py`, `data/routing_evidence.json` and migration `0006` (the
+`media-inputs`-alone tree); the CI checkout must fetch enough history for `git diff`.
+Re-runs: thresholds never change; a change of margin, mapping, shortlist or evidence after a run is a new
+numbered run reported beside the earlier ones, and the budget bounds how many can happen.
+Isolation: all of this work happens in a separate git worktree (task 0.4). The live pm2 app runs from the
+main checkout with autorestart; a tree carrying migration `0006` that restarted there would migrate the live
+database to a revision the main code does not know. Evaluation runs use a temporary data directory, never
+`~/.perplexity-pro`.
 Dependency analysis (what `media-inputs` consumed from this change, and what unwinding takes), computed
 from the two task lists:
-- Migration `0006`: NOT used by `media-inputs` (it adds no column and asserts nothing about `0006`,
-  its task 3.2), so dropping `0006` changes nothing there; the revision head returns to `0005`.
-- `routing.resolve(required_input=...)`, the order of D16 and the provisional resolve (routing 5.4):
-  consumed by media 1.5, 2.3 and 3.1 (the parse, the gate order, the two chat resolve sites). On unwind
-  the gate stays and its call into the router goes: the gate then checks `route.model` (or `route.preset`
-  through `preset_accepts`) of the EXISTING resolve, and there is no held-model or router-substitution
-  rule. `inherited_kinds` is media's own function (media 3.1 replaced the empty hook), so it stays.
-- `agent.build_request` optional `reasoning` argument (routing 5.3): media 1.4 composes with it; harmless
-  to keep, removed with its tests if the whole of 5.3 is reverted.
+- Migration `0006` (5.2): NOT used by `media-inputs` (it adds no column and asserts nothing about `0006`,
+  its task 3.2), so dropping it returns the head to `0005`. But task 5.3's research parts (the
+  `research_jobs.effort` storage, the `routed` depth, the jobs-tool `effort` field, the optional research
+  `depth`) depend on that column, so 7.8 reverts ALL of 5.3 with it, `build_request`'s optional
+  `reasoning` argument included (media 1.4's composition assertions for `reasoning` go with it).
+- Task 5.4 is split. 5.3a is MEDIA-OWNED, router-free scaffolding that SURVIVES an unwind: the
+  `required_input` and `provisional` keyword arguments of `routing.resolve` (ignored by every non-router
+  path), the D16 call order in `ask.py` and both chat resolve sites, and the `inherited_kinds` hook (media owns
+  `inherited_kinds` from 5.3a onward; media 3.1 replaces its body). 5.4 is router-owned logic: `evidence`,
+  `matrix`, `tool`, selection, effort, `Route.effort`, the stored tier and `routed_model`. Media tasks
+  1.5, 2.3 and 3.1 build on 5.3a only.
+- On unwind the attachment gate checks `route.model` (or `route.preset` through `preset_accepts`) of the
+  EXISTING resolve; no held-model or router-substitution rule survives.
 - The 450-byte description trim (6.3) and the per-server ceilings (6.4): standalone, media's gross growth
   (at most 900 bytes) fits under the cap with headroom of 2044, 1758 and 1524 bytes on the three servers
-  (59779 minus 57735, 58021 and 58255), so media's own task 3.3 needs no trim and sets its own ceilings.
+  (59779 minus 57735, 58021 and 58255), so media's task 3.3 needs no trim and sets its own ceilings.
 - The single `CLAUDE.md` tools-list edit (routing 9.1) moves to media 7.1 when routing is dropped.
 - Spec text in `media-inputs` that names the router, a held model or `routing-v2` D12 (the
-  `media-attachments` requirements "A held model is kept only when it can take the kinds" and the
-  router scenarios of "An unknown model is let through" and of the model-selection requirement, the
-  `agent-chat` requirements that store `tier` and `routed_model` and name router input, and design D13a)
-  becomes conditional and is amended by task 7.8; media task 0.4 marks them.
-- The terra baseline entry of task 2.5 (55 models) is reverted to 54 with its count test.
-- The model-gone predicate is `media-inputs`' (task 2.1), so it is NOT unwound; only the retry (5.6)
-  goes with the router.
-
-The canonical apply order puts `media-inputs` 1.4, 1.5, 2.3 and 3.1 on top of routing 5.4, so the unwind
-is a revert of the routing-attributed commits (the epic's `--attribute-commit` list is the exact set) in
-reverse landing order, followed by the edits above; a persistent data directory must never be
-opened by this branch (a database at revision `0006` is refused by a build that stops at `0005`).
+  `media-attachments` requirements "A held model is kept only when it can take the kinds" and the router
+  scenarios of "An unknown model is let through" and of the model-selection requirement, the `agent-chat`
+  requirements that store `tier` and `routed_model` and name router input, and design D13a) becomes
+  conditional and is amended by task 7.8; media task 0.4 marks them.
+- The terra baseline entry (2.5) is an added entry, not a count change; 7.8 removes it.
+- `matrix.model_not_served`, `is_named_refusal` and `inherited_kinds` are media's and are NOT unwound;
+  only the retry (5.6) goes with the router.
+Unwinding is a revert PLUS manual conflict resolution, not a clean revert: the canonical apply order puts
+`media-inputs` 1.4, 1.5, 2.3 and 3.1 on top of routing 5.3a, 5.4, 5.5 and 5.6 in `ask.py`, `chat.py`,
+`routing.py` and the tests. The epic's `--attribute-commit` list names the routing commits; revert them in
+reverse landing order, resolve the conflicts by hand, then run the FULL pytest, ruff and `openspec validate
+media-inputs --strict` and RERUN media's Gate 2 (its 6.5) on the unwound tree. Because that is
+expensive to discover late, an OFFLINE REHEARSAL (task 7.1a) builds the media-only tree in a throwaway
+worktree after the code freeze and runs its suite before any evaluation spend. If `media-inputs` then
+ships alone, its matrix and the existing dynamic mode remain unpublished under the owner's hold of
+2026-10-29 (the matrix and dynamic mode exist in the unpublished 2.1.0 to 2.3.0 releases): task 7.7 records
+"owner decision required before any tag; default: nothing published". A persistent data directory must
+never be opened by this branch (a database at revision `0006` is refused by a build that stops at `0005`).
 
 ## Shortlist proposal (models only; scores are not proposed)
 
@@ -504,6 +590,8 @@ LATER shortlist round, and is not added now.
 - **Migration `0006`** touches the chat and research tables. Mitigation: nullable columns, backup
   by the existing runner, a `DROP COLUMN` downgrade (D12) that cannot cascade into
   `embedding_chunks`, and a test that the vectors survive.
+- **The live pm2 app shares this checkout.** A branch tree carrying migration `0006` that restarted there would migrate the live database. Mitigation: a separate worktree (task 0.4), temporary data directories for every run, worktree cleanup at the end (9.4).
+- **Media alone still publishes the matrix.** `media-inputs` rides on the matrix and the existing dynamic mode, which the owner holds unpublished. Mitigation: task 7.7 records that an owner decision is required before any tag.
 - **A held model on a chat follow-up** can keep a model the evidence later ranks lower. Mitigation:
   it is dropped when `removed`, an explicit selector overrides it, and the evaluation may revisit it.
 - **Vendor-reported versus independent scores** can differ by many points; D3 treats them equally.
@@ -520,15 +608,15 @@ LATER shortlist round, and is not added now.
 
 ## Migration Plan
 
-0. CANONICAL APPLY ORDER across the two changes (`media-inputs` owns the modality facts): (1) media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0-4 and 5.1-5.3; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4; (6) routing-v2 7.1 to 7.7, the in-branch evaluation (7.8 only if the evaluation fails); (7) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, only after 7.6 reports); (8) routing-v2 9.3, the merge gate, then the archive 9.4. If that order is impossible, a stub `matrix.accepts` returning `unknown` (nothing substituted, nothing refused) lets this change land alone, and `media-inputs` replaces it.
+0. CANONICAL APPLY ORDER across the two changes (`media-inputs` owns the modality facts): (1) routing-v2 1.1 to 1.5 and media 1.1, 1.2, 1.3, 2.1, 2.2; (2) routing-v2 groups 0, 2, 3 and 4, then 5.1 to 5.3a; (3) routing-v2 5.4, 5.5, 5.6, 6.1, 6.2, then 6.3; (4) media 1.4, 1.5, 2.3, 2.4, 3.1, 3.2, 4.1, 4.2, then 3.3; (5) routing-v2 6.4 and 7.1, and media 5.1; (6) the CODE FREEZE: routing-v2 8.1, 8.2, 8.3 and 8.5 and media 6.1 to 6.5 (Gate 2 over code), then routing-v2 7.1a, the offline unwind rehearsal; (7) routing-v2 7.1b and 7.2 to 7.7, the in-branch evaluation (7.8 only if it fails), any `src/` commit after 7.6 requiring a new numbered run; (8) docs for both (routing-v2 9.1 makes the single CLAUDE.md tools-list figures edit, then routing-v2 8.4 and 8.6; media 7.1), then the docs-only reviews routing-v2 9.2 and media 7.2; (9) routing-v2 9.3, the merge gate, then 9.4, the worktree cleanup, and the archives (routing-v2 9.5, media 7.3). If that order is impossible, a stub `matrix.accepts` returning `unknown` (nothing substituted, nothing refused) lets this change land alone, and `media-inputs` replaces it.
 1. Land specs and code behind `dynamic` mode only; `standard` (the default) and `custom` do not change.
 2. Ship the evidence file with empty `scores`; dynamic mode then routes to the fallback and
    logs one warning that no verified evidence is loaded.
-3. Source and verify the figures live (tasks 2.x), then pre-register and run the in-branch evaluation
-   (D18, tasks 7.2 to 7.6).
+3. Source and verify the figures live (tasks 2.x), freeze the code (Gate 2 over code), rehearse the unwind
+   offline, then pilot, pre-register and run the in-branch evaluation (D18, tasks 7.1a to 7.6).
 4. Only a report with every threshold PASS allows the merge and the release; until then 2.1.0 to 2.3.0
    stay unpublished and the branch stays unmerged. On FAIL or INVALID, task 7.8 unwinds the routed
-   selection and `media-inputs` ships alone.
+   selection and `media-inputs` can merge alone (nothing is tagged without an owner decision, D18).
 5. Rollback: remove the evidence override file and use `standard` mode; migration `0006` downgrades.
 
 ## Open Questions

@@ -86,7 +86,7 @@ A call that breaks more than one routing rule SHALL be refused with the first of
 - **THEN** the message names both, says to pass one or neither, and says that with neither the model and effort are picked from the prompt
 
 ### Requirement: Dynamic mode routes by a classifier
-In `dynamic` mode a call that names no `depth`, `tier` or `model` SHALL be classified over the call's text (the ask's query, the chat send's message, the research query) by the configured classifier, the rules of `routing-rules` unless a change adds another, which supplies the tier; the task class SHALL always come from the rules, offline. The router of `routing-evidence` SHALL then choose the model and the effort. With the rules classifier the classification makes no upstream request. Presets SHALL be used only by the router's last fallback rung.
+In `dynamic` mode a call that names no `depth`, `tier` or `model` SHALL be classified over the call's text (the ask's query, the chat send's message, the research query) by the configured classifier, the rules of `routing-rules` unless a change adds another (a research query is ALWAYS classified by the rules, never by the Decisions classifier), which supplies the tier; the task class SHALL always come from the rules, offline. The router of `routing-evidence` SHALL then choose the model and the effort. With the rules classifier the classification makes no upstream request. Presets SHALL be used only by the router's last fallback rung.
 
 #### Scenario: A lookup goes light
 - **WHEN** an ask in `dynamic` mode asks `What is the latest stable Python release?`
@@ -338,7 +338,7 @@ When a call naming `model`, or running a pin or a `standard` or `custom` mode mo
 - **THEN** the error says it could not list same-family models and points to `perplexity_models`
 
 ### Requirement: A retired model shows in the routing reason
-When the server retried a call after a retirement, the result's `routing.reason` SHALL begin with `model_retired:` followed by the retired id, within the 120-character rule and without any prompt text, and `selected_by` SHALL remain `router` or `fallback`.
+When the server retried a call after a retirement, the result's `routing.reason` SHALL begin with `model_retired:` followed by the retired id, within the 120-character rule (the id cut to 64 characters) and without any prompt text, and `selected_by` SHALL keep the failed route's value (`router`, or `tier` for a named-tier route) unless the retry ran on the chain fallback, when it is `fallback`.
 
 #### Scenario: Reason content
 - **WHEN** a routed call was retried after `vendor/haiku-5` retired

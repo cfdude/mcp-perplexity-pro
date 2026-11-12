@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: A retired model forces one bounded catalog refresh
-The matrix state SHALL offer `refresh_now(failed_id)` for a call that failed with an answer `matrix.model_not_served` recognises. It SHALL be single-flight, rate-limited to one listing fetch of any origin per 300 seconds per process, read only the API's own models listing, merge with the existing rules and send no probe.
+The matrix state SHALL offer `refresh_now(failed_id)` for a call that failed with an answer `matrix.model_not_served` recognises. It SHALL be single-flight, rate-limited to one listing fetch of any origin per 300 seconds per process (the scheduled refresh, a `perplexity_models` refresh and a failed fetch all stamp the window), read only the API's own models listing, merge with the existing rules and never call the probe path.
 
 #### Scenario: A vanished model becomes removed
 - **WHEN** a call fails not supported and the fresh listing no longer holds the id
@@ -27,4 +27,8 @@ The matrix state SHALL offer `refresh_now(failed_id)` for a call that failed wit
 
 #### Scenario: No probes, no spend
 - **WHEN** a forced refresh runs and a new model appears in the listing
-- **THEN** no probe request is sent by it (the scheduled refresh probes later) and no usage event is written
+- **THEN** `probe_new` is not called (a test asserts it), no probe request is sent (the scheduled refresh probes later) and no usage event is written
+
+#### Scenario: Another origin stamped the window
+- **WHEN** a `perplexity_models` call refreshed the listing 100 seconds ago
+- **THEN** a retirement makes no listing request

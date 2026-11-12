@@ -104,7 +104,7 @@ A usage event for a job SHALL be recorded while no write unit is open, before th
 ## ADDED Requirements
 
 ### Requirement: A nameless research run is routed in dynamic mode
-In `dynamic` mode a research call with `depth` omitted SHALL be classified by the rules (never by the Decisions classifier) and routed like an ask under the research cap, and its background request SHALL name the chosen model with `reasoning.effort` when one was chosen and the web search tool. If the API refuses a background run for a named model, the tier's documented preset SHALL run instead (see `routing-evidence`, research fallback).
+In `dynamic` mode a research call with `depth` omitted SHALL be classified by the rules (never by the Decisions classifier) and routed like an ask under the research cap, and its background request SHALL name the chosen model with `reasoning.effort` when one was chosen and the web search tool. With no eligible model the tier's preset runs (see `routing-evidence`); whether the API accepts a model background run is probe 1.2 and design D11.
 
 #### Scenario: Routed research
 - **WHEN** a client starts research with no depth in `dynamic` mode and the router chooses model `M` with level `high`
@@ -161,8 +161,20 @@ When a routed research submit fails with an answer that `matrix.model_not_served
 
 #### Scenario: Routed submit retried
 - **WHEN** a routed submit names a retired model and the retry succeeds on the tier's preset
-- **THEN** one failed event and one event of the retry exist, the job has depth `routed` or the preset's depth as `routing-config` says for a preset fallback, and no second retry is made
+- **THEN** one failed event and one event of the retry exist, the job is an ordinary preset job (depth the preset's depth, effort null, the event's preset set), and no second retry is made
 
 #### Scenario: Named depth unaffected
 - **WHEN** a client names `depth` `high`
 - **THEN** no retirement logic runs
+
+### Requirement: A research job that fell back to a preset is an ordinary preset job
+A research run that the router sent to the tier's preset (no eligible model, or a retirement with no same-family model) SHALL be stored and recorded exactly like a run that named that `depth`: depth the preset's depth, `effort` null, the recorded event's preset set; only a job that ran a model has depth `routed`.
+
+#### Scenario: Preset fallback job
+- **WHEN** a nameless research run in `dynamic` mode finds no eligible model and runs preset `medium`
+- **THEN** the job has depth `medium` and effort null, its event has preset `medium`, and `perplexity_jobs` shows `medium`
+
+#### Scenario: A model job
+- **WHEN** the router chooses model `M` for a nameless research run
+- **THEN** the job has depth `routed`, effort the chosen level or null, and its event has preset null
+

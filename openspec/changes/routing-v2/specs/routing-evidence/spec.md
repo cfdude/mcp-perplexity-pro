@@ -190,11 +190,15 @@ The target level SHALL be `low` for tier `light`, `medium` for `standard`, and f
 - **THEN** the chosen model is the same and only the effort differs
 
 ### Requirement: An unavailable choice falls back in a fixed order
-When no model is eligible, ask and chat SHALL try `fallbacks.default` (`openai/gpt-6-luna` at `low` as shipped, subject to the same `accepts` test through the matrix and clipped like any level: the highest accepted level not above `low`, else no effort) and then the tier's documented preset. A rung whose model is not `available` SHALL be skipped, and the result has `selected_by` `fallback` and a reason naming the rung.
+When no model is eligible, ask and chat SHALL try `fallbacks.default` (`openai/gpt-6-luna` at `low` as shipped, subject to the same `accepts` test through the matrix and clipped like any level: the highest accepted level not above `low`, else no effort) and then the tier's documented preset. A rung whose model is not `available`, is tombstoned by a retirement or is absent from the held live listing SHALL be skipped, and the result has `selected_by` `fallback` and a reason naming the rung.
 
 #### Scenario: No eligible model
 - **WHEN** every shortlist model is `removed` and `openai/gpt-6-luna` is `available`
 - **THEN** the call runs `openai/gpt-6-luna` at `low` with `selected_by` `fallback`
+
+#### Scenario: The fallback model itself retired
+- **WHEN** the call on `fallbacks.default` is answered 400 not supported
+- **THEN** the id is tombstoned, one refresh is requested, and the call falls through to the tier's preset rung (or fails with the hint when no preset is allowed), with no further retry
 
 #### Scenario: Fallback model removed
 - **WHEN** no shortlist model is eligible and `openai/gpt-6-luna` is `removed`
@@ -280,22 +284,22 @@ Selection SHALL read the matrix at call time, so a model that becomes `removed`,
 - **THEN** the offline test suite fails
 
 ### Requirement: The reason names the rule and never the prompt
-A routed call's `reason` SHALL be at most 120 ASCII characters built from constants and counts (the task class, the number of contenders, the rule, the fallback rung, `held` or `pinned`), and SHALL NOT contain any text from the prompt.
+A routed call's `reason` SHALL be at most 120 ASCII characters built from constants and counts (the task class, the number of contenders, the rule, the fallback rung, `held` or `pinned`), and SHALL NOT contain any text from the prompt. After a retirement it SHALL begin `model_retired:<id>` (the id cut to 64 characters) and the rest SHALL be clipped so the whole stays within 120.
 
 #### Scenario: Reason content
 - **WHEN** a prompt containing the string `hunter2` is routed
 - **THEN** the reason names the class and the rule and does not contain `hunter2`
 
 ### Requirement: A retired model is replaced once, on the best same-family shortlist model
-When a call on a server-chosen model fails with an answer `matrix.model_not_served` recognises, the server SHALL tombstone the id for 300 seconds, request one bounded refresh and retry once on the best remaining eligible same-family shortlist model, else on the chain fallback (research: the tier's preset). The retry is the only extra request.
+When a call on a server-chosen model (the router, a named-tier router route, the fallback model rung or a held chat model) is rejected with an answer `matrix.model_not_served` recognises, the server SHALL tombstone the id for 300 seconds, request one bounded refresh and retry once on the best remaining eligible same-family shortlist model, else on the chain fallback (research: the tier's preset). The retry is the only extra request. It follows only a rejection before the request was accepted.
 
 #### Scenario: Same-family peer on the shortlist
 - **WHEN** the chosen `vendor/haiku-5` is answered 400 not supported and the shortlist also holds a live, eligible `vendor/haiku-6`
-- **THEN** the call is retried once on `vendor/haiku-6`, and the result's reason says `model_retired:vendor/haiku-5`
+- **THEN** the call is retried once on `vendor/haiku-6`, the reason begins `model_retired:vendor/haiku-5`, and `selected_by` keeps its earlier value (`router`, or `tier` for a named-tier route)
 
 #### Scenario: No same-family model on the shortlist
 - **WHEN** the chosen model is retired and no other shortlist model shares its family
-- **THEN** the call is retried once on `fallbacks.default` (or the preset rung when that is not allowed), `selected_by` is `fallback` and the reason says `model_retired:` and the id
+- **THEN** the call is retried once on `fallbacks.default` (or the preset rung when that is not allowed), `selected_by` is `fallback` and the reason begins `model_retired:` with the id
 
 #### Scenario: A live successor off the shortlist
 - **WHEN** the live listing holds `vendor/haiku-7`, which is not on the shortlist, and `vendor/haiku-5` is retired
@@ -305,6 +309,10 @@ When a call on a server-chosen model fails with an answer `matrix.model_not_serv
 - **WHEN** the retry model answers not supported too
 - **THEN** the call fails with the model-gone hint, and no second refresh or retry occurs
 
+#### Scenario: A timeout or a later failure is not retried
+- **WHEN** a call times out, answers 5xx or fails after the API accepted it
+- **THEN** no retirement logic runs and no retry follows
+
 #### Scenario: Family key
 - **WHEN** the ids `anthropic/claude-haiku-5-5`, `anthropic/claude-haiku-6` and `openai/gpt-6.1-luna` are keyed
 - **THEN** the first two share `anthropic/claude-haiku` and the third is `openai/gpt-luna`
@@ -313,13 +321,52 @@ When a call on a server-chosen model fails with an answer `matrix.model_not_serv
 - **WHEN** a preset call or a Decisions classifier request fails not supported
 - **THEN** no refresh and no retry occurs for it
 
+### Requirement: An effort refusal is not a retirement and is retried without reasoning
+A 400 on a request that carried `reasoning.effort`, recognised by `matrix.is_effort_refusal` (its text captured by task 1.5), SHALL never satisfy `matrix.model_not_served`. The server SHALL retry once on the same model WITHOUT `reasoning` and mark that level refused for that model in this process, so later selection clips to another level or none. The one retry of a call is shared with the retirement retry.
+
+#### Scenario: Effort refused
+- **WHEN** a routed call at `high` is answered with the effort-refusal 400
+- **THEN** it is retried once on the same model with no `reasoning`, the level is marked refused for that model, and no refresh or tombstone occurs
+
+#### Scenario: The classifiers are disjoint
+- **WHEN** `model_not_served` is called with the captured effort-refusal text
+- **THEN** it is false
+
+#### Scenario: The mark steers later calls
+- **WHEN** `high` was marked refused for a model and the next call targets `high`
+- **THEN** the clip chooses the highest accepted level not above the target that is not marked, else none
+
+### Requirement: A retirement's state lives in one holder and selection stays pure
+Tombstones, the 300-second refresh window and refused-effort marks SHALL live in one mutable holder on the application context with an injected monotonic clock. `select` SHALL stay pure by taking an `exclude` frozenset from the caller, and the same exclusion, held-listing filter and tombstones SHALL cover `fallbacks.default`.
+
+#### Scenario: Pure selection
+- **WHEN** `select` is called twice with the same arguments and `exclude`
+- **THEN** it returns the same result and reads no clock and no holder
+
+#### Scenario: Listed but failing
+- **WHEN** a listed model answers 400 not supported
+- **THEN** it is skipped for 300 seconds and eligible after, and each such failure costs one failed call and one retry
+
+#### Scenario: The window sees every origin
+- **WHEN** a `perplexity_models` refresh fetched the listing 100 seconds ago, or a fetch failed 100 seconds ago
+- **THEN** a retirement now makes no listing request
+
 ### Requirement: A retirement is recorded and costs nothing but its one retry
-The retirement SHALL be recorded: the failed call's usage event as for any failure (status from the category, no usage), one log line naming the retired id, whether the refresh ran, was rate-limited or failed, and the replacement, and the retry's own usage event. The retry SHALL add no probe request, no documentation fetch and no `tools/list` byte.
+The failed call's usage event SHALL carry the failed model (an optional `model` argument of `costed_call` and `run_costed`, with no third `record_usage` call), the category status and no usage. One log line SHALL name the retired id, the refresh outcome and the replacement, and the retry has its own event and adds no probe or documentation fetch.
 
 #### Scenario: Two events reconcile
 - **WHEN** a routed ask is retried after a retirement
-- **THEN** `perplexity_usage` holds one failed event for the retired model and one `ok` event for the replacement, and no other event
+- **THEN** `perplexity_usage` holds one failed event whose model is the retired id and one `ok` event for the replacement, and no other event
+
+#### Scenario: Still two recording sites
+- **WHEN** `rg "record_usage\(" src/` runs
+- **THEN** it finds the same two functions, and the five-caller assertion of the contract test still holds
 
 #### Scenario: Tombstone expires
 - **WHEN** 301 seconds pass after a retirement and the live listing again lists the id
 - **THEN** the id is eligible again
+
+#### Scenario: A not-served 400 is unbilled
+- **WHEN** a not-served 400 is recorded
+- **THEN** its event has no usage and cost unknown, and the assumption that it is unbilled is the one task 1.5 checks
+
