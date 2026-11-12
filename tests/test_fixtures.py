@@ -51,6 +51,36 @@ def test_sidecar_has_payload(sidecar):
     assert payload.exists(), f"{sidecar.name} has no fixture {payload.name}"
 
 
+# Committed text that could hold a pasted key or an LLM Stats lead: every acceptance folder of an
+# OpenSpec change, and docs (routing-v2 task 2.2). Binary files and the fixtures are not read here.
+ROOT = FIXTURE_DIR.parent.parent
+SCANNED_SUFFIXES = {".md", ".txt", ".json", ".py", ".sha256", ".csv"}
+SCANNED = sorted(
+    p
+    for base in (*ROOT.glob("openspec/**/acceptance"), ROOT / "docs")
+    if base.is_dir()
+    for p in base.rglob("*")
+    if p.is_file() and p.suffix in SCANNED_SUFFIXES
+)
+
+
+def test_the_scan_reaches_acceptance_folders_and_docs():
+    names = {p.relative_to(ROOT).as_posix() for p in SCANNED}
+    assert any(n.startswith("openspec/changes/routing-v2/acceptance/") for n in names)
+    assert any(n.startswith("docs/") for n in names)
+
+
+@pytest.mark.parametrize("path", SCANNED, ids=lambda p: p.relative_to(ROOT).as_posix())
+def test_no_key_shaped_strings_in_acceptance_files_and_docs(path):
+    hits = find_key_shapes(path.read_text(errors="replace"))
+    assert not hits, f"{path.name} contains key-shaped strings: {hits}"
+
+
+def test_the_llm_stats_key_shape_is_detected():
+    assert find_key_shapes("key sk_ze_" + "Ab3dE5gH7jK9 here")
+    assert not find_key_shapes("sk_ze_ alone and sk_zebra_12345678")
+
+
 def test_key_scan_detects_a_key():
     assert find_key_shapes("x pplx-" + "A1" * 12 + " y")
     assert not find_key_shapes("pplx-short")

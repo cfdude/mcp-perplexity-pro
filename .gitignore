@@ -83,3 +83,6 @@ __pycache__/
 .conductor/state.json.lock*
 .conductor/state.json.tmp*
 .conductor/spend/
+
+# Redirected output of the owner-run LLM Stats worksheet (leads only, never committed)
+openspec/changes/routing-v2/acceptance/llm_stats_*.txt

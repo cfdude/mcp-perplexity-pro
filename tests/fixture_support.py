@@ -13,9 +13,14 @@ KEY_SHAPE = re.compile(
     r"pplx-(?!(?:embed|decider)-[A-Za-z0-9.-]{1,28}(?![A-Za-z0-9_-]))[A-Za-z0-9_\-]{20,}"
 )
 
+# An LLM Stats API key (``sk_ze_`` then key characters): the owner-run worksheet of routing-v2 reads
+# one from the environment, and no output of it may land in a committed file.
+LLM_STATS_KEY_SHAPE = re.compile(r"sk_ze_[A-Za-z0-9_\-]{8,}")
+
 REQUIRED_META_KEYS = ("endpoint", "method", "http_status", "capture_date", "scrubbed")
 
 
 def find_key_shapes(text: str) -> list[str]:
     """Return every key-shaped match in ``text`` (truncated, never the full match)."""
-    return [m.group(0)[:8] + "..." for m in KEY_SHAPE.finditer(text)]
+    hits = [m.group(0)[:8] + "..." for m in KEY_SHAPE.finditer(text)]
+    return hits + [m.group(0)[:8] + "..." for m in LLM_STATS_KEY_SHAPE.finditer(text)]
