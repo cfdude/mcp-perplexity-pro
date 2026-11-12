@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "as_of": "2026-11-11",
+  "task_classes": {
+    "coding": {"benchmarks": ["swe_bench_pro", "terminal_bench_4_0"]},
+    "reasoning": {"benchmarks": ["gpqa_diamond"]},
+    "browsing": {"benchmarks": ["browsecomp"]}
+  },
+  "benchmarks": {
+    "swe_bench_pro": {"name": "SWE-Bench Pro"},
+    "terminal_bench_4_0": {"name": "Terminal-Bench 4.0"},
+    "gpqa_diamond": {"name": "GPQA Diamond"},
+    "browsecomp": {"name": "BrowseComp"}
+  },
+  "shortlist": [
+    "openai/gpt-6-luna",
+    "anthropic/claude-haiku-5-5",
+    "perplexity/sonar",
+    "google/gemini-3.8-flash",
+    "anthropic/claude-sonnet-5-5",
+    "openai/gpt-6.1-sol",
+    "openai/gpt-6.1-terra",
+    "anthropic/claude-opus-5-5"
+  ],
+  "fallbacks": {"default": {"model": "openai/gpt-6-luna", "effort": "low"}},
+  "models": {
+    "openai/gpt-6-luna": {"scores": {}},
+    "anthropic/claude-haiku-5-5": {"scores": {}},
+    "perplexity/sonar": {"scores": {}},
+    "google/gemini-3.8-flash": {"scores": {}},
+    "anthropic/claude-sonnet-5-5": {"scores": {}},
+    "openai/gpt-6.1-sol": {"scores": {}},
+    "openai/gpt-6.1-terra": {"scores": {}},
+    "anthropic/claude-opus-5-5": {"scores": {}}
+  }
+}
