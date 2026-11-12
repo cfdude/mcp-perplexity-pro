@@ -8,6 +8,7 @@ across the call, usage recorded), and only then writes the chat in one short uni
 import inspect
 import json
 import logging
+from collections.abc import Mapping
 from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Annotated, Any
@@ -17,6 +18,7 @@ from fastmcp.tools import ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
+from mcp_perplexity_pro import call_flow
 from mcp_perplexity_pro.agent import (
     AskOptions,
     Source,
@@ -33,7 +35,12 @@ from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.help_text import POINTER
 from mcp_perplexity_pro.redaction import scrub_secrets
-from mcp_perplexity_pro.routing import description_sentence, resolve, tier_of
+from mcp_perplexity_pro.routing import (
+    check_selectors,
+    description_sentence,
+    resolve,
+    tier_of,
+)
 from mcp_perplexity_pro.routing_decisions import classify_dynamic, wants_decider
 from mcp_perplexity_pro.settings import Settings
 from mcp_perplexity_pro.storage.chats import (
@@ -186,11 +193,16 @@ async def _send(
     chat_id: int | None,
     replay: bool,
     options: AskOptions,
+    selectors: Mapping[str, str | None],
+    new_kinds: frozenset[str] = frozenset(),
     classify_route: bool = False,
 ) -> tuple[ChatResult, str]:
-    """``classify_route`` is true for a nameless send in dynamic mode: ``options`` then holds a
-    provisional route (the standard tier's model, enough to validate every option), and the real
-    route is resolved below, after the chat lookup, from the message and the chat's last tier."""
+    """``options`` holds the provisional route of the tool (a route that only has to name some
+    model so every option can be validated); the real route is resolved below, after the chat
+    lookup, from the call's ``selectors`` (``depth``, ``tier``, ``model``), the message and, for
+    a nameless send in dynamic mode (``classify_route``), the chat's last tier. ``new_kinds`` are
+    the input kinds the new message needs; the kinds the route must carry also depend on whether
+    the send is chained or a replay (``call_flow.required_kinds``)."""
     # 1. Everything local, before any database access or request.
     check_text("message", message)
     if chat_id is not None:
@@ -208,7 +220,7 @@ async def _send(
     name = validate_project_name(project or DEFAULT_PROJECT)
 
     # 2. Find the chat (read-only; the project is never created here).
-    project_id = anchor = None
+    project_id = anchor = chat = None
     previous: tuple[str | None, str | None] | None = None
     history: list[tuple[str, str]] = []
     if chat_id is not None:
@@ -217,7 +229,7 @@ async def _send(
             if found is None:
                 raise _not_found_project(name)
             project_id = found.id
-            await load_chat(session, project_id, chat_id)
+            chat = await load_chat(session, project_id, chat_id)
             if classify_route:
                 previous = await last_route(session, chat_id)
             if replay:
@@ -230,26 +242,44 @@ async def _send(
                 f"chat {chat_id} has no stored response to continue from; send with replay true.",
             )
 
-    # 3. The route (dynamic mode, nothing named), then the request. A preset route only adds
-    # what ``depth`` already allows, and ``search`` false never gets one, so the build cannot
-    # newly fail.
+    # 3. The real route, in the fixed order of ``call_flow``: the rules-based resolve with the
+    # kinds the send must carry, the gate, then (only when the Decisions classifier applies and
+    # its answer can change the route) the classifier request, the second resolve and the gate
+    # again when that changed the route. A preset route only adds what ``depth`` already allows,
+    # and ``search`` false never gets one, so the build cannot newly fail.
+    kinds = call_flow.required_kinds(new_kinds, chat, replay=replay)
+    floor = None
     if classify_route:
         floor = None if previous is None else tier_of(app.settings, *previous)
-        classification = None
-        if floor != "complex" and wants_decider(
-            app.settings, depth=None, tier=None, model=None, search=options.search
-        ):
-            # After the lookup (its read-only unit is closed) and only when the answer can
-            # change the route: a follow-up already at the top tier cannot move.
-            classification = await classify_dynamic(app, message, project=name, tool=TOOL)
-        route = resolve(
+    route = resolve(
+        app.settings,
+        **selectors,
+        text=message if classify_route else None,
+        previous=floor,
+        search=options.search,
+        required_input=kinds,
+    )
+    call_flow.gate_route(app, route, kinds)
+    if (
+        classify_route
+        and floor != "complex"
+        and wants_decider(app.settings, depth=None, tier=None, model=None, search=options.search)
+    ):
+        # After the lookup (its read-only unit is closed) and only when the answer can change
+        # the route: a follow-up already at the top tier cannot move.
+        classification = await classify_dynamic(app, message, project=name, tool=TOOL)
+        decided = resolve(
             app.settings,
             text=message,
             previous=floor,
             search=options.search,
             classification=classification,
+            required_input=kinds,
         )
-        options = replace(options, route=route)
+        if (decided.model, decided.preset) != (route.model, route.preset):
+            call_flow.gate_route(app, decided, kinds)
+        route = decided
+    options = replace(options, route=route)
     warnings: list[str] = []
     if replay:
         items = [_message_item(role, content) for role, content in history]
@@ -577,6 +607,8 @@ def register(server: FastMCP, settings: Settings) -> None:
             # Selectors resolve here, before any database access, so an invalid one beats
             # ``not_found``. Nameless in dynamic mode this is the provisional route, or the
             # final one when ``search`` is false; ``_send`` classifies the rest.
+            check_selectors(app.settings, depth=depth, tier=tier, model=model)
+            new_kinds = call_flow.parse_attachments()
             classify_route = (
                 app.settings.routing == "dynamic"
                 and depth is None
@@ -585,7 +617,15 @@ def register(server: FastMCP, settings: Settings) -> None:
                 and search is not False
             )  # the rules, or the Decisions classifier (``wants_decider``), run in ``_send``
             options = AskOptions(
-                route=resolve(app.settings, depth=depth, tier=tier, model=model, search=search),
+                route=resolve(
+                    app.settings,
+                    depth=depth,
+                    tier=tier,
+                    model=model,
+                    search=search,
+                    required_input=new_kinds,
+                    provisional=True,
+                ),
                 search=search,
                 domains=domains,
                 recency=recency,
@@ -604,6 +644,8 @@ def register(server: FastMCP, settings: Settings) -> None:
                 chat_id=chat_id,
                 replay=replay,
                 options=options,
+                selectors={"depth": depth, "tier": tier, "model": model},
+                new_kinds=new_kinds,
                 classify_route=classify_route,
             )
         return ToolResult(content=text, structured_content=result.model_dump(mode="json"))

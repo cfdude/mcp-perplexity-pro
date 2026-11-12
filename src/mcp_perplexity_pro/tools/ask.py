@@ -9,6 +9,7 @@ from fastmcp.tools import ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
+from mcp_perplexity_pro import call_flow
 from mcp_perplexity_pro.agent import (
     AskOptions,
     Digest,
@@ -22,7 +23,12 @@ from mcp_perplexity_pro.agent import (
 )
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.help_text import POINTER
-from mcp_perplexity_pro.routing import Route, description_sentence, resolve
+from mcp_perplexity_pro.routing import (
+    Route,
+    check_selectors,
+    description_sentence,
+    resolve,
+)
 from mcp_perplexity_pro.routing_decisions import classify_dynamic, wants_decider
 from mcp_perplexity_pro.settings import Settings
 from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, validate_project_name
@@ -221,17 +227,23 @@ def register(server: FastMCP, settings: Settings) -> None:
         reaches the API is recorded as spend (see perplexity_usage)."""
         check_text("query", query)
         app = ctx.lifespan_context
+        # The fixed order of ``call_flow``: selector and tier errors, attachment parse, a
+        # provisional resolve and option validation, the real resolve, the gate, the Decisions
+        # request, the second resolve, the gate again on the final route.
+        check_selectors(app.settings, depth=depth, tier=tier, model=model)
+        kinds = call_flow.parse_attachments()
         decider = wants_decider(app.settings, depth=depth, tier=tier, model=model, search=search)
-        # With the Decisions classifier the route below is provisional (the standard tier's
-        # model: enough to validate every option); the real one is resolved after validation.
+        # The first route only has to name some model so every option can be validated (with the
+        # Decisions classifier it is also the route the classifier request is built from).
         options = AskOptions(
             route=resolve(
                 app.settings,
                 depth=depth,
                 tier=tier,
                 model=model,
-                text=None if decider else query,
                 search=search,
+                required_input=kinds,
+                provisional=True,
             ),
             search=search,
             domains=domains,
@@ -245,15 +257,33 @@ def register(server: FastMCP, settings: Settings) -> None:
             json_schema=json_schema,
         )
         request = build_request(options, query, store=False)
+        options = replace(
+            options,
+            route=resolve(
+                app.settings,
+                depth=depth,
+                tier=tier,
+                model=model,
+                text=query,
+                search=search,
+                required_input=kinds,
+            ),
+        )
+        call_flow.gate_route(app, options.route, kinds)
+        request = build_request(options, query, store=False)
         if decider:  # only now: an invalid call spends nothing (the project name is checked first)
             name = validate_project_name(project or DEFAULT_PROJECT)
             classification = await classify_dynamic(app, query, project=name, tool=TOOL)
-            options = replace(
-                options,
-                route=resolve(
-                    app.settings, text=query, search=search, classification=classification
-                ),
+            decided = resolve(
+                app.settings,
+                text=query,
+                search=search,
+                classification=classification,
+                required_input=kinds,
             )
+            if (decided.model, decided.preset) != (options.route.model, options.route.preset):
+                call_flow.gate_route(app, decided, kinds)  # the route changed: gate the final one
+            options = replace(options, route=decided)
             request = build_request(options, query, store=False)
         try:
             costed = await run_costed(

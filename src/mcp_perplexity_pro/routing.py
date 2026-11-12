@@ -113,6 +113,8 @@ def resolve(
     previous: str | None = None,
     search: bool | None = None,
     classification: rules.Classification | None = None,
+    required_input: frozenset[str] = frozenset(),
+    provisional: bool = False,
 ) -> Route:
     """Resolve one call. Refusals come in a fixed order: a conflict between selectors, then
     ``tier`` outside ``custom`` and ``dynamic``, then an unknown ``tier``, then a depth that is
@@ -122,7 +124,47 @@ def resolve(
     ready verdict from another classifier) matter only in ``dynamic`` mode with no selector
     named: the call is classified (the rules over ``text``, unless ``classification`` is given),
     held at ``previous`` when that is higher, and run on the standard tier's model when
-    ``search`` is false."""
+    ``search`` is false.
+
+    ``required_input`` (the input kinds of the call, a frozenset of ``image`` and ``document``,
+    empty for text only) and ``provisional`` (a first pass that only has to name some model so a
+    request can be validated) are accepted for the call order of ``call_flow`` and are ignored
+    by every path here: they change nothing about which model a call resolves to."""
+    check_selectors(settings, depth=depth, tier=tier, model=model)
+    if tier is not None:
+        if settings.routing == "dynamic":
+            route = dynamic_route(settings, tier, selected_by="tier")
+            if search is False and route.preset is not None:
+                raise _bad(
+                    "tier and search",
+                    f"`tier` {tier} runs preset {route.preset} and a preset always searches, so "
+                    "it cannot be combined with `search` false. Pass `model`, tier standard or "
+                    "search true.",
+                )
+            return route
+        return Route("custom", tier, getattr(settings, f"tier_{tier}"), None, "tier")
+    if depth is not None:
+        return Route(settings.routing, None, None, depth, "depth")
+    if model is not None:
+        return Route(settings.routing, None, model, None, "model")
+    if settings.routing == "custom":
+        return Route("custom", "standard", settings.tier_standard, None, "default")
+    if settings.routing == "dynamic":
+        return _classified(settings, text, previous, search, classification)
+    return Route(settings.routing, None, settings.model, None, "default")
+
+
+def check_selectors(
+    settings: Settings,
+    *,
+    depth: str | None = None,
+    tier: str | None = None,
+    model: str | None = None,
+) -> None:
+    """The selector refusals of ``resolve``, in their fixed order, with nothing else: a conflict
+    between selectors, then ``tier`` outside ``custom`` and ``dynamic``, then an unknown
+    ``tier``, then a depth that is not allowed. A tool calls it first so that a bad selector
+    fails before anything else (an attachment is never opened for a call that is refused)."""
     given = [
         name
         for name, value in (("depth", depth), ("tier", tier), ("model", model))
@@ -150,17 +192,6 @@ def resolve(
             )
         if tier not in TIER_NAMES:
             raise _bad("tier", f"must be one of {', '.join(TIER_NAMES)}.")
-        if settings.routing == "dynamic":
-            route = dynamic_route(settings, tier, selected_by="tier")
-            if search is False and route.preset is not None:
-                raise _bad(
-                    "tier and search",
-                    f"`tier` {tier} runs preset {route.preset} and a preset always searches, so "
-                    "it cannot be combined with `search` false. Pass `model`, tier standard or "
-                    "search true.",
-                )
-            return route
-        return Route("custom", tier, getattr(settings, f"tier_{tier}"), None, "tier")
     if depth is not None:
         if depth in LONG_DEPTHS:
             raise _bad(
@@ -168,14 +199,6 @@ def resolve(
             )
         if depth not in ASK_DEPTHS:
             raise _bad("depth", f"must be one of {', '.join(ASK_DEPTHS)}.")
-        return Route(settings.routing, None, None, depth, "depth")
-    if model is not None:
-        return Route(settings.routing, None, model, None, "model")
-    if settings.routing == "custom":
-        return Route("custom", "standard", settings.tier_standard, None, "default")
-    if settings.routing == "dynamic":
-        return _classified(settings, text, previous, search, classification)
-    return Route(settings.routing, None, settings.model, None, "default")
 
 
 def describe_tiers(settings: Settings) -> str:

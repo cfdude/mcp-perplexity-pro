@@ -320,9 +320,9 @@ builder, 5.4 = router-owned wiring (one commit), 6.1 = polish only.
 
 ### The resolve sites (5.3a builds the D16 order; 5.4 adds the router)
 
-- [ ] `routing.py:106` `resolve` (5.3a: `required_input`, `provisional` ignored; 5.4: `evidence`, `matrix`, `tool`, the dynamic path, `Route.effort`, `selected_by` `router`/`fallback`)
-- [ ] `tools/ask.py:224` `wants_decider`, `:228` first `resolve`, `:253` second `resolve` after the classifier (5.3a order; 5.4 inputs)
-- [ ] `tools/chat.py:245` the real `resolve` of a send, `:239` `wants_decider`, `:588` the validation-path `resolve`, `:586` comment (5.3a order; 5.4 inputs and the hold)
+- [~] `routing.py:106` `resolve` (5.3a DONE: `required_input`, `provisional`, `check_selectors`; 5.4 still adds: `required_input`, `provisional` ignored; 5.4: `evidence`, `matrix`, `tool`, the dynamic path, `Route.effort`, `selected_by` `router`/`fallback`)
+- [~] `tools/ask.py` (5.3a DONE: the D16 order through `call_flow`; 5.4 inputs remain) `wants_decider`, `:228` first `resolve`, `:253` second `resolve` after the classifier (5.3a order; 5.4 inputs)
+- [~] `tools/chat.py` (5.3a DONE: the D16 order at both resolve sites through `call_flow`; 5.4 inputs and the hold remain) the real `resolve` of a send, `:239` `wants_decider`, `:588` the validation-path `resolve`, `:586` comment (5.3a order; 5.4 inputs and the hold)
 - [ ] `routing_decisions.py:111` `wants_decider` (5.4 drops the `search` condition), `:4` docstring that names `routing.resolve`
 - [ ] `routing.py:138` the refusal text "with neither, the tier is picked from the prompt" and its tests (5.4: model and effort are picked instead)
 - [ ] `tests/test_routing_decisions.py` (`wants_decider`, `classify_dynamic`), `tests/test_live_capture.py` (names `classify_dynamic`) (5.4 checks; the live capture needs no edit)
