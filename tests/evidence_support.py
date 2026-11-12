@@ -52,8 +52,49 @@ def document(
 
 
 def evidence(**kwargs: Any) -> ev.Evidence:
-    return ev.parse(json.dumps(document(**kwargs)), TODAY)
+    return ev.parse(dumps(document(**kwargs)), TODAY)
 
 
 def dumps(doc: dict[str, Any]) -> str:
-    return json.dumps(doc)
+    return json.dumps(doc, default=float)  # a Decimal score is written as its JSON number
+
+
+# --- small matrices ---------------------------------------------------------------------------
+
+from mcp_perplexity_pro import matrix as mx  # noqa: E402
+
+ALL_LEVELS = ["minimal", "low", "medium", "high", "xhigh", "max"]
+
+
+def row(
+    price: tuple[float | None, float | None] = (1.0, 1.0),
+    *,
+    efforts: list[str] | str = "all",
+    status: str = "available",
+    inputs: tuple[str, ...] = (),
+    refused_inputs: tuple[str, ...] = (),
+) -> mx.ModelEntry:
+    """One matrix row. ``efforts`` is a list of accepted levels, ``"all"``, or ``"unprobed"``;
+    ``inputs`` lists the kinds the row accepts and ``refused_inputs`` the ones it refuses."""
+    accepted = ALL_LEVELS if efforts == "all" else ([] if efforts == "unprobed" else efforts)
+    return mx.ModelEntry(
+        provider="x",
+        status=status,
+        pricing=mx.Pricing(input=price[0], output=price[1]),
+        first_seen="2026-11-01T00:00:00Z",
+        last_seen="2026-11-01T00:00:00Z",
+        efforts=mx.Efforts(
+            accepted=list(accepted),
+            probed_at="2026-11-01T00:00:00Z",
+            source="unprobed" if efforts == "unprobed" else "probe",
+        ),
+        inputs=mx.Inputs(
+            accepted=list(inputs),
+            refused={k: 400 for k in refused_inputs},
+            source="probe" if inputs or refused_inputs else "unprobed",
+        ),
+    )
+
+
+def matrix_of(rows: dict[str, mx.ModelEntry]) -> mx.Matrix:
+    return mx.Matrix(fetched_at="2026-11-01T00:00:00Z", models=rows)
