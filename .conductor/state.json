@@ -1368,9 +1368,15 @@
         }
       ],
       "parent": "model-routing",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "f2b2a8e8eca707d834e8525c0fb8b7eebbbdfe0c",
+        "9fe26e9837ed975a6cc38adef9faf5225368d6ca",
+        "fecadd449d076ea532a16b13ab7c43a03c978eb7",
+        "e63067eb512eda3cc1e814f341fa33fe0e9aa19d",
+        "6b76fccfef7ec88e2e4bb666bd1553e5e7a387ee"
+      ],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-11-12T02:42:00.044Z",
+      "touchedAt": "2026-11-12T04:05:19.161Z",
       "release": "release-2-4-0",
       "gateReview": {
         "gate1": {
@@ -1497,7 +1503,8 @@
           "lastVerdictAt": "2026-11-12T02:42:00.041Z",
           "lastPassAt": "2026-11-12T02:42:00.041Z"
         }
-      }
+      },
+      "reviewMode": "thorough"
     },
     {
       "id": "model-matrix",
@@ -1660,9 +1667,14 @@
         }
       ],
       "parent": "model-routing",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "ff0f8e7f7c5c4b4b7196a78e75e517afd7430b6b",
+        "19c2e31413eaae1c66f291e38b928ec30563e0bd",
+        "49bcc1c1a2facbda0c73d3c56564c365da62bbc6",
+        "4012b0c21acb31b68c9521078459bb483e946017"
+      ],
       "createdAt": "2026-10-16T06:24:44.693Z",
-      "touchedAt": "2026-11-12T02:41:59.378Z",
+      "touchedAt": "2026-11-12T03:18:14.548Z",
       "release": "release-2-4-0",
       "gateReview": {
         "gate1": {
@@ -2043,7 +2055,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 487,
+  "revision": 497,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
