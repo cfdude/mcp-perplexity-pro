@@ -10,7 +10,7 @@ from collections import Counter
 import pytest
 from fixture_support import FIXTURE_DIR
 
-from mcp_perplexity_pro.rules import classify
+from mcp_perplexity_pro.rules import classify, task_class
 
 PROMPTS = json.loads((FIXTURE_DIR / "routing_prompts.json").read_text())
 TIERS = ("light", "standard", "complex")
@@ -55,3 +55,22 @@ def test_a_borderline_prompt_lands_within_one_tier(item):
 @pytest.mark.parametrize("item", [p for p in PROMPTS if "single_signal" in p], ids=label)
 def test_a_single_signal_prompt_fires_only_its_own_signal(item):
     assert classify(item["text"]).signals == SIGNALS_OF[item["single_signal"]]
+
+
+# --- the task class (routing-v2 task 3.1): a label per prompt, tiers unchanged --------------------
+
+
+def test_every_prompt_has_a_task_label_and_every_class_is_present():
+    assert all(p["task"] in ("coding", "reasoning", "browsing") for p in PROMPTS)
+    assert {p["task"] for p in PROMPTS} == {"coding", "reasoning", "browsing"}
+
+
+@pytest.mark.parametrize("item", PROMPTS, ids=label)
+def test_a_prompt_classifies_to_its_task_label(item):
+    assert task_class(item["text"]) == item["task"]
+
+
+def test_the_lookup_about_the_latest_python_release_is_browsing_and_light():
+    (item,) = [p for p in PROMPTS if p["text"] == "What is the latest stable Python release?"]
+    assert item["task"] == "browsing" and item["expected"] == "light"
+    assert classify(item["text"]).tier == "light" and task_class(item["text"]) == "browsing"

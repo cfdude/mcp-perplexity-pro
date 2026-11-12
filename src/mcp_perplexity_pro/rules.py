@@ -16,6 +16,79 @@ from dataclasses import dataclass
 
 CLASSIFIER = "rules"
 
+# The task class (routing-v2 design D2): which benchmark family a prompt resembles. Offline,
+# deterministic and independent of the tier. ``coding`` when the text holds a fenced code block or
+# a phrase of CODING_VOCABULARY, else ``reasoning`` when it holds a phrase of
+# REASONING_VOCABULARY, else ``browsing`` (every routed call is web-grounded, so it is the default
+# class). The two lists are EXACTLY the ones of the routing-rules spec, plurals written out; generic
+# words (``function``, ``bug``) and language names are left out on purpose, so that
+# ``What is the latest stable Python release?`` stays a light ``browsing`` lookup.
+TASK_CLASSES = ("coding", "reasoning", "browsing")
+DEFAULT_TASK_CLASS = "browsing"
+CODING_VOCABULARY: tuple[str, ...] = (
+    "traceback",
+    "tracebacks",
+    "stack trace",
+    "stack traces",
+    "stacktrace",
+    "stacktraces",
+    "segfault",
+    "segfaults",
+    "syntax error",
+    "syntax errors",
+    "compile error",
+    "compile errors",
+    "compiler error",
+    "compiler errors",
+    "unit test",
+    "unit tests",
+    "refactor",
+    "refactors",
+    "refactored",
+    "refactoring",
+    "refactorings",
+    "regex",
+    "regexes",
+    "regular expression",
+    "regular expressions",
+    "pull request",
+    "pull requests",
+    "code review",
+    "code reviews",
+    "debugging",
+    "source code",
+    "codebase",
+    "codebases",
+)
+REASONING_VOCABULARY: tuple[str, ...] = (
+    "prove",
+    "proves",
+    "proved",
+    "proven",
+    "proof",
+    "proofs",
+    "derive",
+    "derives",
+    "derived",
+    "derivation",
+    "derivations",
+    "theorem",
+    "theorems",
+    "lemma",
+    "lemmas",
+    "probability",
+    "probabilities",
+    "equation",
+    "equations",
+    "integral",
+    "integrals",
+    "eigenvalue",
+    "eigenvalues",
+    "logic puzzle",
+    "logic puzzles",
+)
+_FENCE = "```"
+
 LENGTH_COMPLEX = 1200  # trimmed characters at or above which a text is complex
 QUESTIONS_COMPLEX = 3  # questions plus numbered items at or above which a text is complex
 VOCABULARY_COMPLEX = 2  # distinct analysis groups at or above which a text is complex
@@ -66,6 +139,10 @@ def _phrase(term: str) -> str:
 _GROUP_PATTERNS = tuple(
     re.compile(r"(?<!\w)(?:" + "|".join(_phrase(t) for t in group) + r")(?!\w)")
     for group in ANALYSIS_GROUPS
+)
+_CODING = re.compile(r"(?<!\w)(?:" + "|".join(_phrase(t) for t in CODING_VOCABULARY) + r")(?!\w)")
+_REASONING = re.compile(
+    r"(?<!\w)(?:" + "|".join(_phrase(t) for t in REASONING_VOCABULARY) + r")(?!\w)"
 )
 _LOOKUP = re.compile(r"(?:" + "|".join(_phrase(o) for o in LOOKUP_OPENINGS) + r")(?!\w)")
 # An ASCII question mark counts only before whitespace or the end (so a URL query string does
@@ -121,3 +198,16 @@ def classify(text: str) -> Classification:
 def _result(tier: str, signals: list[str], parts: list[str]) -> Classification:
     reason = ", ".join(parts)[:REASON_MAX_LENGTH]
     return Classification(tier=tier, reason=reason, signals=tuple(signals))
+
+
+def task_class(text: str) -> str:
+    """The task class of ``text``: ``coding``, ``reasoning`` or ``browsing``. Total (never raises
+    on any string) and independent of ``classify``. Phrases match as whole words, any case."""
+    if _FENCE in text:
+        return "coding"
+    folded = text.casefold()
+    if _CODING.search(folded) is not None:
+        return "coding"
+    if _REASONING.search(folded) is not None:
+        return "reasoning"
+    return DEFAULT_TASK_CLASS

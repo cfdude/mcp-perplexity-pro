@@ -271,3 +271,110 @@ def test_the_module_imports_no_settings_network_database_or_fastmcp():
     )
     result = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+# --- the task class (routing-v2 task 3.1) ------------------------------------------------------
+
+CODING_WORDS = (
+    "traceback, tracebacks, stack trace, stack traces, stacktrace, stacktraces, segfault, "
+    "segfaults, syntax error, syntax errors, compile error, compile errors, compiler error, "
+    "compiler errors, unit test, unit tests, refactor, refactors, refactored, refactoring, "
+    "refactorings, regex, regexes, regular expression, regular expressions, pull request, "
+    "pull requests, code review, code reviews, debugging, source code, codebase, codebases"
+)
+REASONING_WORDS = (
+    "prove, proves, proved, proven, proof, proofs, derive, derives, derived, derivation, "
+    "derivations, theorem, theorems, lemma, lemmas, probability, probabilities, equation, "
+    "equations, integral, integrals, eigenvalue, eigenvalues, logic puzzle, logic puzzles"
+)
+
+
+def test_the_coding_vocabulary_is_exactly_the_spec_list():
+    assert rules.CODING_VOCABULARY == tuple(CODING_WORDS.split(", "))
+
+
+def test_the_reasoning_vocabulary_is_exactly_the_spec_list():
+    assert rules.REASONING_VOCABULARY == tuple(REASONING_WORDS.split(", "))
+
+
+def test_the_three_classes_and_the_default_are_pinned():
+    assert rules.TASK_CLASSES == ("coding", "reasoning", "browsing")
+    assert rules.DEFAULT_TASK_CLASS == "browsing"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Why does this traceback appear when I run the unit tests?", "coding"),
+        ("Prove that the sum of two even numbers is even.", "reasoning"),
+        ("What is the latest stable Python release?", "browsing"),
+        ("Which Python version is newer, 3.12 or 3.13?", "browsing"),
+        ("Is this function a bug?", "browsing"),
+        ("Why is this loop slow?\n```\nfor x in y: pass\n```", "coding"),
+        ("```", "coding"),
+        ("Does this regular expression match emails, and can you prove it?", "coding"),
+        ("We had stack traces in the logs", "coding"),
+        ("How was the formula derived?", "reasoning"),
+        ("Find the eigenvalues of this matrix.", "reasoning"),
+        ("REGEX", "coding"),
+        ("Regular\n  Expression", "coding"),
+        ("", "browsing"),
+        ("   \n\t ", "browsing"),
+    ],
+)
+def test_the_task_class_of_a_text(text, expected):
+    assert rules.task_class(text) == expected
+
+
+@pytest.mark.parametrize("phrase", CODING_WORDS.split(", "))
+def test_every_coding_phrase_makes_a_coding_text(phrase):
+    assert rules.task_class(f"Tell me about {phrase} please") == "coding"
+
+
+@pytest.mark.parametrize("phrase", REASONING_WORDS.split(", "))
+def test_every_reasoning_phrase_makes_a_reasoning_text(phrase):
+    assert rules.task_class(f"Tell me about {phrase} please") == "reasoning"
+
+
+@pytest.mark.parametrize(
+    "text", ["prover", "refactory", "regexp", "unit testing", "reproof", "codebased", "stack-trace"]
+)
+def test_phrases_match_whole_words_only(text):
+    assert rules.task_class(text) == "browsing"
+
+
+@pytest.mark.parametrize("word", ["function", "bug", "python", "javascript", "rust", "code"])
+def test_generic_words_and_language_names_are_not_coding(word):
+    assert rules.task_class(f"Tell me about {word} please") == "browsing"
+
+
+def test_coding_wins_over_reasoning():
+    assert rules.task_class("Prove that this regex terminates") == "coding"
+    assert rules.task_class("```\n```\nprove it") == "coding"
+
+
+def test_the_class_does_not_move_the_tier():
+    text = "What is the probability of a segfault?"
+    assert rules.task_class(text) == "coding"
+    assert classify(text).tier == "light"
+
+
+def test_the_task_class_is_deterministic_and_total():
+    odd = ["", "\x00", "💥" * 50, "?" * 4000, "traceback" * 1000, "a" * 100_000, "İregex"]
+    for text in odd:
+        assert rules.task_class(text) == rules.task_class(text)
+        assert rules.task_class(text) in rules.TASK_CLASSES
+
+
+def test_the_task_class_is_the_same_in_another_process():
+    code = (
+        "from mcp_perplexity_pro.rules import task_class;"
+        "print(task_class('Why does this traceback appear?'), task_class('prove it'))"
+    )
+    out = [
+        subprocess.run(
+            [sys.executable, "-c", code], capture_output=True, text=True, check=True
+        ).stdout.strip()
+        for _ in range(2)
+    ]
+    assert out == ["coding reasoning"] * 2
