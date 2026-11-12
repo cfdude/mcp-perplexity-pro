@@ -94,6 +94,14 @@
           "basis": "vendor",
           "harness": "official public leaderboard figure, highest thinking level (model evaluation PDF, results as of September 2026)",
           "verified_at": "2026-11-11"
+        },
+        "gpqa_diamond": {
+          "score": 95.3,
+          "source_url": "https://artificialanalysis.ai/evaluations/gpqa-diamond",
+          "as_of": "2026-11-11",
+          "basis": "independent",
+          "harness": "Artificial Analysis, Gemini 3.8 Flash (High)",
+          "verified_at": "2026-11-11"
         }
       }
     },

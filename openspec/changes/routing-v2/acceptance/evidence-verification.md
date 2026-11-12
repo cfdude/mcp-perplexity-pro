@@ -8,7 +8,7 @@ Data by LLM Stats (linked to https://llm-stats.com).
 
 A score of `data/routing_evidence.json` is on a 0 to 100 scale (the lead's 0.648 is 64.8).
 
-## Verified figures (9 entered)
+## Verified figures (10 entered)
 
 | Model | Benchmark id | Score | Source read | Quoted snippet |
 |---|---|---|---|---|
@@ -20,6 +20,7 @@ A score of `data/routing_evidence.json` is on a 0 to 100 scale (the lead's 0.648
 | `anthropic/claude-opus-5-5` | `swe_bench_pro` | 89.9 | card 8.1 table and 8.2 | "Claude Opus 5.5 achieved 89.9%." |
 | `google/gemini-3.8-flash` | `terminal_bench_4_0` | 19.1 | Google DeepMind model evaluation PDF behind deepmind.google/models/evals-methodology/gemini-3-8-flash/ (results "as of September, 2026"), rendered page 4 | row "Terminal-bench 4.0 / General agent capabilities", column Gemini 3.8 Flash: 19.1%; methodology: "reported from the official public leaderboard ... the highest scoring thinking level" |
 | `perplexity/sonar` | `browsecomp` | 7.0 | docs.perplexity.ai/docs/agent-api/migrate-from-sonar/benchmarks.md | table row Sonar: "7.00%", benchmark BrowseComp (arXiv 2504.12516), "the baseline those models were measured against before retirement" |
+| `google/gemini-3.8-flash` | `gpqa_diamond` | 95.3 | artificialanalysis.ai/evaluations/gpqa-diamond (independent) | summary line: "Gemini 3.8 Flash (High) with a score of 95.3%" (the page is truncated; no date shown) |
 
 `as_of` is the announcement date for the Anthropic figures. The Google and Perplexity pages state
 no day (a month, and none), so their `as_of` is the retrieval date 2026-11-11 and `verified_at` is
@@ -57,3 +58,19 @@ The task asks for a human spot check of at least 5 of these figures. An agent re
 not yet. Until then `verified_at` carries the agent's read date and the owner should open at least five
 `source_url`s (suggest: Haiku 5.5 `swe_bench_pro` card 8.2, Sonnet 5.5 and Opus 5.5 `terminal_bench_4_0`,
 the Gemini PDF page 4, the Sonar benchmarks page).
+
+## Second sourcing pass (GPQA Diamond and BrowseComp), same day
+
+Goal: 3 or more eligible models for `reasoning` and for `browsing`. Result: not reached.
+
+- OpenAI pages for GPT-6 Luna, GPT-6.1 Sol and GPT-6.1 Terra: HTTP 403 to the fetch tool and to curl,
+  and a Cloudflare "Just a moment" challenge to a headless browser (agent-browser). The Chrome extension
+  was not connected. No OpenAI figure was readable, so none is entered (Terra Terminal-Bench 4.0 stays absent).
+- Google evaluation PDF: no GPQA or BrowseComp row (HLE-Verified, not GPQA).
+- Anthropic system cards and pages: no GPQA Diamond or BrowseComp score (GPQA appears only in a controllability test).
+- Artificial Analysis: the GPQA Diamond page is truncated; it names only Gemini 3.8 Flash (95.3, High) and two
+  GPT-6 Astra rows (not on the shortlist). Its model pages for Luna, Haiku 5.5, Sonnet 5.5 and Gemini 3.8 Flash show
+  no GPQA or BrowseComp row in the readable text. Its BrowseComp page is a 404.
+- Perplexity docs: BrowseComp only for Sonar models and Agent API presets, not for the other shortlist models.
+
+Class counts after the pass: coding 3 eligible, reasoning 1 (Gemini 3.8 Flash), browsing 1 (Sonar).

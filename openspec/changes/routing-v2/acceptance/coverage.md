@@ -12,6 +12,6 @@ Evidence `as_of` 2026-11-11.
 |---|---|---|---|---|---|
 | browsing | 1: `perplexity/sonar` | 20 | 20 | 100% | EXCLUDED |
 | coding | 3: `anthropic/claude-haiku-5-5`, `anthropic/claude-opus-5-5`, `anthropic/claude-sonnet-5-5` | 20 | 20 | 100% | KEPT |
-| reasoning | 0: none | 20 | 0 | 0% | EXCLUDED |
+| reasoning | 1: `google/gemini-3.8-flash` | 20 | 20 | 100% | EXCLUDED |
 
 **evidence too thin: router cannot be evaluated**: the work stops here for the owner (shrink the classes, source more figures, or hold `routing-v2`); no evaluation spend occurs.
