@@ -33,15 +33,21 @@ def test_the_packaged_evidence_is_valid_with_an_entry_for_every_shortlist_id_and
     assert set(packaged.task_classes) == {"coding", "reasoning", "browsing"}
 
 
-def test_the_shipped_state_has_empty_scores_so_no_model_is_eligible_for_any_class():
+def test_empty_scores_are_valid_and_make_no_model_eligible_for_any_class():
+    empty = evidence()  # a literal with an empty scores object for every model
+    assert all(not entry.scores for entry in empty.models.values())
+    assert not empty.has_verified_score()
+    assert all(empty.class_score(m, c) is None for m in empty.shortlist for c in empty.task_classes)
+
+
+def test_every_packaged_score_is_sourced_verified_and_never_from_llm_stats():
     packaged = ev.load_packaged(TODAY)
-    assert all(not entry.scores for entry in packaged.models.values())
-    assert not packaged.has_verified_score()
-    assert all(
-        packaged.class_score(m, c) is None
-        for m in packaged.shortlist
-        for c in packaged.task_classes
-    )
+    assert packaged.has_verified_score()
+    for model_id, entry in packaged.models.items():
+        for benchmark, score in entry.scores.items():
+            assert score.verified_at is not None, (model_id, benchmark)
+            assert score.source_url.startswith("https://")
+            assert "llm-stats.com" not in score.source_url
 
 
 def test_no_file_in_the_data_directory_uses_the_packaged_evidence_without_a_warning(tmp_path):

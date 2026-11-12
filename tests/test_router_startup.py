@@ -202,14 +202,27 @@ async def test_evidence_exactly_90_days_old_does_not_warn(
     await close(server)
 
 
-async def test_the_packaged_empty_evidence_warns_that_nothing_is_verified(
-    make_settings, monkeypatch, caplog, restore_logging
+async def test_evidence_with_no_verified_score_warns_that_nothing_is_verified(
+    make_settings, monkeypatch, caplog, tmp_path, restore_logging
 ):
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / ev.FILENAME).write_text(json.dumps(document(as_of="2026-11-01")))  # empty scores
     with caplog.at_level(logging.WARNING, logger="mcp_perplexity_pro"):
         _, server = boot(make_settings, monkeypatch, routing="dynamic")
     (warning,) = evidence_warnings(caplog)
     assert "no verified routing evidence" in warning.getMessage()
     assert "fall back" in warning.getMessage()
+    await close(server)
+
+
+async def test_the_packaged_evidence_holds_verified_scores_and_warns_nothing(
+    make_settings, monkeypatch, caplog, restore_logging
+):
+    with caplog.at_level(logging.WARNING, logger="mcp_perplexity_pro"):
+        _, server = boot(make_settings, monkeypatch, routing="dynamic")
+    # no "no verified evidence" warning (an age warning is the packaged file getting old)
+    assert not [w for w in evidence_warnings(caplog) if "no verified" in w.getMessage()]
     await close(server)
 
 

@@ -2,15 +2,36 @@
   "version": 1,
   "as_of": "2026-11-11",
   "task_classes": {
-    "coding": {"benchmarks": ["swe_bench_pro", "terminal_bench_4_0"]},
-    "reasoning": {"benchmarks": ["gpqa_diamond"]},
-    "browsing": {"benchmarks": ["browsecomp"]}
+    "coding": {
+      "benchmarks": [
+        "swe_bench_pro",
+        "terminal_bench_4_0"
+      ]
+    },
+    "reasoning": {
+      "benchmarks": [
+        "gpqa_diamond"
+      ]
+    },
+    "browsing": {
+      "benchmarks": [
+        "browsecomp"
+      ]
+    }
   },
   "benchmarks": {
-    "swe_bench_pro": {"name": "SWE-Bench Pro"},
-    "terminal_bench_4_0": {"name": "Terminal-Bench 4.0"},
-    "gpqa_diamond": {"name": "GPQA Diamond"},
-    "browsecomp": {"name": "BrowseComp"}
+    "swe_bench_pro": {
+      "name": "SWE-Bench Pro"
+    },
+    "terminal_bench_4_0": {
+      "name": "Terminal-Bench 4.0"
+    },
+    "gpqa_diamond": {
+      "name": "GPQA Diamond"
+    },
+    "browsecomp": {
+      "name": "BrowseComp"
+    }
   },
   "shortlist": [
     "openai/gpt-6-luna",
@@ -22,15 +43,105 @@
     "openai/gpt-6.1-terra",
     "anthropic/claude-opus-5-5"
   ],
-  "fallbacks": {"default": {"model": "openai/gpt-6-luna", "effort": "low"}},
+  "fallbacks": {
+    "default": {
+      "model": "openai/gpt-6-luna",
+      "effort": "low"
+    }
+  },
   "models": {
-    "openai/gpt-6-luna": {"scores": {}},
-    "anthropic/claude-haiku-5-5": {"scores": {}},
-    "perplexity/sonar": {"scores": {}},
-    "google/gemini-3.8-flash": {"scores": {}},
-    "anthropic/claude-sonnet-5-5": {"scores": {}},
-    "openai/gpt-6.1-sol": {"scores": {}},
-    "openai/gpt-6.1-terra": {"scores": {}},
-    "anthropic/claude-opus-5-5": {"scores": {}}
+    "openai/gpt-6-luna": {
+      "scores": {}
+    },
+    "anthropic/claude-haiku-5-5": {
+      "scores": {
+        "swe_bench_pro": {
+          "score": 64.8,
+          "source_url": "https://www.anthropic.com/claude-haiku-5-5-system-card",
+          "as_of": "2026-10-07",
+          "basis": "vendor",
+          "harness": "mean of five trials (system card 8.2)",
+          "verified_at": "2026-11-11"
+        },
+        "terminal_bench_4_0": {
+          "score": 39.2,
+          "source_url": "https://www.anthropic.com/claude-haiku-5-5",
+          "as_of": "2026-10-07",
+          "basis": "vendor",
+          "harness": "Claude Code --bare, max thinking effort, safeguards on (system card 8.4)",
+          "verified_at": "2026-11-11"
+        }
+      }
+    },
+    "perplexity/sonar": {
+      "scores": {
+        "browsecomp": {
+          "score": 7.0,
+          "source_url": "https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/benchmarks.md",
+          "as_of": "2026-11-11",
+          "basis": "vendor",
+          "harness": null,
+          "verified_at": "2026-11-11"
+        }
+      }
+    },
+    "google/gemini-3.8-flash": {
+      "scores": {
+        "terminal_bench_4_0": {
+          "score": 19.1,
+          "source_url": "https://deepmind.google/models/evals-methodology/gemini-3-8-flash/",
+          "as_of": "2026-11-11",
+          "basis": "vendor",
+          "harness": "official public leaderboard figure, highest thinking level (model evaluation PDF, results as of September 2026)",
+          "verified_at": "2026-11-11"
+        }
+      }
+    },
+    "anthropic/claude-sonnet-5-5": {
+      "scores": {
+        "swe_bench_pro": {
+          "score": 81.3,
+          "source_url": "https://www.anthropic.com/claude-sonnet-5-5-system-card",
+          "as_of": "2026-09-28",
+          "basis": "vendor",
+          "harness": "mean of five trials (system card 8.2)",
+          "verified_at": "2026-11-11"
+        },
+        "terminal_bench_4_0": {
+          "score": 70.6,
+          "source_url": "https://www.anthropic.com/claude-sonnet-5-5",
+          "as_of": "2026-09-28",
+          "basis": "vendor",
+          "harness": "Claude Code --bare, max thinking effort, safeguards on (system card 8.5)",
+          "verified_at": "2026-11-11"
+        }
+      }
+    },
+    "openai/gpt-6.1-sol": {
+      "scores": {}
+    },
+    "openai/gpt-6.1-terra": {
+      "scores": {}
+    },
+    "anthropic/claude-opus-5-5": {
+      "scores": {
+        "swe_bench_pro": {
+          "score": 89.9,
+          "source_url": "https://www.anthropic.com/claude-opus-5-5-system-card",
+          "as_of": "2026-09-22",
+          "basis": "vendor",
+          "harness": "mean of five trials (system card 8.2)",
+          "verified_at": "2026-11-11"
+        },
+        "terminal_bench_4_0": {
+          "score": 66.4,
+          "source_url": "https://www.anthropic.com/claude-opus-5-5",
+          "as_of": "2026-09-22",
+          "basis": "vendor",
+          "harness": "Claude Code --bare, xhigh thinking effort, safeguards on (system card 8.5)",
+          "verified_at": "2026-11-11"
+        }
+      }
+    }
   }
 }
