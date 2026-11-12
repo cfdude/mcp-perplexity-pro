@@ -178,6 +178,11 @@ def run(
 
 
 async def _run_http(server: FastMCP, settings: Settings, graceful_timeout: float) -> None:
+    from mcp_perplexity_pro.media_read import http_paths_notice  # fastmcp loads after bootstrap
+
+    notice = http_paths_notice(settings.attach_root_dirs)
+    if notice:
+        logger.info(notice)
     # uvicorn stops accepting at SIGTERM/SIGINT, drains in-flight requests for
     # ``graceful_timeout`` and cancels what is left; its lifespan shutdown runs after that.
     try:

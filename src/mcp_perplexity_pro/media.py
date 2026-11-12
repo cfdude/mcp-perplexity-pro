@@ -92,6 +92,7 @@ class Attachment:
     url: str | None = None
     data: bytes | None = None
     size: int = 0
+    written: str = ""  # a path item as the caller wrote it (for error text, cut when shown)
 
 
 class Built(NamedTuple):
@@ -198,7 +199,7 @@ def _parse_path(raw: str, index: int, prefix: str | None) -> Attachment:
     kind = SUPPORTED[media_type][0]
     base = PurePosixPath(path).name
     name = _document_name(base, media_type) if kind == "document" else base
-    return Attachment(index, "path", kind, media_type, name, path=path)
+    return Attachment(index, "path", kind, media_type, name, path=path, written=raw)
 
 
 # --- inline data ---------------------------------------------------------------------------
