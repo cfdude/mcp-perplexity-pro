@@ -7,6 +7,7 @@ no data directory). Directory creation belongs to the storage layer, after setti
 from __future__ import annotations
 
 import re
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Annotated, Literal
 from urllib.parse import urlsplit
@@ -28,6 +29,25 @@ DEFAULT_MODEL = "perplexity/sonar"
 # keeps several servers sharing a data directory from refreshing and probing in a tight loop).
 MATRIX_REFRESH_MIN = 300
 MATRIX_REFRESH_MAX = 604800
+# The router's margin in score points (routing-v2 design D4): models within it of the best class
+# score are contenders and the cheapest wins; 0 means the best score always wins. Owner-approved
+# 2026-11-11; ``PERPLEXITY_ROUTER_MARGIN`` overrides it in ``dynamic`` mode only.
+ROUTER_MARGIN_DEFAULT = Decimal("3.0")
+ROUTER_MARGIN_MAX = Decimal("20")
+
+
+def parse_router_margin(value: str) -> Decimal:
+    """A margin from its text: a finite number from 0 to 20, as an exact ``Decimal``. Raises
+    ``ValueError`` for anything else (``nan``, ``inf``, a negative, 25, ``abc``)."""
+    try:
+        margin = Decimal(value.strip())
+    except InvalidOperation:
+        raise ValueError("not a number") from None
+    if not margin.is_finite() or not Decimal(0) <= margin <= ROUTER_MARGIN_MAX:
+        raise ValueError("outside 0 to 20")
+    return margin
+
+
 # A model id is written into the instructions text the calling agent reads, so only the plain
 # characters real ids use (no whitespace, control, invisible or Markdown characters); 200
 # characters is this server's own sanity cap.
@@ -80,6 +100,9 @@ class Settings(BaseSettings):
     tier_standard: str | None = None
     tier_complex: str | None = None
     classifier: str = "rules"
+    # Raw text, not a number: it is validated only in ``dynamic`` mode (and ignored with a warning
+    # elsewhere), so a bad value must not break a standard server or the schema build.
+    router_margin: str | None = None
     matrix_refresh: int = 86400
     matrix_probe: Literal["new", "off"] = "new"
     # A plain string, not a list field: pydantic-settings reads a list field as JSON from the
@@ -112,6 +135,14 @@ class Settings(BaseSettings):
     def _check_attach_roots(cls, value: str) -> str:
         parse_attach_roots(value)
         return value
+
+    @property
+    def router_margin_points(self) -> Decimal:
+        """The margin in force: ``PERPLEXITY_ROUTER_MARGIN`` in ``dynamic`` mode, else the
+        default 3. Only a validated value reaches here (``dynamic`` fails startup otherwise)."""
+        if self.routing == "dynamic" and self.router_margin is not None:
+            return parse_router_margin(self.router_margin)
+        return ROUTER_MARGIN_DEFAULT
 
     @property
     def attach_root_dirs(self) -> tuple[str, ...]:
@@ -151,6 +182,14 @@ class Settings(BaseSettings):
                 f"{ENV_PREFIX}CLASSIFIER: got {self.classifier!r}; accepted values are rules "
                 "and decisions"
             )
+        if self.routing == "dynamic" and self.router_margin is not None:
+            try:
+                parse_router_margin(self.router_margin)
+            except ValueError:
+                problems.append(
+                    f"{ENV_PREFIX}ROUTER_MARGIN: got {self.router_margin!r}; a number from 0 "
+                    f"to {ROUTER_MARGIN_MAX} is required"
+                )
         for name, value in wanted.items():
             if value is None:
                 if self.routing == "custom":
@@ -174,6 +213,7 @@ class Settings(BaseSettings):
             return [f"{ENV_PREFIX}MODEL"] if shadowed else []
         unused = ["model"] if self.routing == "custom" else [f"tier_{t}" for t in TIER_NAMES]
         unused.append("classifier")  # only dynamic mode classifies
+        unused.append("router_margin")  # only dynamic mode routes
         return [f"{ENV_PREFIX}{n.upper()}" for n in unused if n in self.model_fields_set]
 
     @field_validator("data_dir", mode="after")

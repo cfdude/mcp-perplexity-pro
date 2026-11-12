@@ -24,9 +24,12 @@ from decimal import Decimal
 from mcp_perplexity_pro import matrix as matrix_mod
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.routing_evidence import Evidence
+from mcp_perplexity_pro.settings import ROUTER_MARGIN_DEFAULT
 
 PRICE_WEIGHTS = (3, 1)  # blended price = (3 * input + 1 * output) / 4 per million tokens
-MARGIN_POINTS = Decimal("3.0")  # owner-approved 2026-11-11; PERPLEXITY_ROUTER_MARGIN overrides
+MARGIN_POINTS = (
+    ROUTER_MARGIN_DEFAULT  # 3.0, owner-approved 2026-11-11; PERPLEXITY_ROUTER_MARGIN overrides
+)
 TOOLS = ("ask", "chat")
 LEVELS = matrix_mod.LEVELS  # ordered lowest to highest
 # The level a tier asks for (D5). ``high`` and ``xhigh`` are never automatic: a call has a 120 s

@@ -98,7 +98,33 @@ def bootstrap(
     server = build_server(
         settings, http or httpx2.AsyncClient(), engine, matrix_refresh=serving
     )  # the matrix refresh task runs only in a process that serves
+    if serving and settings.routing == "dynamic":
+        warn_about_evidence(server.app)  # type: ignore[attr-defined]
     return server, settings
+
+
+def warn_about_evidence(app: object) -> None:
+    """The two startup warnings of the router's evidence (routing-evidence spec): its ``as_of`` is
+    more than 90 days before today, and it holds no verified score. Reads the evidence once, in a
+    serving ``dynamic`` process only; routing is unchanged by either."""
+    from mcp_perplexity_pro import routing_evidence as ev
+
+    state: ev.EvidenceState = app.evidence  # type: ignore[attr-defined]
+    evidence = state.snapshot().evidence
+    age = (state.today() - evidence.as_of).days
+    if age > ev.STALE_DAYS:
+        logger.warning(
+            "routing evidence is dated %s, %d days ago (more than %d); routing is unchanged, "
+            "re-verify the figures (see the README)",
+            evidence.as_of,
+            age,
+            ev.STALE_DAYS,
+        )
+    if not evidence.has_verified_score():
+        logger.warning(
+            "no verified routing evidence is loaded: every nameless call will fall back to "
+            "the default fallback model"
+        )
 
 
 def main(argv: list[str] | None = None) -> None:

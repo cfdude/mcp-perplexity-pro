@@ -102,7 +102,9 @@ def test_dynamic_routing_starts_with_only_the_key_and_logs_its_three_tiers(tmp_p
     for part in ("light=preset fast", "standard=model perplexity/sonar", "complex=preset medium"):
         assert part in lines[0]
     assert "test-dummy-api-key" not in result.stderr
-    assert "WARNING" not in result.stderr
+    # the only warning is the evidence one: the shipped file holds no verified score
+    warnings = [ln for ln in result.stderr.splitlines() if "WARNING" in ln]
+    assert len(warnings) == 1 and "no verified routing evidence" in warnings[0]
 
 
 def test_dynamic_routing_logs_a_replaced_tier_as_its_model(tmp_path):
@@ -129,7 +131,11 @@ def test_dynamic_routing_warns_once_about_a_shadowed_model_variable(tmp_path):
         stdin="",
     )
     assert result.returncode == 0, result.stderr
-    warnings = [ln for ln in result.stderr.splitlines() if "WARNING" in ln]
+    warnings = [
+        ln
+        for ln in result.stderr.splitlines()
+        if "WARNING" in ln and "routing evidence" not in ln  # the evidence warning is its own
+    ]
     assert len(warnings) == 1 and "PERPLEXITY_MODEL" in warnings[0]
     assert "x/shadowed" not in warnings[0] and "PERPLEXITY_TIER_STANDARD" in warnings[0]
 

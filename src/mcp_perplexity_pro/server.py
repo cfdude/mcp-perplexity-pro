@@ -34,6 +34,7 @@ from mcp_perplexity_pro.matrix_refresh import MatrixState, start_task, stop_task
 from mcp_perplexity_pro.media import drop_attachment_input_values
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.routing import instructions_text
+from mcp_perplexity_pro.routing_evidence import EvidenceState
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
 from mcp_perplexity_pro.tools import register_tools
 from mcp_perplexity_pro.usage import failure_summary, utcnow
@@ -66,6 +67,8 @@ class AppContext:
     catalog: Catalog
     # the model matrix (lazily loaded) and its refresh task; one mutable holder, no globals
     matrix: MatrixState
+    # the router's benchmark evidence (lazily loaded, never written); one mutable holder
+    evidence: EvidenceState
     # OUR clock for research jobs (naive UTC); tests inject one
     now: Callable[[], datetime] = utcnow
     # one in-process lock per research job (design D8)
@@ -255,6 +258,7 @@ def build_server(
             clock=clock,
         ),
         matrix=MatrixState(data_dir=settings.data_dir, enabled=matrix_refresh),
+        evidence=EvidenceState(data_dir=settings.data_dir),
         now=now,
     )
 
