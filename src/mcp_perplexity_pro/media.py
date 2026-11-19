@@ -387,6 +387,14 @@ def note_item(item: Attachment) -> str:
     return f"{name} ({item.media_type}, {len(data)} bytes, sha256 {_sha12(data)})"
 
 
+def log_line(item: Attachment) -> str:
+    """What a log record may say about an attachment: position, kind, type, decoded size and the
+    first 12 hex characters of a SHA-256 (of the bytes, or of the URL). Never a name or a path."""
+    digest = _sha12(item.data) if item.data is not None else _sha12((item.url or "").encode())
+    size = len(item.data) if item.data is not None else item.size
+    return f"attachment {item.index}: {item.kind} {item.media_type} {size} bytes sha256 {digest}"
+
+
 def render_trailer(items: Sequence[Attachment], notes: Sequence[str]) -> str:
     """``[attachments: a; b]``, or at 1500 characters a prefix of the items plus a count of the
     hidden ones (``+N more: <d> documents, <i> images, <b> bytes``)."""

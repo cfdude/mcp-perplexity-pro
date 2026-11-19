@@ -25,6 +25,7 @@ from pathlib import Path
 from mcp_perplexity_pro import media
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.media import Attachment, label
+from mcp_perplexity_pro.settings import Settings
 
 MAX_INFLIGHT_BYTES = 64 * 1024 * 1024
 ACQUIRE_TIMEOUT = 30.0
@@ -122,6 +123,22 @@ class ByteLimiter:
             self._waiters.popleft()
             self.used += share
             future.set_result(None)
+
+
+@dataclasses.dataclass
+class AttachState:
+    """What the server holds for attachments: the process-wide byte limiter and whether the
+    transport is HTTP (set by ``__main__.run``; a stdio server and a one-shot command read local
+    paths, an HTTP one only inside ``PERPLEXITY_ATTACH_ROOTS``). One mutable holder on the app
+    context, no globals."""
+
+    limiter: ByteLimiter = dataclasses.field(default_factory=lambda: ByteLimiter())
+    http: bool = False
+
+    def policy(self, settings: Settings) -> AttachPolicy:
+        return AttachPolicy(
+            roots=settings.attach_root_dirs, http=self.http, data_dir=settings.data_dir
+        )
 
 
 # --- the real path -------------------------------------------------------------------------

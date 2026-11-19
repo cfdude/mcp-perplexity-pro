@@ -9,7 +9,7 @@ from fastmcp.tools import ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
-from mcp_perplexity_pro import call_flow
+from mcp_perplexity_pro import call_flow, media
 from mcp_perplexity_pro.agent import (
     AskOptions,
     Digest,
@@ -35,6 +35,10 @@ from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, validate_projec
 
 TOOL = "perplexity_ask"
 GENERIC_400 = "invalid request"  # the API's body for several unrelated mistakes (design D6)
+# At most 100 characters (spec agent-ask): the form, the cost note, nothing about retention.
+ATTACHMENTS_DESCRIPTION = (
+    "Paths, https URLs or data: URIs of images/documents, at most 10; they add input tokens"
+)
 
 
 class Routing(BaseModel):
@@ -209,6 +213,10 @@ def register(server: FastMCP, settings: Settings) -> None:
             dict[str, Any] | None,
             Field(description="A JSON Schema (root type object) for a structured answer"),
         ] = None,
+        attachments: Annotated[
+            list[str] | None,
+            Field(description=ATTACHMENTS_DESCRIPTION),
+        ] = None,
     ) -> ToolResult:
         """Ask one web-grounded question and get the answer with its sources. Synchronous and
         stateless; it never waits for a background run (use perplexity_research for those).
@@ -231,7 +239,8 @@ def register(server: FastMCP, settings: Settings) -> None:
         # provisional resolve and option validation, the real resolve, the gate, the Decisions
         # request, the second resolve, the gate again on the final route.
         check_selectors(app.settings, depth=depth, tier=tier, model=model)
-        kinds = call_flow.parse_attachments()
+        kinds = call_flow.parse_attachments(attachments)
+        items = media.parse_attachments(attachments)  # pure: the same check, nothing is read
         decider = wants_decider(app.settings, depth=depth, tier=tier, model=model, search=search)
         # The first route only has to name some model so every option can be validated (with the
         # Decisions classifier it is also the route the classifier request is built from).
@@ -270,45 +279,51 @@ def register(server: FastMCP, settings: Settings) -> None:
             ),
         )
         call_flow.gate_route(app, options.route, kinds)
-        request = build_request(options, query, store=False)
-        if decider:  # only now: an invalid call spends nothing (the project name is checked first)
-            name = validate_project_name(project or DEFAULT_PROJECT)
-            classification = await classify_dynamic(app, query, project=name, tool=TOOL)
-            decided = resolve(
-                app.settings,
-                text=query,
-                search=search,
-                classification=classification,
-                required_input=kinds,
+        async with call_flow.held(app, items, query) as loaded:
+            parts = media.build_parts(loaded).parts
+            request = build_request(options, query, store=False, attachments=parts)
+            if (
+                decider
+            ):  # only now: an invalid call spends nothing (the project name is checked first)
+                name = validate_project_name(project or DEFAULT_PROJECT)
+                classification = await classify_dynamic(app, query, project=name, tool=TOOL)
+                decided = resolve(
+                    app.settings,
+                    text=query,
+                    search=search,
+                    classification=classification,
+                    required_input=kinds,
+                )
+                if (decided.model, decided.preset) != (options.route.model, options.route.preset):
+                    call_flow.gate_route(
+                        app, decided, kinds
+                    )  # the route changed: gate the final one
+                options = replace(options, route=decided)
+                request = build_request(options, query, store=False, attachments=parts)
+            try:
+                costed = await run_costed(
+                    app,
+                    tool=TOOL,
+                    project=project,
+                    body=request,
+                    preset=options.preset,
+                    background=False,
+                )
+            except PerplexityError as exc:
+                raise (schema_hint(exc) if json_schema is not None else exc) from None
+            result = build_result(
+                digest(
+                    costed.run,
+                    structured=json_schema is not None,
+                    secrets=(app.settings.api_key.get_secret_value(),),
+                ),
+                route=options.route,
+                latency_ms=costed.latency_ms,
+                project=costed.project,
             )
-            if (decided.model, decided.preset) != (options.route.model, options.route.preset):
-                call_flow.gate_route(app, decided, kinds)  # the route changed: gate the final one
-            options = replace(options, route=decided)
-            request = build_request(options, query, store=False)
-        try:
-            costed = await run_costed(
-                app,
-                tool=TOOL,
-                project=project,
-                body=request,
-                preset=options.preset,
-                background=False,
+            return ToolResult(
+                content=render_answer(result), structured_content=result.model_dump(mode="json")
             )
-        except PerplexityError as exc:
-            raise (schema_hint(exc) if json_schema is not None else exc) from None
-        result = build_result(
-            digest(
-                costed.run,
-                structured=json_schema is not None,
-                secrets=(app.settings.api_key.get_secret_value(),),
-            ),
-            route=options.route,
-            latency_ms=costed.latency_ms,
-            project=costed.project,
-        )
-        return ToolResult(
-            content=render_answer(result), structured_content=result.model_dump(mode="json")
-        )
 
     server.tool(
         name=TOOL,

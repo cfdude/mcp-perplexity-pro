@@ -197,6 +197,7 @@ def run(
     ``graceful_timeout`` is how long in-flight calls may run after a stop signal; production
     uses the 10 s default, tests pass less so a cut-off scenario does not take 10 s.
     """
+    server.app.attach.http = transport == "http"  # type: ignore[attr-defined]
     if transport == "http":
         asyncio.run(_run_http(server, settings, graceful_timeout))
     else:
