@@ -186,3 +186,38 @@ def test_a_closing_paren_after_a_cut_url_is_kept():
     assert redact_text("(see https://x.example/a?k=1)") == "(see https://x.example/a)"
     assert redact_persisted("(see https://x.example/a/b?k=1)") == "(see https://x.example/…)"
     assert redact_text("https://x.example/wiki/Foo_(bar)?k=1") == "https://x.example/wiki/Foo_(bar)"
+
+
+V6 = "https://u:pw@[::1]:8443/cap/x?sig=SECRET#f"
+
+
+def test_an_ipv6_host_url_is_cut_in_both_forms():
+    from mcp_perplexity_pro.redaction import redact_persisted
+
+    assert redact_text(f"bad {V6} end") == "bad https://[::1]:8443/cap/x end"
+    assert redact_persisted(f"bad {V6} end") == "bad https://[::1]:8443/… end"
+
+
+def test_an_ipv6_url_never_reaches_a_usage_text_or_a_log_record():
+    import logging
+
+    from mcp_perplexity_pro.log_setup import RedactingFilter
+    from mcp_perplexity_pro.usage import _failure_text
+
+    text = _failure_text(ValueError(f"echo {V6}"), ())
+    assert not any(x in text for x in ("pw", "SECRET", "/cap"))
+    record = logging.LogRecord("t", logging.ERROR, __file__, 1, "said %s", (V6,), None)
+    RedactingFilter().filter(record)
+    assert not any(x in record.msg for x in ("pw", "SECRET", "/cap"))
+
+
+def test_a_trailing_backtick_is_kept_and_the_url_scan_is_linear():
+    assert redact_text("see `https://h.example/cap?k=1` ok") == "see `https://h.example/cap` ok"
+    for hostile in (
+        "https://[" * 100_000,
+        "https://" + "[::1]" * 100_000,
+        "https://" + "a" * 500_000,
+    ):
+        started = time.perf_counter()
+        redact_text(hostile)
+        assert time.perf_counter() - started < 3

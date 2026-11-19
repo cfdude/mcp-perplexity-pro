@@ -45,8 +45,9 @@ def _base64_run(match: re.Match[str]) -> str:
     return run
 
 
-# A URL runs to whitespace, a quote or a bracket. One character class under one ``+``.
-_URL = re.compile(r"https?://[^\s\"'<>\[\]{}]+", re.IGNORECASE)
+# A URL runs to whitespace, a quote, a backtick or a bracket; a bracketed IPv6 host is one unit
+# (its first character differs from every other alternative's, so the scan is linear).
+_URL = re.compile(r"https?://(?:\[[0-9A-Fa-f:.%]+\]|[^\s\"'`<>\[\]{}])+", re.IGNORECASE)
 
 
 def _cut_url(match: re.Match[str], *, host_only: bool) -> str:
@@ -93,7 +94,10 @@ def redact_text(text: str, secrets: Iterable[str] = (), *, persisted: bool = Fal
 
 
 def redact_persisted(text: str, secrets: Iterable[str] = ()) -> str:
-    """``redact_text`` for stored or logged text: a quoted URL shows scheme and host only."""
+    """``redact_text`` for stored or logged text: a quoted URL shows scheme and host only.
+
+    Accepted limit: a URL written JSON-escaped (``https:\\/\\/``) or with a percent-encoded
+    scheme is not recognised and is left as it is."""
     return redact_text(text, secrets, persisted=True)
 
 
