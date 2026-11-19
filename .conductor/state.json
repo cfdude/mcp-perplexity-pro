@@ -1343,7 +1343,7 @@
       "id": "media-inputs",
       "title": "Image, audio and file inputs on ask and chat, with modality-aware routing",
       "priority": "P2",
-      "status": "planned",
+      "status": "archived",
       "role": "epic",
       "lane": "openspec",
       "links": [
@@ -1385,10 +1385,11 @@
         "6fedb3cad794fe783512fcd5c5f36dabbaff8a68",
         "0243be87d03e613bfac0dac51b4bcd798feeaa65",
         "7e03e7632d33cbfcfcb5901de9b952016ca89645",
-        "72f3b6830627378b88dd6c0ecc70dbe5802a1bab"
+        "72f3b6830627378b88dd6c0ecc70dbe5802a1bab",
+        "6f0efd9def263c46a16522b33f413afce94b8953"
       ],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-11-19T19:25:56.876Z",
+      "touchedAt": "2026-11-19T19:57:55.040Z",
       "release": "release-2-4-0",
       "releaseJoinedAt": "2026-11-19T17:28:39.742Z",
       "reviewMode": "thorough",
@@ -1471,6 +1472,11 @@
           "lastVerdictAt": "2026-11-19T19:25:56.874Z",
           "lastPassAt": "2026-11-19T19:25:56.874Z"
         }
+      },
+      "disposition": {
+        "outcome": "unknown",
+        "recordedAt": "2026-11-19T19:57:55.040Z",
+        "recordedBy": "archive-drift-heal"
       }
     },
     {
@@ -1813,7 +1819,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 499,
+  "revision": 501,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
