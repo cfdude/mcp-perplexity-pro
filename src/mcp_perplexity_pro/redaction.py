@@ -45,6 +45,21 @@ def _base64_run(match: re.Match[str]) -> str:
     return run
 
 
+# A URL runs to whitespace, a quote or a bracket. One character class under one ``+``.
+_URL = re.compile(r"https?://[^\s\"'<>()\[\]{}]+", re.IGNORECASE)
+
+
+def _bare_url(match: re.Match[str]) -> str:
+    """The URL without credentials, query or fragment (a signed URL's secret lives there)."""
+    url = match.group(0)
+    scheme, _, rest = url.partition("://")
+    for mark in ("?", "#"):
+        rest = rest.partition(mark)[0]
+    authority, slash, path = rest.partition("/")
+    authority = authority.rpartition("@")[2]
+    return f"{scheme}://{authority}{slash}{path}"
+
+
 def scrub_media(text: str) -> str:
     """Replace ``data:`` URI bodies and bare base64 runs with ``[media removed]`` (one linear
     scan each), so an error that quotes a request never carries a file's bytes."""
@@ -57,8 +72,12 @@ def redact_text(text: str, secrets: Iterable[str] = ()) -> str:
     """Remove media, each configured secret and any key-shaped token from ``text``.
 
     Media goes first, before key removal and before any caller truncates, so a base64 run that
-    straddles a later cut is already gone."""
+    straddles a later cut is already gone. A quoted URL loses its credentials, query and fragment
+    (a signed URL's secret); its path stays for the error the caller reads, not for a stored row.
+    """
     text = scrub_media(text)
+    if "://" in text:
+        text = _URL.sub(_bare_url, text)  # no credentials, query or fragment of a quoted URL
     for secret in sorted((s for s in secrets if s), key=len, reverse=True):
         text = text.replace(secret, REDACTED)
     return _KEY_SHAPED.sub(REDACTED, text)

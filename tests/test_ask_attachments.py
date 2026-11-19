@@ -338,3 +338,24 @@ async def test_the_base64_and_hash_work_runs_off_the_event_loop(world, tmp_path,
     path = write(tmp_path, "shot.png", png())
     assert not (await w.call(TOOL, query="q", model=MODEL, attachments=[path])).is_error
     assert seen == [False]
+
+
+async def test_a_signed_url_path_never_reaches_a_usage_row_or_a_log(world, caplog):
+    import httpx2
+
+    url = "https://files.example.com/private/PATHTOKEN/report.pdf?sig=QUERYTOKEN"
+
+    def echo(request, n):
+        message = f"cannot fetch {url}"
+        body = {"error": {"message": message, "type": "invalid_request", "code": 400}}
+        return httpx2.Response(400, json=body)
+
+    caplog.set_level(logging.DEBUG)
+    w = await world(echo)
+    result = await w.call(TOOL, query="q", model=MODEL, attachments=[url])
+    assert result.is_error
+    assert "QUERYTOKEN" not in str(result.content)  # the caller's error: no query either
+    rows = await w.rows("SELECT * FROM usage_events")
+    persisted = repr(rows) + caplog.text
+    for secret in ("PATHTOKEN", "QUERYTOKEN"):
+        assert secret not in persisted, secret

@@ -125,3 +125,17 @@ def test_a_validation_error_on_attachments_never_quotes_the_value():
     shown = result.content[0].text
     assert "attachments.0" in shown and "private-" not in shown
     assert result.structured_content["category"] == "invalid_request"
+
+
+def test_a_quoted_url_loses_credentials_query_and_fragment_but_keeps_scheme_host_path():
+    out = redact_text('fetch "https://user:pw@files.example.com/a/b.pdf?sig=SECRET#frag" failed')
+    assert out == 'fetch "https://files.example.com/a/b.pdf" failed'
+    assert redact_text("see HTTP://h.example/x?y=1 now") == "see HTTP://h.example/x now"
+    assert redact_text("no url here, a://b and 100% sure") == "no url here, a://b and 100% sure"
+
+
+def test_url_scrub_is_linear_on_hostile_input():
+    hostile = "https://" + "@" * 200_000 + "?" + "a" * 200_000
+    started = time.perf_counter()
+    redact_text(hostile)
+    assert time.perf_counter() - started < 2
