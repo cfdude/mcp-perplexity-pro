@@ -65,7 +65,9 @@ SCANNED = sorted(
 
 def test_the_scan_reaches_acceptance_folders_and_docs():
     names = {p.relative_to(ROOT).as_posix() for p in SCANNED}
-    assert any(n.startswith("openspec/changes/media-inputs/acceptance/") for n in names)
+    assert any(
+        n.startswith("openspec/changes/archive/2026-11-19-media-inputs/acceptance/") for n in names
+    )
     assert any(n.startswith("docs/") for n in names)
 
 

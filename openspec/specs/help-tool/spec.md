@@ -1,7 +1,7 @@
 # help-tool Specification
 
 ## Purpose
-Defines `perplexity_help`, the server's own help for a calling agent: a small index that picks the right tool, one page per tool (arguments read from its schema), five topics, the size caps, the single text source the CLI will reuse, the closing pointer on the largest tool descriptions and the `tools/list` size budget.
+Defines `perplexity_help`, the server's own help for a calling agent: a small index that picks the right tool, one page per tool (arguments read from its schema), six topics, the size caps, the single text source the CLI will reuse, the closing pointer on the largest tool descriptions and the `tools/list` size budget.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ The server SHALL provide `perplexity_help`, a read-only tool with an `action` of
 
 #### Scenario: Index content
 - **WHEN** a client calls `perplexity_help` with no arguments
-- **THEN** the text names every registered tool exactly once in its tool-list section (the decision table may name them again), names the five topics, states the routing mode and is at most 1500 bytes, all ASCII
+- **THEN** the text names every registered tool exactly once in its tool-list section (the decision table may name them again), names the six topics, states the routing mode and is at most 1500 bytes, all ASCII
 
 #### Scenario: The decision table
 - **WHEN** a client reads the index
@@ -50,7 +50,7 @@ The arguments section of tool help SHALL list each parameter's name, readable ty
 - **THEN** help shows each as its readable type (for example `string or null`, `fast, low or medium`), not as raw schema
 
 ### Requirement: Topic help
-`action` `topic` SHALL accept `routing`, `costs`, `citations`, `errors` and `projects` and return at most 3000 bytes of markdown for it. The `costs` topic SHALL name how many runs and which query shape stand behind each figure, and every dollar figure in help SHALL also appear in the README (help quotes the README's measured ranges; the descriptions keep the rounded ranges their specs pin). A missing or unknown `name` SHALL fail with `invalid_request` listing the topics.
+`action` `topic` SHALL accept `routing`, `costs`, `citations`, `errors`, `projects` and `attachments` and return at most 3000 bytes of markdown for it. The `costs` topic SHALL name how many runs and which query shape stand behind each figure, and every dollar figure in help SHALL also appear in the README (help quotes the README's measured ranges; the descriptions keep the rounded ranges their specs pin). A missing or unknown `name` SHALL fail with `invalid_request` listing the topics.
 
 #### Scenario: Costs name their samples
 - **WHEN** a client asks for topic `costs`
@@ -72,9 +72,13 @@ The arguments section of tool help SHALL list each parameter's name, readable ty
 - **WHEN** a client asks for topic `projects`
 - **THEN** the text says every stored record belongs to a project, that a project is created by the first costed call that stores something, and that deleting a project keeps the spend history
 
+#### Scenario: Attachments topic
+- **WHEN** a client asks for topic `attachments`
+- **THEN** the text names the three forms, the supported types and the limits, and `perplexity_help` `topic` with an unknown name lists `routing`, `costs`, `citations`, `errors`, `projects` and `attachments`
+
 #### Scenario: Unknown topic
 - **WHEN** a client asks for topic `pricing`
-- **THEN** the call fails with `invalid_request` naming `name` and listing the five topics
+- **THEN** the call fails with `invalid_request` naming `name` and listing the six topics
 
 ### Requirement: One source, covered by tests
 The help text SHALL be rendered by pure functions that import neither FastMCP nor the database, so the CLI can print the same text. Every registered tool SHALL have a curated help entry, every example call SHALL validate against its tool's input schema, and every result key a help entry names SHALL exist in the tool's output schema.
@@ -99,11 +103,19 @@ The descriptions of `perplexity_ask`, `perplexity_chat`, `perplexity_research`, 
 - **THEN** the per-depth costs, the retention wording and the no-upstream-call statements that other specs require are still present
 
 ### Requirement: The tools list has a size budget
-The `tools/list` response with the help tool included SHALL be no larger than 59779 bytes, the size measured after the routing modes, and a test SHALL fail above that budget. The levers are the closing pointers, shorter descriptions and the removal of the `title` annotations pydantic writes on every schema node.
+The `tools/list` response with the help tool included SHALL be no larger than 59779 bytes and a test SHALL fail above that budget. The cap SHALL NOT be raised: if the final measurement of a release cannot fit, work stops and the owner is asked. The levers are the closing pointers, shorter descriptions and the removal of the `title` annotations pydantic writes on every schema node.
 
 #### Scenario: The budget holds
-- **WHEN** the server is built and its tools listed
-- **THEN** the JSON size of the list is at most 59779 bytes
+- **WHEN** the server is built and its tools listed, for the default, the dynamic and the dynamic-with-Decisions variants
+- **THEN** the JSON size of the list is at most 59779 bytes for each
+
+#### Scenario: Media growth is bounded
+- **WHEN** the figures are measured at the commit `media-inputs` starts from and in its task 3.3 (after the parameters of the change have landed)
+- **THEN** the gross schema growth from `attachments` and the models inputs is at most 900 bytes per variant, the 300-byte trim is waived because the recorded standalone table fits every variant
+
+#### Scenario: Nothing fits
+- **WHEN** the final measure exceeds 59779 for any variant at the standalone figures
+- **THEN** the cap is not raised; the work stops and the owner decides what to cut
 
 ### Requirement: Help renders for the command line
 The help renderers SHALL take a style, `mcp` (the default) or `cli`. In `cli` style an example is written as a `perplexity-pro` command line derived from the same example arguments, and the closing pointer names `perplexity-pro help`. Topic pages SHALL be identical in both styles. Every example, rendered to a command line and parsed back by the CLI parser, SHALL yield the same arguments.
@@ -137,3 +149,38 @@ On a `dynamic` server the `routing` topic SHALL name the classifier in use and, 
 #### Scenario: Decisions topic
 - **WHEN** a client asks for topic `routing` on a `dynamic` server with the Decisions classifier
 - **THEN** the text says the tier is picked by a Decisions request, that it is bounded and falls back to the rules, and is at most 3000 bytes
+
+### Requirement: An attachments topic
+The `attachments` topic (also rendered by `perplexity-pro help attachments`) SHALL state the three forms of an attachment, the supported and unsupported types (audio and video), the limits (10 items, 20 MiB per file, 32 MiB per call, 1 MiB inline, 30 documents and 50 MiB of documents per chat) and one runnable example per tool, and the index SHALL list it.
+
+#### Scenario: The index lists it
+- **WHEN** a client calls `perplexity_help` with action `index`
+- **THEN** `attachments` is among the topics
+
+### Requirement: The attachments topic explains handling and storage
+The topic SHALL say that files are read by the server and sent as base64, that URLs are passed to the provider, that file bytes are never stored (only a note of name, type, size and a short digest), what a follow-up and a replay do, the model gate and `perplexity_models` inputs, and that attachments can raise the cost. The ask and chat help entries SHALL mention `attachments` in at most one line each.
+
+#### Scenario: Storage rule stated
+- **WHEN** a client asks for the topic
+- **THEN** the text says file bytes are never stored and that a replay does not resend files
+
+### Requirement: The attachments wording is capped
+The `attachments` parameter SHALL have ONE description, shared by `perplexity_ask` and `perplexity_chat`, of at most 100 characters that carries the cost note (attachments add input tokens) and no retention claim. The sentence about attachments in each of the two tool descriptions SHALL be at most 100 characters. These caps are owned here because the `tools/list` budget depends on them.
+
+#### Scenario: The caps hold
+- **WHEN** the tools are listed
+- **THEN** the `attachments` description of both tools is the same string of at most 100 characters containing `token`
+
+### Requirement: Attachment help is covered by the help tests
+Every example in the topic SHALL validate against its tool's input schema, and every dollar figure in the topic SHALL also appear in `README.md`.
+
+#### Scenario: Examples validate
+- **WHEN** the help tests run
+- **THEN** each example validates against the schema of the tool it names, and every dollar figure appears in `README.md`
+
+### Requirement: The errors topic describes the local rate limit
+The `errors` topic and the README's error table SHALL say that `rate_limited` also covers the local wait for attachment bytes, and that no Retry-After applies to it.
+
+#### Scenario: Errors topic
+- **WHEN** a client asks for topic `errors`
+- **THEN** the `rate_limited` entry mentions the local attachment wait and does not promise a Retry-After for it
