@@ -175,9 +175,9 @@ async def test_the_text_shows_each_models_efforts_and_the_matrix_line(make_world
     nano = next(line for line in text.splitlines() if line.startswith(f"{NANO} |"))
     assert "minimal,low,medium,high" in nano and "refused xhigh,max" in nano
     fable = next(line for line in text.splitlines() if line.startswith("anthropic/claude-fable-5"))
-    assert fable.rstrip().endswith("all")
+    assert fable.split(" | ")[7] == "all"  # the efforts column; the inputs column follows it
     live_only = next(line for line in text.splitlines() if line.startswith("acme/live-only"))
-    assert live_only.rstrip().endswith("-")
+    assert live_only.split(" | ")[7] == "-"
     assert "Matrix: baseline" in text and "0 unprobed" in text
 
 
@@ -195,9 +195,10 @@ def test_the_help_entry_describes_efforts_and_the_matrix(make_settings):
 
 async def test_a_full_result_for_the_whole_list_stays_small(make_world):
     """Measured 2026-10-18: 14757 bytes of structured content for 54 models (acceptance README);
-    the baseline now holds 55 (the entry added by hand, routing-v2 2.5)."""
+    the baseline now holds 55 (the entry added by hand, routing-v2 2.5); the inputs field of
+    media-inputs 2.4 adds at most 1700 bytes (model-catalog spec), so the bound is 16600."""
     import json
 
     result = await models(await make_world())
     assert len(by_id(result)) == len(matrix.load_baseline().models) == 55
-    assert len(json.dumps(result.structured_content, separators=(",", ":"))) < 16000
+    assert len(json.dumps(result.structured_content, separators=(",", ":"))) < 16600
