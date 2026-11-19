@@ -34,7 +34,7 @@
 
 ## 4. CLI, help, documentation fixtures
 
-- [ ] 4.1 RED then GREEN: `command.py` path normalisation for `--attachments` (relative to absolute against the cwd, `~/` expanded, URLs, `data:` and prefixed values untouched), the generated flag on ask and chat only, `perplexity-pro --help` text; scenarios of the `cli` delta (a refusal exits 1 with `[invalid_request]`)
+- [x] 4.1 RED then GREEN: `command.py` path normalisation for `--attachments` (relative to absolute against the cwd, `~/` expanded, URLs, `data:` and prefixed values untouched), the generated flag on ask and chat only, `perplexity-pro --help` text; scenarios of the `cli` delta (a refusal exits 1 with `[invalid_request]`)
 - [ ] 4.2 RED then GREEN: `help_text.py` topic `attachments` (at most 3000 bytes, one example per tool validated against the schemas, every dollar figure also in the README), the index entry, the one-line mentions in the ask and chat entries, the six-topic error text; the `help-tool` delta scenarios; and the combined test that the `perplexity_help` index stays at most 1500 bytes and every topic including `routing` at most 3000 bytes with both changes' text (`routing-v2` 6.1 supplies the routing text)
 
 ## 5. Acceptance (live)

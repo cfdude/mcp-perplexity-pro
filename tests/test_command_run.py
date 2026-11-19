@@ -330,3 +330,46 @@ def test_a_one_shot_models_command_reports_origin_file_from_the_stored_matrix(en
     nano = next(m for m in doc["models"] if m["id"] == "openai/gpt-5-nano")
     assert nano["efforts"]["accepted"] == ["low"]
     assert path.read_bytes() == raw and path.stat().st_mtime_ns == mtime  # read, never written
+
+
+# --- attachments (media-inputs task 4.1) ---------------------------------------------------------
+
+
+def test_a_refused_attachment_prints_the_error_and_exits_1_with_no_request(env, capsys, tmp_path):
+    up = Upstream()
+    sound = tmp_path / "call.mp3"
+    sound.write_bytes(b"ID3")
+    code = main(
+        ["ask", "q", "--model", "openai/gpt-6-luna", "--attachments", str(sound)], http=up.client()
+    )
+    out = capsys.readouterr()
+    assert code == 1 and out.out == ""
+    assert out.err.startswith("[invalid_request]") and "audio" in out.err.lower()
+    assert up.requests == []
+
+
+def test_a_relative_path_reaches_the_tool_as_an_absolute_one(env, capsys, tmp_path, monkeypatch):
+    from media_support import png
+
+    (tmp_path / "shot.png").write_bytes(png())
+    monkeypatch.chdir(tmp_path)
+    up = Upstream()
+    argv = ["ask", "What is this?", "--model", "openai/gpt-6-luna", "--attachments", "shot.png"]
+    assert main(argv, http=up.client()) == 0
+    parts = up.requests[0]["input"][0]["content"]
+    assert [p["type"] for p in parts] == ["input_text", "input_image"]
+    assert "Usage:" in capsys.readouterr().out
+
+
+def test_a_chat_send_takes_the_flag_too(env, capsys, tmp_path, monkeypatch):
+    from media_support import pdf
+
+    (tmp_path / "r.pdf").write_bytes(pdf())
+    monkeypatch.chdir(tmp_path)
+    up = Upstream(fixture("agent_chat_turn_a.json"))
+    code = main(
+        ["chat", "send", "--message", "Summarize", "--title", "t", "--attachments", "r.pdf"],
+        http=up.client(),
+    )
+    assert code == 0, capsys.readouterr().err
+    assert up.requests[0]["input"][0]["content"][1]["type"] == "input_file"
