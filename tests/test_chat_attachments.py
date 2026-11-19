@@ -464,3 +464,16 @@ async def test_a_chained_send_refused_for_its_attachment_does_not_say_replay(cha
         TOOL, action="send", chat_id=chat_id, message="no file", model="vendor/unknown"
     )
     assert "replay" in message(plain)  # the continuation hint is unchanged without attachments
+
+
+async def test_a_chained_follow_up_with_only_inherited_kinds_keeps_the_replay_hint(
+    chat_world, tmp_path
+):
+    w = await chat_world(first_then_400())
+    chat_id = await first(w, tmp_path)  # turn 1 carries a PDF: the chain now inherits `document`
+    plain = await w.call(
+        TOOL, action="send", chat_id=chat_id, message="no new file", model=ACCEPTING
+    )
+    text = message(plain)
+    assert "replay" in text, text
+    assert "may not accept" not in text and "attachments" not in text.split("replay")[0][-200:]

@@ -363,12 +363,15 @@ async def _send_read(
             preset=options.preset,
             background=False,
             resolve_project=chat_id is None,
-            attachment_kinds=kinds,
+            attachment_kinds=new_kinds,
         )
     except PerplexityError as exc:
-        # the attachment hint (already applied by run_costed) wins over the continuation hint,
-        # whose advice to replay is wrong when an attachment is the cause
-        raise (continuation_hint(exc) if continuation == "chained" and not kinds else exc) from None
+        # the attachment hint (applied by run_costed, only for NEW attachments) wins over the
+        # continuation hint, whose advice to replay is wrong when an attachment is the cause; a
+        # follow-up with only inherited kinds sent no file, so the continuation hint applies
+        raise (
+            continuation_hint(exc) if continuation == "chained" and not new_kinds else exc
+        ) from None
     secrets = (app.settings.api_key.get_secret_value(),)
     answer = digest(costed.run, secrets=secrets)
 
