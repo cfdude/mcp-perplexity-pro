@@ -461,3 +461,32 @@ def test_parsing_is_linear_on_a_hostile_data_uri():
     with pytest.raises(PerplexityError):
         media.parse_attachments([hostile])
     assert time.monotonic() - start < 2
+
+
+def test_the_debug_hash_is_only_computed_when_debug_is_on(monkeypatch, caplog):
+    import asyncio
+    import logging
+    from types import SimpleNamespace
+
+    from mcp_perplexity_pro import call_flow, media_read
+
+    calls = []
+    monkeypatch.setattr(media, "log_line", lambda item: calls.append(item) or "x")
+    item = dataclasses.replace(
+        media.parse_attachments(["data:image/png;base64,iVBORw0KGgo="])[0], data=b"x", size=1
+    )
+    app = SimpleNamespace(
+        attach=media_read.AttachState(),
+        settings=SimpleNamespace(attach_root_dirs=(), data_dir=None),
+    )
+
+    async def run():
+        async with call_flow.held(app, [item], "") as got:
+            return got
+
+    caplog.set_level(logging.INFO, logger=call_flow.logger.name)
+    asyncio.run(run())
+    assert calls == []
+    caplog.set_level(logging.DEBUG, logger=call_flow.logger.name)
+    asyncio.run(run())
+    assert len(calls) == 1

@@ -47,8 +47,9 @@ async def held(app: Any, items: Sequence[media.Attachment], text: str) -> AsyncI
     the block exits; yields every item with its bytes. Nothing is read for a call with none."""
     policy = app.attach.policy(app.settings)
     async with media_read.hold_attachments(items, policy, app.attach.limiter, text=text) as loaded:
-        for item in loaded:
-            logger.debug("%s", media.log_line(item))
+        if logger.isEnabledFor(logging.DEBUG):  # log_line hashes the bytes: only when it is read
+            for item in loaded:
+                logger.debug("%s", media.log_line(item))
         yield loaded
 
 

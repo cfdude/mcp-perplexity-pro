@@ -211,7 +211,8 @@ def _with_parts(
     """The ``input`` of a call that carries attachments: one user message of parts."""
 
     def item(text: str) -> dict[str, Any]:
-        content = [{"type": "input_text", "text": text}, *copy.deepcopy(list(parts))]
+        # shared, not copied (32 MiB of base64 per call); nothing mutates the parts
+        content = [{"type": "input_text", "text": text}, *parts]
         return {"type": "message", "role": "user", "content": content}
 
     if isinstance(input, str):

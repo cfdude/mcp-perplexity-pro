@@ -108,3 +108,13 @@ def test_building_a_request_logs_nothing_at_debug(caplog):
     big = [{"type": "input_image", "image_url": "data:image/png;base64," + "Qk1h" * 400}]
     build_request(ask_options(model=MODEL), "q", store=False, attachments=big)
     assert "Qk1h" not in caplog.text and "data:image" not in caplog.text
+
+
+def test_building_a_request_leaves_the_parts_unchanged_and_shares_them():
+    import copy
+
+    parts = [{"type": "input_image", "image_url": "data:image/png;base64,Qk1h"}]
+    before = copy.deepcopy(parts)
+    body = build_request(ask_options(model=MODEL), "q", store=False, attachments=parts)
+    assert parts == before
+    assert body["input"][0]["content"][1] is parts[0]  # no deepcopy of the (large) parts

@@ -1,5 +1,6 @@
 """``perplexity_ask``: a stateless, synchronous, web-grounded answer (agent-ask spec)."""
 
+import asyncio
 import inspect
 from dataclasses import replace
 from typing import Annotated, Any
@@ -277,7 +278,7 @@ def register(server: FastMCP, settings: Settings) -> None:
         )
         call_flow.gate_route(app, options.route, kinds, tentative=decider)
         async with call_flow.held(app, items, query) as loaded:
-            parts = media.build_parts(loaded).parts
+            parts = (await asyncio.to_thread(media.build_parts, loaded)).parts  # base64 + hash
             request = build_request(options, query, store=False, attachments=parts)
             # the classifier request comes only now: an invalid call spends nothing
             if decider:

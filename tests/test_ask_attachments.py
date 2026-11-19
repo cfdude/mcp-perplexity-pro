@@ -319,3 +319,22 @@ def test_run_sets_the_transport_flag_before_serving(monkeypatch, transport, http
     monkeypatch.setattr(entry, "_run_stdio", fake)
     entry.run(server, None, transport=transport)
     assert seen == [http]
+
+
+async def test_the_base64_and_hash_work_runs_off_the_event_loop(world, tmp_path, monkeypatch):
+    import threading
+
+    from mcp_perplexity_pro import media
+
+    seen = []
+    real = media.build_parts
+
+    def spy(items):
+        seen.append(threading.current_thread() is threading.main_thread())
+        return real(items)
+
+    monkeypatch.setattr(media, "build_parts", spy)
+    w = await world()
+    path = write(tmp_path, "shot.png", png())
+    assert not (await w.call(TOOL, query="q", model=MODEL, attachments=[path])).is_error
+    assert seen == [False]
