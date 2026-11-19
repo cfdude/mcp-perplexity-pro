@@ -278,7 +278,9 @@ def register(server: FastMCP, settings: Settings) -> None:
         )
         call_flow.gate_route(app, options.route, kinds, tentative=decider)
         async with call_flow.held(app, items, query) as loaded:
-            parts = (await asyncio.to_thread(media.build_parts, loaded)).parts  # base64 + hash
+            # base64 + hash in a thread; not shielded on purpose: it holds no descriptor and
+            # nothing to release (``held`` owns both), so a cancel just abandons the result
+            parts = (await asyncio.to_thread(media.build_parts, loaded)).parts
             request = build_request(options, query, store=False, attachments=parts)
             # the classifier request comes only now: an invalid call spends nothing
             if decider:

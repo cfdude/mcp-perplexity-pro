@@ -313,3 +313,9 @@ def test_a_json_supplied_list_is_normalised_too(tools, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _, arguments = parse(tools, "ask", "q", "--args-json", '{"attachments": ["a.png"]}')
     assert arguments["attachments"] == [os.path.join(os.getcwd(), "a.png")]
+
+
+def test_a_prefix_with_an_empty_path_is_left_as_given():
+    from mcp_perplexity_pro.command import normalise_attachment
+
+    assert normalise_attachment("image/png::") == "image/png::"

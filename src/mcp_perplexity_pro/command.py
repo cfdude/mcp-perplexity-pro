@@ -345,7 +345,7 @@ def normalise_attachment(item: str) -> str:
     prefixed = _PREFIXED.match(item)
     if prefixed:  # the path after ``<type>::`` is normalised like a bare path
         rest = item[prefixed.end() :]
-        if rest.lower().startswith(_URLISH):
+        if not rest or rest.lower().startswith(_URLISH):
             return item
         return item[: prefixed.end()] + _absolute(rest)
     if item.lower().startswith(_URLISH):

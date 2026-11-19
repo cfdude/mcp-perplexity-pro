@@ -35,7 +35,9 @@ SHOWN_PATH_CHARS = 200
 DENY_DIRS = (".ssh", ".aws", ".gnupg", ".config", ".claude", ".kube", ".docker")
 DENY_NAMES = (
     "ecosystem*.cjs",
-    ".env*",
+    ".env",
+    ".env.*",
+    ".envrc",
     "*.env",
     "*.env.*",
     ".netrc",
@@ -258,7 +260,9 @@ class FdSet:
         self._closed = False
 
     def add(self, index: int, fd: int) -> bool:
-        """Register an opened descriptor; ``False`` (the caller closes it) when the call is over."""
+        """Register an opened descriptor; ``False`` (the caller closes it) when the call is over.
+        Unreachable through ``hold_attachments``, which waits for its threads before ``close_all``;
+        kept so a caller that does not wait still cannot leak a descriptor."""
         with self._lock:
             if self._closed:
                 return False
@@ -419,9 +423,11 @@ async def hold_attachments(
             loaded.append(item)
         yield loaded
     finally:
-        await _settle(threads)
-        fds.close_all()
-        limiter.release(held)
+        try:
+            await _settle(threads)  # may re-raise a cancel that arrived while it waited
+        finally:
+            fds.close_all()  # always runs, whatever _settle raised
+            limiter.release(held)
 
 
 async def _settle(threads: list[asyncio.Future[object]]) -> None:

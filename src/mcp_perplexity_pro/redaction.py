@@ -46,7 +46,7 @@ def _base64_run(match: re.Match[str]) -> str:
 
 
 # A URL runs to whitespace, a quote or a bracket. One character class under one ``+``.
-_URL = re.compile(r"https?://[^\s\"'<>()\[\]{}]+", re.IGNORECASE)
+_URL = re.compile(r"https?://[^\s\"'<>\[\]{}]+", re.IGNORECASE)
 
 
 def _bare_url(match: re.Match[str]) -> str:

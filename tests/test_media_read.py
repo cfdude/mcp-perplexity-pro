@@ -528,3 +528,49 @@ def test_a_path_string_over_4096_characters_is_refused():
     with pytest.raises(PerplexityError, match=r"attachments\[0\].*4096"):
         media.parse_attachments(["/" + "a" * 4100 + ".png"])
     media.parse_attachments(["/" + "a" * 4000 + ".png"])
+
+
+async def test_two_cancels_while_a_reader_is_blocked_still_clean_up(home, monkeypatch):
+    import threading
+
+    p = write(home / "a.png")
+    started, gate = threading.Event(), threading.Event()
+    real = media_read._read_fd
+
+    def blocked(fd, size, where):
+        started.set()
+        gate.wait(5)
+        return real(fd, size, where)
+
+    monkeypatch.setattr(media_read, "_read_fd", blocked)
+    limiter = ByteLimiter()
+    items = media.parse_attachments([p])
+    before = _fd_count()
+
+    async def run():
+        async with hold_attachments(items, policy(home), limiter):
+            pass
+
+    task = asyncio.create_task(run())
+    while not started.is_set():
+        await asyncio.sleep(0.01)
+    task.cancel()
+    await asyncio.sleep(0.05)
+    task.cancel()  # a level-triggered cancel arrives again while the call is settling
+    await asyncio.sleep(0.05)
+    gate.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert limiter.used == 0
+    assert _fd_count() == before
+
+
+@pytest.mark.parametrize("name", [".env", ".env.local.txt", ".envrc", "prod.env"])
+def test_env_style_names_are_denied(home, name):
+    with pytest.raises(PerplexityError, match="denied"):
+        media_read.check_real_path(str(home / "w" / name), policy(home), "attachments[0]")
+
+
+@pytest.mark.parametrize("name", [".envelope.pdf", ".environment.txt"])
+def test_names_that_only_start_like_env_are_allowed(home, name):
+    media_read.check_real_path(str(home / "w" / name), policy(home), "attachments[0]")

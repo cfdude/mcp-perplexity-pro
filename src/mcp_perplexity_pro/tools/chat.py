@@ -262,7 +262,9 @@ async def _send_read(
 ) -> tuple[ChatResult, str]:
     """The rest of a send once its attachments are read: the chat lookup, the route and its
     gates, the upstream call and the one write (steps 2 to 5 of ``_send``)."""
-    built = await asyncio.to_thread(media.build_parts, loaded)  # base64 + hash off the loop
+    # base64 + hash off the loop; not shielded on purpose: no descriptor, nothing to release
+    # (``call_flow.held`` owns both), so a cancel just abandons the result
+    built = await asyncio.to_thread(media.build_parts, loaded)
     # 2. Find the chat (read-only; the project is never created here).
     project_id = anchor = notes = None
     previous: tuple[str | None, str | None] | None = None

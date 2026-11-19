@@ -145,3 +145,11 @@ def test_a_word_that_ends_in_data_is_not_a_data_uri():
     text = "metadata:foo,AbCdEf0123 and subdata:xyz"
     assert scrub_media(text) == text
     assert scrub_media("(data:image/png;base64,iVBOR)") == "(data:" + MARK + ")"
+
+
+def test_a_url_with_parentheses_in_its_path_still_loses_its_query():
+    out = redact_text(
+        "see https://x.example/wiki/Foo_(bar)?token=abc#f and (https://y.example/a?k=1)"
+    )
+    assert "token" not in out and "k=1" not in out
+    assert "https://x.example/wiki/Foo_(bar)" in out
