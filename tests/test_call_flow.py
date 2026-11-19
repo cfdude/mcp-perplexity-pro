@@ -80,7 +80,7 @@ class Trace:
                 raise self.refuse["parse"]
             return self.kinds
 
-        def gate(app, route, kinds):
+        def gate(app, route, kinds, **kwargs):
             self.events.append("gate")
             self.gated.append((route.model, route.preset, kinds))
             if "gate" in self.refuse:
@@ -240,7 +240,7 @@ async def test_a_refusal_of_the_final_route_comes_after_the_decisions_request(wo
     trace = Trace(monkeypatch, ask_tool)
     calls = []
 
-    def gate(app, route, kinds):
+    def gate(app, route, kinds, **kwargs):
         calls.append(route.model)
         if route.model == PIN:
             raise refusal("gate: the pinned model refuses")
@@ -330,13 +330,13 @@ async def test_a_chained_send_gates_on_new_and_inherited_kinds_and_a_replay_on_n
 # --- the hooks and resolve themselves ---------------------------------------------------------
 
 
-def test_the_hooks_are_no_ops_and_inherited_kinds_is_the_empty_set():
+def test_no_attachments_need_nothing_and_inherited_kinds_is_the_empty_set():
     assert call_flow.parse_attachments() == frozenset()
     assert call_flow.parse_attachments(None) == frozenset()
     assert call_flow.inherited_kinds(object()) == frozenset()
     assert call_flow.inherited_kinds(None) == frozenset()
     route = resolve_for("standard")
-    assert call_flow.gate_route(object(), route, frozenset({"image"})) is None
+    assert call_flow.gate_route(object(), route, frozenset()) is None  # no kinds: no matrix read
 
 
 def resolve_for(mode, **kwargs):

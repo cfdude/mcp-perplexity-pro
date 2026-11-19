@@ -278,13 +278,12 @@ def register(server: FastMCP, settings: Settings) -> None:
                 required_input=kinds,
             ),
         )
-        call_flow.gate_route(app, options.route, kinds)
+        call_flow.gate_route(app, options.route, kinds, tentative=decider)
         async with call_flow.held(app, items, query) as loaded:
             parts = media.build_parts(loaded).parts
             request = build_request(options, query, store=False, attachments=parts)
-            if (
-                decider
-            ):  # only now: an invalid call spends nothing (the project name is checked first)
+            # the classifier request comes only now: an invalid call spends nothing
+            if decider:
                 name = validate_project_name(project or DEFAULT_PROJECT)
                 classification = await classify_dynamic(app, query, project=name, tool=TOOL)
                 decided = resolve(
@@ -294,10 +293,13 @@ def register(server: FastMCP, settings: Settings) -> None:
                     classification=classification,
                     required_input=kinds,
                 )
-                if (decided.model, decided.preset) != (options.route.model, options.route.preset):
-                    call_flow.gate_route(
-                        app, decided, kinds
-                    )  # the route changed: gate the final one
+                # the route changed, or the first gate was only tentative: gate the final route
+                changed = (decided.model, decided.preset) != (
+                    options.route.model,
+                    options.route.preset,
+                )
+                if changed or kinds:
+                    call_flow.gate_route(app, decided, kinds)
                 options = replace(options, route=decided)
                 request = build_request(options, query, store=False, attachments=parts)
             try:
@@ -308,9 +310,12 @@ def register(server: FastMCP, settings: Settings) -> None:
                     body=request,
                     preset=options.preset,
                     background=False,
+                    attachment_kinds=kinds,
                 )
             except PerplexityError as exc:
-                raise (schema_hint(exc) if json_schema is not None else exc) from None
+                # a call with attachments already carries the attachment hint (run_costed),
+                # which takes precedence over the schema hint
+                raise (schema_hint(exc) if json_schema is not None and not kinds else exc) from None
             result = build_result(
                 digest(
                     costed.run,

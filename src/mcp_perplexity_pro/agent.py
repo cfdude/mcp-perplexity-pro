@@ -31,6 +31,7 @@ from sqlalchemy import select
 from mcp_perplexity_pro.costed import Recording, costed_call
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.matrix import LEVELS
+from mcp_perplexity_pro.media_gate import attachment_hint, refusal_hint
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
 from mcp_perplexity_pro.routing import Route
@@ -684,6 +685,7 @@ async def run_costed(
     preset: str | None,
     background: bool,
     resolve_project: bool = True,
+    attachment_kinds: frozenset[str] = frozenset(),
 ) -> CostedRun:
     """Create a run and record it: the recorder contract of ``CLAUDE.md`` "How to record usage".
 
@@ -703,6 +705,10 @@ async def run_costed(
     comes after this returns. The sequence itself is ``costed.costed_call``; this function holds
     the Agent rules (the interpreter above and the unexpected-status error). ``costed_call`` and
     the job observation are the only ``record_usage`` call sites.
+
+    ``attachment_kinds`` are the input kinds the call carried (empty for a text call): a 400 gets
+    ``media_gate.attachment_hint`` and a run that failed with a ``refusal`` error on a document
+    gets ``media_gate.refusal_hint``, both AFTER the recording, so the event is unchanged.
     """
     secrets = (app.settings.api_key.get_secret_value(),)
 
@@ -721,31 +727,46 @@ async def run_costed(
             request_id=raw.get("id"),
         )
 
-    costed = await costed_call(
-        app,
-        tool=tool,
-        api="agent",
-        project=project,
-        preset=preset,
-        call=lambda: app.client.create_run(body, background=background),
-        record=interpret,
-        resolve_project=resolve_project,
-    )
+    try:
+        costed = await costed_call(
+            app,
+            tool=tool,
+            api="agent",
+            project=project,
+            preset=preset,
+            call=lambda: app.client.create_run(body, background=background),
+            record=interpret,
+            resolve_project=resolve_project,
+        )
+    except PerplexityError as exc:
+        if attachment_kinds:
+            raise attachment_hint(exc, attachment_kinds, body.get("model")) from None
+        raise
     run = costed.result
     raw = run.model_dump(mode="json")
     if not background and (
         raw.get("status") not in ("completed", "incomplete") or raw.get("error") is not None
     ):
         detail = clean_error_text(raw.get("error"), secrets)
+        hint = ""
+        if "document" in attachment_kinds and _is_refusal(raw.get("error")):
+            hint = refusal_hint(attachment_kinds)
         raise PerplexityError(
             "unexpected_response",
             f"The API returned status {clean_status(raw.get('status'), secrets)!r} instead of a "
-            "finished answer" + (f": {detail}" if detail else "."),
+            "finished answer" + (f": {detail}" if detail else ".") + hint,
             secrets=secrets,
         )
     return CostedRun(
         run=run, latency_ms=costed.latency_ms, project=costed.project, event_status=costed.status
     )
+
+
+def _is_refusal(error: object) -> bool:
+    """A run's ``error`` whose code or type is ``refusal`` (a model declining its input)."""
+    if not isinstance(error, Mapping):
+        return False
+    return "refusal" in (error.get("code"), error.get("type"))
 
 
 def _ms(started: float) -> int:

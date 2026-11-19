@@ -25,8 +25,10 @@ from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
 from typing import Any
 
-from mcp_perplexity_pro import media, media_read
-from mcp_perplexity_pro.routing import Route
+from mcp_perplexity_pro import media, media_gate, media_read
+from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.routing import Route, dynamic_route
+from mcp_perplexity_pro.settings import TIER_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +51,25 @@ async def held(app: Any, items: Sequence[media.Attachment], text: str) -> AsyncI
         yield loaded
 
 
-def gate_route(app: Any, route: Route, kinds: frozenset[str]) -> None:
+def gate_route(app: Any, route: Route, kinds: frozenset[str], *, tentative: bool = False) -> None:
     """Refuse (``invalid_request``) a FINAL route that cannot carry ``kinds``; called once on the
     route of the real resolve and again on the route of the second resolve when that changed it.
-    A no-op until attachments exist."""
-    return None
+
+    ``tentative`` marks the route of a dynamic call whose tier the Decisions classifier is still
+    to choose: it is refused only when EVERY tier's route is refused (so a refused call spends no
+    classifier request, while a call another tier can carry waits for the final gate). A call
+    with no kinds is never refused."""
+    if not kinds:
+        return
+    current = app.matrix.snapshot().matrix
+    problem = media_gate.blocked(route, kinds, current)
+    if problem is None:
+        return
+    if tentative and route.mode == "dynamic" and route.tier is not None:
+        tiers = (dynamic_route(app.settings, tier) for tier in TIER_NAMES)
+        if any(media_gate.blocked(other, kinds, current) is None for other in tiers):
+            return
+    raise PerplexityError("invalid_request", problem)
 
 
 def inherited_kinds(chat: Any) -> frozenset[str]:

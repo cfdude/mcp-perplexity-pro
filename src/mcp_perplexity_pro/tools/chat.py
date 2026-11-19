@@ -259,12 +259,13 @@ async def _send(
         search=options.search,
         required_input=kinds,
     )
-    call_flow.gate_route(app, route, kinds)
-    if (
+    decides = (
         classify_route
         and floor != "complex"
         and wants_decider(app.settings, depth=None, tier=None, model=None, search=options.search)
-    ):
+    )
+    call_flow.gate_route(app, route, kinds, tentative=bool(decides))
+    if decides:
         # After the lookup (its read-only unit is closed) and only when the answer can change
         # the route: a follow-up already at the top tier cannot move.
         classification = await classify_dynamic(app, message, project=name, tool=TOOL)
@@ -276,8 +277,8 @@ async def _send(
             classification=classification,
             required_input=kinds,
         )
-        if (decided.model, decided.preset) != (route.model, route.preset):
-            call_flow.gate_route(app, decided, kinds)
+        if kinds or (decided.model, decided.preset) != (route.model, route.preset):
+            call_flow.gate_route(app, decided, kinds)  # changed, or the first gate was tentative
         route = decided
     options = replace(options, route=route)
     warnings: list[str] = []
@@ -309,9 +310,12 @@ async def _send(
             preset=options.preset,
             background=False,
             resolve_project=chat_id is None,
+            attachment_kinds=kinds,
         )
     except PerplexityError as exc:
-        raise (continuation_hint(exc) if continuation == "chained" else exc) from None
+        # the attachment hint (already applied by run_costed) wins over the continuation hint,
+        # whose advice to replay is wrong when an attachment is the cause
+        raise (continuation_hint(exc) if continuation == "chained" and not kinds else exc) from None
     secrets = (app.settings.api_key.get_secret_value(),)
     answer = digest(costed.run, secrets=secrets)
 
