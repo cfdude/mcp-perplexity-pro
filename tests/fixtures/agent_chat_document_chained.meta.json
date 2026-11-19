@@ -1,0 +1,46 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-11-11",
+  "scrubbed": "account-identifying keys replaced",
+  "note": "Three bodies: the document turn, a follow-up by previous_response_id, a second chained hop. Request headers and the API key are never recorded.",
+  "request_note": "media-inputs 1.1: the file survives two continuation hops (store false)",
+  "requests": [
+    {
+      "model": "openai/gpt-6-luna",
+      "store": false,
+      "max_output_tokens": 150,
+      "input": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "input_text",
+              "text": "Remember the secret word. Reply OK."
+            },
+            {
+              "type": "input_file",
+              "filename": "doc.pdf",
+              "file_data": "<800 characters of base64>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model": "openai/gpt-6-luna",
+      "store": false,
+      "max_output_tokens": 150,
+      "input": "What was the secret word in the document? One word.",
+      "previous_response_id": "resp_365ff0ef-7548-476e-9b1b-f81b2b39a95d"
+    },
+    {
+      "model": "openai/gpt-6-luna",
+      "store": false,
+      "max_output_tokens": 150,
+      "input": "Say it again.",
+      "previous_response_id": "resp_0783c579-7800-42d1-9afe-9b27e5d71f02"
+    }
+  ]
+}

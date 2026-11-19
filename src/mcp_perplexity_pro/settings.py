@@ -34,6 +34,19 @@ MATRIX_REFRESH_MAX = 604800
 _MODEL_ID = re.compile(r"[A-Za-z0-9._:/@+-]{1,200}")
 
 
+def parse_attach_roots(value: str) -> tuple[str, ...]:
+    """A colon-separated list of absolute directories; empty means no roots. Raises
+    ``ValueError`` (which ``SettingsError`` reports against the variable) for anything else."""
+    value = value.strip()
+    if not value:
+        return ()
+    roots = value.split(":")
+    for root in roots:
+        if not root.startswith("/") or "\x00" in root:
+            raise ValueError("must be a colon-separated list of absolute directories")
+    return tuple(r.rstrip("/") or "/" for r in roots)
+
+
 def _default_data_dir() -> Path:
     return Path.home() / ".perplexity-pro"
 
@@ -69,6 +82,10 @@ class Settings(BaseSettings):
     classifier: str = "rules"
     matrix_refresh: int = 86400
     matrix_probe: Literal["new", "off"] = "new"
+    # A plain string, not a list field: pydantic-settings reads a list field as JSON from the
+    # environment, so an unusual value would break `--help` and the schema build that read the
+    # settings. ``attach_root_dirs`` is the parsed form.
+    attach_roots: str = ""
 
     @field_validator("log_level", mode="before")
     @classmethod
@@ -89,6 +106,17 @@ class Settings(BaseSettings):
                 f"{MATRIX_REFRESH_MAX} seconds"
             )
         return value
+
+    @field_validator("attach_roots", mode="after")
+    @classmethod
+    def _check_attach_roots(cls, value: str) -> str:
+        parse_attach_roots(value)
+        return value
+
+    @property
+    def attach_root_dirs(self) -> tuple[str, ...]:
+        """The directories local attachments may be read from (empty when unset)."""
+        return parse_attach_roots(self.attach_roots)
 
     @field_validator("routing", "classifier", mode="before")
     @classmethod

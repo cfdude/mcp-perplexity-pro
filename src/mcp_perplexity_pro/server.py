@@ -31,6 +31,8 @@ from mcp_perplexity_pro.embeddings import ProjectLocks
 from mcp_perplexity_pro.errors import ALL_CATEGORIES, PerplexityError
 from mcp_perplexity_pro.help_text import TOOLS
 from mcp_perplexity_pro.matrix_refresh import MatrixState, start_task, stop_task
+from mcp_perplexity_pro.media import drop_attachment_input_values
+from mcp_perplexity_pro.media_read import AttachState
 from mcp_perplexity_pro.redaction import redact_text
 from mcp_perplexity_pro.routing import instructions_text
 from mcp_perplexity_pro.storage.session import is_busy_error, storage_busy_error
@@ -71,6 +73,8 @@ class AppContext:
     job_locks: JobLocks = field(default_factory=JobLocks)
     # one in-process lock per project name for embedding index and delete (design D7)
     embed_locks: ProjectLocks = field(default_factory=ProjectLocks)
+    # the byte limiter of attachments and the transport flag of their path policy
+    attach: AttachState = field(default_factory=AttachState)
 
 
 def error_result(category: str, message: str) -> ToolResult:
@@ -199,7 +203,8 @@ class ErrorContractMiddleware(Middleware):
             busy = storage_busy_error()
             return error_result(busy.category, str(busy))
         if isinstance(exc, ValidationError):  # FastMCP's: arguments failed schema validation
-            message = redact_text(str(exc), self._secrets)
+            # an `attachments` error never quotes the rejected value (a path, a URL, bytes)
+            message = redact_text(drop_attachment_input_values(str(exc)), self._secrets)
             return error_result(
                 "invalid_request", with_help_hint("invalid_request", message, context)
             )

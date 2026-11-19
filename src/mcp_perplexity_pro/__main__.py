@@ -171,6 +171,7 @@ def run(
     ``graceful_timeout`` is how long in-flight calls may run after a stop signal; production
     uses the 10 s default, tests pass less so a cut-off scenario does not take 10 s.
     """
+    server.app.attach.http = transport == "http"  # type: ignore[attr-defined]
     if transport == "http":
         asyncio.run(_run_http(server, settings, graceful_timeout))
     else:
@@ -178,6 +179,11 @@ def run(
 
 
 async def _run_http(server: FastMCP, settings: Settings, graceful_timeout: float) -> None:
+    from mcp_perplexity_pro.media_read import http_paths_notice  # fastmcp loads after bootstrap
+
+    notice = http_paths_notice(settings.attach_root_dirs)
+    if notice:
+        logger.info(notice)
     # uvicorn stops accepting at SIGTERM/SIGINT, drains in-flight requests for
     # ``graceful_timeout`` and cancels what is left; its lifespan shutdown runs after that.
     try:

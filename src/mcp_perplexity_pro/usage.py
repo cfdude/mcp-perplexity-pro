@@ -473,7 +473,9 @@ def _failure_text(exc: BaseException, secrets: Iterable[str]) -> str:
     """The exception and its traceback as text with secrets removed (a log filter may not be
     installed where this runs, and the text of a database error can echo bound values)."""
     rendered = "".join(traceback.format_exception(exc))
-    return redact_text(rendered[-2000:], secrets)
+    # Redact the whole text, then cut: a key or a base64 run straddling the cut would survive as
+    # a fragment of what redaction could no longer recognise.
+    return redact_text(rendered, secrets)[-2000:]
 
 
 def _safe(value: object, secrets: Iterable[str]) -> str:

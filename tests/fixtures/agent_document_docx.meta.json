@@ -1,0 +1,32 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-11-11",
+  "content_type": "application/json",
+  "scrubbed": "account-identifying keys and addresses replaced; search results removed",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "media-inputs 1.1: a one-line DOCX file (built by zipfile)",
+  "latency_seconds": 2.617,
+  "request": {
+    "model": "openai/gpt-6-luna",
+    "store": false,
+    "max_output_tokens": 150,
+    "input": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "What is the secret word? One word."
+          },
+          {
+            "type": "input_file",
+            "filename": "k.docx",
+            "file_data": "<1184 characters of base64>"
+          }
+        ]
+      }
+    ]
+  }
+}

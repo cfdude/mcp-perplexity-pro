@@ -1,0 +1,42 @@
+{
+  "background": false,
+  "completed_at": null,
+  "created_at": 1794453579,
+  "error": {
+    "code": "refusal",
+    "message": "the model declined this request under its content policy",
+    "type": "refusal"
+  },
+  "frequency_penalty": 0,
+  "id": "resp_00c10d96-be93-4b33-9bd9-1028e19e58c5",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 150,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "anthropic/claude-opus-5",
+  "object": "response",
+  "output": [],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "failed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": null,
+  "user": null
+}
