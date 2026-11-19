@@ -17,6 +17,7 @@ from datetime import date
 from pathlib import Path
 
 import httpx2
+import media_support
 import pytest
 from fixture_support import FIXTURE_DIR, find_key_shapes
 
@@ -349,3 +350,323 @@ def test_capture_agent_fast_effort_fixture():
     FIXTURE_DIR.mkdir(exist_ok=True)
     (FIXTURE_DIR / "agent_fast_effort.json").write_text(json.dumps(payload, indent=2) + "\n")
     (FIXTURE_DIR / "agent_fast_effort.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+
+
+# --- media-inputs 1.1 and the model-gone captures: probe fixtures ----------------------------
+# Each test sends raw requests, scrubs, key-scans every payload before writing ANY file, and
+# writes a fixture with a `.meta.json`. Run only the one you need: ``pytest -m live
+# tests/test_live_capture.py -k media`` (the first test of this file overwrites tracked fixtures).
+
+
+def _drop_search_results(body):
+    """Third-party scraped text stays out of the repo: search-result items keep their count."""
+    if isinstance(body, dict) and isinstance(body.get("output"), list):
+        body = dict(body)
+        body["output"] = [
+            {"type": item.get("type"), "results": f"<removed: {len(item.get('results') or [])}>"}
+            if isinstance(item, dict) and item.get("type") == "search_results"
+            else item
+            for item in body["output"]
+        ]
+    return body
+
+
+def _redact_request(value):
+    """The request kept in a sidecar: attachment bytes become a length marker."""
+    if isinstance(value, dict):
+        return {k: _redact_request(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_request(v) for v in value]
+    if isinstance(value, str) and len(value) > 200 and "base64," in value[:60]:
+        return value[: value.index("base64,") + 7] + f"<{len(value)} characters>"
+    if isinstance(value, str) and len(value) > 200:
+        return f"<{len(value)} characters of base64>"
+    return value
+
+
+def _send(c, auth, method, path, request):
+    started = time.monotonic()
+    if method == "GET":
+        resp = c.get(path, headers=auth)
+    else:
+        resp = c.post(path, headers=auth, json=request)
+    return resp, round(time.monotonic() - started, 3)
+
+
+def _write_probe_fixtures(pending, key):
+    for name, (payload, meta) in pending.items():
+        text = json.dumps([payload, meta])
+        hits = find_key_shapes(text)
+        assert not hits, f"key-shaped string in {name}; nothing written"
+        assert key not in text, f"live key in {name}"
+        assert "base64," not in json.dumps(payload), f"attachment bytes echoed in {name}"
+    FIXTURE_DIR.mkdir(exist_ok=True)
+    for name, (payload, meta) in pending.items():
+        (FIXTURE_DIR / f"{name}.json").write_text(json.dumps(payload, indent=2) + "\n")
+        (FIXTURE_DIR / f"{name}.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+
+
+def _probe_meta(resp, latency, request, note):
+    return {
+        "endpoint": "/v1/agent",
+        "method": "POST" if request is not None else "GET",
+        "http_status": resp.status_code,
+        "capture_date": date.today().isoformat(),
+        "content_type": resp.headers.get("content-type"),
+        "scrubbed": "account-identifying keys and addresses replaced; search results removed",
+        "note": "Response ids are kept; they identify no account. Request headers and the API "
+        "key are never recorded.",
+        "request_note": note,
+        "latency_seconds": latency,
+        "request": _redact_request(request),
+    }
+
+
+def _run_probe_specs(specs):
+    key = os.environ.get("PERPLEXITY_API_KEY")
+    if not key:
+        pytest.skip("PERPLEXITY_API_KEY is not set")
+    auth = {"Authorization": f"Bearer {key}"}
+    pending: dict[str, tuple[dict, dict]] = {}
+    with httpx2.Client(base_url=BASE_URL, timeout=httpx2.Timeout(30.0, read=120.0)) as c:
+        for name, request, note, expected in specs:
+            resp, latency = _send(c, auth, "POST", "/v1/agent", request)
+            assert resp.status_code == expected, f"{name}: HTTP {resp.status_code}"
+            removed: list[str] = []
+            body = scrub(_drop_search_results(_body(resp)), "", removed)
+            pending[name] = (body, _probe_meta(resp, latency, request, note))
+    _write_probe_fixtures(pending, key)
+
+
+def test_capture_model_gone_fixtures():
+    """routing-v2 1.5: what the API answers for a model it does not serve and for an effort
+    level it refuses (both 400s, no run, nothing billed that we can see)."""
+    _run_probe_specs(
+        [
+            (
+                "agent_model_not_served_400",
+                {
+                    "model": "openai/gpt-99-luna",
+                    "input": "hi",
+                    "store": False,
+                    "max_output_tokens": 50,
+                },
+                "routing-v2 1.5(a): a real family stem with a version nobody serves",
+                400,
+            ),
+            (
+                "agent_effort_refused_400",
+                {
+                    "model": "openai/gpt-5-nano",
+                    "input": "hi",
+                    "store": False,
+                    "max_output_tokens": 50,
+                    "reasoning": {"effort": "xhigh"},
+                },
+                "routing-v2 1.5(b): a level the matrix records as refused for the model",
+                400,
+            ),
+        ]
+    )
+
+
+def _user(*parts):
+    return [{"role": "user", "content": list(parts)}]
+
+
+def _text(s):
+    return {"type": "input_text", "text": s}
+
+
+def _file(name, data):
+    return {"type": "input_file", "filename": name, "file_data": media_support.b64(data)}
+
+
+_MEDIA_MODEL = "openai/gpt-6-luna"
+_BASE = {"model": _MEDIA_MODEL, "store": False, "max_output_tokens": 150}
+_DUMMY_PDF_URL = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+
+
+def test_capture_media_fixtures():
+    """media-inputs 1.1: the fixtures of design "Fixtures to capture" (about $0.02 in total;
+    several are 400s that are not billed). Written through the same scrub and key scan."""
+    png = "data:image/png;base64," + media_support.b64(media_support.png())
+    pdf = media_support.pdf()
+    specs = [
+        (
+            "agent_image_inline",
+            {
+                **_BASE,
+                "input": _user(
+                    _text("What colour is this image? One word."),
+                    {"type": "input_image", "image_url": png},
+                ),
+            },
+            "media-inputs 1.1: a 48 by 48 red PNG as an inline data URI",
+            200,
+        ),
+        (
+            "agent_document_inline",
+            {
+                **_BASE,
+                "input": _user(_text("What is the secret word? One word."), _file("doc.pdf", pdf)),
+            },
+            "media-inputs 1.1: a one-line PDF as plain base64 file_data",
+            200,
+        ),
+        (
+            "agent_document_url",
+            {
+                **_BASE,
+                "max_output_tokens": 400,
+                "input": _user(
+                    _text("Quote the first 8 words of the document."),
+                    {"type": "input_file", "file_url": _DUMMY_PDF_URL},
+                ),
+            },
+            "media-inputs 1.1: a document the provider fetches from an HTTPS URL",
+            200,
+        ),
+        (
+            "agent_image_unsupported_model_400",
+            {
+                **_BASE,
+                "model": "perplexity/deepseek-v4-pro-0813",
+                "input": _user(
+                    _text("Colour? One word."), {"type": "input_image", "image_url": png}
+                ),
+            },
+            "media-inputs 1.1: an image sent to a model that cannot read images",
+            400,
+        ),
+        (
+            "agent_document_unsupported_route_400",
+            {
+                **_BASE,
+                "model": "xai/grok-4.3",
+                "input": _user(_text("Secret word? One word."), _file("doc.pdf", pdf)),
+            },
+            "media-inputs 1.1: a document sent to a route that refuses documents",
+            400,
+        ),
+        (
+            "agent_document_bad_extension_400",
+            {
+                **_BASE,
+                "input": _user(_text("hi"), _file("doc.docx", pdf)),
+            },
+            "media-inputs 1.1: PDF bytes under a .docx file name",
+            400,
+        ),
+        (
+            "agent_audio_invalid_type_400",
+            {
+                **_BASE,
+                "model": "google/gemini-3.5-flash-lite",
+                "input": _user(
+                    _text("Is there speech? One word."),
+                    {
+                        "type": "input_audio",
+                        "input_audio": {
+                            "data": media_support.b64(media_support.wav()),
+                            "format": "wav",
+                        },
+                    },
+                ),
+            },
+            "media-inputs 1.1: an input_audio part, which the API refuses",
+            400,
+        ),
+        (
+            "agent_document_rtf",
+            {
+                **_BASE,
+                "input": _user(
+                    _text("What is the secret word? One word."),
+                    _file("k.rtf", media_support.rtf()),
+                ),
+            },
+            "media-inputs 1.1: a one-line RTF file",
+            200,
+        ),
+        (
+            "agent_document_docx",
+            {
+                **_BASE,
+                "input": _user(
+                    _text("What is the secret word? One word."),
+                    _file("k.docx", media_support.docx()),
+                ),
+            },
+            "media-inputs 1.1: a one-line DOCX file (built by zipfile)",
+            200,
+        ),
+        (
+            "agent_document_failed_refusal",
+            {
+                **_BASE,
+                "model": "anthropic/claude-opus-5",
+                "input": _user(_text("Secret word? One word."), _file("doc.pdf", pdf)),
+            },
+            "media-inputs 1.1: a 200 whose run status is failed (a model refusal)",
+            200,
+        ),
+    ]
+    doc = media_support.doc_bytes()
+    if doc is not None:
+        specs.append(
+            (
+                "agent_document_doc",
+                {
+                    **_BASE,
+                    "input": _user(
+                        _text("What is the secret word? One word."), _file("k.doc", doc)
+                    ),
+                },
+                "media-inputs 1.1: a one-line legacy DOC file (macOS textutil)",
+                200,
+            )
+        )
+    _run_probe_specs(specs)
+    _capture_chained_document(pdf)
+
+
+def _capture_chained_document(pdf):
+    key = os.environ["PERPLEXITY_API_KEY"]
+    auth = {"Authorization": f"Bearer {key}"}
+    turns, requests = [], []
+    with httpx2.Client(base_url=BASE_URL, timeout=httpx2.Timeout(30.0, read=120.0)) as c:
+        previous = None
+        for question in (
+            None,
+            "What was the secret word in the document? One word.",
+            "Say it again.",
+        ):
+            if question is None:
+                req = {
+                    **_BASE,
+                    "input": _user(
+                        _text("Remember the secret word. Reply OK."), _file("doc.pdf", pdf)
+                    ),
+                }
+            else:
+                req = {**_BASE, "input": question, "previous_response_id": previous}
+            resp, _ = _send(c, auth, "POST", "/v1/agent", req)
+            assert resp.status_code == 200, f"chained turn: HTTP {resp.status_code}"
+            body = _body(resp)
+            previous = body["id"]
+            turns.append(scrub(body, "", []))
+            requests.append(_redact_request(req))
+    payload = {"turns": turns}
+    meta = {
+        "endpoint": "/v1/agent",
+        "method": "POST",
+        "http_status": 200,
+        "capture_date": date.today().isoformat(),
+        "scrubbed": "account-identifying keys replaced",
+        "note": "Three bodies: the document turn, a follow-up by previous_response_id, a second "
+        "chained hop. Request headers and the API key are never recorded.",
+        "request_note": "media-inputs 1.1: the file survives two continuation hops (store false)",
+        "requests": requests,
+    }
+    _write_probe_fixtures({"agent_chat_document_chained": (payload, meta)}, key)

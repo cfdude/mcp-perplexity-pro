@@ -19,11 +19,86 @@ _KEY_SHAPED = re.compile(
 )
 
 
-def redact_text(text: str, secrets: Iterable[str] = ()) -> str:
-    """Remove each configured secret and any key-shaped token from ``text``."""
+MEDIA_REMOVED = "[media removed]"
+
+# A ``data:`` URI body runs from after ``data:`` to the first character outside this class
+# (whitespace, quotes and brackets end it). Not preceded by a letter or digit, so ``metadata:x``
+# is left alone. One character class under one ``+``: no backtracking.
+_DATA_URI = re.compile(r"(?<![A-Za-z0-9])(data:)[A-Za-z0-9+/=;,.%_-]+", re.IGNORECASE)
+# A bare run of the STANDARD base64 alphabet (not ``_`` or ``-``, so a ``pplx-``/``Qq7_`` key prefix
+# stays for key redaction). A candidate is replaced only when it also looks like encoded bytes.
+_BASE64_RUN = re.compile(r"[A-Za-z0-9+/=]{200,}")
+_UPPER = re.compile(r"[A-Z]")
+_LOWER = re.compile(r"[a-z]")
+_DIGIT = re.compile(r"[0-9]")
+
+
+def _base64_run(match: re.Match[str]) -> str:
+    run = match.group(0)
+    if (
+        _UPPER.search(run)
+        and _LOWER.search(run)
+        and _DIGIT.search(run)
+        and run.count("/") * 16 <= len(run)
+    ):
+        return MEDIA_REMOVED
+    return run
+
+
+# A URL runs to whitespace, a quote, a backtick or a bracket; a bracketed IPv6 host is one unit
+# (its first character differs from every other alternative's, so the scan is linear).
+_URL = re.compile(r"https?://(?:\[[0-9A-Fa-f:.%]+\]|[^\s\"'`<>\[\]{}])+", re.IGNORECASE)
+
+
+def _cut_url(match: re.Match[str], *, host_only: bool) -> str:
+    """The URL without credentials, query or fragment (a signed URL's secret lives there); with
+    ``host_only`` also without its path (a path can be a capability). One closing parenthesis
+    that the cut swallowed is put back when the match had more ``)`` than ``(``."""
+    url = match.group(0)
+    scheme, _, rest = url.partition("://")
+    for mark in ("?", "#"):
+        rest = rest.partition(mark)[0]
+    authority, slash, path = rest.partition("/")
+    authority = authority.rpartition("@")[2]
+    if host_only:
+        out = f"{scheme}://{authority}" + ("/\u2026" if path else "")
+    else:
+        out = f"{scheme}://{authority}{slash}{path}"
+    if url.count(")") > url.count("(") and not out.endswith(")"):
+        out += ")"
+    return out
+
+
+def scrub_media(text: str) -> str:
+    """Replace ``data:`` URI bodies and bare base64 runs with ``[media removed]`` (one linear
+    scan each), so an error that quotes a request never carries a file's bytes."""
+    if "data:" in text.lower():
+        text = _DATA_URI.sub(lambda m: m.group(1) + MEDIA_REMOVED, text)
+    return _BASE64_RUN.sub(_base64_run, text)
+
+
+def redact_text(text: str, secrets: Iterable[str] = (), *, persisted: bool = False) -> str:
+    """Remove media, each configured secret and any key-shaped token from ``text``.
+
+    Media goes first, before key removal and before any caller truncates, so a base64 run that
+    straddles a later cut is already gone. A quoted URL loses its credentials, query and fragment
+    (a signed URL's secret); its path stays for the error RETURNED to the caller. With
+    ``persisted`` (a usage row, a log record: see ``redact_persisted``) a quoted URL is cut to
+    scheme and host, because a path can be a capability."""
+    text = scrub_media(text)
+    if "://" in text:
+        text = _URL.sub(lambda m: _cut_url(m, host_only=persisted), text)
     for secret in sorted((s for s in secrets if s), key=len, reverse=True):
         text = text.replace(secret, REDACTED)
     return _KEY_SHAPED.sub(REDACTED, text)
+
+
+def redact_persisted(text: str, secrets: Iterable[str] = ()) -> str:
+    """``redact_text`` for stored or logged text: a quoted URL shows scheme and host only.
+
+    Accepted limit: a URL written JSON-escaped (``https:\\/\\/``) or with a percent-encoded
+    scheme is not recognised and is left as it is."""
+    return redact_text(text, secrets, persisted=True)
 
 
 def scrub_secrets(text: str, secrets: Iterable[str] = ()) -> str:

@@ -1,0 +1,71 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": 1793375237,
+  "created_at": 1793375237,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_13fa1f82-fe68-4337-8078-c8f8480013f8",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 200,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "Red blue MANGO",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_05e844ae-e18c-4feb-b991-ae0f1ae9c548",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "currency": "USD",
+    "input_cost": 2e-05,
+    "output_cost": 2e-05,
+    "total_cost": 4e-05
+   },
+   "input_tokens": 197,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 37,
+   "output_tokens_details": {
+    "reasoning_tokens": 27
+   },
+   "total_tokens": 234
+  },
+  "user": null
+ }
+}

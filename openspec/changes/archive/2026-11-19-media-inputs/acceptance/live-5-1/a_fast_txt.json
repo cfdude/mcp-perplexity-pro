@@ -1,0 +1,134 @@
+{
+  "name": "a_fast_txt",
+  "argv": [
+    "ask",
+    "What is the secret word in the attached document? One word.",
+    "--depth",
+    "fast",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/note.txt"
+  ],
+  "returncode": 0,
+  "result": {
+    "answer": "PAPAYA",
+    "answer_json": null,
+    "sources": [
+      {
+        "url": "https://www.scribd.com/document/968750809/One-Word-Substitution",
+        "title": "One Word Substitution Guide | PDF - Scribd",
+        "date": "2026-10-25",
+        "id": 1,
+        "ids": [
+          1
+        ]
+      },
+      {
+        "url": "https://repository.londonmet.ac.uk/5717/1/IJCNA-2020-O-02.pdf",
+        "title": "International Journal of Computer Networks and Applications (IJCNA)",
+        "date": null,
+        "id": 2,
+        "ids": [
+          2
+        ]
+      },
+      {
+        "url": "https://www.thefreedictionary.com/secret",
+        "title": "Secret - definition of secret by The Free Dictionary",
+        "date": null,
+        "id": 3,
+        "ids": [
+          3
+        ]
+      },
+      {
+        "url": "https://doitswift.com/text/word-counter/",
+        "title": "Free Word Counter \u2014 Unlimited Text, Private, No Signup",
+        "date": null,
+        "id": 4,
+        "ids": [
+          4
+        ]
+      },
+      {
+        "url": "https://watermark.ws/learn/how-to-mark-a-document-as-confidential",
+        "title": "How to Mark a Document as Confidential",
+        "date": "2026-10-20",
+        "id": 5,
+        "ids": [
+          5
+        ]
+      },
+      {
+        "url": "https://qpdf.readthedocs.io/en/stable/encryption.html",
+        "title": "PDF Encryption \u2014 qpdf 12.4.2 documentation",
+        "date": null,
+        "id": 6,
+        "ids": [
+          6
+        ]
+      },
+      {
+        "url": "https://www.scribd.com/document/521631945/Secret-Words",
+        "title": "Secret Words",
+        "date": "2025-07-03",
+        "id": 7,
+        "ids": [
+          7
+        ]
+      },
+      {
+        "url": "http://www.gnu.org/philosophy/no-word-attachments.html.en",
+        "title": "We Can Put an End to Word Attachments - GNU Project",
+        "date": "2024-01-01",
+        "id": 8,
+        "ids": [
+          8
+        ]
+      },
+      {
+        "url": "https://ar5iv.arxiv.org/html/1506.01256",
+        "title": "PDF Steganography based on Chinese Remainder Theorem",
+        "date": null,
+        "id": 9,
+        "ids": [
+          9
+        ]
+      },
+      {
+        "url": "https://www.cnet.com/tech/tech-industry/email-attachments-can-be-pretty-revealing/",
+        "title": "Email attachments can be pretty revealing",
+        "date": "2002-01-13",
+        "id": 10,
+        "ids": [
+          10
+        ]
+      }
+    ],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": "fast",
+    "response_id": "resp_3e18206a-9303-41c3-9e58-ec9d6fb1889b",
+    "usage": {
+      "input_tokens": 3284,
+      "output_tokens": 7,
+      "total_tokens": 3291,
+      "cost_usd": "0.00103",
+      "cost_source": "reported"
+    },
+    "latency_ms": 1778,
+    "project": "default",
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": null,
+      "selected_by": "depth",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00103"
+}

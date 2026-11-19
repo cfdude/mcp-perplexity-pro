@@ -1,0 +1,64 @@
+{
+  "name": "b_turn1_pdf",
+  "argv": [
+    "chat",
+    "send",
+    "--model",
+    "openai/gpt-6-luna",
+    "--no-search",
+    "--title",
+    "acceptance",
+    "--message",
+    "What is the secret word in the attached document? One word.",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/doc.pdf"
+  ],
+  "returncode": 0,
+  "result": {
+    "action": "send",
+    "project": "default",
+    "chat_id": 1,
+    "chat": {
+      "id": 1,
+      "title": "acceptance",
+      "message_count": 2,
+      "created_at": "2026-11-19T17:34:27.323133Z",
+      "updated_at": "2026-11-19T17:34:27.323133Z"
+    },
+    "chats": null,
+    "messages": null,
+    "chats_total": null,
+    "messages_total": null,
+    "truncated": null,
+    "messages_removed": null,
+    "continuation": "new",
+    "answer": "MANGO",
+    "answer_json": null,
+    "sources": [],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": null,
+    "response_id": "resp_cce00e18-d747-4a58-bd2c-808e2f2485a2",
+    "usage": {
+      "input_tokens": 67,
+      "output_tokens": 6,
+      "total_tokens": 73,
+      "cost_usd": "0.00001",
+      "cost_source": "reported"
+    },
+    "latency_ms": 2352,
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": "openai/gpt-6-luna",
+      "selected_by": "model",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00001"
+}

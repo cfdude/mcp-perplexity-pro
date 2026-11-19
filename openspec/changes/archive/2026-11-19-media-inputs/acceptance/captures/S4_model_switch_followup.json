@@ -1,0 +1,71 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": 1793376109,
+  "created_at": 1793376109,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_c8e05c7f-c818-488f-bee9-08ec43ab58a5",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 200,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "google/gemini-3.6-flash",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "MANGO",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_0b15ed95-31fc-4136-99b3-581f68f5693c",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "currency": "USD",
+    "input_cost": 0.00086,
+    "output_cost": 0.00095,
+    "total_cost": 0.00181
+   },
+   "input_tokens": 574,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 126,
+   "output_tokens_details": {
+    "reasoning_tokens": 124
+   },
+   "total_tokens": 700
+  },
+  "user": null
+ }
+}

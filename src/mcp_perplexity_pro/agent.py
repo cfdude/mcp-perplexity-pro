@@ -19,7 +19,7 @@ import json
 import logging
 import re
 import time
-from collections.abc import AsyncIterator, Coroutine, Iterable, Mapping
+from collections.abc import AsyncIterator, Coroutine, Iterable, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -30,6 +30,7 @@ from sqlalchemy import select
 
 from mcp_perplexity_pro.costed import Recording, costed_call
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.media_gate import attachment_hint, refusal_hint
 from mcp_perplexity_pro.models import AgentRun
 from mcp_perplexity_pro.redaction import redact_text, scrub_secrets
 from mcp_perplexity_pro.routing import Route
@@ -203,6 +204,27 @@ def _web_search_tool(options: AskOptions) -> dict[str, Any] | None:
     return tool if len(tool) > 1 else None
 
 
+def _with_parts(
+    input: str | list[dict[str, Any]],  # noqa: A002 - the API's own field name
+    parts: Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """The ``input`` of a call that carries attachments: one user message of parts."""
+
+    def item(text: str) -> dict[str, Any]:
+        # shared, not copied (32 MiB of base64 per call); nothing mutates the parts
+        content = [{"type": "input_text", "text": text}, *parts]
+        return {"type": "message", "role": "user", "content": content}
+
+    if isinstance(input, str):
+        return [item(input)]
+    last = input[-1] if input else None
+    if not (isinstance(last, dict) and last.get("role") == "user"):
+        raise ValueError("attachments need a user message as the last input item")
+    if not isinstance(last.get("content"), str):
+        raise ValueError("the last input item already holds parts")
+    return [*copy.deepcopy(input[:-1]), item(last["content"])]
+
+
 def build_request(
     options: AskOptions,
     input: str | list[dict[str, Any]],  # noqa: A002 - the API's own field name
@@ -210,12 +232,18 @@ def build_request(
     store: bool,
     background: bool = False,
     previous_response_id: str | None = None,
+    attachments: Sequence[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Validate ``options`` and build the ``POST /v1/agent`` body (design D2).
 
     Pure: no network, no database. ``input`` is a non-blank string, or the replay list of
     message items. ``store`` is always sent explicitly. Raises ``invalid_request`` naming the
     first option that is wrong.
+
+    ``attachments`` are the already-built parts of ``media.build_parts`` (none, or an empty list,
+    builds the body this function always built). With parts the ``input`` becomes ONE user message
+    item whose content is the ``input_text`` part followed by the parts in order; for a replay
+    list the same is done to its last item, the new user message. Nothing else changes.
     """
     if isinstance(input, str):
         valid_input = bool(input.strip())
@@ -253,7 +281,7 @@ def build_request(
         request["model"] = options.model
     else:
         request["effort"] = options.preset  # the API's name for the preset (`preset` is deprecated)
-    request["input"] = copy.deepcopy(input)
+    request["input"] = copy.deepcopy(input) if not attachments else _with_parts(input, attachments)
     if options.instructions is not None:
         if not isinstance(options.instructions, str):
             raise _bad("instructions", "must be a string.")
@@ -643,6 +671,7 @@ async def run_costed(
     preset: str | None,
     background: bool,
     resolve_project: bool = True,
+    attachment_kinds: frozenset[str] = frozenset(),
 ) -> CostedRun:
     """Create a run and record it: the recorder contract of ``CLAUDE.md`` "How to record usage".
 
@@ -662,6 +691,10 @@ async def run_costed(
     comes after this returns. The sequence itself is ``costed.costed_call``; this function holds
     the Agent rules (the interpreter above and the unexpected-status error). ``costed_call`` and
     the job observation are the only ``record_usage`` call sites.
+
+    ``attachment_kinds`` are the input kinds the call carried (empty for a text call): a 400 gets
+    ``media_gate.attachment_hint`` and a run that failed with a ``refusal`` error on a document
+    gets ``media_gate.refusal_hint``, both AFTER the recording, so the event is unchanged.
     """
     secrets = (app.settings.api_key.get_secret_value(),)
 
@@ -680,31 +713,46 @@ async def run_costed(
             request_id=raw.get("id"),
         )
 
-    costed = await costed_call(
-        app,
-        tool=tool,
-        api="agent",
-        project=project,
-        preset=preset,
-        call=lambda: app.client.create_run(body, background=background),
-        record=interpret,
-        resolve_project=resolve_project,
-    )
+    try:
+        costed = await costed_call(
+            app,
+            tool=tool,
+            api="agent",
+            project=project,
+            preset=preset,
+            call=lambda: app.client.create_run(body, background=background),
+            record=interpret,
+            resolve_project=resolve_project,
+        )
+    except PerplexityError as exc:
+        if attachment_kinds:
+            raise attachment_hint(exc, attachment_kinds, body.get("model")) from None
+        raise
     run = costed.result
     raw = run.model_dump(mode="json")
     if not background and (
         raw.get("status") not in ("completed", "incomplete") or raw.get("error") is not None
     ):
         detail = clean_error_text(raw.get("error"), secrets)
+        hint = ""
+        if "document" in attachment_kinds and _is_refusal(raw.get("error")):
+            hint = refusal_hint(attachment_kinds)
         raise PerplexityError(
             "unexpected_response",
             f"The API returned status {clean_status(raw.get('status'), secrets)!r} instead of a "
-            "finished answer" + (f": {detail}" if detail else "."),
+            "finished answer" + (f": {detail}" if detail else ".") + hint,
             secrets=secrets,
         )
     return CostedRun(
         run=run, latency_ms=costed.latency_ms, project=costed.project, event_status=costed.status
     )
+
+
+def _is_refusal(error: object) -> bool:
+    """A run's ``error`` whose code or type is ``refusal`` (a model declining its input)."""
+    if not isinstance(error, Mapping):
+        return False
+    return "refusal" in (error.get("code"), error.get("type"))
 
 
 def _ms(started: float) -> int:

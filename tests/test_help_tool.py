@@ -46,6 +46,7 @@ async def test_the_index_is_the_default_action(world):
         "citations",
         "errors",
         "projects",
+        "attachments",
     ]
     assert len(out["text"].encode()) <= 1500 and out["text"].isascii()
     assert "perplexity_help" in out["text"]  # every registered tool, itself included

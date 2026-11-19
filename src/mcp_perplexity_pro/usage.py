@@ -40,7 +40,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from mcp_perplexity_pro.errors import ALL_CATEGORIES
 from mcp_perplexity_pro.pricing import PRICES_AS_OF
-from mcp_perplexity_pro.redaction import redact_text
+from mcp_perplexity_pro.redaction import redact_persisted as redact_text  # stored: host only
 from mcp_perplexity_pro.storage.models import Project, UsageEvent
 from mcp_perplexity_pro.storage.projects import validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
@@ -473,7 +473,9 @@ def _failure_text(exc: BaseException, secrets: Iterable[str]) -> str:
     """The exception and its traceback as text with secrets removed (a log filter may not be
     installed where this runs, and the text of a database error can echo bound values)."""
     rendered = "".join(traceback.format_exception(exc))
-    return redact_text(rendered[-2000:], secrets)
+    # Redact the whole text, then cut: a key or a base64 run straddling the cut would survive as
+    # a fragment of what redaction could no longer recognise.
+    return redact_text(rendered, secrets)[-2000:]
 
 
 def _safe(value: object, secrets: Iterable[str]) -> str:

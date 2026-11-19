@@ -16,10 +16,25 @@ from mcp_perplexity_pro.server import build_server
 from mcp_perplexity_pro.storage.engine import create_engine_for
 from mcp_perplexity_pro.storage.migrate import migrate
 
+ADDED_AFTER_THE_SWEEP = (
+    "openai/gpt-6.1-terra"  # the one baseline entry added by hand (routing-v2 2.5)
+)
+
+
+def swept_payload() -> dict[str, Any]:
+    """The recorded live list of 2026-10-17 (the 54 swept models), a fresh copy per call."""
+    return json.loads((FIXTURE_DIR / "models_2026-10-17.json").read_text())
+
 
 def models_payload() -> dict[str, Any]:
-    """The recorded live list of 2026-10-17 (54 models), a fresh copy per call."""
-    return json.loads((FIXTURE_DIR / "models_2026-10-17.json").read_text())
+    """The recorded list of 2026-10-17 plus ``openai/gpt-6.1-terra``, whose row is copied from the
+    real capture of 2026-11-11 (`models_2026-11-11.json`), so that a refresh test against the
+    baseline does not mark the hand-added entry removed (55 models), a fresh copy per call."""
+    payload = swept_payload()
+    later = json.loads((FIXTURE_DIR / "models_2026-11-11.json").read_text())
+    (row,) = [m for m in later["data"] if m["id"] == ADDED_AFTER_THE_SWEEP]
+    payload["data"].append(row)
+    return payload
 
 
 def payload_with(*ids: str, price: float = 1.0) -> dict[str, Any]:

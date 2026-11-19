@@ -15,6 +15,7 @@ from typing import Any
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mcp_perplexity_pro.media_notes import strip_trailer
 from mcp_perplexity_pro.storage.models import (
     Chat,
     ChatMessage,
@@ -76,7 +77,11 @@ async def source_items(session: AsyncSession, project_id: int, source: str) -> l
             .where(Chat.project_id == project_id)
             .order_by(ChatMessage.id)
         )
-        return [SourceItem("chat", f"c:{i}", content, chat_message_id=i) for i, content in rows]
+        return [
+            # the stored attachment note is the server's, not the user's words: never embedded
+            SourceItem("chat", f"c:{i}", strip_trailer(content), chat_message_id=i)
+            for i, content in rows
+        ]
     rows = await session.execute(
         select(ResearchJob.id, ResearchJob.result_text)
         .where(

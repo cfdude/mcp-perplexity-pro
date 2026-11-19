@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "the selected model route does not support this document type or source",
+    "type": "invalid_request",
+    "code": 400
+  }
+}

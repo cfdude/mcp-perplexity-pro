@@ -1,0 +1,16 @@
+{
+  "name": "c_audio",
+  "argv": [
+    "ask",
+    "Transcribe",
+    "--model",
+    "openai/gpt-6-luna",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/audio.wav"
+  ],
+  "returncode": 1,
+  "result": null,
+  "stdout_raw": "",
+  "stderr": "[invalid_request] attachments[0]: audio is not supported (the API accepts neither audio nor video) Run perplexity-pro help ask for its arguments and examples.",
+  "cost_usd": "0"
+}

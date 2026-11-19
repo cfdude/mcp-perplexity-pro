@@ -38,6 +38,14 @@ KEY = "test-dummy-api-key"
 LOGGER = "mcp_perplexity_pro.matrix_refresh"
 
 
+@pytest.fixture(autouse=True)
+def _efforts_only(monkeypatch):
+    """These tests are about the effort probe (task 4.1 / 3.1): since the input probe exists, the
+    baseline's unknown kinds would add requests, so the input probe is switched off here and has
+    its own tests in ``test_matrix_input_probe.py``."""
+    monkeypatch.setattr(matrix_refresh, "_wants_inputs", lambda *args, **kwargs: [])
+
+
 @pytest.fixture
 async def worlds(make_settings):
     made: list[MatrixWorld] = []
@@ -487,6 +495,7 @@ def test_stdio_signal_during_the_shielded_finish_write_lets_the_finish_land(tmp_
             "stdio",
             PERPLEXITY_BASE_URL=f"http://127.0.0.1:{server.server_address[1]}",
             FIXTURE_SLOW_MATRIX_WRITE="1.5",
+            FIXTURE_EFFORTS_ONLY="1",
         )
         tail = StderrTail(proc)
         stdio_initialize(proc)

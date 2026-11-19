@@ -1,0 +1,83 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": 1793375359,
+  "created_at": 1793375359,
+  "effort": "low@2026-10-24.0",
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_85824482-d153-4ac6-a3cf-be5c14e0971d",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 300,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "Red",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_825d94d8-759a-4b64-a404-e40338830e83",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "preset": "low@2026-10-24.0",
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [
+   {
+    "type": "web_search"
+   },
+   {
+    "type": "fetch_url"
+   }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "cache_creation_cost": 0.00018,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0,
+    "total_cost": 0.00018
+   },
+   "input_tokens": 1452,
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 1449,
+    "cache_read_input_tokens": 0,
+    "cached_tokens": 0
+   },
+   "output_tokens": 5,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 1457
+  },
+  "user": null
+ }
+}

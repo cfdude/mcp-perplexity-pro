@@ -1,0 +1,71 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": 1793373690,
+  "created_at": 1793373690,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_aa504123-3e69-4b4c-adf2-5e7c06de16d8",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 60,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "perplexity/nemotron-3.5-super-120b-a12b",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "Red",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_bcd58cb6-9f35-47dc-9a57-f9c281a3b098",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "standard",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "currency": "USD",
+    "input_cost": 6e-05,
+    "output_cost": 0,
+    "total_cost": 6e-05
+   },
+   "input_tokens": 302,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 2,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 304
+  },
+  "user": null
+ }
+}

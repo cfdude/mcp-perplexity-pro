@@ -1,0 +1,134 @@
+{
+  "name": "a_fast_png",
+  "argv": [
+    "ask",
+    "What colour is the attached image? One word.",
+    "--depth",
+    "fast",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/red.png"
+  ],
+  "returncode": 0,
+  "result": {
+    "answer": "Red",
+    "answer_json": null,
+    "sources": [
+      {
+        "url": "https://openclips.ai/community/asmr-satisfying/",
+        "title": "AI ASMR Generator: Cut, Press, Pour | OpenClips.AI",
+        "date": "2026-10-13",
+        "id": 1,
+        "ids": [
+          1
+        ]
+      },
+      {
+        "url": "https://github.com/NousResearch/hermes-agent/issues/91548",
+        "title": "Image parts are dropped from the stored transcript (they do reach the model) \u00b7 Issue #91548 \u00b7 NousResearch/hermes-agent",
+        "date": "2026-08-21",
+        "id": 2,
+        "ids": [
+          2
+        ]
+      },
+      {
+        "url": "https://github.com/Gaurav-Gosain/tuios/pull/817",
+        "title": "feat(composer): preview attached images by Gaurav-Gosain \u00b7 Pull Request #817 \u00b7 Gaurav-Gosain/tuios",
+        "date": "2026-10-16",
+        "id": 3,
+        "ids": [
+          3
+        ]
+      },
+      {
+        "url": "https://openclips.ai/community/v/printer-boss-fight/",
+        "title": "Printer Boss Fight: Seedance 2.5 Workflow | OpenClips.AI",
+        "date": "2026-10-02",
+        "id": 4,
+        "ids": [
+          4
+        ]
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Blue",
+        "title": "Blue - Wikipedia",
+        "date": "2001-10-31",
+        "id": 5,
+        "ids": [
+          5
+        ]
+      },
+      {
+        "url": "https://abacus.ai/help/chatllm-ai-super-assistant/studio-prompting-guide",
+        "title": "Studio Prompting Guide",
+        "date": null,
+        "id": 6,
+        "ids": [
+          6
+        ]
+      },
+      {
+        "url": "https://github.com/Perts-Foundry/sapphire-shadow-studio-theme/blob/main/docs/product-media-alt-text.md",
+        "title": "sapphire-shadow-studio-theme/docs/product-media-alt-text.md at main \u00b7 Perts-Foundry/sapphire-shadow-studio-theme",
+        "date": "2026-05-03",
+        "id": 7,
+        "ids": [
+          7
+        ]
+      },
+      {
+        "url": "https://colourwise.app/colour-names/translating-colour-names",
+        "title": "Translating colour names",
+        "date": null,
+        "id": 8,
+        "ids": [
+          8
+        ]
+      },
+      {
+        "url": "https://pixo.video/blog/seedance-2-first-frame-reference-image",
+        "title": "Seedance 2.0: How to Use a Reference Image as the First Frame",
+        "date": "2026-08-14",
+        "id": 9,
+        "ids": [
+          9
+        ]
+      },
+      {
+        "url": "https://openclips.ai/community/v/page/14/",
+        "title": "Shared Clips: AI Videos and Prompts, Page 14 | OpenClips.AI",
+        "date": "2026-09-21",
+        "id": 10,
+        "ids": [
+          10
+        ]
+      }
+    ],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": "fast",
+    "response_id": "resp_684fd3c5-9306-4882-81f0-7906b32f1702",
+    "usage": {
+      "input_tokens": 4317,
+      "output_tokens": 5,
+      "total_tokens": 4322,
+      "cost_usd": "0.00104",
+      "cost_source": "reported"
+    },
+    "latency_ms": 1760,
+    "project": "default",
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": null,
+      "selected_by": "depth",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00104"
+}

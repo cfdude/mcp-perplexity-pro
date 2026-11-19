@@ -181,6 +181,17 @@ async def chat_history(session: AsyncSession, chat_id: int) -> list[tuple[str, s
     return [(role, content) for role, content in rows]
 
 
+async def user_contents(session: AsyncSession, chat_id: int) -> list[str]:
+    """The stored text of every user message, oldest first: where a chat's attachment notes
+    are read back from (``media_notes.ChatNotes``)."""
+    rows = await session.execute(
+        select(ChatMessage.content)
+        .where(ChatMessage.chat_id == chat_id, ChatMessage.role == "user")
+        .order_by(ChatMessage.id)
+    )
+    return [content for (content,) in rows]
+
+
 async def list_chats(
     session: AsyncSession, project_id: int, limit: int
 ) -> tuple[list[ChatSummary], int]:

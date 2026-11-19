@@ -1,0 +1,64 @@
+{
+  "name": "b_turn4_adds_image",
+  "argv": [
+    "chat",
+    "send",
+    "--model",
+    "openai/gpt-6-luna",
+    "--no-search",
+    "--chat-id",
+    "1",
+    "--message",
+    "What colour is the attached image? One word.",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/red.png"
+  ],
+  "returncode": 0,
+  "result": {
+    "action": "send",
+    "project": "default",
+    "chat_id": 1,
+    "chat": {
+      "id": 1,
+      "title": "acceptance",
+      "message_count": 8,
+      "created_at": "2026-11-19T17:34:27.323133Z",
+      "updated_at": "2026-11-19T17:34:37.072603Z"
+    },
+    "chats": null,
+    "messages": null,
+    "chats_total": null,
+    "messages_total": null,
+    "truncated": null,
+    "messages_removed": null,
+    "continuation": "chained",
+    "answer": "Red",
+    "answer_json": null,
+    "sources": [],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": null,
+    "response_id": "resp_79a84683-2e3c-404b-8c47-db7325cdb7b8",
+    "usage": {
+      "input_tokens": 200,
+      "output_tokens": 22,
+      "total_tokens": 222,
+      "cost_usd": "0.00003",
+      "cost_source": "reported"
+    },
+    "latency_ms": 2392,
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": "openai/gpt-6-luna",
+      "selected_by": "model",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00003"
+}

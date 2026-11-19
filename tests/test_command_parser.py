@@ -236,3 +236,86 @@ def test_standard_input_can_be_read_only_once(tools, capsys, monkeypatch):
     monkeypatch.setattr(sys, "stdin", io.StringIO('{"query": "q"}'))
     err = refused(tools, capsys, "ask", "--args-json", "-", "--json-schema", "-")
     assert "--json-schema" in err and "once" in err
+
+
+# --- attachments (media-inputs task 4.1) ---------------------------------------------------------
+
+
+def test_the_flag_exists_on_ask_and_chat_only(tools, capsys):
+    for command_name in ("ask", "chat"):
+        with pytest.raises(SystemExit):
+            parse(tools, command_name, "--help")
+        assert "--attachments" in capsys.readouterr().out
+    for other in ("research", "jobs", "search", "decide", "embed", "models", "usage", "projects"):
+        with pytest.raises(SystemExit):
+            parse(tools, other, "--help")
+        assert "--attachments" not in capsys.readouterr().out, other
+
+
+def test_repeated_flags_arrive_in_order(tools):
+    _, arguments = parse(
+        tools, "ask", "q", "--attachments", "/a.png", "--attachments", "https://example.com/b.pdf"
+    )
+    assert arguments["attachments"] == ["/a.png", "https://example.com/b.pdf"]
+
+
+def test_a_relative_path_is_made_absolute_against_the_working_directory(
+    tools, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    _, arguments = parse(tools, "ask", "q", "--attachments", "shot.png")
+    assert arguments["attachments"] == [os.path.join(os.getcwd(), "shot.png")]
+
+
+def test_a_leading_tilde_is_expanded(tools, monkeypatch, tmp_path):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    _, arguments = parse(tools, "ask", "q", "--attachments", "~/pics/a.png")
+    assert arguments["attachments"] == [str(tmp_path / "pics" / "a.png")]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://example.com/a.png",
+        "HTTPS://Example.com/a.png",
+        "http://example.com/a.png",
+        "data:image/png;base64,iVBORw0KGgo=",
+        "DATA:image/png;base64,iVBORw0KGgo=",
+        "application/pdf::https://example.com/download?id=7",
+    ],
+)
+def test_urls_data_and_prefixed_values_are_left_untouched(tools, value):
+    _, arguments = parse(tools, "ask", "q", "--attachments", value)
+    assert arguments["attachments"] == [value]
+
+
+def test_the_path_after_a_media_type_prefix_is_normalised_like_a_bare_path(
+    tools, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path / "h"))
+    _, arguments = parse(
+        tools,
+        "ask",
+        "q",
+        "--attachments",
+        "image/png::shot.png",
+        "--attachments",
+        "image/png::~/s.png",
+    )
+    assert arguments["attachments"] == [
+        "image/png::" + os.path.join(os.getcwd(), "shot.png"),
+        "image/png::" + str(tmp_path / "h" / "s.png"),
+    ]
+
+
+def test_a_json_supplied_list_is_normalised_too(tools, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _, arguments = parse(tools, "ask", "q", "--args-json", '{"attachments": ["a.png"]}')
+    assert arguments["attachments"] == [os.path.join(os.getcwd(), "a.png")]
+
+
+def test_a_prefix_with_an_empty_path_is_left_as_given():
+    from mcp_perplexity_pro.command import normalise_attachment
+
+    assert normalise_attachment("image/png::") == "image/png::"

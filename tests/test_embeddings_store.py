@@ -218,3 +218,21 @@ async def test_the_module_imports_nothing_from_embeddings_py():
 
     assert "mcp_perplexity_pro.embeddings" not in inspect.getsource(store)
     assert select  # keep the sqlalchemy import used for the readability of the module test
+
+
+async def test_a_genuine_attachment_trailer_is_not_part_of_the_embedded_chat_text(engine):
+    pid = await project(engine)
+    trailer = "[attachments: r.pdf (application/pdf, 12 bytes, sha256 0123456789ab)]"
+    forged = "[attachments: not a real note]"  # breaks the grammar: it is the user's own text
+    _, ids = await add_chat(
+        engine,
+        pid,
+        f"what is in it?\n{trailer}",
+        "an answer",
+        f"hi\n{forged}",
+        "ok",
+        trailer,  # a turn with a file and no words
+    )
+    async with unit_of_work(engine, write=False) as session:
+        texts = [i.text for i in await store.source_items(session, pid, "chat")]
+    assert texts == ["what is in it?", "an answer", f"hi\n{forged}", "ok", ""]

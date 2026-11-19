@@ -1,0 +1,974 @@
+{
+ "anthropic/claude-fable-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00102,
+   "in": 47
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.02067,
+   "in": 1630
+  }
+ },
+ "anthropic/claude-fable-5-1": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00069,
+   "in": 49
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.02069,
+   "in": 1632
+  }
+ },
+ "anthropic/claude-haiku-4-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 6e-05,
+   "in": 44
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0017,
+   "in": 1622
+  }
+ },
+ "anthropic/claude-haiku-5-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0,
+   "in": 49
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0002,
+   "in": 1632
+  }
+ },
+ "anthropic/claude-opus-4-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00032,
+   "in": 44
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00826,
+   "in": 1622
+  }
+ },
+ "anthropic/claude-opus-4-6": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00032,
+   "in": 44
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00831,
+   "in": 1622
+  }
+ },
+ "anthropic/claude-opus-4-7": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00041,
+   "in": 52
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00838,
+   "in": 1635
+  }
+ },
+ "anthropic/claude-opus-4-8": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00034,
+   "in": 47
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0083,
+   "in": 1630
+  }
+ },
+ "anthropic/claude-opus-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00094,
+   "in": 47
+  },
+  "file": {
+   "code": 200,
+   "st": "failed",
+   "ok": false,
+   "err": "document processing failed: refusal",
+   "cost": null,
+   "in": null
+  }
+ },
+ "anthropic/claude-opus-5-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00048,
+   "in": 49
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00665,
+   "in": 1632
+  }
+ },
+ "anthropic/claude-sonnet-4-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00019,
+   "in": 44
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00496,
+   "in": 1622
+  }
+ },
+ "anthropic/claude-sonnet-4-6": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00022,
+   "in": 44
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00505,
+   "in": 1622
+  }
+ },
+ "anthropic/claude-sonnet-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00013,
+   "in": 47
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00334,
+   "in": 1630
+  }
+ },
+ "anthropic/claude-sonnet-5-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00015,
+   "in": 49
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00332,
+   "in": 1632
+  }
+ },
+ "google/gemini-3-flash-preview": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00079,
+   "in": 1123
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00064,
+   "in": 557
+  }
+ },
+ "google/gemini-3.1-flash-lite": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00028,
+   "in": 1123
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00014,
+   "in": 557
+  }
+ },
+ "google/gemini-3.1-pro-preview": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00371,
+   "in": 1123
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00285,
+   "in": 557
+  }
+ },
+ "google/gemini-3.5-flash": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0024,
+   "in": 1123
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0018,
+   "in": 557
+  }
+ },
+ "google/gemini-3.5-flash-lite": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00034,
+   "in": 1123
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00017,
+   "in": 557
+  }
+ },
+ "google/gemini-3.6-flash": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00214,
+   "in": 1123
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00119,
+   "in": 557
+  }
+ },
+ "google/gemini-3.7-flash": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00097,
+   "in": 1123
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00059,
+   "in": 557
+  }
+ },
+ "google/gemini-3.8-flash": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00096,
+   "in": 1123
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00058,
+   "in": 557
+  }
+ },
+ "google/gemini-4-argon": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00236,
+   "in": 1156
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00129,
+   "in": 617
+  }
+ },
+ "openai/gpt-5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00166,
+   "in": 244
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00138,
+   "in": 61
+  }
+ },
+ "openai/gpt-5-mini": {
+  "image": {
+   "code": 200,
+   "st": "incomplete",
+   "ok": false,
+   "err": null,
+   "cost": 0.00027,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0002,
+   "in": 61
+  }
+ },
+ "openai/gpt-5-nano": {
+  "image": {
+   "code": 200,
+   "st": "incomplete",
+   "ok": false,
+   "err": null,
+   "cost": 5e-05,
+   "in": 40
+  },
+  "file": {
+   "code": 200,
+   "st": "incomplete",
+   "ok": false,
+   "err": null,
+   "cost": 5e-05,
+   "in": 61
+  }
+ },
+ "openai/gpt-5.1": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00042,
+   "in": 244
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0002,
+   "in": 61
+  }
+ },
+ "openai/gpt-5.2": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00014,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00019,
+   "in": 61
+  }
+ },
+ "openai/gpt-5.3-codex": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00028,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00038,
+   "in": 61
+  }
+ },
+ "openai/gpt-5.4": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00018,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00024,
+   "in": 61
+  }
+ },
+ "openai/gpt-5.4-mini": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 5e-05,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 8e-05,
+   "in": 61
+  }
+ },
+ "openai/gpt-5.4-nano": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 2e-05,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 2e-05,
+   "in": 61
+  }
+ },
+ "openai/gpt-5.5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0011,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00049,
+   "in": 61
+  }
+ },
+ "openai/gpt-5.6-luna": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 4e-05,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 2e-05,
+   "in": 66
+  }
+ },
+ "openai/gpt-5.6-sol": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00026,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00038,
+   "in": 66
+  }
+ },
+ "openai/gpt-5.6-terra": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00014,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.0002,
+   "in": 66
+  }
+ },
+ "openai/gpt-6-astra": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00064,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00096,
+   "in": 66
+  }
+ },
+ "openai/gpt-6-luna": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 1e-05,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 1e-05,
+   "in": 66
+  }
+ },
+ "openai/gpt-6-sol": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00013,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00031,
+   "in": 66
+  }
+ },
+ "openai/gpt-6.1-sol": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00013,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00019,
+   "in": 66
+  }
+ },
+ "perplexity/deepseek-v4-pro-0813": {
+  "image": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "invalid request",
+   "cost": null,
+   "in": null
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00011,
+   "in": 51
+  }
+ },
+ "perplexity/glm-5.3": {
+  "image": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "invalid request",
+   "cost": null,
+   "in": null
+  },
+  "file": {
+   "code": 429,
+   "st": null,
+   "ok": false,
+   "err": "upstream model is overloaded, please try again later",
+   "cost": null,
+   "in": null
+  }
+ },
+ "perplexity/glm-5.3-flash": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 3e-05,
+   "in": 58
+  },
+  "file": {
+   "code": 429,
+   "st": null,
+   "ok": false,
+   "err": "upstream model is overloaded, please try again later",
+   "cost": null,
+   "in": null
+  }
+ },
+ "perplexity/kimi-k3": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00106,
+   "in": 128
+  },
+  "file": {
+   "code": 429,
+   "st": null,
+   "ok": false,
+   "err": "upstream model is overloaded, please try again later",
+   "cost": null,
+   "in": null
+  }
+ },
+ "perplexity/nemotron-3-ultra-550b-a55b": {
+  "image": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "validation failed: model \"perplexity/nemotron-3-ultra-550b-a55b\" is not supported",
+   "cost": null,
+   "in": null
+  },
+  "file": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "validation failed: model \"perplexity/nemotron-3-ultra-550b-a55b\" is not supported",
+   "cost": null,
+   "in": null
+  }
+ },
+ "perplexity/nemotron-3.5-super-120b-a12b": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 6e-05,
+   "in": 306
+  },
+  "file": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "invalid request",
+   "cost": null,
+   "in": null
+  }
+ },
+ "perplexity/sonar": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 2e-05,
+   "in": 39
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 4e-05,
+   "in": 66
+  }
+ },
+ "xai/grok-4.20-multi-agent": {
+  "image": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "invalid request",
+   "cost": null,
+   "in": null
+  },
+  "file": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "the selected model route does not support this document type or source",
+   "cost": null,
+   "in": null
+  }
+ },
+ "xai/grok-4.20-non-reasoning": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 7e-05,
+   "in": 47
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 8e-05,
+   "in": 65
+  }
+ },
+ "xai/grok-4.20-reasoning": {
+  "image": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "invalid request",
+   "cost": null,
+   "in": null
+  },
+  "file": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "the selected model route does not support this document type or source",
+   "cost": null,
+   "in": null
+  }
+ },
+ "xai/grok-4.3": {
+  "image": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "invalid request",
+   "cost": null,
+   "in": null
+  },
+  "file": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "the selected model route does not support this document type or source",
+   "cost": null,
+   "in": null
+  }
+ },
+ "xai/grok-4.5": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 8e-05,
+   "in": 36
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00011,
+   "in": 52
+  }
+ },
+ "xai/grok-4.6": {
+  "image": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 8e-05,
+   "in": 36
+  },
+  "file": {
+   "code": 200,
+   "st": "completed",
+   "ok": true,
+   "err": null,
+   "cost": 0.00011,
+   "in": 52
+  }
+ },
+ "xai/grok-4.7": {
+  "image": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "invalid request",
+   "cost": null,
+   "in": null
+  },
+  "file": {
+   "code": 400,
+   "st": null,
+   "ok": false,
+   "err": "the selected model route does not support this document type or source",
+   "cost": null,
+   "in": null
+  }
+ }
+}

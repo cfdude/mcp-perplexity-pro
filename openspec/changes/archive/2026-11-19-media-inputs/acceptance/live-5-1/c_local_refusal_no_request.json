@@ -1,0 +1,16 @@
+{
+  "name": "c_local_refusal_no_request",
+  "argv": [
+    "ask",
+    "Summarize",
+    "--model",
+    "xai/grok-4.3",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/doc.pdf"
+  ],
+  "returncode": 1,
+  "result": null,
+  "stdout_raw": "",
+  "stderr": "[invalid_request] model: 'xai/grok-4.3' does not accept document attachments (the model matrix records a refusal). Models recorded as accepting document: anthropic/claude-fable-5, anthropic/claude-fable-5-1, anthropic/claude-haiku-4-5, anthropic/claude-haiku-5-5, anthropic/claude-opus-4-5. perplexity_models lists the inputs of every model. Run perplexity-pro help ask for its arguments and examples.",
+  "cost_usd": "0"
+}

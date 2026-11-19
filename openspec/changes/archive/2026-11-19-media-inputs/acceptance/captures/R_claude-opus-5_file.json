@@ -1,0 +1,45 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": null,
+  "created_at": 1793375376,
+  "error": {
+   "code": "refusal",
+   "message": "document processing failed: refusal",
+   "type": "refusal"
+  },
+  "frequency_penalty": 0,
+  "id": "resp_6cbfa689-10b2-429a-aceb-fa59fa47651a",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 150,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "anthropic/claude-opus-5",
+  "object": "response",
+  "output": [],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "failed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": null,
+  "user": null
+ }
+}

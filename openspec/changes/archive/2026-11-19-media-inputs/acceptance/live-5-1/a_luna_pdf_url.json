@@ -1,0 +1,44 @@
+{
+  "name": "a_luna_pdf_url",
+  "argv": [
+    "ask",
+    "What is this document about? A few words.",
+    "--model",
+    "openai/gpt-6-luna",
+    "--no-search",
+    "--attachments",
+    "https://pdfobject.com/pdf/sample.pdf"
+  ],
+  "returncode": 0,
+  "result": {
+    "answer": "A sample PDF filled with placeholder Lorem ipsum text.",
+    "answer_json": null,
+    "sources": [],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": null,
+    "response_id": "resp_eb43d9b7-d20e-4b58-8f53-6c5a2e9c108d",
+    "usage": {
+      "input_tokens": 782,
+      "output_tokens": 14,
+      "total_tokens": 796,
+      "cost_usd": "0.00009",
+      "cost_source": "reported"
+    },
+    "latency_ms": 2705,
+    "project": "default",
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": "openai/gpt-6-luna",
+      "selected_by": "model",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00009"
+}

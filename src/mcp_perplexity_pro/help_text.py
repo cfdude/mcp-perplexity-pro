@@ -17,7 +17,7 @@ from mcp_perplexity_pro.settings import Settings, tier_runs
 # The closing sentence of the largest tool descriptions (agent-help).
 POINTER = " Details: call perplexity_help."
 
-TOPICS = ("routing", "costs", "citations", "errors", "projects")
+TOPICS = ("routing", "costs", "citations", "errors", "projects", "attachments")
 
 
 class HelpError(Exception):
@@ -36,7 +36,8 @@ class ToolHelp(TypedDict):
 
 TOOLS: dict[str, ToolHelp] = {
     "perplexity_ask": {
-        "summary": "One web-grounded question, answered now, with its sources. No memory.",
+        "summary": "One web-grounded question, answered now, with its sources. No memory. Takes "
+        "attachments (images, documents): see topic attachments.",
         "billed": True,
         "kind": "billed",
         "cost": "Default model perplexity/sonar: $0.00336 in one sample. depth fast: $0.00118 "
@@ -56,7 +57,8 @@ TOOLS: dict[str, ToolHelp] = {
         ],
     },
     "perplexity_chat": {
-        "summary": "A conversation kept in the local database: send, list, read, delete.",
+        "summary": "A conversation kept in the local database: send, list, read, delete. A send "
+        "takes attachments: see topic attachments.",
         "billed": True,
         "kind": "billed; list/read/delete free",
         "cost": "A send costs like perplexity_ask. list, read and delete make no API call.",
@@ -195,7 +197,8 @@ ERROR_FIXES: dict[str, str] = {
     "authentication": "The API key is rejected; tell the operator.",
     "forbidden": "The key lacks access to this feature; tell the operator.",
     "not_found": "The chat, job or project does not exist; list first.",
-    "rate_limited": "Wait and retry; a Retry-After shorter than the cap was already honored.",
+    "rate_limited": "Wait and retry; a Retry-After shorter than the cap was already honored. A "
+    "local wait for attachment memory gives it too, with no Retry-After.",
     "upstream_failure": "Perplexity failed; retry later, a billed call is recorded.",
     "network_timeout": "The call timed out; it may still have been billed, check perplexity_usage.",
     "unexpected_response": "The reply could not be used; it was recorded; retry or report it.",
@@ -343,6 +346,7 @@ def render_topic(name: str, settings: Settings) -> str:
         "citations": _citations_topic,
         "errors": _errors_topic,
         "projects": _projects_topic,
+        "attachments": _attachments_topic,
     }[name](settings)
 
 
@@ -434,4 +438,62 @@ def _projects_topic(settings: Settings) -> str:
         "default. A project is created by the first costed call that stores something. Reading "
         "(list, read, status) never creates one. The delete action removes a project, its chats, "
         "jobs and vectors but keeps the spend history, detached and still reportable by name.\n"
+    )
+
+
+# One runnable example per tool that takes attachments; a test validates each against the tool's
+# input schema.
+ATTACHMENT_EXAMPLES: tuple[tuple[str, dict[str, Any]], ...] = (
+    (
+        "perplexity_ask",
+        {
+            "query": "What colour is this?",
+            "model": "openai/gpt-6-luna",
+            "attachments": ["/Users/me/shot.png"],
+        },
+    ),
+    (
+        "perplexity_chat",
+        {
+            "action": "send",
+            "title": "Q3 report",
+            "message": "Summarize this",
+            "attachments": ["/Users/me/report.pdf"],
+        },
+    ),
+)
+
+
+def _attachments_topic(settings: Settings) -> str:
+    examples = "\n".join(
+        f'{{"name": "{tool}", "arguments": {_json(arguments)}}}'
+        for tool, arguments in ATTACHMENT_EXAMPLES
+    )
+    return (
+        "# Attachments\n"
+        "ask and chat send take attachments: a list of up to 10 strings, each in one of three "
+        "forms.\n"
+        "- A local path, absolute or starting ~/. The server reads the file and sends it as "
+        "base64. Over HTTP paths work only inside PERPLEXITY_ATTACH_ROOTS, and a built-in deny "
+        "list (~/.ssh, ~/.aws, ~/.config, .env files and similar) always applies.\n"
+        "- An https URL (port 443, no credentials). The provider fetches it; this server never "
+        "does. Write a type and :: before a URL with no extension, as application/pdf::URL.\n"
+        "- A data: URI of at most 1 MiB.\n"
+        "Types: images png, jpeg, webp, gif; documents pdf, doc, docx, txt, rtf. The type is "
+        "checked against the file's first bytes. Audio and video are refused: the API accepts "
+        "neither.\n"
+        "Limits: 10 items, 20 MiB per file, 32 MiB per call, 1 MiB inline, and per chat 30 "
+        "documents and 50 MiB of documents.\n"
+        "Models: an explicit model that the matrix records as refusing a kind is refused before "
+        "any request; an unknown one is sent and the API decides. perplexity_models lists each "
+        "model's inputs (empty means unknown). A depth carries media only where verified: images "
+        "at fast, low and medium, documents at fast and medium.\n"
+        "Storage: file bytes are never stored. A chat keeps only a note on the turn (name, type, "
+        "size, short digest; a URL only its host and a hash). A follow-up keeps earlier files "
+        "through the provider and resends nothing. A replay cannot resend files: it warns, "
+        "starts a new chain, and the files can be attached again on that turn.\n"
+        "Cost: attachments add input tokens, so a call can cost more than the figures in costs; "
+        "the result reports the tokens.\n"
+        "## Examples\n"
+        f"{examples}\n"
     )

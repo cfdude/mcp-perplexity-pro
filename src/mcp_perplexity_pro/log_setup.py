@@ -12,7 +12,7 @@ import sys
 import traceback
 from collections.abc import Iterable
 
-from mcp_perplexity_pro.redaction import REDACTED, redact_text
+from mcp_perplexity_pro.redaction import REDACTED, redact_persisted, redact_text
 
 __all__ = ["REDACTED", "RedactingFilter", "configure_logging", "redact_text"]
 
@@ -50,7 +50,7 @@ class RedactingFilter(logging.Filter):
         self._secrets = tuple(s for s in secrets if s)
 
     def _redact(self, text: str) -> str:
-        return _BOUND_VALUES.sub("[parameters: omitted]", redact_text(text, self._secrets))
+        return _BOUND_VALUES.sub("[parameters: omitted]", redact_persisted(text, self._secrets))
 
     def filter(self, record: logging.LogRecord) -> bool:
         try:

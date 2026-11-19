@@ -46,6 +46,7 @@ class Efforts(BaseModel):
 
 
 class ListedModel(CatalogModel):
+    inputs: Annotated[str, Field(description="Inputs taken; empty: unknown")] = ""
     efforts: Annotated[
         Efforts | None,
         Field(
@@ -96,7 +97,33 @@ def _efforts_text(efforts: Efforts | None) -> str:
     return f"{accepted} (refused {','.join(efforts.refused)})" if efforts.refused else accepted
 
 
-def render(result: ModelsResult, provider: str | None) -> str:
+def inputs_string(model_id: str, rows: model_matrix.Matrix) -> str:
+    """What the matrix says about the input kinds of one model: the accepted kinds, then the
+    refused ones in parentheses (``image,document``, ``image (refused document)``,
+    ``(refused document)``), and the empty string when nothing is known or the model is not in
+    the matrix. Reads ``accepts`` per kind, so the baseline answers a kind a stored file has not."""
+    row = rows.models.get(model_id)
+    if row is None or row.status != "available":
+        return ""
+    answers = {kind: model_matrix.accepts(model_id, [kind], rows) for kind in model_matrix.KINDS}
+    taken = ",".join(k for k, a in answers.items() if a == "yes")
+    refused = ",".join(k for k, a in answers.items() if a == "no")
+    if refused:
+        return f"{taken} (refused {refused})" if taken else f"(refused {refused})"
+    return taken
+
+
+def unknown_inputs(rows: model_matrix.Matrix) -> int:
+    """Available matrix models with at least one input kind unknown (for the text only)."""
+    return sum(
+        1
+        for model_id, row in rows.models.items()
+        if row.status == "available"
+        and any(model_matrix.accepts(model_id, [k], rows) == "unknown" for k in model_matrix.KINDS)
+    )
+
+
+def render(result: ModelsResult, provider: str | None, unknown: int | None = None) -> str:
     """A plain-text rendering of ``result`` for clients that show only text."""
     lines = []
     if result.stale:
@@ -111,19 +138,26 @@ def render(result: ModelsResult, provider: str | None) -> str:
     if not result.models and provider:
         lines.append(f"No model matches provider {provider!r}; real providers are listed above.")
     if result.models:
-        lines.append("id | provider | input | output | cache_read | cache_write | unit | efforts")
+        lines.append(
+            "id | provider | input | output | cache_read | cache_write | unit | efforts | inputs"
+        )
     for m in result.models:
         p = m.pricing
         lines.append(
             f"{m.id} | {m.provider or '-'} | {_price(p.input)} | {_price(p.output)} | "
             f"{_price(p.cache_read)} | {_price(p.cache_write)} | {p.unit or '-'} | "
-            f"{_efforts_text(m.efforts)}"
+            f"{_efforts_text(m.efforts)} | {m.inputs or '-'}"
         )
     lines.append("")
     section_matrix = result.matrix
     lines.append(
         f"Matrix: {section_matrix.origin}, fetched {section_matrix.fetched_at}, "
         f"{section_matrix.unprobed} unprobed"
+    )
+    lines.append(
+        "inputs lists the attachment kinds a model takes (image, document); audio and video are "
+        "not accepted by the API. A - (empty) means unknown, not unsupported"
+        + (f"; {unknown} models have an input kind unknown." if unknown is not None else ".")
     )
     configured = ", ".join(
         f"{m.name} = preset {m.preset}"
@@ -175,6 +209,7 @@ def listed_model(model: CatalogModel, rows: model_matrix.Matrix) -> ListedModel:
     """A live model with its efforts joined by id; none when the matrix lacks it or holds it
     ``removed`` (a removed row is history, not a fact about a model the API lists)."""
     row = rows.models.get(model.id)
+    inputs = inputs_string(model.id, rows)
     efforts = None
     if row is not None and row.status == "available":
         efforts = Efforts(
@@ -182,7 +217,7 @@ def listed_model(model: CatalogModel, rows: model_matrix.Matrix) -> ListedModel:
             refused=[lv for lv in model_matrix.LEVELS if lv in row.efforts.refused],
             source=row.efforts.source,
         )
-    return ListedModel(**model.model_dump(), efforts=efforts)
+    return ListedModel(**model.model_dump(), efforts=efforts, inputs=inputs)
 
 
 def matrix_section(snapshot: model_matrix.Loaded) -> MatrixSection:
@@ -232,6 +267,6 @@ def register(server: FastMCP) -> None:
         # the stored matrix: ``refresh`` refreshes the catalog list only, never the matrix
         result = build_result(listing, provider, app.settings, app.matrix.snapshot())
         return ToolResult(
-            content=render(result, provider),
+            content=render(result, provider, unknown_inputs(app.matrix.snapshot().matrix)),
             structured_content=result.model_dump(mode="json"),
         )
