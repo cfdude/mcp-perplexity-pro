@@ -107,6 +107,13 @@ The model matrix is the only owner of which input kinds a model accepts. Kinds a
 - **WHEN** `rg "input_modalities|modalit" src/ data/` is run after the change
 - **THEN** every match is in `matrix.py`, the baseline, `perplexity_models` output text or a comment
 
+### Requirement: The words unknown, unprobed, unanswered and refusal
+The words `unprobed`, `unknown`, `unanswered` and `refusal` SHALL be used in the senses of the scenario below and not mixed.
+
+#### Scenario: The vocabulary
+- **WHEN** the matrix and its probes are described
+- **THEN** `unprobed` is a `source` label (nothing has asked the model yet); `unknown` is what `accepts` answers for a kind neither accepted nor refused, or whose refusal has expired at the gate; `unanswered` is a probe request with no usable answer (a 5xx, a timeout, a 429, a failed run, a generic 400); and `refusal` is one of three things, the API's named 400 (`is_named_refusal`), the recorded fact `refused`, or a run that `failed` with error code `refusal` (unanswered, never a `refused` fact)
+
 ### Requirement: Each model entry records the inputs it accepts
 A model's `inputs` SHALL hold `accepted` (a list drawn from `image` and `document`), `refused` (a kind mapped to the HTTP status that refused it), `answers` (the round's control and each answered kind mapped to its status, kept while a probe is incomplete), `source` (`probe`, `baseline` or `unprobed`) and, PER KIND (objects keyed by `image` and `document`), `probed_at`, `last_attempt_at`, `attempts`, `unanswered_rounds` and `retry_after`.
 
@@ -185,8 +192,12 @@ In the baseline, a 200 whose run status is `completed` or `incomplete` SHALL be 
 An `available` model SHALL be selected for an input probe when, with `PERPLEXITY_MATRIX_PROBE` `new`, a kind is unknown and its own `retry_after` has passed or is null, or a kind is `refused`, its own `probed_at` is more than 24 hours old (`REFUSAL_TTL`, owner-editable) and its own `retry_after` has passed or is null. Selection also respects the lease and the ten-model and $0.25 limits.
 
 #### Scenario: Baseline answers count
-- **WHEN** a model has both kinds answered by the baseline
+- **WHEN** a model has both kinds answered `accepted` by the baseline
 - **THEN** it is not selected for an input probe
+
+#### Scenario: A stale baseline refusal is probed
+- **WHEN** the baseline records a kind of a model as refused with a `probed_at` more than 24 hours old, and the stored entry has not attempted that kind
+- **THEN** the model is selected for that kind (after its same-round control) exactly as for an own stale refusal; on the packaged baseline that is `xai/grok-4.3`, `xai/grok-4.20-reasoning` and `xai/grok-4.20-multi-agent` for `document`, so the first refresh after the 24 hours costs three controls and three document requests, inside the ten-model and $0.25 limits
 
 #### Scenario: A refused kind in backoff
 - **WHEN** a kind was refused 2 days ago but its `retry_after` is still in the future
@@ -225,7 +236,11 @@ The probe request SHALL be a fixed 48 by 48 PNG or one-line PDF with a fixed pro
 - **THEN** it carries one `input_image` part, `store` false, `max_output_tokens` 150 and no tools
 
 ### Requirement: An input probe answers by HTTP status
-For input probes only, a 200 whose run status is `completed` or `incomplete` SHALL mean accepted, without checking the answer (an `incomplete` event is recorded as `unexpected_response`); the effort probe's rule is unchanged. A 400 SHALL mean refused only when the control completed AND `is_named_refusal` is true. Every other 400, a 5xx, a timeout, a 429 and a 200 whose run `failed` SHALL leave the kind unanswered, and a 429 SHALL end that refresh's probing.
+For input probes only, a 200 whose run status is `completed` or `incomplete` SHALL mean accepted, and a 400 SHALL mean refused only when the control completed AND `is_named_refusal` is true. Every other 400, a 5xx, a timeout, a 429 and a 200 whose run `failed` SHALL leave the kind unanswered; a 429 SHALL also end that refresh's probing and SHALL count only in `attempts`, never stamping `last_attempt_at`, adding to `unanswered_rounds` or starting a backoff.
+
+#### Scenario: Accepted without checking the answer
+- **WHEN** an input probe answers 200 with status `completed` or `incomplete`
+- **THEN** the kind is accepted whatever the answer says, an `incomplete` event is recorded as `unexpected_response`, and the effort probe's rule is unchanged
 
 #### Scenario: A new model that cannot read images
 - **WHEN** a new model completes the control, accepts the document and answers 400 `invalid request` to the image
@@ -289,7 +304,11 @@ A kind left unanswered in a round SHALL add one to ITS `unanswered_rounds` wheth
 - **THEN** the document kind still reaches its backoff
 
 ### Requirement: A refusal is not permanent
-A `refused` kind SHALL be probed again once ITS `probed_at` is more than 24 hours old (the named constant `REFUSAL_TTL`, owner-editable), under the same limits, and an answer replaces the old one; until then the local gate uses `no`. A re-probe left unanswered (429, 5xx, timeout, failed run) SHALL leave the old refusal and its `probed_at` as they were, stamp `last_attempt_at` and count toward that kind's `unanswered_rounds`.
+A `refused` kind (the entry's own, or the baseline's for a kind that is not `attempted`) SHALL be probed again once ITS `probed_at` is more than 24 hours old (the constant `REFUSAL_TTL`, owned by `matrix.py`, owner-editable), under the same limits, and an answer replaces the old one. Independently of probing, the local gate SHALL treat a refusal older than `REFUSAL_TTL` as `unknown`, so a refusal cannot block a model for ever when `PERPLEXITY_MATRIX_PROBE` is `off`.
+
+#### Scenario: The gate reads an old refusal as unknown
+- **WHEN** a refusal is older than `REFUSAL_TTL`, or has no readable `probed_at`
+- **THEN** `accepts` called with a clock answers `unknown` and the call is sent, while the stored lists, `accepts` without a clock and the `perplexity_models` display are unchanged
 
 #### Scenario: A stale refusal is re-probed
 - **WHEN** a model's `document` was refused 25 hours ago and a refresh runs
@@ -300,8 +319,16 @@ A `refused` kind SHALL be probed again once ITS `probed_at` is more than 24 hour
 - **THEN** no request is sent for it
 
 #### Scenario: An unanswered re-probe keeps the refusal
+- **WHEN** a 25-hour-old refusal is re-probed and the request answers 503 (or times out, or the run fails)
+- **THEN** the kind stays refused with its old `probed_at`, `last_attempt_at` is stamped, `unanswered_rounds` rises by one and no request is repeated in the same refresh window
+
+#### Scenario: A 429 is not an unanswered round
 - **WHEN** a 25-hour-old refusal is re-probed and the request answers 429
-- **THEN** the kind stays refused with its old `probed_at`, `last_attempt_at` is stamped and no request is repeated in the same refresh window
+- **THEN** the kind stays refused with its old `probed_at`, `attempts` rises by one, `last_attempt_at` is NOT stamped, `unanswered_rounds` and `retry_after` are unchanged, and the next refresh asks again
+
+#### Scenario: An expired refusal does not block the gate
+- **WHEN** `PERPLEXITY_MATRIX_PROBE` is `off`, the baseline's refusal of `document` for `xai/grok-4.3` is older than 24 hours and a client asks with that model and a PDF
+- **THEN** the call is sent (the gate sees `unknown`), while `accepts` without a clock still answers `no`
 
 ### Requirement: Input answers have their own bookkeeping
 The refresh task SHALL keep the answers, failed models and pending writes of input probes apart from the effort probe's (their own keys and sets, `inputs.answers` in the file), so a round that failed to finish efforts does not mark inputs failed and the reverse.
@@ -332,7 +359,11 @@ The README SHALL state input-probe costs only from the sweep of 2026-10-30 (`acc
 - **THEN** each figure it states appears in or is computed from the sweep
 
 ### Requirement: Callers ask which models accept a kind
-The matrix module SHALL expose, pure and without network or database, `accepts(model_id, kinds, matrix=None)` returning `yes`, `no` or `unknown`, and `models_accepting(kinds, matrix=None)` returning a set of model ids; `kinds` is an iterable of `image` and `document`. `accepts` is `yes` when every kind is accepted, `no` when any is refused, else `unknown`. `models_accepting` holds the `available` models with `yes`, never one whose kind is unknown.
+The matrix module SHALL expose, pure and without network or database, `accepts(model_id, kinds, matrix=None, now=None)` returning `yes`, `no` or `unknown`, and `models_accepting(kinds, matrix=None)` returning a set of model ids; `kinds` is an iterable of `image` and `document`.
+
+#### Scenario: The answers
+- **WHEN** `accepts` is called
+- **THEN** it is `yes` when every kind is accepted, `no` when any is refused, else `unknown`; with `now`, a refusal older than `REFUSAL_TTL` is `unknown`; and `models_accepting` holds the `available` models with `yes`, never one whose kind is unknown
 
 #### Scenario: Image-capable set
 - **WHEN** the baseline is loaded and `models_accepting({"image"})` is called

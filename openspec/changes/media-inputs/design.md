@@ -101,7 +101,7 @@ unprobed) are the backstop. Memory: one call holds the raw bytes until encoded, 
 text, the JSON text and the encoded request, about four times its decoded size at peak, so a
 process-wide condition-variable byte limiter (asyncio has no byte semaphore; 64 MiB; the share known before any read from the descriptor size or the decoded inline length and acquired for the whole call at once; a share above the limit failing at once; a 30-second wait then `rate_limited`: the closest
 member of the closed vocabulary for "retry later") bounds the process near 4 x 64 MiB however many
-calls arrive together. The implementation drops raw bytes once encoded and serializes the body
+calls arrive together. The blocking open and read run in threads that a cancel cannot stop, so a call (`media_read.hold_attachments`) registers every descriptor in an `FdSet` under a lock, waits for its own threads under `asyncio.shield` before it closes anything and releases its share, and re-raises the cancel afterwards: a cancelled open leaves no descriptor, and no byte is released under a live read (review fix C1). Building the parts (base64 and the SHA-256 of up to 32 MiB) also runs in a thread and the request shares the parts instead of copying them (C6, C7); the debug hash is computed only when debug logging is on. The implementation drops raw bytes once encoded and serializes the body
 once. The body size is computed arithmetically before anything is encoded (4 x ceil(n/3) per item
 plus the text); with the caps above it cannot exceed about 44 MiB, so the 64 MiB check is a
 backstop that tests reach by lowering the module constants, not by building 65 MiB. Inline data is
@@ -118,8 +118,8 @@ comparison ignores case only on a case-insensitive volume, detected), never to t
 string (a symlinked parent or `/Users/rob/work-secrets` against root `/Users/rob/work` cannot
 pass); the extension allowlist plus the signature check keeps keys, databases and executables out
 even when correctly spelled. A built-in DENY list applies in every transport and beats the roots:
-`~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config`, `~/.claude`, `~/.kube`, `PERPLEXITY_DATA_DIR`, and base
-names `ecosystem*.cjs` and `.env*`. The HTTP server is unauthenticated, so over HTTP local paths
+`~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config`, `~/.claude`, `~/.kube`, `~/.docker`, `PERPLEXITY_DATA_DIR`, and base
+names (case-insensitive) `ecosystem*.cjs`, `.env*`, `*.env`, `*.env.*`, `.netrc`, `.npmrc` and `.pypirc`. The same check also runs BEFORE any open, on the caller's string with its parent directory resolved lexically, and when roots restrict, a missing, denied or outside path all fail with one uniform text that names no path (the open's own error would otherwise tell an HTTP caller which files exist outside the roots); the post-open real-path check stays as the defence against a race (review fix C2). A path string is at most 4096 characters. The HTTP server is unauthenticated, so over HTTP local paths
 are DENIED unless `PERPLEXITY_ATTACH_ROOTS` is set (the refusal says how to enable) and the server
 logs one line at startup when it is unset; stdio keeps allow-by-default (the person who runs it
 chooses what to attach). `PERPLEXITY_ATTACH_ROOTS` is parsed from a plain string, not a pydantic
@@ -153,7 +153,7 @@ never silently dropped: the call carries it to the resolved model or fails `inva
 
 Probe design (Gate 1). `accepts` reads the per-kind lists only; `source` is a label. The refresh's
 selector `_wants_probe` gains a second test: an `available` model with a kind unknown (and past its
-`retry_after`) or refused for more than 24 hours (`REFUSAL_TTL`, owner-editable; only a NAMED modality refusal is ever recorded as refused, because the generic `400 invalid request` is shared with text-only models and unrelated mistakes, and one model, `xai/grok-4.7`, flipped from refused to accepted between 2026-10-30 and 2026-11-11, so a refusal is a likely answer, not a proof, and expires quickly). One per-kind predicate, `attempted` (an answer, or a non-null `retry_after`, or an `attempts` count
+`retry_after`) or refused for more than 24 hours (`REFUSAL_TTL`, owner-editable; only a NAMED modality refusal is ever recorded as refused, because the generic `400 invalid request` is shared with text-only models and unrelated mistakes, and one model, `xai/grok-4.7`, flipped from refused to accepted between 2026-10-30 and 2026-11-11, so a refusal is a likely answer, not a proof, and expires quickly: the constant lives in `matrix.py`, and the local GATE (not only the probe) reads a refusal older than it, the baseline's included, as `unknown`, so `PERPLEXITY_MATRIX_PROBE=off` cannot block a model for ever; the three baseline document refusals (`xai/grok-4.3`, `xai/grok-4.20-reasoning`, `xai/grok-4.20-multi-agent`, probed 2026-10-30) are therefore let through today and re-probed once with a same-round control when probing is on, a cost of three controls and three document requests; the pinned sweep counts 48/0/6 and 45/3/6 are baseline FACTS and do not move). One per-kind predicate, `attempted` (an answer, or a non-null `retry_after`, or an `attempts` count
 above 0 that never resets, while `unanswered_rounds` is only the backoff counter), is used by the
 merge, `accepts` and `_wants_probe`: the baseline fills or answers a kind only when the stored kind is
 not attempted. Baseline answers count as known only then. Each input probe has its OWN same-round control (the effort probe's control
@@ -242,17 +242,17 @@ to take the kinds), so a refused call makes no
 costed classifier request, and AGAIN after it, together with `preset_accepts`, when the second
 `resolve` changed the route (for instance a pinned model for the reclassified tier).
 
-**D13. Wiring order.** In ask and chat `send`: selector and
+**D13. Wiring order.** The spec `agent-ask` ("Attachments are wired in a fixed order") owns the order for ask and for chat, including where the files are read and the byte share is taken (chat reads before it loads the chat, because the kinds depend on the stored notes). In short: selector and
 tier errors, attachment parse (kinds, sizes), provisional resolve and option validation, the real
 `resolve(required_input=kinds)`, the gate, the Decisions request, the second resolve, then the gate and `preset_accepts` again on the final
-route, then the project. A bad
+route whenever the call carries kinds or the route changed, then the project. A bad
 attachment therefore costs no classifier call, and a bad tier never opens a file. The
 `required_input` parameter (default empty, ignored by every path) of `routing.resolve` is router-free scaffolding owned by this change; our task 2.3
 owns passing the kinds into `resolve(required_input=kinds)`, the gate and `attachment_hint` (task 1.5 does
 parsing and hooks only; 3.1 replaces the empty `inherited_kinds` hook with the real
-function at both chat resolve sites, `chat.py:245` and `:588`), rebased on the new `ask.py` and `chat.py` flow and the
+function at both chat resolve sites (the real resolve in `_send_read` and the provisional one in the `perplexity_chat` body)), rebased on the new `ask.py` and `chat.py` flow and the
 final `build_request` signature.
-Hint precedence has ONE owner: task 2.3 puts `attachment_hint` below the model-gone hint (a not-served 400 is about the model, not the attachment): `matrix.model_not_served` suppresses `attachment_hint` and gives the plain text `model <id> is not served`.
+Hint precedence has ONE owner, the spec requirement "The attachment hint takes precedence": the model-gone text first (a not-served 400 is about the model, not the attachment: `matrix.model_not_served` suppresses `attachment_hint` and gives the plain text `model <id> is not served by the API`), then the attachment hint only for a call that carried NEW attachments, then the continuation or schema hint. A chained follow-up with only inherited kinds is gated with them but hinted as a plain chained send (review fix C3). `matrix.model_not_served`'s 404/410 branch is reserved: every caller passes a 400 only.
 
 **D14. Budget and apply order.** The cap 59779 never rises; if the final measure cannot fit,
 work stops and the owner decides. Standalone budget (this release, `routing-v2` held): the headroom

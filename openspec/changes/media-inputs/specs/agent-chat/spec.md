@@ -47,7 +47,7 @@ With `replay` true, a `send` SHALL NOT use `previous_response_id`; it SHALL set 
 ## ADDED Requirements
 
 ### Requirement: Send takes attachments
-`send` SHALL accept the optional `attachments` of `media-attachments` on a first turn and on every later turn, with the ask tool's rules, limits and model gate. Validation SHALL happen with the other local checks, before any database access or request, so a send with a bad attachment creates no chat and makes no request. The validation-only request build SHALL NOT receive the built parts.
+`send` SHALL accept the optional `attachments` of `media-attachments` on a first turn and on every later turn, with the ask tool's rules, limits and model gate; the order of the steps is the chat order of `agent-ask`. Validation SHALL happen with the other local checks, before any database access or request, so a send with a bad attachment creates no chat and makes no request. The validation-only request build SHALL NOT receive the built parts.
 
 #### Scenario: First turn with a document
 - **WHEN** a client sends `message` "Summarize this" with `title` `Q3 report` and a PDF path
@@ -58,7 +58,11 @@ With `replay` true, a `send` SHALL NOT use `previous_response_id`; it SHALL set 
 - **THEN** the call fails with `invalid_request`, no request is made and no message is stored
 
 ### Requirement: A turn's attachments are recorded as a note
-The user message stored for a turn with attachments SHALL be the message text, a newline and one trailer line `[attachments: <item>; <item>]`. A file or inline item is `<name> (<media type>, <bytes> bytes, sha256 <12 hex>)`; a URL item is `<host> (<media type>, url sha256 <12 hex of host and path>)`, never the path or query (path tokens can be capabilities), the host having passed the URL rule of `media-attachments`. No column and no migration are added.
+The user message stored for a turn with attachments SHALL be the message text, a newline and one trailer line in the grammar of the first scenario, which is defined there and nowhere else. No column and no migration SHALL be added.
+
+#### Scenario: The trailer grammar
+- **WHEN** a turn with attachments is stored
+- **THEN** its last line matches `trailer := "[attachments: " [ "restart; " ] item { "; " item } "]"` (or exactly `[attachments: restart]` for a replay turn with no items), where `item := file | url | more`; `file := <name> (<media type>, <bytes> bytes, sha256 <12 hex>)` for a file or inline item; `url := <host> (<media type>, url sha256 <12 hex of host and path>)`, never the path or query because path tokens can be capabilities, the host having passed the URL rule of `media-attachments`; `more := +N more: <d> documents, <i> images, <b> bytes`, the tail of a trailer cut at 1500 characters, where `b` is the sum of the decoded sizes of ALL N hidden items, images included; `restart` marks a replay turn
 
 #### Scenario: What is stored
 - **WHEN** a client sends "What is in it?" with `/Users/rob/shot.png` (2048 bytes)
@@ -76,11 +80,11 @@ A name in the note SHALL be at most 60 characters with every `;`, `(`, `)`, `[`,
 - **THEN** the stored note holds a name with those characters replaced and still parses as one item
 
 ### Requirement: A long note keeps its counts
-A trailer longer than 1500 characters SHALL list items until the limit and end with `+N more: <d> documents, <i> images, <b> bytes` counting every hidden item, so the per-chat limits still count them. The user's text is never shortened for the note.
+A trailer longer than 1500 characters SHALL list items until the limit and end with the `more` item of the grammar above counting every hidden item, so the per-chat limits still count them (the parser adds the tail's bytes to the document bytes, which is conservative when images are hidden). The user's text is never shortened for the note.
 
 #### Scenario: Hidden items still count
-- **WHEN** ten attachments with long names produce a note over 1500 characters
-- **THEN** the note ends with `+N more: ...` and a later send counts the hidden documents toward the 30-document limit
+- **WHEN** ten DOCX attachments (each with a 60-character name, whose note is about 160 characters because of the long OOXML media type) produce a note over 1500 characters
+- **THEN** the note ends with `+N more: <d> documents, <i> images, <b> bytes` and a later send counts the hidden documents toward the 30-document limit
 
 ### Requirement: The user cannot forge a note
 Only the server SHALL write a trailer. When a user's message has a line that begins with `[attachments:`, the server SHALL store that line with a leading backslash, so that the last-line trailer the parser reads is always genuine, and the parser SHALL accept only the strict item grammar above. The trailer parser and the escape SHALL split lines on `\n` only, never on other Unicode line separators.

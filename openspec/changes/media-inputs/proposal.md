@@ -17,7 +17,7 @@ that and ships images and documents only.
 
 - `perplexity_ask` and `perplexity_chat` `send` gain ONE new optional parameter, `attachments`
   (at most 10 items), a LIST OF STRINGS (design D1): each is a local path, an `https://` URL or a
-  `data:` URI, with an optional `type::` prefix for a URL with no extension. The kind (image or
+  `data:` URI (inline data is only ever a `data:` URI: there is no separate data plus media-type form), with an optional `type::` prefix for a URL with no extension. The kind (image or
   document) is derived from the media type, never asked for. One compact parameter instead of
   three keeps the `tools/list` growth small (design D1, D14: gross growth capped at 900 bytes,
   measured in task 3.3 against the unchanged cap 59779).
@@ -27,8 +27,8 @@ that and ships images and documents only.
   directory, `.env*` and the like), denied outright over the unauthenticated HTTP transport unless
   the roots are set, and sent inline as base64: images as `input_image` with a data
   URI, documents as `input_file` with `file_data`. A `url` (HTTPS, public) is passed to the API
-  untouched (`image_url` or `file_url`): the provider fetches it, this server never does. `data` is
-  caller-supplied base64 (or a data URI) with a media type.
+  untouched (`image_url` or `file_url`): the provider fetches it, this server never does. Inline
+  data is a caller-supplied `data:<type>;base64,...` URI of at most 1 MiB.
 - File bytes are never stored locally: no migration. A chat message stores its text plus a short
   note of the attachments' names, media types, sizes and SHA-256 digests (inside the existing
   `content` text, so no new column), and a chained follow-up keeps the files through the API's own
@@ -59,6 +59,16 @@ that and ships images and documents only.
 - This change also owns the single predicate `matrix.model_not_served(status, message, model)` (a 400 `validation failed: model ... is not supported`; a 404 or a 410 only when the message names the requested model), used by the baseline rules and the input probe, and the named-refusal predicate `matrix.is_named_refusal`.
 - **Release scope (owner decision 2026-11-19).** `media-inputs` ships on its own, on branch `epic/media-inputs` cut from `main`. `routing-v2` is held on branch `epic/routing-v2-media-inputs` and is not part of this release: nothing here uses its router, evidence file, migration `0006`, `chat_messages.tier`/`routed_model`, task class or `PERPLEXITY_ROUTER_MARGIN`. The only seam is `resolve(required_input=...)`, owned here and ignored by every path (`acceptance/split-plan.md`, which lists the router-dependent wording this release removed).
 - **Apply order** (this release): (0) worktree, Gate 1, split readiness; (1) probes and matrix input facts (1.1 to 1.3, 2.1, 2.2); (2) the call flow and the attachments parameter on ask and chat (1.4, 1.5, 2.3, 2.4, 3.1, 3.2); (3) the budget measure and the help topic (4.1, 4.2, 3.3); (4) the live acceptance (5.1); (5) the code freeze and Gate 2 (6.1 to 6.5); (6) documentation (7.1, 7.2); (7) archive (7.3).
+
+## Resolves
+
+- R1: a caller can send images and documents through `perplexity_ask` and `perplexity_chat` `send` (one `attachments` list of strings; paths, HTTPS URLs, `data:` URIs).
+- R2: a local file read is safe: real-path checks, roots, a deny list, a uniform refusal under roots, no leak of descriptors or memory, nothing stored or logged.
+- R3: a model that cannot take a kind is not sent it (a gate on the final route), an unknown one is let through, and a refusal expires.
+- R4: the model matrix owns modality facts (`inputs`, `accepts`, `models_accepting`, `preset_accepts`), baselined from the 2026-10-30 sweep and probed per kind within the refresh limits.
+- R5: a chat keeps its files through the API's own continuation, notes them without storing bytes, limits its documents, and a replay says what it cannot resend.
+- R6: costs, errors and hints are honest: attachments add input tokens, one hint order, no echo of contents or signed URLs.
+- R7: the command line, help topic and `perplexity_models` show it all, inside the unchanged `tools/list` cap of 59779 bytes.
 
 ## Capabilities
 

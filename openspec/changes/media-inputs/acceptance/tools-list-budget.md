@@ -22,6 +22,12 @@ sixth topic named in its description). Total 510, against the cap of 900 (design
 `perplexity_search` and `perplexity_decide` are byte-identical to the starting commit
 (sha256 prefixes `1e4aab4731f90f3e` and `a3a6370d4b8378c4`, pinned in the test).
 
+## Re-measure after the review fixes (2026-11-19)
+
+Measured again at branch head `6fedb3c` (after review fixes C1 to C12 and S5, same method, three test
+servers): default 58245, dynamic 58531, dynamic with Decisions 58765. Identical to the table above:
+the fixes changed no listed byte. Growth over the starting commit stays 510 (cap 59779, growth cap 900).
+
 ## Waiver of the 300-byte trim
 
 Task 3.3 waives its trim only when `routing-v2` is unmerged after its evaluation failed and the

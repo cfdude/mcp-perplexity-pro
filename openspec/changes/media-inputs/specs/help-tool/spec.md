@@ -63,7 +63,7 @@ The `tools/list` response with the help tool included SHALL be no larger than 59
 ## ADDED Requirements
 
 ### Requirement: An attachments topic
-The `attachments` topic (also rendered by `perplexity-pro help attachments`) SHALL state the three forms of an attachment, the supported and unsupported types (audio and video), the limits (10 items, 20 MiB per file, 32 MiB per call, 1 MiB inline, 30 documents per chat) and one runnable example per tool, and the index SHALL list it.
+The `attachments` topic (also rendered by `perplexity-pro help attachments`) SHALL state the three forms of an attachment, the supported and unsupported types (audio and video), the limits (10 items, 20 MiB per file, 32 MiB per call, 1 MiB inline, 30 documents and 50 MiB of documents per chat) and one runnable example per tool, and the index SHALL list it.
 
 #### Scenario: The topic renders
 - **WHEN** a client calls `perplexity_help` with action `topic` and `name` `attachments`
@@ -79,6 +79,13 @@ The topic SHALL say that files are read by the server and sent as base64, that U
 #### Scenario: Storage rule stated
 - **WHEN** a client asks for the topic
 - **THEN** the text says file bytes are never stored and that a replay does not resend files
+
+### Requirement: The attachments wording is capped
+The `attachments` parameter SHALL have ONE description, shared by `perplexity_ask` and `perplexity_chat`, of at most 100 characters that carries the cost note (attachments add input tokens) and no retention claim. The sentence about attachments in each of the two tool descriptions SHALL be at most 100 characters. These caps are owned here because the `tools/list` budget depends on them.
+
+#### Scenario: The caps hold
+- **WHEN** the tools are listed
+- **THEN** the `attachments` description of both tools is the same string of at most 100 characters containing `token`
 
 ### Requirement: Attachment help is covered by the help tests
 Every example in the topic SHALL validate against its tool's input schema, and every dollar figure in the topic SHALL also appear in `README.md`.

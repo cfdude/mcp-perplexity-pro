@@ -55,7 +55,11 @@ A path's media type SHALL come from its extension (`.png`, `.jpg`, `.jpeg`, `.we
 - **THEN** it is a TXT document and the request part carries plain base64
 
 ### Requirement: Audio and video are refused
-An attachment whose media type is audio or video SHALL fail with `invalid_request` naming `attachments[i]` and saying the API accepts neither (observed 2026-10-30: `invalid type "input_audio"`, `invalid type "input_video"`, and a WAV as a file is `unsupported document type`), and SHALL never be sent.
+An attachment whose media type is audio or video SHALL fail with `invalid_request` naming `attachments[i]` and saying the API accepts neither, and SHALL never be sent. A path or URL SHALL be judged by its extension in a fixed order: the supported list, then the audio list, then the video list, and only then the unlisted-type error.
+
+#### Scenario: The extension lists and their order
+- **WHEN** a path or URL ends in an audio extension (`.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.aac`, `.opus`, `.wma`) or a video extension (`.mp4`, `.mov`, `.webm`, `.mkv`, `.avi`, `.m4v`, `.mpeg`, `.mpg`), or a `data:` or prefixed type begins `audio/` or `video/`
+- **THEN** the error says audio or video is not supported (observed 2026-10-30: `invalid type "input_audio"`, `invalid type "input_video"`, and a WAV as a file is `unsupported document type`), not merely that the type is unlisted
 
 #### Scenario: Audio refused
 - **WHEN** a client passes `["/Users/rob/call.mp3"]`
@@ -77,7 +81,7 @@ The server SHALL expand a leading `~/` only, open the path with `O_NOFOLLOW` on 
 - **THEN** the read stops at the limit plus one byte and the call fails with `invalid_request` for size
 
 ### Requirement: Local read errors are invalid requests
-An OS error (permission denied, name too long) or a NUL byte in a path SHALL fail with `invalid_request` naming the item, never `internal_error`, and no message SHALL contain file contents.
+An OS error (permission denied, name too long), a NUL byte in a path or a path string longer than 4096 characters SHALL fail with `invalid_request` naming the item, never `internal_error`, and no message SHALL contain file contents.
 
 #### Scenario: OS errors
 - **WHEN** a client passes an unreadable file, a 5000-character path and a path with a NUL byte
@@ -100,6 +104,21 @@ When `PERPLEXITY_ATTACH_ROOTS` (a colon-separated list of absolute directories, 
 #### Scenario: Outside the roots
 - **WHEN** `PERPLEXITY_ATTACH_ROOTS` is `/Users/rob/work` and a client passes `/Users/rob/notes.txt`
 - **THEN** the call fails with `invalid_request` saying the path is outside the allowed directories, and the file is never read
+
+### Requirement: A restricted server does not reveal which paths exist
+The deny list and the roots SHALL be checked against the caller's path BEFORE any open (its parent directory resolved with `realpath`, no file touched); the check on the opened descriptor's real path stays as the defence against a change in between. When roots restrict, a path that is missing, denied or outside the roots SHALL fail with ONE uniform `invalid_request` text that names the item and never the path, so an HTTP caller cannot probe the file system.
+
+#### Scenario: Inside the roots and without roots
+- **WHEN** a client passes a missing file inside the roots, or any path when no roots are set
+- **THEN** the call fails with `not_found` (or the specific message of stdio) naming it, because only a restricted server hides which paths exist
+
+#### Scenario: Missing and existing look the same
+- **WHEN** the roots are `/Users/rob/work` and a client passes a missing file, an existing file and a file in `~/.ssh`, all outside the roots
+- **THEN** the three texts are identical and none names a path
+
+#### Scenario: Inside the roots
+- **WHEN** a client passes a missing file inside the roots
+- **THEN** the call fails with `not_found` naming it
 
 ### Requirement: Roots and deny directories are resolved first
 The roots and the deny directories SHALL themselves be resolved with `realpath` before comparing, and the comparison SHALL ignore case only on a case-insensitive volume (detected, not assumed from the operating system).
@@ -124,14 +143,14 @@ Over the HTTP transport, local paths SHALL be refused with `invalid_request` unl
 - **THEN** the file is read and sent
 
 ### Requirement: A built-in deny list applies in every transport
-Whatever the transport and the roots, the real path SHALL NOT lie inside `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config`, `~/.claude`, `~/.kube` or `PERPLEXITY_DATA_DIR`, and its base name SHALL NOT match `ecosystem*.cjs` or `.env*`. A match SHALL fail with `invalid_request` before the contents are read.
+Whatever the transport and the roots, the real path SHALL NOT lie inside `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config`, `~/.claude`, `~/.kube`, `~/.docker` or `PERPLEXITY_DATA_DIR`, and its base name (compared case-insensitively) SHALL NOT match `ecosystem*.cjs`, `.env*`, `*.env`, `*.env.*`, `.netrc`, `.npmrc` or `.pypirc`. A match SHALL fail with `invalid_request` before the contents are read.
 
 #### Scenario: A denied directory inside the roots
 - **WHEN** the roots include `/Users/rob` and a client passes `/Users/rob/.ssh/notes.txt`
 - **THEN** the call fails with `invalid_request` saying the path is denied
 
 #### Scenario: A denied base name
-- **WHEN** a client passes `/Users/rob/work/.env.txt` or `/Users/rob/work/ecosystem.config.cjs`
+- **WHEN** a client passes `/Users/rob/work/.env.txt`, `/Users/rob/work/prod.env`, `/Users/rob/.npmrc` or `/Users/rob/work/ecosystem.config.cjs`
 - **THEN** each fails with `invalid_request`
 
 ### Requirement: File bytes must match the declared type
@@ -175,11 +194,15 @@ This server SHALL NOT fetch a URL attachment, resolve its host or check that it 
 - **THEN** the only request the server makes is the one to the API, with the URL in an `input_image` part
 
 ### Requirement: Attachment values are never echoed
-An error text, a log record or a hint SHALL NOT repeat an attachment's contents or its secrets. A `data:` item SHALL be shown only as its position and media type. A URL SHALL be shown without credentials, query and fragment. A local path MAY be shown, as the caller wrote it and cut to 200 characters, and never the file's contents.
+An error text, a log record or a hint SHALL NOT repeat an attachment's contents or its secrets. Persisted text (a log record, a usage row, a stored chat note) SHALL show a URL by scheme and host only, never its path. Only the error returned to the caller MAY show a URL's path, and then without credentials, query and fragment.
+
+#### Scenario: Which text may show what
+- **WHEN** a client passes a `data:` item, a URL or a local path and the call fails
+- **THEN** a `data:` item is shown only as its position and media type; a URL is shown in the returned error without credentials, query and fragment (`redact_text` cuts them from any quoted URL) and in persisted text by host only; a local path is shown in the returned error as the caller wrote it, cut to 200 characters, and under roots not at all (the uniform refusal), and never the file's contents
 
 #### Scenario: A signed URL is not echoed
 - **WHEN** a client passes `https://example.com/a.pdf?X-Amz-Signature=abc123` and the API answers with an error
-- **THEN** the error text and the logs show the URL without its query string
+- **THEN** the error text shows the URL without its query string, and neither a usage row nor a log record holds the path or the query
 
 #### Scenario: A data item is not echoed
 - **WHEN** a client passes `data:image/png;base64,` followed by 5000 characters that are not valid base64
@@ -205,7 +228,11 @@ An error text, a log record or a hint SHALL NOT repeat an attachment's contents 
 - **THEN** none of its characters appear in the shortened text
 
 ### Requirement: What scrub_media removes
-`scrub_media` SHALL replace with `[media removed]` (a) the body of every `data:` URI, which runs from after `data:` to the first character outside `[A-Za-z0-9+/=;,.%_-]` (whitespace, quotes, brackets and the like end it), and (b) bare base64 runs as the next requirement defines, found by one linear scan.
+`scrub_media` SHALL replace with `[media removed]` (a) the body of every `data:` URI, which runs from after `data:` to the first character outside `[A-Za-z0-9+/=;,.%_-]` (whitespace, quotes, brackets and the like end it), and (b) bare base64 runs as the next requirement defines, found by one linear scan. A `data:` counts only at the start of the text or after a character that is not a letter or a digit, so `metadata:foo` is left alone.
+
+#### Scenario: A word that ends in data
+- **WHEN** an error shows `metadata:foo,bar`
+- **THEN** it is unchanged
 
 #### Scenario: A data URI body ends at a quote
 - **WHEN** an error shows `"data:image/png;base64,iVBOR..."` followed by more text
@@ -252,7 +279,7 @@ The server SHALL enforce, before any request: at most 20 MiB decoded per file an
 - **THEN** the call fails with `invalid_request` naming `attachments` and the 32 MiB total, and no request reaches the API
 
 ### Requirement: Decoded bytes in flight are bounded process-wide
-The server SHALL hold a process-wide limit of 64 MiB of decoded attachment bytes in flight, implemented as a condition-variable byte limiter (asyncio's semaphore counts units, not bytes), held from the read until the request has been sent or failed. A call that cannot get its share within 30 seconds SHALL fail with `rate_limited` and a message saying this is a local wait and no Retry-After applies.
+The server SHALL hold a process-wide limit of 64 MiB of decoded attachment bytes in flight, implemented as a condition-variable byte limiter (asyncio's semaphore counts units, not bytes), held from the read until the request has been sent or failed. A call that cannot get its share within 30 seconds (the named constant `ACQUIRE_TIMEOUT`, which the wait uses) SHALL fail with `rate_limited` and a message saying this is a local wait and no Retry-After applies.
 
 #### Scenario: Three large calls at once
 - **WHEN** three calls each carry 32 MiB of decoded attachments at the same time
@@ -265,6 +292,10 @@ The server SHALL hold a process-wide limit of 64 MiB of decoded attachment bytes
 #### Scenario: Released on failure
 - **WHEN** a call fails after reading its files
 - **THEN** its bytes are released and a later call can use them
+
+#### Scenario: A cancelled call leaves nothing open
+- **WHEN** a call is cancelled while a file is being opened, or while its bytes are being read in a thread
+- **THEN** the call waits for that thread before it closes the descriptor and releases its share, so no descriptor is left open and no byte is released under a live read (the process holds the same number of open descriptors as before the call)
 
 ### Requirement: A call's share is known before it reads
 A call's share SHALL be known before any read (the descriptor's size for a path, the decoded length of inline data, zero for a URL) and acquired for the WHOLE call at once, and a share above the limit SHALL fail at once with `invalid_request`.
@@ -324,7 +355,15 @@ A log record about an attachment SHALL hold at most its position, kind, media ty
 - **THEN** the records name each attachment by position, kind, type, size and short digest only
 
 ### Requirement: A known refusing model is not sent the attachment
-An explicit `model` SHALL be checked against the model matrix (`accepts(model, kinds)` of `model-matrix`). When the matrix records that the model refuses a kind the call carries, the call SHALL fail with `invalid_request` naming `model` and the kind and listing up to five models the matrix records as accepting it, and no request SHALL be made.
+The gate SHALL check the FINAL resolved route, whatever chose it (an explicit `model`, a pin, a tier's model or the default model), against the model matrix with the call's required kinds. When the matrix records that the model refuses a kind the call carries, the call SHALL fail with `invalid_request` naming the model and the kind and listing up to five accepting models sorted by id, and no request SHALL be made. The order of the steps is owned by `agent-ask`.
+
+#### Scenario: A refusal older than the TTL
+- **WHEN** the only refusal of a kind is older than `REFUSAL_TTL` (the baseline's included)
+- **THEN** the gate treats the kind as unknown and the call is sent
+
+#### Scenario: Inherited kinds in a chat
+- **WHEN** a chained chat send carries no new file after a PDF turn
+- **THEN** the gate is given `new_kinds | inherited_kinds` (`document`), and a replay is given `new_kinds` only
 
 #### Scenario: Known refusal
 - **WHEN** the matrix records `xai/grok-4.3` as refusing documents (a named route refusal) and a client asks with that model and a PDF path
@@ -334,37 +373,24 @@ An explicit `model` SHALL be checked against the model matrix (`accepts(model, k
 - **WHEN** a client asks with no attachments and a model that refuses documents
 - **THEN** the call is unaffected
 
+#### Scenario: A tier model that refuses
+- **WHEN** a `custom` server's light tier names a model the matrix records as refusing images and a client asks with `tier` `light` and a PNG
+- **THEN** the call fails with `invalid_request` naming the tier's model and `image`, and no request reaches the API
+
+#### Scenario: The route is unchanged but the final gate still refuses
+- **WHEN** a dynamic-mode call is gated tentatively (another tier can carry a PNG), the Decisions classifier keeps the tier whose pinned model is recorded as refusing images, and the second resolve returns the same route
+- **THEN** the final gate still fails the call with `invalid_request` naming the pinned model and `image`, and no model request is made
+
 ### Requirement: An unknown model is let through
-For an explicit model, a pin, a tier's model or the default route, a model the matrix does not know, or whose kind is neither accepted nor refused, SHALL be sent the attachment and the API's own answer applies, because the matrix lags the API and a wrong local refusal is worse than one 400.
+For an explicit model, a pin, a tier's model or the default route, a model the matrix does not know, or whose kind is neither accepted nor refused (or whose only refusal has expired), SHALL be sent the attachment and the API's own answer applies, because the matrix lags the API and a wrong local refusal is worse than one 400. An attachment is never silently dropped, and only `image` and `document` are kinds.
 
 #### Scenario: Unknown model
 - **WHEN** a client names a model the matrix does not hold, with a PNG
 - **THEN** the request is sent and the API's answer is the result
 
-### Requirement: One gate on the final route
-The gate SHALL run once on the final resolved route and again if the route changes: an explicit model, a pin, a tier's model, the default model all pass the same `accepts` check with the call's required kinds (`new_kinds | inherited_kinds` in a chat). `no` fails with `invalid_request`.
-
-#### Scenario: A tier model that refuses
-- **WHEN** a `custom` server's light tier names a model the matrix records as refusing images and a client asks with `tier` `light` and a PNG
-- **THEN** the call fails with `invalid_request` naming the tier's model and `image`, and no request reaches the API
-
-### Requirement: Unknown is sent for explicit, pin, tier and default routes
-`unknown` SHALL be sent for an explicit model, a pin, a tier's model or the default route, the API's own answer applying. An attachment is never silently dropped, and only `image` and `document` are kinds.
-
 #### Scenario: An unknown tier model
 - **WHEN** a tier's model is not in the matrix and a client asks with that tier and a PNG
 - **THEN** the request is sent with the image
-
-### Requirement: The gate runs before the classifier, and again after
-When the route is knowable before the classifier and its model cannot take the call's kinds (the models the pins and tiers allow all refuse them), the gate SHALL fail the call before the Decisions classifier runs, so a refused call makes no costed Decisions request. When the second resolve after the classifier changed the route, the gate SHALL run again on the final route. An explicit `model` makes the classifier unnecessary, and its gate runs at once.
-
-#### Scenario: Nothing can take the kinds
-- **WHEN** a dynamic-mode call with the Decisions classifier, no selector and tier pins that all name models recorded as refusing images carries a PNG
-- **THEN** the call fails with `invalid_request` and no Decisions request is made
-
-#### Scenario: A reclassified tier whose pin refuses
-- **WHEN** the Decisions classifier raises the tier and the pinned model of that tier is recorded as refusing the call's kinds
-- **THEN** the second gate fails the call with `invalid_request` naming the pinned model and the kind, and no model request is made
 
 ### Requirement: A preset is used with media only when verified
 A route that names a preset SHALL be sent with attachments only when `preset_accepts(preset, kinds)` is `yes`; for `unknown` the call fails with `invalid_request` naming the preset and the kinds and suggesting an explicit model or a verified depth.
@@ -378,7 +404,11 @@ A route that names a preset SHALL be sent with attachments only when `preset_acc
 - **THEN** the call fails with `invalid_request` naming `depth` `low` and `document`, and no request reaches the API
 
 ### Requirement: Upstream refusals of an attachment are hinted
-A 400 from the API on a call that carried attachments or inherited kinds SHALL stay `invalid_request` with a hint appended. For the generic body `invalid request` (observed 2026-10-30 for a model that cannot read images) the hint says the model may not accept images or documents and points to `perplexity_models`. For a descriptive body the API's text is kept and the hint names the kinds sent. A 429, a 5xx and a timeout SHALL be handled as for any call.
+A 400 from the API on a call that carried NEW attachments SHALL stay `invalid_request` with a hint appended; a 429, a 5xx and a timeout SHALL be handled as for any call. The hint text depends on the body, and the order among hints is owned by the precedence requirement.
+
+#### Scenario: The hint text
+- **WHEN** the API answers 400
+- **THEN** for the generic body `invalid request` (observed 2026-10-30 for a model that cannot read images) the hint says the model may not accept images or documents and points to `perplexity_models`, and for a descriptive body the API's text is kept and the hint names the kinds sent
 
 #### Scenario: A model that cannot read images
 - **WHEN** the API answers 400 `invalid request` to a call that carried a PNG and the matrix did not know the model
@@ -386,18 +416,26 @@ A 400 from the API on a call that carried attachments or inherited kinds SHALL s
 
 #### Scenario: The model is gone, not the attachment refused
 - **WHEN** the API answers 400 `validation failed: model ... is not supported` (true for `matrix.model_not_served`) to a call that carried a PNG
-- **THEN** the attachment hint is suppressed and the text says `model <id> is not served` , and the matrix is not told the kind was refused
+- **THEN** the attachment hint is suppressed and the text says `model <id> is not served by the API` (the id of the request's model; `the requested model` when a preset chose the route), and the matrix is not told the kind was refused
 
 #### Scenario: A document type the route refuses
 - **WHEN** the API answers 400 `the selected model route does not support this document type or source`
 - **THEN** the error keeps that text and adds the kinds sent
 
 ### Requirement: The attachment hint takes precedence
-When a request carried attachments or inherited kinds, `attachment_hint` SHALL be applied instead of `schema_hint` and of the chat continuation hint (which tells the caller to resend with `replay`, wrong for an attachment cause); a `json_schema` hint is added only when no attachment was involved.
+The hint of a 400 SHALL be chosen in one order, and this requirement is the only statement of it: (1) the model-gone text, (2) the attachment hint, (3) the chat continuation hint or the `json_schema` hint as before this change.
+
+#### Scenario: The three levels
+- **WHEN** a 400 answers a call
+- **THEN** (1) the model-gone text is used when `matrix.model_not_served` is true on a call that carried new attachments (a seam, `model_gone_hint`, whose default is the plain text); (2) otherwise the attachment hint is used, only when the call itself carried NEW attachments; (3) otherwise a chained send gets the continuation hint (send again with `replay` true) and a `json_schema` call the schema hint; kinds a chained follow-up merely inherits decide the model gate but never the hint
 
 #### Scenario: A chained send refused for its attachment
 - **WHEN** a chained chat send carrying a PNG is answered 400 `invalid request`
 - **THEN** the error carries the attachment hint and does not tell the caller to resend with `replay`
+
+#### Scenario: A follow-up that carries only inherited kinds
+- **WHEN** a chat's first turn sent a PDF and a chained follow-up with plain text only is answered 400 `invalid request`
+- **THEN** the error carries the continuation hint (send again with `replay` true) and not the attachment hint
 
 ### Requirement: A refusal that arrives as a failed run is hinted
 A 200 whose run has status `failed` and an error of code or type `refusal` (observed 2026-10-30 for `anthropic/claude-opus-5` with a one-line PDF: `document processing failed: refusal`) on a call that carried a document SHALL keep category `unexpected_response` and carry the attachment hint saying the model refused the document and another model may read it. It is recorded as the run's status as today.
@@ -416,6 +454,13 @@ A call with attachments SHALL go through `agent.run_costed` and be recorded exac
 #### Scenario: A failed local check records nothing
 - **WHEN** an attachment fails local validation
 - **THEN** no usage event is stored and no project is created
+
+### Requirement: The gate and the hints are worded once
+The text of a gate refusal SHALL name the model (or the tier and its model, or the depth or tier of a refused preset) and the kinds, never a path or a URL. The model-gone text SHALL contain `is not served`.
+
+#### Scenario: A preset refused
+- **WHEN** a client asks with `depth` `low` and a PDF
+- **THEN** the text names `depth`, the preset `low`, `document` and the verified presets
 
 ### Requirement: Search and attachments combine
 Attachments SHALL be allowed with `search` true, with the web search tool and with search filters (the API accepted a document with the web search tool on 2026-10-30). An API refusal for the documented browser-tool restriction SHALL surface as `invalid_request` with the hint above.

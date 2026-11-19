@@ -14,7 +14,11 @@
 - **THEN** no `--attachments` flag is listed
 
 ### Requirement: Paths are made absolute by the command
-The command SHALL make a relative path argument absolute against its own working directory and expand a leading `~/` before calling the tool (the tool refuses relative paths), and SHALL leave `https://` URLs, `data:` strings and `<media type>::` prefixed values unchanged.
+The command SHALL make a relative path argument absolute against its own working directory and expand a leading `~/` before calling the tool (the tool refuses relative paths), and SHALL leave `https://` URLs and `data:` strings unchanged. A `<media type>::` prefix SHALL be kept as written and the path after it normalised like a bare path (a prefixed URL or `data:` value is unchanged).
+
+#### Scenario: A prefixed relative path
+- **WHEN** a user passes `--attachments image/png::shot.png`
+- **THEN** the tool receives `image/png::` followed by the absolute path of `shot.png`
 
 #### Scenario: A relative path
 - **WHEN** a user runs `perplexity-pro ask "What is this?" --attachments shot.png --model openai/gpt-6-luna` in a directory holding `shot.png`
