@@ -1368,9 +1368,19 @@
         }
       ],
       "parent": "model-routing",
-      "attributedCommits": [],
+      "attributedCommits": [
+        "2f0574d4c8485a8e5b78f301fb828517e21daa4c",
+        "00b3ca9a9693f0601e5e40544f250f1e24d04bfb",
+        "a6ae5fbcd25c9b218ebeb1e9c54cd4b3a8d21118",
+        "3065ad456936beff85fb7c7ae33a93ce3dde7107",
+        "662d6f4694d5bdf9159db26ecdf1afbb75ee30d4",
+        "368daf84b316e17c784408cd3c013c053bf6fb0c"
+      ],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-10-29T23:30:18.070Z"
+      "touchedAt": "2026-11-19T17:38:12.835Z",
+      "release": "release-2-4-0",
+      "releaseJoinedAt": "2026-11-19T17:28:39.742Z",
+      "reviewMode": "thorough"
     },
     {
       "id": "model-matrix",
@@ -1712,7 +1722,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 477,
+  "revision": 485,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
@@ -2210,6 +2220,12 @@
         ],
         "reviewer": "fresh-context general-purpose subagent over the five api-drift-2026-10 deltas vs main specs: 3 BLOCKS (routing-config wording, artifact list, date re-dating scope) folded, POLISH folded or declined (declined: dedupe of per-tool effort scenarios, kept as owned duplicates; fallback models not in the table)"
       }
+    },
+    {
+      "id": "release-2-4-0",
+      "intent": "Media inputs only: image and document attachments on ask and chat, the model input matrix and its probe; routing-v2 is held and not in this release",
+      "deferred": [],
+      "target": "2.4.0"
     }
   ],
   "reviewMode": "standard"
