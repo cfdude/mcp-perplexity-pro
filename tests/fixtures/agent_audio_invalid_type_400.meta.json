@@ -1,0 +1,34 @@
+{
+  "endpoint": "/v1/agent",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-11-11",
+  "content_type": "application/json",
+  "scrubbed": "account-identifying keys and addresses replaced; search results removed",
+  "note": "Response ids are kept; they identify no account. Request headers and the API key are never recorded.",
+  "request_note": "media-inputs 1.1: an input_audio part, which the API refuses",
+  "latency_seconds": 0.106,
+  "request": {
+    "model": "google/gemini-3.5-flash-lite",
+    "store": false,
+    "max_output_tokens": 150,
+    "input": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "Is there speech? One word."
+          },
+          {
+            "type": "input_audio",
+            "input_audio": {
+              "data": "<2192 characters of base64>",
+              "format": "wav"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

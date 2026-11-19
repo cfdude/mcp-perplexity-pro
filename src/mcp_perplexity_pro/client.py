@@ -28,6 +28,7 @@ from mcp_perplexity_pro.models import (
     ModelList,
     SearchResponse,
 )
+from mcp_perplexity_pro.probe_media import probe_input_body
 from mcp_perplexity_pro.settings import Settings
 
 M = TypeVar("M", bound=BaseModel)
@@ -50,6 +51,7 @@ def is_response_id(value: object) -> bool:
 PROBE_INPUT = "Reply with the single word OK."
 PROBE_MAX_OUTPUT_TOKENS = 300
 PROBE_TIMEOUT = httpx2.Timeout(30.0)
+PROBE_INPUT_MAX_OUTPUT_TOKENS = 150
 
 _TIMEOUT_NAMES = (
     (httpx2.ConnectTimeout, "connect"),
@@ -308,6 +310,15 @@ class PerplexityClient:
         }
         if level is not None:
             body["reasoning"] = {"effort": level}
+        data = await self.request_json("POST", path, json=body, timeout=PROBE_TIMEOUT, attempts=1)
+        return self._parse(AgentRun, data, path)
+
+    async def probe_input(self, model: str, kind: str) -> AgentRun:
+        """``POST /v1/agent`` with one fixed tiny attachment (``kind`` is ``image`` or
+        ``document``): one attempt, 30 s, ``store`` false, ``max_output_tokens`` 150, no tools.
+        A 429 is reported at once, like ``probe_effort``."""
+        path = "/v1/agent"
+        body = probe_input_body(model, kind, PROBE_INPUT_MAX_OUTPUT_TOKENS)
         data = await self.request_json("POST", path, json=body, timeout=PROBE_TIMEOUT, attempts=1)
         return self._parse(AgentRun, data, path)
 

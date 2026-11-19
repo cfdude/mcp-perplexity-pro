@@ -81,6 +81,14 @@ if os.environ.get("FIXTURE_SLOW_MATRIX_WRITE"):
     _slow_matrix_write(float(os.environ["FIXTURE_SLOW_MATRIX_WRITE"]))
 
 
+if os.environ.get("FIXTURE_EFFORTS_ONLY"):
+    # a test about the effort probe's three writes: the baseline's unknown input kinds would add
+    # probe rounds of other models before the one under test
+    from mcp_perplexity_pro import matrix_refresh
+
+    matrix_refresh._wants_inputs = lambda *args, **kwargs: []
+
+
 @server.tool
 async def log_all() -> str:
     """Log once at every level."""
