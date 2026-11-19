@@ -92,7 +92,7 @@ After opening, the server SHALL determine the descriptor's real path (`F_GETPATH
 
 #### Scenario: A sibling directory with a common prefix
 - **WHEN** the roots are `/Users/rob/work` and a client passes `/Users/rob/work-secrets/a.txt`
-- **THEN** the call fails with `invalid_request` saying the path is outside the allowed directories
+- **THEN** the call fails with `invalid_request` saying the path is not readable or not allowed (the one uniform text)
 
 #### Scenario: A symlinked parent
 - **WHEN** a path inside a root resolves outside it through a symbolic link in a parent directory
@@ -103,18 +103,14 @@ When `PERPLEXITY_ATTACH_ROOTS` (a colon-separated list of absolute directories, 
 
 #### Scenario: Outside the roots
 - **WHEN** `PERPLEXITY_ATTACH_ROOTS` is `/Users/rob/work` and a client passes `/Users/rob/notes.txt`
-- **THEN** the call fails with `invalid_request` saying the path is outside the allowed directories, and the file is never read
+- **THEN** the call fails with `invalid_request` saying the path is not readable or not allowed (the one uniform text), and the file is never read
 
 ### Requirement: A restricted server does not reveal which paths exist
 The deny list and the roots SHALL be checked against the caller's path BEFORE any open (its parent resolved with `realpath`, no file touched); the check on the opened descriptor's real path stays as the defence against a change in between. When roots restrict, a path that is denied or outside the roots, whether or not it exists, SHALL get ONE uniform `invalid_request` text that names the item and never the path.
 
 #### Scenario: Inside the roots
-- **WHEN** a client passes a missing or unreadable file inside the roots
-- **THEN** the call fails with `not_found` or `invalid_request` naming the path as the caller wrote it; only a restricted server hides which paths exist outside the roots
-
-#### Scenario: Inside the roots and without roots
-- **WHEN** a client passes a missing file inside the roots, or any path when no roots are set
-- **THEN** the call fails with `not_found` (or the specific message of stdio) naming it, because only a restricted server hides which paths exist
+- **WHEN** a client passes a missing or unreadable file inside the roots, or over stdio with no roots
+- **THEN** the call fails with `not_found` (missing) or `invalid_request` (unreadable) naming the path as the caller wrote it; only a restricted server hides which paths exist outside the roots (over HTTP with no roots every local path is refused before any open, by the next requirement)
 
 #### Scenario: Missing and existing look the same
 - **WHEN** the roots are `/Users/rob/work` and a client passes a missing file, an existing file and a file in `~/.ssh`, all outside the roots
@@ -195,11 +191,11 @@ This server SHALL NOT fetch a URL attachment, resolve its host or check that it 
 - **THEN** the only request the server makes is the one to the API, with the URL in an `input_image` part
 
 ### Requirement: Attachment values are never echoed
-An error text, a log record or a hint SHALL NOT repeat an attachment's contents or its secrets. No usage row and no stored chat note SHALL hold a URL's path (a note keeps the host and a digest), and a log record SHALL show a URL by scheme and host only. Only the error returned to the caller MAY keep a URL's path, and then without credentials, query and fragment.
+An error text, a log record or a hint SHALL NOT repeat an attachment's contents or its secrets. No usage row, no log record and no stored chat note SHALL hold a URL's path: text stored or logged shows a quoted URL by scheme and host only (`redaction.redact_persisted`, used by `usage.py` and the logging filter), and a chat note keeps the host and a digest. Only the error returned to the caller MAY keep a URL's path, and then without credentials, query and fragment.
 
 #### Scenario: Which text may show what
 - **WHEN** a client passes a `data:` item, a URL or a local path and the call fails
-- **THEN** a `data:` item is shown only as its position and media type; a URL is shown in the returned error without credentials, query and fragment (`redact_text` cuts them from any quoted URL) and in persisted text by host only; a local path is shown in the returned error as the caller wrote it, cut to 200 characters, except that a denied or outside path under roots gets the uniform refusal with no path (a missing or unreadable file inside the roots is `not_found` or `invalid_request` naming it as written), and never the file's contents
+- **THEN** a `data:` item is shown only as its position and media type; a URL is shown in the returned error without credentials, query and fragment (`redact_text` cuts them from any quoted URL) and in stored or logged text by scheme and host only; a local path is shown in the returned error as the caller wrote it, cut to 200 characters, except that a denied or outside path under roots gets the uniform refusal with no path (a missing or unreadable file inside the roots is `not_found` or `invalid_request` naming it as written), and never the file's contents
 
 #### Scenario: A signed URL is not echoed
 - **WHEN** a client passes `https://example.com/a.pdf?X-Amz-Signature=abc123` and the API answers with an error
@@ -251,7 +247,7 @@ A run of 200 or more characters of the standard base64 alphabet `A-Za-z0-9+/=` o
 - **THEN** none of them is replaced
 
 ### Requirement: A quoted URL loses credentials, query and fragment
-`redact_text` SHALL cut the credentials, query and fragment from any URL (`http` or `https`, parentheses in its path included) quoted in a text, so a signed URL's secret never appears. This applies to every error text the server builds, not only attachment errors, and the URL's path is kept.
+`redact_text` SHALL cut the credentials, query and fragment from any URL (`http` or `https`, parentheses in its path included) quoted in a text, so a signed URL's secret never appears; this applies to every error text the server builds, and the path is kept in the error RETURNED to the caller. With `persisted` (`redact_persisted`, used for usage rows and log records) the URL is cut to scheme and host as well. A closing parenthesis that follows a cut URL is kept.
 
 #### Scenario: A quoted signed URL
 - **WHEN** an upstream error quotes `https://user:pw@files.example.com/a/Foo_(bar).pdf?sig=SECRET#frag`

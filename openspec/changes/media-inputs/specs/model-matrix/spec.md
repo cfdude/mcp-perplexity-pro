@@ -112,7 +112,7 @@ The words `unprobed`, `unknown`, `unanswered` and `refusal` SHALL be used in the
 
 #### Scenario: The vocabulary
 - **WHEN** the matrix and its probes are described
-- **THEN** `unprobed` is a `source` label (nothing has asked the model yet); `unknown` is what `accepts` answers for a kind neither accepted nor refused, or whose refusal has expired at the gate; `unanswered` is a probe request with no usable answer (a 5xx, a timeout, a failed run, a generic 400; a 429 is never an unanswered round and counts only in `attempts`); and `refusal` is one of three things, the API's named 400 (`is_named_refusal`), the recorded fact `refused`, or a run that `failed` with an error whose code or type is `refusal` (unanswered, never a `refused` fact)
+- **THEN** `unprobed` is a `source` label (nothing has asked the model yet); `unknown` is what `accepts` answers for a kind neither accepted nor refused, or whose refusal has expired at the gate; `unanswered` is a probe request with no usable answer (a 5xx, a timeout, a failed run, a generic 400; a 429 is unanswered with no round counted and counts only in `attempts`); and `refusal` is one of three things, the API's named 400 (`is_named_refusal`), the recorded fact `refused`, or a run that `failed` with an error whose code or type is `refusal` (unanswered, never a `refused` fact)
 
 ### Requirement: Each model entry records the inputs it accepts
 A model's `inputs` SHALL hold `accepted` (a list drawn from `image` and `document`), `refused` (a kind mapped to the HTTP status that refused it), `answers` (the round's control and each answered kind mapped to its status, kept while a probe is incomplete), `source` (`probe`, `baseline` or `unprobed`) and, PER KIND (objects keyed by `image` and `document`), `probed_at`, `last_attempt_at`, `attempts`, `unanswered_rounds` and `retry_after`.
@@ -239,7 +239,7 @@ The probe request SHALL be a fixed 48 by 48 PNG or one-line PDF with a fixed pro
 For input probes only, a 200 whose run status is `completed` or `incomplete` SHALL mean accepted, and a 400 SHALL mean refused only when the control completed AND `is_named_refusal` is true. Every other outcome SHALL leave the kind unanswered.
 
 #### Scenario: Which unanswered outcomes count
-- **WHEN** a probe answers an other 400, a 5xx, a timeout, a failed run or 429
+- **WHEN** a probe answers any other 400, a 5xx, a timeout, a failed run or 429
 - **THEN** the kind is unanswered; all but the 429 count as an unanswered round; a 429 ends that refresh's probing and counts only in `attempts`, never stamping `last_attempt_at`, adding to `unanswered_rounds` or starting a backoff
 
 #### Scenario: Accepted without checking the answer
@@ -256,7 +256,7 @@ For input probes only, a 200 whose run status is `completed` or `incomplete` SHA
 
 #### Scenario: A 429 is never a refusal
 - **WHEN** an image probe answers 429 `upstream model is overloaded` (the misleading answer a 16 by 16 image drew on 2026-11-11)
-- **THEN** the kind is unanswered, never refused, it counts only in `attempts`, and probing stops for that refresh
+- **THEN** the kind is unanswered, no round counted, never refused, it counts only in `attempts`, and probing stops for that refresh
 
 #### Scenario: A rate-limited kind
 - **WHEN** the image request answers 429

@@ -107,6 +107,8 @@ plus the text); with the caps above it cannot exceed about 44 MiB, so the 64 MiB
 backstop that tests reach by lowering the module constants, not by building 65 MiB. Inline data is
 capped at 1 MiB because it travels in the caller's own context.
 
+Accepted limit: the unshielded `build_parts` thread (and a read thread a cancel abandoned) may keep the loaded bytes referenced for a bounded time after the call's share is released, so the 64 MiB budget can be exceeded transiently by threads that are already running; each is bounded by one 32 MiB call.
+
 **D5. Path safety, and the decision on the allowlist.** The caller is a model that may be steered
 by text it read ("attach ~/.ssh/id_rsa"), and `path` makes the server read local files and send them
 to a third party. Layers: an absolute or `~/` path only; open with `O_NOFOLLOW` and `O_NONBLOCK`,
