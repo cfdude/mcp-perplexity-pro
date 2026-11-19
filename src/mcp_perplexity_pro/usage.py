@@ -40,7 +40,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from mcp_perplexity_pro.errors import ALL_CATEGORIES
 from mcp_perplexity_pro.pricing import PRICES_AS_OF
-from mcp_perplexity_pro.redaction import redact_text
+from mcp_perplexity_pro.redaction import redact_persisted as redact_text  # stored: host only
 from mcp_perplexity_pro.storage.models import Project, UsageEvent
 from mcp_perplexity_pro.storage.projects import validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work

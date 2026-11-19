@@ -153,3 +153,36 @@ def test_a_url_with_parentheses_in_its_path_still_loses_its_query():
     )
     assert "token" not in out and "k=1" not in out
     assert "https://x.example/wiki/Foo_(bar)" in out
+
+
+URL = "https://h.example/secret-token/a.pdf?sig=Q#f"
+
+
+def test_persisted_text_cuts_a_url_to_scheme_and_host_but_the_caller_keeps_the_path():
+    from mcp_perplexity_pro.redaction import redact_persisted
+
+    assert redact_persisted(f"bad {URL} now") == "bad https://h.example/… now"
+    assert redact_text(f"bad {URL} now") == "bad https://h.example/secret-token/a.pdf now"
+    assert redact_persisted("see https://h.example now") == "see https://h.example now"
+    err = PerplexityError("invalid_request", f"cannot fetch {URL}")
+    assert "secret-token" in str(err)  # the error returned to the caller keeps the path
+
+
+def test_a_usage_failure_text_and_a_log_record_never_hold_a_url_path():
+    import logging
+
+    from mcp_perplexity_pro.log_setup import RedactingFilter
+    from mcp_perplexity_pro.usage import _failure_text
+
+    assert "secret-token" not in _failure_text(ValueError(f"echo {URL}"), ())
+    record = logging.LogRecord("t", logging.ERROR, __file__, 1, "upstream said %s", (URL,), None)
+    RedactingFilter().filter(record)
+    assert "secret-token" not in record.msg and "https://h.example" in record.msg
+
+
+def test_a_closing_paren_after_a_cut_url_is_kept():
+    from mcp_perplexity_pro.redaction import redact_persisted
+
+    assert redact_text("(see https://x.example/a?k=1)") == "(see https://x.example/a)"
+    assert redact_persisted("(see https://x.example/a/b?k=1)") == "(see https://x.example/…)"
+    assert redact_text("https://x.example/wiki/Foo_(bar)?k=1") == "https://x.example/wiki/Foo_(bar)"

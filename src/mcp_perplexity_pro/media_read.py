@@ -197,13 +197,13 @@ def _deny_dirs(policy: AttachPolicy) -> list[Path]:
     return dirs
 
 
+UNIFORM_REFUSAL = "the path is not readable or not allowed"
+
+
 def _not_allowed(where: str) -> PerplexityError:
-    """The one refusal a restricted server gives for a path that is missing, denied or outside
-    the roots, so the text never says which of the three it was (design D5)."""
-    return _invalid(
-        f"{where}: the path is not allowed: it is outside the allowed directories "
-        "(PERPLEXITY_ATTACH_ROOTS), denied, or does not exist"
-    )
+    """The one refusal a restricted server gives for a path that is denied or outside the roots,
+    whether or not it exists, so the text never says which (design D5)."""
+    return _invalid(f"{where}: {UNIFORM_REFUSAL}")
 
 
 def _name_denied(name: str) -> bool:

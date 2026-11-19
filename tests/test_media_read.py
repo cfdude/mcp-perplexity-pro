@@ -140,7 +140,7 @@ async def test_a_sibling_directory_with_a_common_prefix_is_outside_the_root(home
     write(home / "work-secrets" / "a.txt", b"hello")
     (home / "work").mkdir()
     pol = policy(home, roots=(str(home / "work"),))
-    await refused([str(home / "work-secrets" / "a.txt")], pol, "outside the allowed directories")
+    await refused([str(home / "work-secrets" / "a.txt")], pol, "not readable or not allowed")
 
 
 async def test_a_file_inside_the_root_is_accepted_and_one_outside_is_not(home):
@@ -148,7 +148,7 @@ async def test_a_file_inside_the_root_is_accepted_and_one_outside_is_not(home):
     write(home / "notes.png")
     pol = policy(home, roots=(str(home / "work"),))
     await load([str(home / "work" / "a.png")], pol)
-    await refused([str(home / "notes.png")], pol, "outside the allowed directories")
+    await refused([str(home / "notes.png")], pol, "not readable or not allowed")
 
 
 async def test_a_symlinked_parent_that_leaves_the_root_is_refused(home, tmp_path):
@@ -157,7 +157,7 @@ async def test_a_symlinked_parent_that_leaves_the_root_is_refused(home, tmp_path
     (home / "work").mkdir()
     (home / "work" / "via").symlink_to(outside)
     pol = policy(home, roots=(str(home / "work"),))
-    await refused([str(home / "work" / "via" / "a.png")], pol, "outside the allowed directories")
+    await refused([str(home / "work" / "via" / "a.png")], pol, "not readable or not allowed")
 
 
 async def test_a_root_that_is_a_symlink_is_resolved_first(home, tmp_path):
@@ -171,9 +171,9 @@ async def test_a_root_that_is_a_symlink_is_resolved_first(home, tmp_path):
 async def test_the_deny_list_beats_the_roots(home):
     write(home / ".ssh" / "notes.txt", b"hello")
     pol = policy(home, roots=(str(home),))
-    await refused([str(home / ".ssh" / "notes.txt")], pol, "denied")
+    await refused([str(home / ".ssh" / "notes.txt")], pol, "not readable or not allowed")
     write(home / ".claude" / "x.png")
-    await refused([str(home / ".claude" / "x.png")], pol, "denied")
+    await refused([str(home / ".claude" / "x.png")], pol, "not readable or not allowed")
 
 
 async def test_a_symlinked_deny_directory_denies_its_target(home, tmp_path):
@@ -225,7 +225,7 @@ async def test_case_insensitive_comparison_only_on_a_case_insensitive_volume(hom
     if insensitive:
         await load([p], pol)
     else:
-        await refused([p], pol, "outside the allowed directories")
+        await refused([p], pol, "not readable or not allowed")
 
 
 # --- HTTP and stdio ------------------------------------------------------------------------
