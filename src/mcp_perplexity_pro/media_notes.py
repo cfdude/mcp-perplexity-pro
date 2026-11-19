@@ -114,6 +114,15 @@ def parse_trailer(content: str) -> Trailer | None:
     return Trailer(restart, items, documents, images, size)
 
 
+def strip_trailer(content: str) -> str:
+    """The stored user message without its genuine trailer line (other text is returned as is):
+    what a search index should embed, since the note is not something the user wrote."""
+    if parse_trailer(content) is None:
+        return content
+    head, newline, _ = content.rpartition("\n")
+    return head if newline else ""
+
+
 def _kind_of(media_type: str) -> str | None:
     entry = media.SUPPORTED.get(media.ALIASES.get(media_type, media_type))
     return entry[0] if entry else None
