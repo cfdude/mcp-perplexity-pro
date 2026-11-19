@@ -99,3 +99,14 @@ async def storage_engine(make_settings):
         )
     yield engine
     await engine.dispose()
+
+
+@pytest.fixture
+def baseline_day(monkeypatch):
+    """Freeze the gate's clock on the day the baseline's refusals were recorded, so a test about
+    the gate's refusal text sees them as fresh (``matrix.REFUSAL_TTL`` otherwise expires them)."""
+    from datetime import UTC, datetime
+
+    from mcp_perplexity_pro import matrix
+
+    monkeypatch.setattr(matrix, "utcnow", lambda: datetime(2026, 10, 30, 12, tzinfo=UTC))

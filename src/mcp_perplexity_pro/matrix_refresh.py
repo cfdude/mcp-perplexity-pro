@@ -36,7 +36,7 @@ TOOL = "model_matrix"  # the usage events of a probe request: no MCP tool is beh
 PROBE_MODELS_PER_REFRESH = 10
 PROBE_SPEND_CAP_NANO = 250_000_000  # $0.25, checked before each model (D6)
 LEASE = timedelta(minutes=10)
-REFUSAL_TTL = timedelta(hours=24)  # a refused input kind is asked again after this (owner-editable)
+REFUSAL_TTL = matrix.REFUSAL_TTL  # owned by matrix.py: the local gate and the probe share it
 UNANSWERED_ROUNDS = 2  # a kind unanswered this many rounds backs off
 BACKOFF = timedelta(days=7)
 FINISH_RETRY_WAIT = 1.0  # seconds before the one retry of a finish write that hit a busy lock
@@ -204,7 +204,7 @@ def _wants_inputs(
                 else (known.inputs.probed_at.get(kind) if known else None)
             )
             probed = _stamp_time(stamp_)
-            if probed is None or now - probed > REFUSAL_TTL:
+            if probed is None or now - probed > matrix.REFUSAL_TTL:
                 wanted.append(kind)
     return wanted
 

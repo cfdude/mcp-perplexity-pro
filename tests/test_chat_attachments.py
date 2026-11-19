@@ -4,6 +4,7 @@ import base64
 import re
 
 import httpx2
+import pytest
 from agent_support import fixture
 from chat_support import (
     A_ID,
@@ -22,6 +23,12 @@ from media_support import docx, pdf, png
 from mcp_perplexity_pro.storage.chats import AssistantTurn, create_chat
 from mcp_perplexity_pro.storage.projects import get_or_create_project
 from mcp_perplexity_pro.storage.session import unit_of_work
+
+
+@pytest.fixture(autouse=True)
+def _fresh_baseline_refusals(baseline_day):
+    """These tests are about the gate's refusal, so the baseline's refusals must be fresh."""
+
 
 ACCEPTING = "openai/gpt-6-luna"
 REFUSES_DOCUMENTS = "xai/grok-4.3"  # the baseline records a named route refusal for documents

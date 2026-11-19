@@ -10,6 +10,7 @@ change that knows live same-family models may replace the function.
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import datetime
 from typing import Any
 
 from mcp_perplexity_pro import matrix
@@ -43,11 +44,18 @@ def _accepting_text(kinds: frozenset[str], current: matrix.Matrix) -> str:
     return f"Models recorded as accepting {kinds_text(kinds)}: {', '.join(names)}."
 
 
-def blocked(route: Route, kinds: frozenset[str], current: matrix.Matrix) -> str | None:
+def blocked(
+    route: Route,
+    kinds: frozenset[str],
+    current: matrix.Matrix,
+    now: datetime | None = None,
+) -> str | None:
     """The refusal text when ``route`` cannot carry ``kinds``, else ``None`` (no kinds is never
     blocked). A model is refused only when the matrix says ``no``; an unknown model is let
-    through (the matrix lags the API). A preset is allowed only when ``preset_accepts`` is
-    ``yes``."""
+    through (the matrix lags the API), and so is one whose only refusal is older than
+    ``matrix.REFUSAL_TTL`` (baseline refusals included), whether or not probing is on. A preset
+    is allowed only when ``preset_accepts`` is ``yes``.
+    """
     if not kinds:
         return None
     if route.preset is not None:
@@ -60,9 +68,10 @@ def blocked(route: Route, kinds: frozenset[str], current: matrix.Matrix) -> str 
             "(perplexity_models lists the inputs each accepts) or a verified depth."
         )
     model = route.model or ""
-    if matrix.accepts(model, kinds, current) != "no":
+    now = now if now is not None else matrix.utcnow()
+    if matrix.accepts(model, kinds, current, now) != "no":
         return None
-    refused = sorted(k for k in kinds if matrix.accepts(model, [k], current) == "no")
+    refused = sorted(k for k in kinds if matrix.accepts(model, [k], current, now) == "no")
     of_tier = f" (the model of tier {route.tier})" if route.selected_by == "tier" else ""
     return (
         f"model: {model!r}{of_tier} does not accept {kinds_text(refused)} attachments (the model "

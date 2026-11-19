@@ -9,6 +9,12 @@ from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.rules import Classification
 from mcp_perplexity_pro.tools import ask as ask_tool
 
+
+@pytest.fixture(autouse=True)
+def _fresh_baseline_refusals(baseline_day):
+    """These tests are about the gate's refusal, so the baseline's refusals must be fresh."""
+
+
 TOOL = "perplexity_ask"
 ACCEPTING = "openai/gpt-6-luna"  # the baseline records image and document accepted
 REFUSES_DOCUMENTS = "xai/grok-4.3"  # the baseline records a named route refusal for documents
@@ -317,3 +323,40 @@ async def test_a_failed_run_without_a_document_gets_no_refusal_hint(world, files
     assert "refused the" not in message(result)
     plain = await w.call(TOOL, query="q", model="anthropic/claude-opus-5")
     assert "refused the" not in message(plain)
+
+
+# --- a refusal older than REFUSAL_TTL no longer blocks (even with probing off) ----------------
+
+
+async def test_a_stale_baseline_refusal_is_let_through_and_a_fresh_one_is_not(
+    world, files, monkeypatch
+):
+    from datetime import UTC, datetime
+
+    from mcp_perplexity_pro import matrix
+
+    w = await world(respond_with("agent_fast.json"), matrix_probe="off")
+    path = files("r.pdf", pdf())
+    fresh = datetime(2026, 10, 30, 12, tzinfo=UTC)  # inside 24 h of the baseline's probed_at
+    monkeypatch.setattr(matrix, "utcnow", lambda: fresh)
+    refused = await w.call(TOOL, query="q", model=REFUSES_DOCUMENTS, attachments=[path])
+    assert refused.is_error
+    monkeypatch.setattr(matrix, "utcnow", lambda: datetime(2026, 11, 19, tzinfo=UTC))
+    sent = await w.call(TOOL, query="q", model=REFUSES_DOCUMENTS, attachments=[path])
+    assert not sent.is_error, sent.content  # stale: unknown, sent to the API
+
+
+def test_accepts_expires_an_own_and_a_baseline_refusal_only_with_a_clock():
+    from datetime import UTC, datetime
+
+    from mcp_perplexity_pro import matrix
+
+    late = datetime(2026, 11, 19, tzinfo=UTC)
+    assert matrix.accepts("xai/grok-4.3", {"document"}) == "no"  # the stored answer
+    assert matrix.accepts("xai/grok-4.3", {"document"}, None, late) == "unknown"
+    m = matrix.Matrix.model_validate(matrix.cached_baseline().model_dump())
+    entry = m.models["xai/grok-4.3"]
+    entry.inputs.probed_at["document"] = matrix.stamp(late)  # an own, fresh refusal
+    assert matrix.accepts("xai/grok-4.3", {"document"}, m, late) == "no"
+    entry.inputs.probed_at.pop("document")  # no readable stamp: expired
+    assert matrix.accepts("xai/grok-4.3", {"document"}, m, late) == "unknown"

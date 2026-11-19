@@ -33,7 +33,7 @@ import threading
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from importlib.resources import files
 from pathlib import Path
 from typing import Any, Literal, Protocol
@@ -341,22 +341,56 @@ def _checked(kinds: Iterable[str]) -> frozenset[str]:
     return kinds
 
 
-def kind_answer(entry: ModelEntry, known: ModelEntry | None, kind: str) -> Answer:
+REFUSAL_TTL = timedelta(hours=24)  # a refused input kind is asked again after this (owner-editable)
+
+
+def _stamp_time(value: str | None) -> datetime | None:
+    if value is None:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+    except ValueError:
+        return None
+
+
+def _refusal_expired(stamp_: str | None, now: datetime | None) -> bool:
+    """Whether a refusal recorded at ``stamp_`` is older than ``REFUSAL_TTL`` at ``now``. A
+    refusal with no readable stamp is expired. ``now=None`` never expires (the stored answer)."""
+    if now is None:
+        return False
+    when = _stamp_time(stamp_)
+    return when is None or now - when > REFUSAL_TTL
+
+
+def kind_answer(
+    entry: ModelEntry, known: ModelEntry | None, kind: str, now: datetime | None = None
+) -> Answer:
+    """One kind's answer. With ``now`` given, a refusal (the entry's own or the baseline's) older
+    than ``REFUSAL_TTL`` counts as ``unknown``: a refusal is a likely answer, not a proof, and
+    must not block a call forever when probing is off."""
     inputs = entry.inputs
     if kind in inputs.accepted:
         return "yes"
     if kind in inputs.refused:
-        return "no"
+        expired = _refusal_expired(inputs.probed_at.get(kind), now)
+        return "unknown" if expired else "no"
     if known is not None and not attempted(inputs, kind):  # the read-time baseline fallback
         if kind in known.inputs.accepted:
             return "yes"
         if kind in known.inputs.refused:
-            return "no"
+            expired = _refusal_expired(known.inputs.probed_at.get(kind), now)
+            return "unknown" if expired else "no"
     return "unknown"
 
 
-def accepts(model_id: str, kinds: Iterable[str], matrix: Matrix | None = None) -> Answer:
-    """``yes`` when every kind is accepted, ``no`` when any is refused, else ``unknown``.
+def accepts(
+    model_id: str,
+    kinds: Iterable[str],
+    matrix: Matrix | None = None,
+    now: datetime | None = None,
+) -> Answer:
+    """``yes`` when every kind is accepted, ``no`` when any is refused, else ``unknown``. With
+    ``now`` (the local gate passes it) a refusal older than ``REFUSAL_TTL`` is ``unknown``.
 
     Pure: reads ``matrix`` (the baseline when ``None``), never writes, never raises for an id (only
     a kind outside ``image`` and ``document`` raises ``ValueError``). A kind that is not
@@ -369,7 +403,7 @@ def accepts(model_id: str, kinds: Iterable[str], matrix: Matrix | None = None) -
     entry = current.models.get(model_id)
     if entry is None:
         return "unknown"
-    answers = {kind_answer(entry, base.models.get(model_id), kind) for kind in wanted}
+    answers = {kind_answer(entry, base.models.get(model_id), kind, now) for kind in wanted}
     if "no" in answers:
         return "no"
     return "yes" if answers == {"yes"} else "unknown"
