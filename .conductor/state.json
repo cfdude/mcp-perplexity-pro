@@ -1388,10 +1388,90 @@
         "72f3b6830627378b88dd6c0ecc70dbe5802a1bab"
       ],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-11-19T19:16:53.899Z",
+      "touchedAt": "2026-11-19T19:25:56.876Z",
       "release": "release-2-4-0",
       "releaseJoinedAt": "2026-11-19T17:28:39.742Z",
-      "reviewMode": "thorough"
+      "reviewMode": "thorough",
+      "gateReview": {
+        "gate1": {
+          "verdict": "pass",
+          "reviewedAt": "2026-11-19T19:25:55.718Z",
+          "artifacts": [
+            "openspec/changes/media-inputs/proposal.md",
+            "openspec/changes/media-inputs/design.md",
+            "openspec/changes/media-inputs/tasks.md",
+            "openspec/changes/media-inputs/specs/agent-ask/spec.md",
+            "openspec/changes/media-inputs/specs/agent-chat/spec.md",
+            "openspec/changes/media-inputs/specs/cli/spec.md",
+            "openspec/changes/media-inputs/specs/help-tool/spec.md",
+            "openspec/changes/media-inputs/specs/media-attachments/spec.md",
+            "openspec/changes/media-inputs/specs/model-catalog/spec.md",
+            "openspec/changes/media-inputs/specs/model-matrix/spec.md"
+          ],
+          "artifactDigests": [
+            {
+              "path": "openspec/changes/media-inputs/proposal.md",
+              "sha256": "5414283a206bcb7df9e9a96d7f603315be5d26a23b015b115f56142313fd61b7"
+            },
+            {
+              "path": "openspec/changes/media-inputs/design.md",
+              "sha256": "ca8a6fcb0ee24d2ee2976b1303b4611acf3b944af4ed1257dccd907204e7d017"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/agent-ask/spec.md",
+              "sha256": "4bce376683e4f43fae46ca8bcd869fb753b6d6e6f6ecd56ca9bdcdbba049e625"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/agent-chat/spec.md",
+              "sha256": "96b25e0710a3f155a2d44c5b7b392c88893c5e1a416fd96523e85810b32898fa"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/cli/spec.md",
+              "sha256": "6938705afcea6ee6a24f6b365290c24d9958acc968d1f3fe559fb4dd12443b32"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/help-tool/spec.md",
+              "sha256": "b32ee2d6ba3f74401bbe938640315b5c08eeea3661dea7462caf5cce8c176b94"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/media-attachments/spec.md",
+              "sha256": "3a80f18da3ccd7f2e69f02e0a0bd3b38eea57a7144e0d5b708a9b2943ba0cfb6"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/model-catalog/spec.md",
+              "sha256": "387bc34e1399d132d0cfd3f4d777d4ac882370b2aad985b2599ffacb49a77b70"
+            },
+            {
+              "path": "openspec/changes/media-inputs/specs/model-matrix/spec.md",
+              "sha256": "00f477f0d7ae26eb8e0da80f32d33f7fbab297d77f0b75e2fafea91e02d114e4"
+            }
+          ],
+          "reviewer": "fresh-context general-purpose subagents, standalone media-inputs after the split from routing-v2: Gate 1 (0 Critical, 2 Important, 5 Minor, folded), Gate 1 recheck PASS; the final round-3 and round-4 text fixes (uniform refusal, persisted URL cut, IPv6) were verified by tests and a narrow cross-spec PASS, not re-read in full by a fresh Gate 1 reviewer"
+        },
+        "gate2": {
+          "verdict": "pass",
+          "reviewedAt": "2026-11-19T19:25:56.874Z",
+          "baseSha": "8dfa8e4a0492946280701f11148116f9608d1941",
+          "headSha": "4f910ed7f80dda867ab64cf4cfd7f1fb6d1f33f3",
+          "reviewer": "two independent fresh-context general-purpose subagents (security lens: 0 Critical, 2 Important, 4 Minor; completeness lens: 0 Critical, 2 Important, 7 Minor), all fixed; delta rounds found 1 Critical (double-cancel cleanup leak, fixed and verified at 12 cancel timings by a fresh reviewer: PASS) and 1 Important (IPv6 URL scrub leak, fixed in 72f3b68 with a mutation-checked test, verified by tests and the orchestrator re-run of ruff, openspec validate and the full suite 3830 passed, not re-reviewed by a fresh reviewer)"
+        }
+      },
+      "gateRounds": {
+        "gate1": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-11-19T19:25:55.718Z",
+          "lastPassAt": "2026-11-19T19:25:55.718Z"
+        },
+        "gate2": {
+          "fails": 0,
+          "passes": 1,
+          "failStreak": 0,
+          "lastVerdictAt": "2026-11-19T19:25:56.874Z",
+          "lastPassAt": "2026-11-19T19:25:56.874Z"
+        }
+      }
     },
     {
       "id": "model-matrix",
@@ -1733,7 +1813,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 496,
+  "revision": 499,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
@@ -2236,7 +2316,42 @@
       "id": "release-2-4-0",
       "intent": "Media inputs only: image and document attachments on ask and chat, the model input matrix and its probe; routing-v2 is held and not in this release",
       "deferred": [],
-      "target": "2.4.0"
+      "target": "2.4.0",
+      "crossSpecReview": {
+        "verdict": "pass",
+        "reviewedAt": "2026-11-19T19:25:56.312Z",
+        "specs": [
+          {
+            "key": "media-inputs/specs/agent-ask/spec.md",
+            "sha256": "4bce376683e4f43fae46ca8bcd869fb753b6d6e6f6ecd56ca9bdcdbba049e625"
+          },
+          {
+            "key": "media-inputs/specs/agent-chat/spec.md",
+            "sha256": "96b25e0710a3f155a2d44c5b7b392c88893c5e1a416fd96523e85810b32898fa"
+          },
+          {
+            "key": "media-inputs/specs/cli/spec.md",
+            "sha256": "6938705afcea6ee6a24f6b365290c24d9958acc968d1f3fe559fb4dd12443b32"
+          },
+          {
+            "key": "media-inputs/specs/help-tool/spec.md",
+            "sha256": "b32ee2d6ba3f74401bbe938640315b5c08eeea3661dea7462caf5cce8c176b94"
+          },
+          {
+            "key": "media-inputs/specs/media-attachments/spec.md",
+            "sha256": "3a80f18da3ccd7f2e69f02e0a0bd3b38eea57a7144e0d5b708a9b2943ba0cfb6"
+          },
+          {
+            "key": "media-inputs/specs/model-catalog/spec.md",
+            "sha256": "387bc34e1399d132d0cfd3f4d777d4ac882370b2aad985b2599ffacb49a77b70"
+          },
+          {
+            "key": "media-inputs/specs/model-matrix/spec.md",
+            "sha256": "00f477f0d7ae26eb8e0da80f32d33f7fbab297d77f0b75e2fafea91e02d114e4"
+          }
+        ],
+        "reviewer": "fresh-context general-purpose subagents, media-inputs alone (7 specs): rounds 1-2 found 4+5 BLOCKS, all folded; round 3 narrow recheck PASS (no BLOCKS, 1 POLISH folded); the round-4 IPv6 scrub fix touched code and one spec heading only and was verified by tests, not re-read by a fresh spec reviewer"
+      }
     }
   ],
   "reviewMode": "standard"
