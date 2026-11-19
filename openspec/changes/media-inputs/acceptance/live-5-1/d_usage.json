@@ -1,0 +1,56 @@
+{
+  "name": "d_usage",
+  "argv": [
+    "usage"
+  ],
+  "returncode": 0,
+  "result": {
+    "totals": {
+      "calls": 19,
+      "errors": 1,
+      "input_tokens": 28699,
+      "output_tokens": 426,
+      "total_tokens": 29125,
+      "cost_nano_usd": 6300000,
+      "cost_usd": "0.0063",
+      "calls_cost_computed": 0,
+      "calls_cost_unknown": 1
+    },
+    "group_by": "tool",
+    "groups": [
+      {
+        "calls": 12,
+        "errors": 1,
+        "input_tokens": 27150,
+        "output_tokens": 172,
+        "total_tokens": 27322,
+        "cost_nano_usd": 6010000,
+        "cost_usd": "0.00601",
+        "calls_cost_computed": 0,
+        "calls_cost_unknown": 1,
+        "key": "perplexity_ask"
+      },
+      {
+        "calls": 7,
+        "errors": 0,
+        "input_tokens": 1549,
+        "output_tokens": 254,
+        "total_tokens": 1803,
+        "cost_nano_usd": 290000,
+        "cost_usd": "0.00029",
+        "calls_cost_computed": 0,
+        "calls_cost_unknown": 0,
+        "key": "perplexity_chat"
+      }
+    ],
+    "groups_total": 2,
+    "groups_truncated": false,
+    "project": null,
+    "since": null,
+    "until": null,
+    "limit": 20
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0"
+}

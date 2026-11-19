@@ -1,0 +1,134 @@
+{
+  "name": "a_fast_pdf_url",
+  "argv": [
+    "ask",
+    "What is this document about? A few words.",
+    "--depth",
+    "fast",
+    "--attachments",
+    "https://pdfobject.com/pdf/sample.pdf"
+  ],
+  "returncode": 0,
+  "result": {
+    "answer": "A sample PDF filled with placeholder text.",
+    "answer_json": null,
+    "sources": [
+      {
+        "url": "https://www.merriam-webster.com/dictionary/document",
+        "title": "DOCUMENT Definition & Meaning - Merriam-Webster",
+        "date": "2026-10-28",
+        "id": 1,
+        "ids": [
+          1
+        ]
+      },
+      {
+        "url": "https://www.postgresql.org/docs/current//textsearch-intro.html",
+        "title": "12.1. Introduction",
+        "date": "2026-11-19",
+        "id": 2,
+        "ids": [
+          2
+        ]
+      },
+      {
+        "url": "https://dictionary.cambridge.org/us/dictionary/english/document",
+        "title": "DOCUMENT | definition in the Cambridge English Dictionary",
+        "date": "2026-01-01",
+        "id": 3,
+        "ids": [
+          3
+        ]
+      },
+      {
+        "url": "https://www.loc.gov/preservation/digital/formats/fdd/fdd000509.shtml",
+        "title": "Microsoft Office Word 97-2003 Binary File Format (.doc)",
+        "date": "2025-04-09",
+        "id": 4,
+        "ids": [
+          4
+        ]
+      },
+      {
+        "url": "https://datatracker.ietf.org/doc/rfc1206/",
+        "title": "RFC 1206 - FYI on Questions and Answers",
+        "date": null,
+        "id": 5,
+        "ids": [
+          5
+        ]
+      },
+      {
+        "url": "https://www.rfc-editor.org/info/rfc8174/",
+        "title": "Information on RFC 8174 \u00bb RFC Editor",
+        "date": "2017-05-18",
+        "id": 6,
+        "ids": [
+          6
+        ]
+      },
+      {
+        "url": "https://www.lva.virginia.gov/collections/educator-resources/dbva/items/browse/dab393daacbba622548c034fd9bb7fdc.pdf/in+the+Norfolk+Journal+and+Guide,?sort_field=Dublin+Core,Date&page=5&output=rss2",
+        "title": "Document Bank of Virginia",
+        "date": null,
+        "id": 7,
+        "ids": [
+          7
+        ]
+      },
+      {
+        "url": "https://www.sec.gov/Archives/edgar/data/0001331284/0000950157-26-000711.txt",
+        "title": "0000950157-26-000711.txt",
+        "date": null,
+        "id": 8,
+        "ids": [
+          8
+        ]
+      },
+      {
+        "url": "https://facesandvoicesofrecovery.org/wp-content/uploads/Documents/Words-Matter-How-Language-Choice-Can-Reduce-Stigma.pdf",
+        "title": "[PDF] Words Matter: How Language Choice Can Reduce Stigma",
+        "date": null,
+        "id": 9,
+        "ids": [
+          9
+        ]
+      },
+      {
+        "url": "http://www.link.springer.com/content/pdf/10.1007/978-0-387-35494-1_10.pdf",
+        "title": "Document-based Design Process Knowledge",
+        "date": null,
+        "id": 10,
+        "ids": [
+          10
+        ]
+      }
+    ],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": "fast",
+    "response_id": "resp_d0571646-7711-43d3-90c6-bd44e05c6cc8",
+    "usage": {
+      "input_tokens": 8613,
+      "output_tokens": 12,
+      "total_tokens": 8625,
+      "cost_usd": "0.0011",
+      "cost_source": "reported"
+    },
+    "latency_ms": 1932,
+    "project": "default",
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": null,
+      "selected_by": "depth",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.0011"
+}

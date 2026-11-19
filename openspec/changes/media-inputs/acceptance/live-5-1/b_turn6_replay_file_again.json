@@ -1,0 +1,67 @@
+{
+  "name": "b_turn6_replay_file_again",
+  "argv": [
+    "chat",
+    "send",
+    "--model",
+    "openai/gpt-6-luna",
+    "--no-search",
+    "--chat-id",
+    "1",
+    "--replay",
+    "--message",
+    "What is the secret word in the attached document? One word.",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/doc.pdf"
+  ],
+  "returncode": 0,
+  "result": {
+    "action": "send",
+    "project": "default",
+    "chat_id": 1,
+    "chat": {
+      "id": 1,
+      "title": "acceptance",
+      "message_count": 12,
+      "created_at": "2026-11-19T17:34:27.323133Z",
+      "updated_at": "2026-11-19T17:34:43.702500Z"
+    },
+    "chats": null,
+    "messages": null,
+    "chats_total": null,
+    "messages_total": null,
+    "truncated": null,
+    "messages_removed": null,
+    "continuation": "replay",
+    "answer": "MANGO",
+    "answer_json": null,
+    "sources": [],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [
+      "A replay does not resend files: 2 earlier attachment(s) were not resent and the model sees only their notes in the stored text. Attach the files again on this turn if the answer needs them."
+    ],
+    "model": "openai/gpt-6-luna",
+    "depth": null,
+    "response_id": "resp_90666367-89c3-4ab2-b13b-c942b7d330e2",
+    "usage": {
+      "input_tokens": 351,
+      "output_tokens": 25,
+      "total_tokens": 376,
+      "cost_usd": "0.00005",
+      "cost_source": "reported"
+    },
+    "latency_ms": 2208,
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": "openai/gpt-6-luna",
+      "selected_by": "model",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00005"
+}

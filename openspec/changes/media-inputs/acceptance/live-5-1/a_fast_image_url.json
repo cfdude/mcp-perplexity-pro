@@ -1,0 +1,134 @@
+{
+  "name": "a_fast_image_url",
+  "argv": [
+    "ask",
+    "What is shown in the attached image? A few words.",
+    "--depth",
+    "fast",
+    "--attachments",
+    "https://www.python.org/static/img/python-logo.png"
+  ],
+  "returncode": 0,
+  "result": {
+    "answer": "The Python logo and wordmark.",
+    "answer_json": null,
+    "sources": [
+      {
+        "url": "https://huggingface.co/datasets/TuringEnterprises/Open-MM-RL/viewer",
+        "title": "TuringEnterprises/Open-MM-RL \u00b7 Datasets at Hugging Face",
+        "date": "2026-05-11",
+        "id": 1,
+        "ids": [
+          1
+        ]
+      },
+      {
+        "url": "https://www.vibecodeapp.com/templates/dynamic-island",
+        "title": "Island: Personalization App Template",
+        "date": "2026-11-14",
+        "id": 2,
+        "ids": [
+          2
+        ]
+      },
+      {
+        "url": "https://www.cs.toronto.edu/~fidler/projects/sentences3Ddataset_1.html",
+        "title": "Sentences3D: What are you talking about?",
+        "date": null,
+        "id": 3,
+        "ids": [
+          3
+        ]
+      },
+      {
+        "url": "https://github.com/el-f/ega/blob/master/docs/custom-tasks.md",
+        "title": "ega/docs/custom-tasks.md at master \u00b7 el-f/ega",
+        "date": "2026-09-29",
+        "id": 4,
+        "ids": [
+          4
+        ]
+      },
+      {
+        "url": "https://ai.harvardartmuseums.org/object/370243",
+        "title": "How AI describes Saint George on Foot (image 522834)",
+        "date": "2025-02-28",
+        "id": 5,
+        "ids": [
+          5
+        ]
+      },
+      {
+        "url": "https://huggingface.co/datasets/yreto/Open-MM-RL",
+        "title": "yreto/Open-MM-RL \u00b7 Datasets at Hugging Face",
+        "date": "2026-05-17",
+        "id": 6,
+        "ids": [
+          6
+        ]
+      },
+      {
+        "url": "https://x.com/mingchikuo/status/2067438616188739960",
+        "title": "\"Breaking down TSMC's glass core substrate slide On June 11, at JPCA ...",
+        "date": "2026-06-18",
+        "id": 7,
+        "ids": [
+          7
+        ]
+      },
+      {
+        "url": "https://www.made.app/guides/animate-your-logo.md",
+        "title": "How to animate your logo with AI | Made",
+        "date": null,
+        "id": 8,
+        "ids": [
+          8
+        ]
+      },
+      {
+        "url": "https://huggingface.co/datasets/OpenGVLab/InternVL-SA-1B-Caption/viewer/multi_en/train?p=1",
+        "title": "OpenGVLab/InternVL-SA-1B-Caption \u00b7 Datasets at Hugging Face",
+        "date": "2024-09-20",
+        "id": 9,
+        "ids": [
+          9
+        ]
+      },
+      {
+        "url": "https://www.exkiap.net/forum/viewtopic.php?t=2367",
+        "title": "Paramount Luluai Anarai Wake of Agarabi Linguistic Group",
+        "date": "2022-02-19",
+        "id": 10,
+        "ids": [
+          10
+        ]
+      }
+    ],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": "fast",
+    "response_id": "resp_98b8ca76-748d-4a41-b1fb-36036ece93ae",
+    "usage": {
+      "input_tokens": 6482,
+      "output_tokens": 11,
+      "total_tokens": 6493,
+      "cost_usd": "0.00162",
+      "cost_source": "reported"
+    },
+    "latency_ms": 1790,
+    "project": "default",
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": null,
+      "selected_by": "depth",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00162"
+}

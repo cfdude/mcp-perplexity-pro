@@ -1,0 +1,44 @@
+{
+  "name": "a_luna_image_url",
+  "argv": [
+    "ask",
+    "What is shown in the attached image? A few words.",
+    "--model",
+    "openai/gpt-6-luna",
+    "--no-search",
+    "--attachments",
+    "https://www.python.org/static/img/python-logo.png"
+  ],
+  "returncode": 0,
+  "result": {
+    "answer": "The Python logo and wordmark.",
+    "answer_json": null,
+    "sources": [],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": null,
+    "response_id": "resp_cf4d2122-4aaa-4af9-8ca8-4a4d88022706",
+    "usage": {
+      "input_tokens": 174,
+      "output_tokens": 11,
+      "total_tokens": 185,
+      "cost_usd": "0.00003",
+      "cost_source": "reported"
+    },
+    "latency_ms": 1906,
+    "project": "default",
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": "openai/gpt-6-luna",
+      "selected_by": "model",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00003"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "c_opus5_failed_refusal",
+  "argv": [
+    "ask",
+    "What is the secret word in the attached document? One word.",
+    "--model",
+    "anthropic/claude-opus-5",
+    "--no-search",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/doc.pdf"
+  ],
+  "returncode": 1,
+  "result": null,
+  "stdout_raw": "",
+  "stderr": "[unexpected_response] The API returned status 'failed' instead of a finished answer: the model declined this request under its content policy The model refused the document attachment; another model may read it (perplexity_models lists the inputs each accepts).",
+  "cost_usd": "0"
+}

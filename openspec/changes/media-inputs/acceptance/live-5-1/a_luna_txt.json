@@ -1,0 +1,44 @@
+{
+  "name": "a_luna_txt",
+  "argv": [
+    "ask",
+    "What is the secret word in the attached document? One word.",
+    "--model",
+    "openai/gpt-6-luna",
+    "--no-search",
+    "--attachments",
+    "/var/folders/8w/3vbj24t97f35t564vq7d21th0000gn/T/[redacted]/note.txt"
+  ],
+  "returncode": 0,
+  "result": {
+    "answer": "PAPAYA",
+    "answer_json": null,
+    "sources": [],
+    "status": "completed",
+    "incomplete_reason": null,
+    "warnings": [],
+    "model": "openai/gpt-6-luna",
+    "depth": null,
+    "response_id": "resp_42337a14-fec1-4e42-94e5-bee4d3f55bd5",
+    "usage": {
+      "input_tokens": 49,
+      "output_tokens": 73,
+      "total_tokens": 122,
+      "cost_usd": "0.00004",
+      "cost_source": "reported"
+    },
+    "latency_ms": 2473,
+    "project": "default",
+    "routing": {
+      "mode": "standard",
+      "tier": null,
+      "model": "openai/gpt-6-luna",
+      "selected_by": "model",
+      "classifier": null,
+      "reason": null
+    }
+  },
+  "stdout_raw": null,
+  "stderr": "",
+  "cost_usd": "0.00004"
+}

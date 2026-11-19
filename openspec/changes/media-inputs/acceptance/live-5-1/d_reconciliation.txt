@@ -1,0 +1,48 @@
+event | tool | status | model | request_id | cost_nano_usd | call | call cost_usd | match
+1 | perplexity_ask | ok | openai/gpt-6-luna | resp_4c3dcb43-1e68-42d4-aef6-bf8fe807a46d | 10000 | a_luna_png | 0.00001 | yes
+2 | perplexity_ask | ok | openai/gpt-6-luna | resp_82c31a39-64c0-4e11-bdcd-4f744e81d7db | 10000 | a_luna_pdf | 0.00001 | yes
+3 | perplexity_ask | ok | openai/gpt-6-luna | resp_42337a14-fec1-4e42-94e5-bee4d3f55bd5 | 40000 | a_luna_txt | 0.00004 | yes
+4 | perplexity_ask | ok | openai/gpt-6-luna | resp_cf4d2122-4aaa-4af9-8ca8-4a4d88022706 | 30000 | a_luna_image_url | 0.00003 | yes
+5 | perplexity_ask | ok | openai/gpt-6-luna | resp_eb43d9b7-d20e-4b58-8f53-6c5a2e9c108d | 90000 | a_luna_pdf_url | 0.00009 | yes
+6 | perplexity_ask | ok | openai/gpt-6-luna | resp_684fd3c5-9306-4882-81f0-7906b32f1702 | 1040000 | a_fast_png | 0.00104 | yes
+7 | perplexity_ask | ok | openai/gpt-6-luna | resp_f059d921-db8b-43c2-9394-bf6770c2b52f | 1030000 | a_fast_pdf | 0.00103 | yes
+8 | perplexity_ask | ok | openai/gpt-6-luna | resp_3e18206a-9303-41c3-9e58-ec9d6fb1889b | 1030000 | a_fast_txt | 0.00103 | yes
+9 | perplexity_ask | ok | openai/gpt-6-luna | resp_98b8ca76-748d-4a41-b1fb-36036ece93ae | 1620000 | a_fast_image_url | 0.00162 | yes
+10 | perplexity_ask | ok | openai/gpt-6-luna | resp_d0571646-7711-43d3-90c6-bd44e05c6cc8 | 1100000 | a_fast_pdf_url | 0.0011 | yes
+11 | perplexity_chat | ok | openai/gpt-6-luna | resp_cce00e18-d747-4a58-bd2c-808e2f2485a2 | 10000 | b_turn1_pdf | 0.00001 | yes
+12 | perplexity_chat | ok | openai/gpt-6-luna | resp_d6da07e5-09b2-41a2-8806-4ba0a8b5e14d | 20000 | b_turn2_chained_text | 0.00002 | yes
+13 | perplexity_chat | ok | openai/gpt-6-luna | resp_376d3d1a-4463-47c2-8ce3-44826dee239c | 40000 | b_turn3_chained_asks_pdf | 0.00004 | yes
+14 | perplexity_chat | ok | openai/gpt-6-luna | resp_79a84683-2e3c-404b-8c47-db7325cdb7b8 | 30000 | b_turn4_adds_image | 0.00003 | yes
+15 | perplexity_chat | ok | openai/gpt-6-luna | resp_596ba3c4-2758-4e45-bc69-e3fff74ea90e | 90000 | b_turn5_replay_no_file | 0.00009 | yes
+16 | perplexity_chat | ok | openai/gpt-6-luna | resp_90666367-89c3-4ab2-b13b-c942b7d330e2 | 50000 | b_turn6_replay_file_again | 0.00005 | yes
+17 | perplexity_chat | ok | openai/gpt-6-luna | resp_89f223de-d8a1-4406-9587-9aa8d6af82fd | 50000 | b_turn7_chained_after_restart | 0.00005 | yes
+18 | perplexity_ask | unexpected_response | anthropic/claude-opus-5 | resp_e1c9d4fd-be27-4249-a7b9-68e999bea5b8 | 0 | (no matching result: http call, failed run or error) | - | -
+19 | perplexity_ask | ok | openai/gpt-6-luna | resp_df012497-1a65-424e-bb79-0a786b4176c0 | 10000 | (no matching result: http call, failed run or error) | - | -
+
+events: 19; reconciled to a result: 17; mismatches: 0
+sum of cost_nano_usd in the database: 6300000 (0.0063 USD)
+perplexity_usage total: {"calls": 19, "errors": 1, "input_tokens": 28699, "output_tokens": 426, "total_tokens": 29125, "cost_nano_usd": 6300000, "cost_usd": "0.0063", "calls_cost_computed": 0, "calls_cost_unknown": 1}
+sum of per-call cost_usd in the saved results: 0.00630 USD (includes http calls)
+
+no-bytes scan (needle | database | saved stderr; an answer may say just MANGO, which is not a file byte):
+pdf body line: in database False; in saved stderr False
+pdf header: in database False; in saved stderr False
+pdf base64 prefix: in database False; in saved stderr False
+png base64 prefix: in database False; in saved stderr False
+txt body: in database False; in saved stderr False
+
+stored chat messages (role | content):
+user | 'What is the secret word in the attached document? One word.\n[attachments: doc.pdf (application/pdf, 598 bytes, sha256 bdedf1f9112b)]'
+assistant | 'MANGO'
+user | 'Say hello in one word, and do not mention any file.'
+assistant | 'Hello'
+user | 'What was the secret word in the first document? One word.'
+assistant | 'MANGO'
+user | 'What colour is the attached image? One word.\n[attachments: red.png (image/png, 122 bytes, sha256 aede22ef35a2)]'
+assistant | 'Red'
+user | 'Without any new file: what was the secret word in the first document? If you cannot see the document itself, answer exactly CANNOT SEE.\n[attachments: restart]'
+assistant | 'CANNOT SEE'
+user | 'What is the secret word in the attached document? One word.\n[attachments: restart; doc.pdf (application/pdf, 598 bytes, sha256 bdedf1f9112b)]'
+assistant | 'MANGO'
+user | 'What was the secret word in the document? One word.'
+assistant | 'MANGO'
