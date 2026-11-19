@@ -1389,7 +1389,7 @@
         "6f0efd9def263c46a16522b33f413afce94b8953"
       ],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-11-19T19:57:55.040Z",
+      "touchedAt": "2026-11-19T20:15:08.437Z",
       "release": "release-2-4-0",
       "releaseJoinedAt": "2026-11-19T17:28:39.742Z",
       "reviewMode": "thorough",
@@ -1474,10 +1474,16 @@
         }
       },
       "disposition": {
-        "outcome": "unknown",
-        "recordedAt": "2026-11-19T19:57:55.040Z",
-        "recordedBy": "archive-drift-heal"
-      }
+        "outcome": "delivered",
+        "recordedAt": "2026-11-19T20:15:08.435Z",
+        "reason": "Attachments (images and documents) on ask and chat with the per-model input-kind matrix and one gate, merged in PR #49"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-11-19T20:15:08.409Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-11-19T20:15:08.435Z"
     },
     {
       "id": "model-matrix",
@@ -1819,7 +1825,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 501,
+  "revision": 502,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
