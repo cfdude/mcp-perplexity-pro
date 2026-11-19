@@ -69,6 +69,8 @@ EXTENSIONS = {
 AUDIO_EXTENSIONS = frozenset({".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac", ".opus", ".wma"})
 VIDEO_EXTENSIONS = frozenset({".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v", ".mpeg", ".mpg"})
 
+MAX_PATH_CHARS = 4096
+
 SUPPORTED_LIST = "png, jpeg, webp, gif (images); pdf, doc, docx, txt, rtf (documents)"
 
 _PREFIX = re.compile(r"^([a-z]+/[a-z0-9.+-]+)::")
@@ -187,6 +189,8 @@ def _parse_path(raw: str, index: int, prefix: str | None) -> Attachment:
     where = label(index)
     if "\x00" in raw:
         raise _invalid(f"{where}: the path holds a NUL byte")
+    if len(raw) > MAX_PATH_CHARS:
+        raise _invalid(f"{where}: a path is at most {MAX_PATH_CHARS} characters")
     if raw.startswith("~/"):
         path = str(Path.home() / raw[2:])
     elif raw.startswith("/"):

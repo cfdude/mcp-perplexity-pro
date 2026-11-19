@@ -413,3 +413,118 @@ async def test_the_http_runner_logs_the_notice_once_when_roots_are_unset(
     await entry._run_http(object(), make_settings(attach_roots="/a"), 1.0)
     notices = [r for r in caplog.records if "PERPLEXITY_ATTACH_ROOTS" in r.getMessage()]
     assert len(notices) == 1
+
+
+# --- review fixes: descriptors survive cancellation, no existence leak, limits ---------------
+
+
+def _fd_count():
+    return len(os.listdir("/dev/fd"))
+
+
+async def test_a_cancelled_open_leaves_no_descriptor_behind(home, monkeypatch):
+    import time
+
+    p = write(home / "a.png")
+    real = media_read._open_checked
+
+    def slow(item, pol, fds):
+        time.sleep(0.3)  # a slow open: the descriptor is created after the caller was cancelled
+        return real(item, pol, fds)
+
+    monkeypatch.setattr(media_read, "_open_checked", slow)
+    items = media.parse_attachments([p])
+    before = _fd_count()
+    for _ in range(3):
+
+        async def run():
+            async with hold_attachments(items, policy(home), ByteLimiter()):
+                pass
+
+        task = asyncio.create_task(run())
+        await asyncio.sleep(0.05)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    assert _fd_count() == before
+
+
+async def test_a_cancelled_read_waits_for_its_thread_before_releasing_the_budget(home, monkeypatch):
+    import threading
+
+    p = write(home / "a.png")
+    started, gate = threading.Event(), threading.Event()
+    real = media_read._read_fd
+
+    def blocked(fd, size, where):
+        started.set()
+        gate.wait(5)
+        return real(fd, size, where)
+
+    monkeypatch.setattr(media_read, "_read_fd", blocked)
+    limiter = ByteLimiter()
+    items = media.parse_attachments([p])
+    before = _fd_count()
+
+    async def run():
+        async with hold_attachments(items, policy(home), limiter):
+            pass
+
+    task = asyncio.create_task(run())
+    while not started.is_set():
+        await asyncio.sleep(0.01)
+    task.cancel()
+    await asyncio.sleep(0.2)
+    assert not task.done()  # the thread still reads: nothing is closed or released yet
+    assert limiter.used > 0
+    gate.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert limiter.used == 0
+    assert _fd_count() == before
+
+
+async def test_missing_and_existing_paths_outside_the_roots_read_the_same(home):
+    (home / "work").mkdir()
+    pol = policy(home, roots=(str(home / "work"),), http=True)
+    write(home / "outside" / "real.png")
+    missing = await refused([str(home / "outside" / "nope.png")], pol)
+    existing = await refused([str(home / "outside" / "real.png")], pol)
+    denied = await refused([str(home / ".ssh" / "nope.txt")], pol)
+    assert missing == existing == denied
+    assert "nope.png" not in missing and "real.png" not in existing  # no path echoed
+
+
+async def test_inside_the_roots_a_missing_file_is_still_not_found(home):
+    (home / "work").mkdir()
+    pol = policy(home, roots=(str(home / "work"),))
+    await refused([str(home / "work" / "nope.png")], pol, "no such file", category="not_found")
+
+
+@pytest.mark.parametrize(
+    "name", [".netrc", ".npmrc", ".pypirc", "prod.env", "app.env.txt", ".ENV", "x.env.png"]
+)
+def test_more_denied_base_names(home, name):
+    with pytest.raises(PerplexityError, match="denied"):
+        media_read.check_real_path(str(home / "work" / name), policy(home), "attachments[0]")
+
+
+async def test_the_docker_directory_is_denied(home):
+    write(home / ".docker" / "x.png")
+    await refused([str(home / ".docker" / "x.png")], policy(home), "denied")
+
+
+async def test_the_limiter_wait_is_thirty_seconds_and_acquire_uses_it(monkeypatch):
+    assert media_read.ACQUIRE_TIMEOUT == 30.0
+    limiter = ByteLimiter(capacity=10)
+    await limiter.acquire(10)
+    monkeypatch.setattr(media_read, "ACQUIRE_TIMEOUT", 0.05)
+    with pytest.raises(PerplexityError) as info:
+        await limiter.acquire(5)  # no explicit timeout: the module value applies
+    assert info.value.category == "rate_limited"
+
+
+def test_a_path_string_over_4096_characters_is_refused():
+    with pytest.raises(PerplexityError, match=r"attachments\[0\].*4096"):
+        media.parse_attachments(["/" + "a" * 4100 + ".png"])
+    media.parse_attachments(["/" + "a" * 4000 + ".png"])

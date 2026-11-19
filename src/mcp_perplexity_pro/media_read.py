@@ -17,6 +17,7 @@ import fnmatch
 import os
 import stat
 import sys
+import threading
 from collections import deque
 from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
@@ -31,8 +32,16 @@ MAX_INFLIGHT_BYTES = 64 * 1024 * 1024
 ACQUIRE_TIMEOUT = 30.0
 SHOWN_PATH_CHARS = 200
 
-DENY_DIRS = (".ssh", ".aws", ".gnupg", ".config", ".claude", ".kube")
-DENY_NAMES = ("ecosystem*.cjs", ".env*")
+DENY_DIRS = (".ssh", ".aws", ".gnupg", ".config", ".claude", ".kube", ".docker")
+DENY_NAMES = (
+    "ecosystem*.cjs",
+    ".env*",
+    "*.env",
+    "*.env.*",
+    ".netrc",
+    ".npmrc",
+    ".pypirc",
+)
 
 _fstat = os.fstat  # an alias a test can replace to model a file that grows
 
@@ -186,22 +195,113 @@ def _deny_dirs(policy: AttachPolicy) -> list[Path]:
     return dirs
 
 
+def _not_allowed(where: str) -> PerplexityError:
+    """The one refusal a restricted server gives for a path that is missing, denied or outside
+    the roots, so the text never says which of the three it was (design D5)."""
+    return _invalid(
+        f"{where}: the path is not allowed: it is outside the allowed directories "
+        "(PERPLEXITY_ATTACH_ROOTS), denied, or does not exist"
+    )
+
+
+def _name_denied(name: str) -> bool:
+    lowered = name.lower()
+    return any(fnmatch.fnmatchcase(lowered, pattern) for pattern in DENY_NAMES)
+
+
 def check_real_path(real: str, policy: AttachPolicy, where: str) -> None:
-    """The deny list (always) and the roots (when set), applied to the opened file's real path."""
+    """The deny list (always) and the roots (when set), applied to a real path. When roots
+    restrict, every refusal is the one uniform message."""
     path = Path(real)
-    if any(fnmatch.fnmatchcase(path.name.lower(), pattern) for pattern in DENY_NAMES):
+    if _name_denied(path.name):
+        if policy.roots:
+            raise _not_allowed(where)
         raise _invalid(f"{where}: the file name is denied (credentials and environment files)")
     if any(_inside(path, deny) for deny in _deny_dirs(policy)):
+        if policy.roots:
+            raise _not_allowed(where)
         raise _invalid(f"{where}: the path is denied (it is inside a protected directory)")
     if policy.roots and not any(_inside(path, _resolved(root)) for root in policy.roots):
-        raise _invalid(
-            f"{where}: the path is outside the allowed directories (PERPLEXITY_ATTACH_ROOTS)"
-        )
+        raise _not_allowed(where)
 
 
-def _open_checked(item: Attachment, policy: AttachPolicy) -> tuple[int, int]:
-    """Open one path item and return ``(descriptor, size)``; nothing has been read."""
+def precheck_path(item: Attachment, policy: AttachPolicy) -> None:
+    """The check that runs BEFORE any open: the caller's string, its parent directory resolved
+    lexically (no file is touched), against the deny list and the roots. Without it the open's own
+    error (no such file, permission denied) would tell an HTTP caller which paths exist outside
+    the roots. The check on the opened descriptor's real path stays as the defence against a
+    path that changes between the two."""
     where = label(item.index)
+    path = Path(item.path or "")
+    if _name_denied(path.name):
+        check_real_path(str(path), policy, where)
+    parent = _resolved(path.parent)
+    if any(_inside(parent, deny) for deny in _deny_dirs(policy)):
+        check_real_path(str(parent / path.name), policy, where)
+    if policy.roots and not any(_inside(parent, _resolved(root)) for root in policy.roots):
+        raise _not_allowed(where)
+
+
+class FdSet:
+    """The descriptors one call has opened, closed exactly once whatever happens to the caller.
+
+    A thread that finishes an open after its caller was cancelled still returns a descriptor
+    nothing would close, and a close while a thread still reads would hit a reused number. So a
+    descriptor is registered here by the thread itself, under a lock: after ``close_all`` a late
+    registration is refused and its thread closes the descriptor, and a descriptor being read is
+    closed by its reader when done."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._fds: dict[int, int] = {}
+        self._busy: set[int] = set()
+        self._closed = False
+
+    def add(self, index: int, fd: int) -> bool:
+        """Register an opened descriptor; ``False`` (the caller closes it) when the call is over."""
+        with self._lock:
+            if self._closed:
+                return False
+            self._fds[index] = fd
+            return True
+
+    def begin_read(self, index: int) -> int | None:
+        with self._lock:
+            if self._closed or index not in self._fds:
+                return None
+            self._busy.add(index)
+            return self._fds[index]
+
+    def end_read(self, index: int) -> None:
+        with self._lock:
+            self._busy.discard(index)
+            if self._closed and index in self._fds:
+                _close_quietly(self._fds.pop(index))
+
+    def close_all(self) -> None:
+        with self._lock:
+            self._closed = True
+            for index in list(self._fds):
+                if index not in self._busy:
+                    _close_quietly(self._fds.pop(index))
+
+    def count(self) -> int:
+        with self._lock:
+            return len(self._fds)
+
+
+def _close_quietly(fd: int) -> None:
+    try:
+        os.close(fd)
+    except OSError:
+        pass
+
+
+def _open_checked(item: Attachment, policy: AttachPolicy, fds: FdSet) -> int:
+    """Open one path item, register its descriptor in ``fds`` and return its size; nothing has
+    been read. A call that is already over closes the descriptor instead."""
+    where = label(item.index)
+    precheck_path(item, policy)
     flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | getattr(os, "O_CLOEXEC", 0)
     try:
         fd = os.open(item.path or "", flags)
@@ -233,14 +333,26 @@ def _open_checked(item: Attachment, policy: AttachPolicy) -> tuple[int, int]:
                 f"{where}: a file is at most {media.MAX_FILE_BYTES // media.MIB} MiB "
                 f"({item.media_type})"
             )
-        return fd, info.st_size
+        if not fds.add(item.index, fd):
+            raise asyncio.CancelledError
+        return info.st_size
     except BaseException:
-        os.close(fd)
+        _close_quietly(fd)
         raise
 
 
-def _read_bounded(fd: int, size: int, where: str) -> bytes:
+def _read_bounded(fds: FdSet, index: int, size: int, where: str) -> bytes:
     """Read the file, stopping one byte past its descriptor size: a file that grew fails."""
+    fd = fds.begin_read(index)
+    if fd is None:
+        raise asyncio.CancelledError
+    try:
+        return _read_fd(fd, size, where)
+    finally:
+        fds.end_read(index)
+
+
+def _read_fd(fd: int, size: int, where: str) -> bytes:
     limit = size + 1
     chunks: list[bytes] = []
     got = 0
@@ -275,14 +387,21 @@ async def hold_attachments(
             "PERPLEXITY_ATTACH_ROOTS to a colon-separated list of absolute directories to "
             "enable them (a URL or inline data works without it)"
         )
-    opened: dict[int, tuple[int, int]] = {}
+    fds = FdSet()
+    sizes: dict[int, int] = {}
+    threads: list[asyncio.Future[object]] = []
     held = 0
+
+    async def in_thread(fn, *args):
+        future = asyncio.ensure_future(asyncio.to_thread(fn, *args))
+        threads.append(future)
+        return await asyncio.shield(future)
+
     try:
         for item in paths:
-            opened[item.index] = await asyncio.to_thread(_open_checked, item, policy)
+            sizes[item.index] = await in_thread(_open_checked, item, policy, fds)
         sized = [
-            dataclasses.replace(i, size=opened[i.index][1]) if i.source == "path" else i
-            for i in items
+            dataclasses.replace(i, size=sizes[i.index]) if i.source == "path" else i for i in items
         ]
         media.check_sizes(sized)
         media.check_body_size(sized, text)
@@ -292,19 +411,37 @@ async def hold_attachments(
         loaded: list[Attachment] = []
         for item in sized:
             if item.source == "path":
-                fd, size = opened[item.index]
-                data = await asyncio.to_thread(_read_bounded, fd, size, label(item.index))
+                data = await in_thread(
+                    _read_bounded, fds, item.index, sizes[item.index], label(item.index)
+                )
                 media.verify_file_bytes(item, data)
                 item = dataclasses.replace(item, data=data, size=len(data))
             loaded.append(item)
         yield loaded
     finally:
-        for fd, _size in opened.values():
-            try:
-                os.close(fd)
-            except OSError:
-                pass
+        await _settle(threads)
+        fds.close_all()
         limiter.release(held)
+
+
+async def _settle(threads: list[asyncio.Future[object]]) -> None:
+    """Wait for every started thread, however often this task is cancelled meanwhile, so no
+    thread still reads (or opens) when the descriptors close and the byte budget is handed
+    back. A thread is bounded (one open, one read of at most 32 MiB). The cancel is re-raised."""
+    cancelled = False
+    while True:
+        pending = [t for t in threads if not t.done()]
+        if not pending:
+            break
+        try:
+            await asyncio.shield(asyncio.gather(*pending, return_exceptions=True))
+        except asyncio.CancelledError:
+            cancelled = True
+    for t in threads:
+        if t.done() and not t.cancelled():
+            t.exception()  # mark retrieved: a late open's error has no reader
+    if cancelled:
+        raise asyncio.CancelledError
 
 
 def http_paths_notice(roots: Sequence[str]) -> str | None:
