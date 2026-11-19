@@ -282,12 +282,31 @@ def test_a_leading_tilde_is_expanded(tools, monkeypatch, tmp_path):
         "data:image/png;base64,iVBORw0KGgo=",
         "DATA:image/png;base64,iVBORw0KGgo=",
         "application/pdf::https://example.com/download?id=7",
-        "image/png::shot.png",
     ],
 )
 def test_urls_data_and_prefixed_values_are_left_untouched(tools, value):
     _, arguments = parse(tools, "ask", "q", "--attachments", value)
     assert arguments["attachments"] == [value]
+
+
+def test_the_path_after_a_media_type_prefix_is_normalised_like_a_bare_path(
+    tools, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path / "h"))
+    _, arguments = parse(
+        tools,
+        "ask",
+        "q",
+        "--attachments",
+        "image/png::shot.png",
+        "--attachments",
+        "image/png::~/s.png",
+    )
+    assert arguments["attachments"] == [
+        "image/png::" + os.path.join(os.getcwd(), "shot.png"),
+        "image/png::" + str(tmp_path / "h" / "s.png"),
+    ]
 
 
 def test_a_json_supplied_list_is_normalised_too(tools, tmp_path, monkeypatch):

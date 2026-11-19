@@ -339,10 +339,21 @@ _URLISH = ("data:", "https://", "http://")
 def normalise_attachment(item: str) -> str:
     """One ``--attachments`` value for the tool: a relative path becomes absolute against this
     command's working directory and a leading ``~/`` is expanded (the tool has no working
-    directory and refuses a relative path). A URL, a ``data:`` string and a value with a
-    ``<media type>::`` prefix are left exactly as given."""
-    if _PREFIXED.match(item) or item.lower().startswith(_URLISH):
+    directory and refuses a relative path). A URL and a ``data:`` string are left exactly as
+    given, and so is a ``<media type>::`` prefix; the path after it is normalised like a bare
+    one."""
+    prefixed = _PREFIXED.match(item)
+    if prefixed:  # the path after ``<type>::`` is normalised like a bare path
+        rest = item[prefixed.end() :]
+        if rest.lower().startswith(_URLISH):
+            return item
+        return item[: prefixed.end()] + _absolute(rest)
+    if item.lower().startswith(_URLISH):
         return item
+    return _absolute(item)
+
+
+def _absolute(item: str) -> str:
     if item == "~" or item.startswith("~/"):
         item = os.path.expanduser(item)
     return item if os.path.isabs(item) else os.path.join(os.getcwd(), item)
