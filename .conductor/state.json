@@ -1382,10 +1382,11 @@
         "51c4c5f10cf695eb9bb4b1ab14edd8e6de3ab53a",
         "c10b0c4310d4cf641c8e0017c551c5c8e6831922",
         "352ba1b08b2f4a968679ccea68ba5ba696df1bcc",
-        "6fedb3cad794fe783512fcd5c5f36dabbaff8a68"
+        "6fedb3cad794fe783512fcd5c5f36dabbaff8a68",
+        "0243be87d03e613bfac0dac51b4bcd798feeaa65"
       ],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-11-19T18:27:43.018Z",
+      "touchedAt": "2026-11-19T18:49:24.021Z",
       "release": "release-2-4-0",
       "releaseJoinedAt": "2026-11-19T17:28:39.742Z",
       "reviewMode": "thorough"
@@ -1730,7 +1731,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 493,
+  "revision": 494,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",
