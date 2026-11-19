@@ -300,7 +300,7 @@ it accepts, refuses or has not been asked about. Nothing in it is typed by hand 
 by it yet (the attachment gate reads the inputs; see "Attachments"); it is the fact base for model
 routing.
 
-- **Never empty.** A baseline of all 54 models as of 2026-10-17 ships inside the package, so the
+- **Never empty.** A baseline of 55 models (the 54 of 2026-10-17 plus `openai/gpt-6.1-terra`, which has both kinds unknown) ships inside the package, so the
   matrix is the baseline on a first start, after a deleted file, and after a corrupt one (a file
   that is not a matrix is renamed `model_matrix.json.corrupt-<time>` and never deleted; a file written
   by a newer version is left alone).
@@ -554,7 +554,7 @@ refused and nothing is sent. **Audio and video are refused locally** (`.mp3`, `.
 
 **Reading a local path is guarded.** The file is opened without following a final symbolic link and
 without blocking, must be a regular file (a directory, FIFO, socket, device or link is
-`invalid_request`, a missing file `not_found`), and is read no further than one byte past its limit.
+`invalid_request`, a missing file `not_found`), and is read no further than one byte past the size the open file reported (a file that grew fails); the 20 MiB limit is checked separately.
 The roots and the deny list are applied to the opened file's real path, never to the string you
 wrote, so a symlinked parent cannot escape and `/Users/me/work-secrets` is not inside
 `/Users/me/work`. Over **stdio**, with `PERPLEXITY_ATTACH_ROOTS` unset, any readable path is
@@ -603,9 +603,9 @@ no project.
 result, an error message or a usage event, and the request body is never logged. A log record about
 an attachment holds at most its position, kind, media type, decoded size and the first 12 hex
 characters of its SHA-256. Error text, usage rows and logs are scrubbed of `data:` URI bodies and of
-long base64 runs (`[media removed]`), and a URL quoted in any of them loses its credentials, query
+base64 runs of 200+ characters that look like encoded bytes (upper case, lower case, a digit, and at most one `/` per 16 characters) (`[media removed]`), and a URL quoted in any of them loses its credentials, query
 and fragment, because a signed URL's secret lives there. Text that is **stored or logged** (a usage
-row, a log record) shows a quoted URL as scheme and host only; the error returned to the caller
+row, a log record) shows a quoted URL as scheme and host only (`/…` when a path was cut); the error returned to the caller
 keeps the URL's path, without credentials, query and fragment. A `data:` item is shown only as its
 position and media type.
 
