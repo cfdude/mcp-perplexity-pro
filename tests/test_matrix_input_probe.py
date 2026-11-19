@@ -528,7 +528,7 @@ async def test_a_fresh_refusal_is_not_reprobed(worlds):
 
 async def test_an_unanswered_reprobe_keeps_the_refusal_and_its_date(worlds):
     old = timedelta(hours=25)
-    agent = Agent({(NEW, "document"): status(429)})
+    agent = Agent({(NEW, "document"): status(503)})
     world = await only(worlds, NEW, agent, inputs=refused_inputs(old))
     await refresh(world)
     row = known(world, NEW)
@@ -539,6 +539,19 @@ async def test_an_unanswered_reprobe_keeps_the_refusal_and_its_date(worlds):
     world.upstream.agent_bodies.clear()
     await refresh(world)  # the same refresh window: no request is repeated
     assert asked(world, NEW) == []
+
+
+async def test_a_429_does_not_count_toward_backoff_or_the_lease(worlds):
+    agent = Agent({(NEW, "document"): status(429)})
+    world = await only(worlds, NEW, agent, inputs=refused_inputs(timedelta(hours=25)))
+    await refresh(world)
+    row = known(world, NEW)
+    assert row.attempts["document"] == 1  # a request was sent
+    assert "document" not in row.last_attempt_at and not row.unanswered_rounds
+    assert not row.retry_after and row.refused == {"document": 400}
+    world.upstream.agent_bodies.clear()
+    await refresh(world)  # no lease was stamped: the same window asks again
+    assert "document" in asked(world, NEW)
 
 
 async def test_a_stale_baseline_refusal_is_reprobed_after_the_merge_copies_it(worlds):

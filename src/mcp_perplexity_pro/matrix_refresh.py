@@ -51,7 +51,8 @@ INPUT_KEYS = (
 @dataclass
 class InputRound:
     """One model's input probe in one round: the same-round control, what each wanted kind came
-    to (``accepted``, ``refused`` or ``unanswered``) and which kinds a request was sent for
+    to (``accepted``, ``refused``, ``unanswered`` or ``rate_limited``, which ends the round and
+    counts only in ``attempts``) and which kinds a request was sent for
     (``attempts`` counts those and never resets)."""
 
     control: bool = False
@@ -402,7 +403,10 @@ def _apply_input_round(inputs: matrix.Inputs, rnd: InputRound, now: datetime) ->
     for kind, result in rnd.results.items():
         if kind in rnd.sent:
             inputs.attempts[kind] = inputs.attempts.get(kind, 0) + 1
-            inputs.last_attempt_at[kind] = stamped
+            if result != "rate_limited":
+                inputs.last_attempt_at[kind] = stamped
+        if result == "rate_limited":
+            continue  # a 429 says nothing about the model: no lease stamp, no backoff count
         if result in ("accepted", "refused"):
             accepted = set(inputs.accepted)
             if result == "accepted":
@@ -561,10 +565,11 @@ async def probe_model(app: Any, model_id: str, spend: Spend) -> Literal["done", 
                 elif reply == "refused":
                     rnd.results[kind] = "refused"
                 else:
-                    rnd.results[kind] = "unanswered"
                     if reply == "rate_limited":
+                        rnd.results[kind] = "rate_limited"
                         outcome = "stop"
                         break
+                    rnd.results[kind] = "unanswered"
     finally:
         if outcome == "done":  # a 429 says nothing about the model
             if efforts:
