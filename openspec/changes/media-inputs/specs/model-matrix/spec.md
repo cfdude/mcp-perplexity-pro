@@ -326,7 +326,7 @@ A `refused` kind (the entry's own, or the baseline's for a kind that is not `att
 - **WHEN** a 25-hour-old refusal is re-probed and the request answers 503 (or times out, or the run fails)
 - **THEN** the kind stays refused with its old `probed_at`, `last_attempt_at` is stamped, `unanswered_rounds` rises by one and no request is repeated in the same refresh window
 
-#### Scenario: A 429 is not an unanswered round
+#### Scenario: A 429 counts no round
 - **WHEN** a 25-hour-old refusal is already stored, it is re-probed and the request answers 429
 - **THEN** the kind stays refused with its old `probed_at`, `attempts` rises by one, `last_attempt_at` is NOT stamped, `unanswered_rounds` and `retry_after` are unchanged, and the next refresh asks again
 
