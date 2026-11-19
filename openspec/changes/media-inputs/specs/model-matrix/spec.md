@@ -112,7 +112,7 @@ The words `unprobed`, `unknown`, `unanswered` and `refusal` SHALL be used in the
 
 #### Scenario: The vocabulary
 - **WHEN** the matrix and its probes are described
-- **THEN** `unprobed` is a `source` label (nothing has asked the model yet); `unknown` is what `accepts` answers for a kind neither accepted nor refused, or whose refusal has expired at the gate; `unanswered` is a probe request with no usable answer (a 5xx, a timeout, a 429, a failed run, a generic 400); and `refusal` is one of three things, the API's named 400 (`is_named_refusal`), the recorded fact `refused`, or a run that `failed` with error code `refusal` (unanswered, never a `refused` fact)
+- **THEN** `unprobed` is a `source` label (nothing has asked the model yet); `unknown` is what `accepts` answers for a kind neither accepted nor refused, or whose refusal has expired at the gate; `unanswered` is a probe request with no usable answer (a 5xx, a timeout, a failed run, a generic 400; a 429 is never an unanswered round and counts only in `attempts`); and `refusal` is one of three things, the API's named 400 (`is_named_refusal`), the recorded fact `refused`, or a run that `failed` with an error whose code or type is `refusal` (unanswered, never a `refused` fact)
 
 ### Requirement: Each model entry records the inputs it accepts
 A model's `inputs` SHALL hold `accepted` (a list drawn from `image` and `document`), `refused` (a kind mapped to the HTTP status that refused it), `answers` (the round's control and each answered kind mapped to its status, kept while a probe is incomplete), `source` (`probe`, `baseline` or `unprobed`) and, PER KIND (objects keyed by `image` and `document`), `probed_at`, `last_attempt_at`, `attempts`, `unanswered_rounds` and `retry_after`.
@@ -236,7 +236,11 @@ The probe request SHALL be a fixed 48 by 48 PNG or one-line PDF with a fixed pro
 - **THEN** it carries one `input_image` part, `store` false, `max_output_tokens` 150 and no tools
 
 ### Requirement: An input probe answers by HTTP status
-For input probes only, a 200 whose run status is `completed` or `incomplete` SHALL mean accepted, and a 400 SHALL mean refused only when the control completed AND `is_named_refusal` is true. Every other 400, a 5xx, a timeout, a 429 and a 200 whose run `failed` SHALL leave the kind unanswered; a 429 SHALL also end that refresh's probing and SHALL count only in `attempts`, never stamping `last_attempt_at`, adding to `unanswered_rounds` or starting a backoff.
+For input probes only, a 200 whose run status is `completed` or `incomplete` SHALL mean accepted, and a 400 SHALL mean refused only when the control completed AND `is_named_refusal` is true. Every other outcome SHALL leave the kind unanswered.
+
+#### Scenario: Which unanswered outcomes count
+- **WHEN** a probe answers an other 400, a 5xx, a timeout, a failed run or 429
+- **THEN** the kind is unanswered; all but the 429 count as an unanswered round; a 429 ends that refresh's probing and counts only in `attempts`, never stamping `last_attempt_at`, adding to `unanswered_rounds` or starting a backoff
 
 #### Scenario: Accepted without checking the answer
 - **WHEN** an input probe answers 200 with status `completed` or `incomplete`
@@ -252,7 +256,7 @@ For input probes only, a 200 whose run status is `completed` or `incomplete` SHA
 
 #### Scenario: A 429 is never a refusal
 - **WHEN** an image probe answers 429 `upstream model is overloaded` (the misleading answer a 16 by 16 image drew on 2026-11-11)
-- **THEN** the kind is unanswered, never refused, and probing stops for that refresh
+- **THEN** the kind is unanswered, never refused, it counts only in `attempts`, and probing stops for that refresh
 
 #### Scenario: A rate-limited kind
 - **WHEN** the image request answers 429
@@ -293,7 +297,7 @@ For input probes only, a 200 whose run status is `completed` or `incomplete` SHA
 - **THEN** both are false
 
 ### Requirement: Unanswered kinds back off per kind
-A kind left unanswered in a round SHALL add one to ITS `unanswered_rounds` whether or not the model's other kind was answered in that round; at two its `retry_after` SHALL be set 7 days ahead, its count SHALL reset, and no probe of that model for that kind SHALL be sent before then. Only an answer for THAT kind resets its count.
+A kind left unanswered in a round (except by a 429, which counts only in `attempts`: see the probe-answer requirement) SHALL add one to ITS `unanswered_rounds` whether or not the model's other kind was answered in that round; at two its `retry_after` SHALL be set 7 days ahead, its count SHALL reset, and no probe of that model for that kind SHALL be sent before then. Only an answer for THAT kind resets its count.
 
 #### Scenario: A model that always fails
 - **WHEN** `anthropic/claude-opus-5` answers every document probe with a failed run for two rounds
@@ -323,7 +327,7 @@ A `refused` kind (the entry's own, or the baseline's for a kind that is not `att
 - **THEN** the kind stays refused with its old `probed_at`, `last_attempt_at` is stamped, `unanswered_rounds` rises by one and no request is repeated in the same refresh window
 
 #### Scenario: A 429 is not an unanswered round
-- **WHEN** a 25-hour-old refusal is re-probed and the request answers 429
+- **WHEN** a 25-hour-old refusal is already stored, it is re-probed and the request answers 429
 - **THEN** the kind stays refused with its old `probed_at`, `attempts` rises by one, `last_attempt_at` is NOT stamped, `unanswered_rounds` and `retry_after` are unchanged, and the next refresh asks again
 
 #### Scenario: An expired refusal does not block the gate

@@ -65,10 +65,6 @@ The `tools/list` response with the help tool included SHALL be no larger than 59
 ### Requirement: An attachments topic
 The `attachments` topic (also rendered by `perplexity-pro help attachments`) SHALL state the three forms of an attachment, the supported and unsupported types (audio and video), the limits (10 items, 20 MiB per file, 32 MiB per call, 1 MiB inline, 30 documents and 50 MiB of documents per chat) and one runnable example per tool, and the index SHALL list it.
 
-#### Scenario: The topic renders
-- **WHEN** a client calls `perplexity_help` with action `topic` and `name` `attachments`
-- **THEN** the text names the three forms, the supported types and the limits
-
 #### Scenario: The index lists it
 - **WHEN** a client calls `perplexity_help` with action `index`
 - **THEN** `attachments` is among the topics

@@ -25,7 +25,7 @@ All attachment validation, reading and model checks SHALL happen before the proj
 - **THEN** the request carries both the `response_format` and the `input_file` part
 
 ### Requirement: Attachments are wired in a fixed order
-The order of a call that may carry attachments SHALL be fixed, and this requirement is its ONE owner (`media-attachments` and `agent-chat` refer to it). Each failure SHALL stop the call, and nothing before the project step SHALL store or spend anything.
+The order of a call that may carry attachments SHALL be fixed (the `required_input` argument of `resolve` is an internal seam, not a tool parameter), and this requirement is its ONE owner (`media-attachments` and `agent-chat` refer to it). Each failure SHALL stop the call, and nothing before the project step SHALL store or spend anything.
 
 #### Scenario: The order in ask
 - **WHEN** `perplexity_ask` runs

@@ -44,6 +44,21 @@ With `replay` true, a `send` SHALL NOT use `previous_response_id`; it SHALL set 
 - **WHEN** a client replays a chat and attaches one PNG
 - **THEN** the last input item holds the text part and the `input_image` part and the earlier items are plain text
 
+### Requirement: Failed continuation is explained
+When a chained send is rejected by the API with its generic `invalid request` 400, recognized by `api_message` equal to `invalid request` with status 400 and type `invalid_request`, the tool SHALL fail with `invalid_request` saying the provider could not continue from the previous response and that `replay` true resends the stored history, and SHALL store nothing, unless the send carried new attachments (precedence is owned by `media-attachments`). Any other API error SHALL pass through unchanged.
+
+#### Scenario: Provider cannot continue
+- **WHEN** the API answers a chained send with the recorded generic 400 for an unknown `previous_response_id`
+- **THEN** the call fails with `invalid_request`, the message mentions `replay`, and the chat's stored messages are unchanged
+
+#### Scenario: Other validation error
+- **WHEN** the API answers a chained send with a 400 whose message begins `validation failed:`
+- **THEN** the tool's error carries that message and does not mention `replay`
+
+#### Scenario: Only inherited kinds
+- **WHEN** a chained send with no new attachment follows a PDF turn and the generic 400 rejects it
+- **THEN** the message mentions `replay` and carries no attachment hint
+
 ## ADDED Requirements
 
 ### Requirement: Send takes attachments

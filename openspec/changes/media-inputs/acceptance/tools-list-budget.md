@@ -28,6 +28,12 @@ Measured again at branch head `6fedb3c` (after review fixes C1 to C12 and S5, sa
 servers): default 58245, dynamic 58531, dynamic with Decisions 58765. Identical to the table above:
 the fixes changed no listed byte. Growth over the starting commit stays 510 (cap 59779, growth cap 900).
 
+## Re-measure on this branch (2026-11-19, round 2)
+
+Measured on branch `epic/media-inputs` (cut from `main`, routing-v2 held) at head `0243be8`, same
+method: default 58245, dynamic 58531, dynamic with Decisions 58765 (growth +510 over 57735, 58021,
+58255; cap 59779). The earlier table above was taken from the held branch; this one is the shipped one.
+
 ## Waiver of the 300-byte trim
 
 Task 3.3 waives its trim only when `routing-v2` is unmerged after its evaluation failed and the

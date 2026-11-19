@@ -146,7 +146,7 @@ window, input probing is last in a model's sequence and cheap to skip.
 
 The interface is three pure functions in `matrix.py`:
 `accepts(model, kinds) -> yes|no|unknown`, `models_accepting(kinds) -> set[str]` and
-`preset_accepts(preset, kinds)`. `unknown` and `unprobed` never enter `models_accepting`: the error text that names accepting
+`preset_accepts(preset, kinds)`. `unknown` never enters `models_accepting` (a model with unknown inputs is `unknown`): the error text that names accepting
 models must be able to trust the set, whereas an explicit model, a pin, a tier's
 model or the default route that the matrix does not know is let through (D9). An attachment is
 never silently dropped: the call carries it to the resolved model or fails `invalid_request`.
@@ -231,9 +231,7 @@ digit, with `slashes * 16 <= run_length`, by one linear scan (no regex with nest
 mixed-case-and-digit rule keeps `"r" * 500` and SHA-256 hex digests untouched (existing tests such
 as `tests/test_agent_digest.py:199` assert exactly that), and the 200 threshold keeps file paths and
 ordinary identifiers. `ErrorContractMiddleware` additionally drops the `input_value` of an
-`attachments` validation error; `agent._echo` (40 characters) is never used on an attachment. Hint precedence: when the request carried
-attachments or inherited kinds `attachment_hint` wins over `schema_hint` (ask.py) and over the chat
-`continuation_hint`, whose advice to resend with `replay` is wrong for an attachment cause. A
+`attachments` validation error; `agent._echo` (40 characters) is never used on an attachment. Hint precedence: see D13; the single owner is the spec requirement "The attachment hint takes precedence" (NEW attachments only; inherited kinds never produce the attachment hint). A
 document refusal can also arrive as HTTP 200 with run status `failed` and error `refusal`
 (observed for `anthropic/claude-opus-5`); `run_costed` raises `unexpected_response` for that and
 the hint is attached there too (category unchanged: the vocabulary is closed). The gate runs

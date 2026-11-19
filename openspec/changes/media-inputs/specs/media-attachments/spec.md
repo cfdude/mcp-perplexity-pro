@@ -106,7 +106,11 @@ When `PERPLEXITY_ATTACH_ROOTS` (a colon-separated list of absolute directories, 
 - **THEN** the call fails with `invalid_request` saying the path is outside the allowed directories, and the file is never read
 
 ### Requirement: A restricted server does not reveal which paths exist
-The deny list and the roots SHALL be checked against the caller's path BEFORE any open (its parent directory resolved with `realpath`, no file touched); the check on the opened descriptor's real path stays as the defence against a change in between. When roots restrict, a path that is missing, denied or outside the roots SHALL fail with ONE uniform `invalid_request` text that names the item and never the path, so an HTTP caller cannot probe the file system.
+The deny list and the roots SHALL be checked against the caller's path BEFORE any open (its parent resolved with `realpath`, no file touched); the check on the opened descriptor's real path stays as the defence against a change in between. When roots restrict, a path that is denied or outside the roots, whether or not it exists, SHALL get ONE uniform `invalid_request` text that names the item and never the path.
+
+#### Scenario: Inside the roots
+- **WHEN** a client passes a missing or unreadable file inside the roots
+- **THEN** the call fails with `not_found` or `invalid_request` naming the path as the caller wrote it; only a restricted server hides which paths exist outside the roots
 
 #### Scenario: Inside the roots and without roots
 - **WHEN** a client passes a missing file inside the roots, or any path when no roots are set
@@ -116,9 +120,6 @@ The deny list and the roots SHALL be checked against the caller's path BEFORE an
 - **WHEN** the roots are `/Users/rob/work` and a client passes a missing file, an existing file and a file in `~/.ssh`, all outside the roots
 - **THEN** the three texts are identical and none names a path
 
-#### Scenario: Inside the roots
-- **WHEN** a client passes a missing file inside the roots
-- **THEN** the call fails with `not_found` naming it
 
 ### Requirement: Roots and deny directories are resolved first
 The roots and the deny directories SHALL themselves be resolved with `realpath` before comparing, and the comparison SHALL ignore case only on a case-insensitive volume (detected, not assumed from the operating system).
@@ -194,11 +195,11 @@ This server SHALL NOT fetch a URL attachment, resolve its host or check that it 
 - **THEN** the only request the server makes is the one to the API, with the URL in an `input_image` part
 
 ### Requirement: Attachment values are never echoed
-An error text, a log record or a hint SHALL NOT repeat an attachment's contents or its secrets. Persisted text (a log record, a usage row, a stored chat note) SHALL show a URL by scheme and host only, never its path. Only the error returned to the caller MAY show a URL's path, and then without credentials, query and fragment.
+An error text, a log record or a hint SHALL NOT repeat an attachment's contents or its secrets. No usage row and no stored chat note SHALL hold a URL's path (a note keeps the host and a digest), and a log record SHALL show a URL by scheme and host only. Only the error returned to the caller MAY keep a URL's path, and then without credentials, query and fragment.
 
 #### Scenario: Which text may show what
 - **WHEN** a client passes a `data:` item, a URL or a local path and the call fails
-- **THEN** a `data:` item is shown only as its position and media type; a URL is shown in the returned error without credentials, query and fragment (`redact_text` cuts them from any quoted URL) and in persisted text by host only; a local path is shown in the returned error as the caller wrote it, cut to 200 characters, and under roots not at all (the uniform refusal), and never the file's contents
+- **THEN** a `data:` item is shown only as its position and media type; a URL is shown in the returned error without credentials, query and fragment (`redact_text` cuts them from any quoted URL) and in persisted text by host only; a local path is shown in the returned error as the caller wrote it, cut to 200 characters, except that a denied or outside path under roots gets the uniform refusal with no path (a missing or unreadable file inside the roots is `not_found` or `invalid_request` naming it as written), and never the file's contents
 
 #### Scenario: A signed URL is not echoed
 - **WHEN** a client passes `https://example.com/a.pdf?X-Amz-Signature=abc123` and the API answers with an error
@@ -248,6 +249,13 @@ A run of 200 or more characters of the standard base64 alphabet `A-Za-z0-9+/=` o
 #### Scenario: Look-alikes survive
 - **WHEN** an error shows a 500-character run of `r`, a 64-character hex SHA-256 digest or a 120-character absolute path
 - **THEN** none of them is replaced
+
+### Requirement: A quoted URL loses credentials, query and fragment
+`redact_text` SHALL cut the credentials, query and fragment from any URL (`http` or `https`, parentheses in its path included) quoted in a text, so a signed URL's secret never appears. This applies to every error text the server builds, not only attachment errors, and the URL's path is kept.
+
+#### Scenario: A quoted signed URL
+- **WHEN** an upstream error quotes `https://user:pw@files.example.com/a/Foo_(bar).pdf?sig=SECRET#frag`
+- **THEN** the returned text holds `https://files.example.com/a/Foo_(bar).pdf` and none of `pw`, `sig`, `SECRET` or `frag`
 
 ### Requirement: Validation errors drop attachment values
 `ErrorContractMiddleware` SHALL drop the `input_value` of an `attachments` validation error, whose remaining text passes through `redact_text`.
@@ -312,7 +320,11 @@ Before any base64 is built the server SHALL compute the request body size as 4 t
 - **THEN** the call fails with `invalid_request` before any base64 is produced
 
 ### Requirement: The request is one message of parts
-When attachments are given the request's `input` SHALL be one item `{"type": "message", "role": "user", "content": [parts]}` whose first part is `{"type": "input_text", "text": <the query or message>}`, followed by one part per attachment in the order given. `instructions`, `tools`, `max_output_tokens`, the model or preset selector and `store` SHALL be built as for a text call. With no attachments the request SHALL be exactly as before this change.
+When attachments are given, the NEW message SHALL be one item `{"type": "message", "role": "user", "content": [parts]}` whose first part is `{"type": "input_text", "text": <the query or message>}`, followed by one part per attachment in the order given. With no attachments the request SHALL be exactly as before this change.
+
+#### Scenario: Where the item sits
+- **WHEN** a call carries attachments
+- **THEN** the item is alone as `input` for ask and for a chained send and the last item of a replay (`agent-chat` owns the replay shape), and `instructions`, `tools`, `max_output_tokens`, the model or preset selector and `store` are built as for a text call
 
 #### Scenario: Order and mixture
 - **WHEN** a client passes an image, a PDF and another image
@@ -366,7 +378,7 @@ The gate SHALL check the FINAL resolved route, whatever chose it (an explicit `m
 - **THEN** the gate is given `new_kinds | inherited_kinds` (`document`), and a replay is given `new_kinds` only
 
 #### Scenario: Known refusal
-- **WHEN** the matrix records `xai/grok-4.3` as refusing documents (a named route refusal) and a client asks with that model and a PDF path
+- **WHEN** the matrix records `xai/grok-4.3` as refusing documents (a named route refusal recorded within `REFUSAL_TTL`) and a client asks with that model and a PDF path
 - **THEN** the call fails with `invalid_request` naming `model` and `document`, listing accepting models, and no request reaches the API
 
 #### Scenario: Text-only call
@@ -374,7 +386,7 @@ The gate SHALL check the FINAL resolved route, whatever chose it (an explicit `m
 - **THEN** the call is unaffected
 
 #### Scenario: A tier model that refuses
-- **WHEN** a `custom` server's light tier names a model the matrix records as refusing images and a client asks with `tier` `light` and a PNG
+- **WHEN** a `custom` server's light tier names a model the matrix records as refusing images (a refusal recorded within `REFUSAL_TTL`) and a client asks with `tier` `light` and a PNG
 - **THEN** the call fails with `invalid_request` naming the tier's model and `image`, and no request reaches the API
 
 #### Scenario: The route is unchanged but the final gate still refuses

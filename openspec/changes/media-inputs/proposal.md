@@ -5,7 +5,7 @@
 The Agent API now reads images and documents, and live probes on 2026-10-30 (`acceptance/probe.md`)
 proved it: a PNG sent as an `input_image` part and a PDF or UTF-8 text file sent as an `input_file`
 part were each read correctly by the cheapest model, at $0.00001 to $0.00005 per call, and a sweep of
-all 54 listed models found 47 that accept images and 44 that accept documents. Neither this
+all 54 listed models found 48 that accept images and 45 that accept documents (one model, `xai/grok-4.7`, flipped from refused to accepted between 2026-10-30 and 2026-11-11, so the sweep's refusal for it is not recorded). Neither this
 server's tools can send them: `perplexity_ask` and `perplexity_chat` take only text, and the
 request builder refuses anything but a string or a list of text messages. A caller who wants "what
 is in this screenshot" or "summarize this PDF" has to leave the server, which also leaves the usage
@@ -38,7 +38,7 @@ that and ships images and documents only.
   `baseline`, `unprobed`) and per-kind timestamps, filled in the baseline from the 2026-10-30 sweep (also for entries of an upgraded file, by the merge and a read-time fallback), probed per kind by the same refresh that probes efforts, and exposed as
   `matrix.models_accepting(kinds)`, a pure read-only function.
 - An explicit `model` that the matrix records as unable to take an attachment is refused locally
-  with `invalid_request` (no request, no spend); an unknown or unprobed model is let through on an explicit, pin, tier or default route and the API's own refusal is mapped to a clear `invalid_request`.
+  with `invalid_request` (no request, no spend); a model with unknown inputs is let through on an explicit, pin, tier or default route and the API's own refusal is mapped to a clear `invalid_request`.
 - Research (`perplexity_research`) is OUT of this change although the API allows it (a background
   `medium` run with a PDF completed on 2026-10-30): the tools-list budget has no room left for a
   third parameter and research runs are stored by the provider, so it is a follow-up
