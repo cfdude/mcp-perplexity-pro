@@ -1374,10 +1374,19 @@
         "fecadd449d076ea532a16b13ab7c43a03c978eb7",
         "e63067eb512eda3cc1e814f341fa33fe0e9aa19d",
         "6b76fccfef7ec88e2e4bb666bd1553e5e7a387ee",
-        "4c6c231d87e75dbd5f34b1fdd4e5212464e2337c"
+        "4c6c231d87e75dbd5f34b1fdd4e5212464e2337c",
+        "7c089f6b4f249e20579ab7111b37d1575e1bf10e",
+        "7b2b98a0e6f06cd9a1ee16321353d881fc442b8a",
+        "e32d43086c8c749e9d01d794ebdf2302f54cbed6",
+        "e9968175690b91aaf6c710aeab164f17c8e7e293",
+        "a799e7c498ff1400ef79f8e4f71291df83c478ce",
+        "af2a3134634c077379c5ed8277abe91578a511a3",
+        "597cd452f528322c58eac8dab10e4e543ceb8a29",
+        "d740fd100103b328fef933c948edf6fd054c8bac",
+        "8dfeb4ac0469c53f5578a8f3c78dc9ee8581891f"
       ],
       "createdAt": "2026-10-16T06:24:43.477Z",
-      "touchedAt": "2026-11-12T05:08:37.894Z",
+      "touchedAt": "2026-11-19T16:54:50.113Z",
       "release": "release-2-4-0",
       "gateReview": {
         "gate1": {
@@ -2069,7 +2078,7 @@
     }
   ],
   "detourStack": [],
-  "revision": 511,
+  "revision": 520,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.52.0",
   "platform": "claude-code",

@@ -15,7 +15,7 @@ commit before any schema change of this change): the router-owned commits alread
 change no listed byte.
 
 Gross growth by tool (identical in the three variants): `perplexity_ask` +203, `perplexity_chat`
-+209 (`attachments` with its 91- and 97-character description), `perplexity_models` +85 (the
++209 (`attachments` with its 86- and 92-character description), `perplexity_models` +85 (the
 `inputs` string, description "Inputs taken; empty: unknown", limit 120), `perplexity_help` +13 (the
 sixth topic named in its description). Total 510, against the cap of 900 (design D14).
 
