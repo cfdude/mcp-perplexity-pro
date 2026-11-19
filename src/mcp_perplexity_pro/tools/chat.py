@@ -8,6 +8,7 @@ across the call, usage recorded), and only then writes the chat in one short uni
 import inspect
 import json
 import logging
+from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Annotated, Any
@@ -17,6 +18,7 @@ from fastmcp.tools import ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
+from mcp_perplexity_pro import call_flow, media
 from mcp_perplexity_pro.agent import (
     AskOptions,
     Source,
@@ -32,8 +34,15 @@ from mcp_perplexity_pro.agent import (
 from mcp_perplexity_pro.client import is_response_id
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.help_text import POINTER
+from mcp_perplexity_pro.media_gate import ATTACHMENTS_DESCRIPTION
+from mcp_perplexity_pro.media_notes import ChatNotes, check_chat_limits, stored_text
 from mcp_perplexity_pro.redaction import scrub_secrets
-from mcp_perplexity_pro.routing import description_sentence, resolve, tier_of
+from mcp_perplexity_pro.routing import (
+    check_selectors,
+    description_sentence,
+    resolve,
+    tier_of,
+)
 from mcp_perplexity_pro.routing_decisions import classify_dynamic, wants_decider
 from mcp_perplexity_pro.settings import Settings
 from mcp_perplexity_pro.storage.chats import (
@@ -50,6 +59,7 @@ from mcp_perplexity_pro.storage.chats import (
     list_chats,
     load_chat,
     read_messages,
+    user_contents,
 )
 from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, find_project, validate_project_name
 from mcp_perplexity_pro.storage.session import unit_of_work
@@ -186,11 +196,19 @@ async def _send(
     chat_id: int | None,
     replay: bool,
     options: AskOptions,
+    selectors: Mapping[str, str | None],
+    new_kinds: frozenset[str] = frozenset(),
+    items: Sequence[media.Attachment] = (),
     classify_route: bool = False,
 ) -> tuple[ChatResult, str]:
-    """``classify_route`` is true for a nameless send in dynamic mode: ``options`` then holds a
-    provisional route (the standard tier's model, enough to validate every option), and the real
-    route is resolved below, after the chat lookup, from the message and the chat's last tier."""
+    """``options`` holds the provisional route of the tool (a route that only has to name some
+    model so every option can be validated); the real route is resolved below, after the chat
+    lookup, from the call's ``selectors`` (``depth``, ``tier``, ``model``), the message and, for
+    a nameless send in dynamic mode (``classify_route``), the chat's last tier. ``new_kinds`` are
+    the input kinds the new message needs; the kinds the route must carry also depend on whether
+    the send is chained or a replay (``call_flow.required_kinds``). ``items`` are the parsed
+    attachments: they are read here, with the other local checks and before any database access,
+    and their share of the byte budget is held until the send is over."""
     # 1. Everything local, before any database access or request.
     check_text("message", message)
     if chat_id is not None:
@@ -207,8 +225,41 @@ async def _send(
     build_request(options, message, store=False)  # validates every option; discarded
     name = validate_project_name(project or DEFAULT_PROJECT)
 
+    async with call_flow.held(app, items, message) as loaded:
+        return await _send_read(
+            app,
+            name=name,
+            message=message,
+            clean_title=clean_title,
+            chat_id=chat_id,
+            replay=replay,
+            options=options,
+            selectors=selectors,
+            new_kinds=new_kinds,
+            loaded=loaded,
+            classify_route=classify_route,
+        )
+
+
+async def _send_read(
+    app: Any,
+    *,
+    name: str,
+    message: str,
+    clean_title: str,
+    chat_id: int | None,
+    replay: bool,
+    options: AskOptions,
+    selectors: Mapping[str, str | None],
+    new_kinds: frozenset[str],
+    loaded: Sequence[media.Attachment],
+    classify_route: bool,
+) -> tuple[ChatResult, str]:
+    """The rest of a send once its attachments are read: the chat lookup, the route and its
+    gates, the upstream call and the one write (steps 2 to 5 of ``_send``)."""
+    built = media.build_parts(loaded)
     # 2. Find the chat (read-only; the project is never created here).
-    project_id = anchor = None
+    project_id = anchor = notes = None
     previous: tuple[str | None, str | None] | None = None
     history: list[tuple[str, str]] = []
     if chat_id is not None:
@@ -222,35 +273,66 @@ async def _send(
                 previous = await last_route(session, chat_id)
             if replay:
                 history = await chat_history(session, chat_id)
+                contents = [text for role, text in history if role == "user"]
             else:
                 anchor = await last_anchor(session, chat_id)
+                contents = await user_contents(session, chat_id)
+            notes = ChatNotes.of(contents)  # what the stored turns say about their attachments
         if not replay and anchor is None:
             raise _bad(
                 "chat_id",
                 f"chat {chat_id} has no stored response to continue from; send with replay true.",
             )
 
-    # 3. The route (dynamic mode, nothing named), then the request. A preset route only adds
-    # what ``depth`` already allows, and ``search`` false never gets one, so the build cannot
-    # newly fail.
+    # 3. The real route, in the fixed order of ``call_flow``: the rules-based resolve with the
+    # kinds the send must carry, the gate, then (only when the Decisions classifier applies and
+    # its answer can change the route) the classifier request, the second resolve and the gate
+    # again when that changed the route. A preset route only adds what ``depth`` already allows,
+    # and ``search`` false never gets one, so the build cannot newly fail.
+    kinds = call_flow.required_kinds(new_kinds, notes, replay=replay)
+    if notes is not None and not replay:
+        check_chat_limits(notes, loaded)  # the API counts the documents a continuation keeps
+    floor = None
     if classify_route:
         floor = None if previous is None else tier_of(app.settings, *previous)
-        classification = None
-        if floor != "complex" and wants_decider(
-            app.settings, depth=None, tier=None, model=None, search=options.search
-        ):
-            # After the lookup (its read-only unit is closed) and only when the answer can
-            # change the route: a follow-up already at the top tier cannot move.
-            classification = await classify_dynamic(app, message, project=name, tool=TOOL)
-        route = resolve(
+    route = resolve(
+        app.settings,
+        **selectors,
+        text=message if classify_route else None,
+        previous=floor,
+        search=options.search,
+        required_input=kinds,
+    )
+    decides = (
+        classify_route
+        and floor != "complex"
+        and wants_decider(app.settings, depth=None, tier=None, model=None, search=options.search)
+    )
+    call_flow.gate_route(app, route, kinds, tentative=bool(decides))
+    if decides:
+        # After the lookup (its read-only unit is closed) and only when the answer can change
+        # the route: a follow-up already at the top tier cannot move.
+        classification = await classify_dynamic(app, message, project=name, tool=TOOL)
+        decided = resolve(
             app.settings,
             text=message,
             previous=floor,
             search=options.search,
             classification=classification,
+            required_input=kinds,
         )
-        options = replace(options, route=route)
+        if kinds or (decided.model, decided.preset) != (route.model, route.preset):
+            call_flow.gate_route(app, decided, kinds)  # changed, or the first gate was tentative
+        route = decided
+    options = replace(options, route=route)
     warnings: list[str] = []
+    if replay and notes is not None and notes.earlier_attachments():
+        n = notes.earlier_attachments()
+        warnings.append(
+            f"A replay does not resend files: {n} earlier attachment(s) were not resent and the "
+            "model sees only their notes in the stored text. Attach the files again on this turn "
+            "if the answer needs them."
+        )
     if replay:
         items = [_message_item(role, content) for role, content in history]
         items.append(_message_item("user", message))
@@ -260,13 +342,15 @@ async def _send(
                 f"A replay resends all {stored:,} stored characters on every turn; this "
                 "chat's history is large, so each send costs more."
             )
-        body = build_request(options, items, store=False)
+        body = build_request(options, items, store=False, attachments=built.parts)
         continuation = "replay"
     elif chat_id is not None:
-        body = build_request(options, message, store=False, previous_response_id=anchor)
+        body = build_request(
+            options, message, store=False, previous_response_id=anchor, attachments=built.parts
+        )
         continuation = "chained"
     else:
-        body = build_request(options, message, store=False)
+        body = build_request(options, message, store=False, attachments=built.parts)
         continuation = "new"
 
     # 4. The upstream call: recorded by run_costed, no write unit open.
@@ -279,9 +363,12 @@ async def _send(
             preset=options.preset,
             background=False,
             resolve_project=chat_id is None,
+            attachment_kinds=kinds,
         )
     except PerplexityError as exc:
-        raise (continuation_hint(exc) if continuation == "chained" else exc) from None
+        # the attachment hint (already applied by run_costed) wins over the continuation hint,
+        # whose advice to replay is wrong when an attachment is the cause
+        raise (continuation_hint(exc) if continuation == "chained" and not kinds else exc) from None
     secrets = (app.settings.api_key.get_secret_value(),)
     answer = digest(costed.run, secrets=secrets)
 
@@ -299,6 +386,17 @@ async def _send(
         sources_json=json.dumps([s.model_dump() for s in answer.sources]),
     )
 
+    # the user message as stored: its text and, when the turn had attachments (or restarts the
+    # chain), one note line; never the files themselves
+    stored_message = scrub_secrets(
+        stored_text(
+            message,
+            built.trailer if loaded else None,
+            restart=replay and notes is not None and notes.has_notes,
+        ),
+        secrets,
+    )
+
     async def write_turn() -> ChatSummary:
         async with unit_of_work(app.engine) as session:
             if chat_id is None:
@@ -309,12 +407,10 @@ async def _send(
                     session,
                     found.id,
                     scrub_secrets(clean_title, secrets),
-                    scrub_secrets(message, secrets),
+                    stored_message,
                     turn,
                 )
-            return await append_turn(
-                session, project_id, chat_id, scrub_secrets(message, secrets), turn
-            )
+            return await append_turn(session, project_id, chat_id, stored_message, turn)
 
     try:
         if complete:
@@ -537,6 +633,9 @@ def register(server: FastMCP, settings: Settings) -> None:
         max_output_tokens: Annotated[
             int | None, Field(description="send: cap on answer tokens, 1 to 64000")
         ] = None,
+        attachments: Annotated[
+            list[str] | None, Field(description=f"send: {ATTACHMENTS_DESCRIPTION}")
+        ] = None,
         limit: Annotated[
             int | None,
             Field(
@@ -577,6 +676,9 @@ def register(server: FastMCP, settings: Settings) -> None:
             # Selectors resolve here, before any database access, so an invalid one beats
             # ``not_found``. Nameless in dynamic mode this is the provisional route, or the
             # final one when ``search`` is false; ``_send`` classifies the rest.
+            check_selectors(app.settings, depth=depth, tier=tier, model=model)
+            new_kinds = call_flow.parse_attachments(attachments)
+            items = media.parse_attachments(attachments)  # pure: the same check, nothing is read
             classify_route = (
                 app.settings.routing == "dynamic"
                 and depth is None
@@ -585,7 +687,15 @@ def register(server: FastMCP, settings: Settings) -> None:
                 and search is not False
             )  # the rules, or the Decisions classifier (``wants_decider``), run in ``_send``
             options = AskOptions(
-                route=resolve(app.settings, depth=depth, tier=tier, model=model, search=search),
+                route=resolve(
+                    app.settings,
+                    depth=depth,
+                    tier=tier,
+                    model=model,
+                    search=search,
+                    required_input=new_kinds,
+                    provisional=True,
+                ),
                 search=search,
                 domains=domains,
                 recency=recency,
@@ -604,6 +714,9 @@ def register(server: FastMCP, settings: Settings) -> None:
                 chat_id=chat_id,
                 replay=replay,
                 options=options,
+                selectors={"depth": depth, "tier": tier, "model": model},
+                new_kinds=new_kinds,
+                items=items,
                 classify_route=classify_route,
             )
         return ToolResult(content=text, structured_content=result.model_dump(mode="json"))

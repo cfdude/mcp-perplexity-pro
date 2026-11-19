@@ -9,6 +9,7 @@ from fastmcp.tools import ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
+from mcp_perplexity_pro import call_flow, media
 from mcp_perplexity_pro.agent import (
     AskOptions,
     Digest,
@@ -22,7 +23,13 @@ from mcp_perplexity_pro.agent import (
 )
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.help_text import POINTER
-from mcp_perplexity_pro.routing import Route, description_sentence, resolve
+from mcp_perplexity_pro.media_gate import ATTACHMENTS_DESCRIPTION
+from mcp_perplexity_pro.routing import (
+    Route,
+    check_selectors,
+    description_sentence,
+    resolve,
+)
 from mcp_perplexity_pro.routing_decisions import classify_dynamic, wants_decider
 from mcp_perplexity_pro.settings import Settings
 from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, validate_project_name
@@ -203,6 +210,10 @@ def register(server: FastMCP, settings: Settings) -> None:
             dict[str, Any] | None,
             Field(description="A JSON Schema (root type object) for a structured answer"),
         ] = None,
+        attachments: Annotated[
+            list[str] | None,
+            Field(description=ATTACHMENTS_DESCRIPTION),
+        ] = None,
     ) -> ToolResult:
         """Ask one web-grounded question and get the answer with its sources. Synchronous and
         stateless; it never waits for a background run (use perplexity_research for those).
@@ -221,17 +232,24 @@ def register(server: FastMCP, settings: Settings) -> None:
         reaches the API is recorded as spend (see perplexity_usage)."""
         check_text("query", query)
         app = ctx.lifespan_context
+        # The fixed order of ``call_flow``: selector and tier errors, attachment parse, a
+        # provisional resolve and option validation, the real resolve, the gate, the Decisions
+        # request, the second resolve, the gate again on the final route.
+        check_selectors(app.settings, depth=depth, tier=tier, model=model)
+        kinds = call_flow.parse_attachments(attachments)
+        items = media.parse_attachments(attachments)  # pure: the same check, nothing is read
         decider = wants_decider(app.settings, depth=depth, tier=tier, model=model, search=search)
-        # With the Decisions classifier the route below is provisional (the standard tier's
-        # model: enough to validate every option); the real one is resolved after validation.
+        # The first route only has to name some model so every option can be validated (with the
+        # Decisions classifier it is also the route the classifier request is built from).
         options = AskOptions(
             route=resolve(
                 app.settings,
                 depth=depth,
                 tier=tier,
                 model=model,
-                text=None if decider else query,
                 search=search,
+                required_input=kinds,
+                provisional=True,
             ),
             search=search,
             domains=domains,
@@ -245,40 +263,69 @@ def register(server: FastMCP, settings: Settings) -> None:
             json_schema=json_schema,
         )
         request = build_request(options, query, store=False)
-        if decider:  # only now: an invalid call spends nothing (the project name is checked first)
-            name = validate_project_name(project or DEFAULT_PROJECT)
-            classification = await classify_dynamic(app, query, project=name, tool=TOOL)
-            options = replace(
-                options,
-                route=resolve(
-                    app.settings, text=query, search=search, classification=classification
-                ),
-            )
-            request = build_request(options, query, store=False)
-        try:
-            costed = await run_costed(
-                app,
-                tool=TOOL,
-                project=project,
-                body=request,
-                preset=options.preset,
-                background=False,
-            )
-        except PerplexityError as exc:
-            raise (schema_hint(exc) if json_schema is not None else exc) from None
-        result = build_result(
-            digest(
-                costed.run,
-                structured=json_schema is not None,
-                secrets=(app.settings.api_key.get_secret_value(),),
+        options = replace(
+            options,
+            route=resolve(
+                app.settings,
+                depth=depth,
+                tier=tier,
+                model=model,
+                text=query,
+                search=search,
+                required_input=kinds,
             ),
-            route=options.route,
-            latency_ms=costed.latency_ms,
-            project=costed.project,
         )
-        return ToolResult(
-            content=render_answer(result), structured_content=result.model_dump(mode="json")
-        )
+        call_flow.gate_route(app, options.route, kinds, tentative=decider)
+        async with call_flow.held(app, items, query) as loaded:
+            parts = media.build_parts(loaded).parts
+            request = build_request(options, query, store=False, attachments=parts)
+            # the classifier request comes only now: an invalid call spends nothing
+            if decider:
+                name = validate_project_name(project or DEFAULT_PROJECT)
+                classification = await classify_dynamic(app, query, project=name, tool=TOOL)
+                decided = resolve(
+                    app.settings,
+                    text=query,
+                    search=search,
+                    classification=classification,
+                    required_input=kinds,
+                )
+                # the route changed, or the first gate was only tentative: gate the final route
+                changed = (decided.model, decided.preset) != (
+                    options.route.model,
+                    options.route.preset,
+                )
+                if changed or kinds:
+                    call_flow.gate_route(app, decided, kinds)
+                options = replace(options, route=decided)
+                request = build_request(options, query, store=False, attachments=parts)
+            try:
+                costed = await run_costed(
+                    app,
+                    tool=TOOL,
+                    project=project,
+                    body=request,
+                    preset=options.preset,
+                    background=False,
+                    attachment_kinds=kinds,
+                )
+            except PerplexityError as exc:
+                # a call with attachments already carries the attachment hint (run_costed),
+                # which takes precedence over the schema hint
+                raise (schema_hint(exc) if json_schema is not None and not kinds else exc) from None
+            result = build_result(
+                digest(
+                    costed.run,
+                    structured=json_schema is not None,
+                    secrets=(app.settings.api_key.get_secret_value(),),
+                ),
+                route=options.route,
+                latency_ms=costed.latency_ms,
+                project=costed.project,
+            )
+            return ToolResult(
+                content=render_answer(result), structured_content=result.model_dump(mode="json")
+            )
 
     server.tool(
         name=TOOL,
