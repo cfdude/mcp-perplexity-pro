@@ -1,0 +1,71 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": 1793375280,
+  "created_at": 1793375280,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_b863f4db-d75b-457a-ac91-c776f34485bf",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 800,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "\u201cDummy PDF file\u201d (the document contains only these three words).",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_fcd0bb23-9e88-47ca-b933-5f384866546e",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "currency": "USD",
+    "input_cost": 1e-05,
+    "output_cost": 4e-05,
+    "total_cost": 5e-05
+   },
+   "input_tokens": 61,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 87,
+   "output_tokens_details": {
+    "reasoning_tokens": 67
+   },
+   "total_tokens": 148
+  },
+  "user": null
+ }
+}

@@ -1,0 +1,71 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": 1793375254,
+  "created_at": 1793375254,
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_d291808e-e597-4e19-8f29-70a1e11f502d",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 200,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "ok",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_aaa9eff1-7013-4863-a4dc-93ed57c8378b",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "currency": "USD",
+    "input_cost": 1e-05,
+    "output_cost": 2e-05,
+    "total_cost": 3e-05
+   },
+   "input_tokens": 65,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 48,
+   "output_tokens_details": {
+    "reasoning_tokens": 41
+   },
+   "total_tokens": 113
+  },
+  "user": null
+ }
+}

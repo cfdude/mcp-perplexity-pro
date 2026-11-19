@@ -1,0 +1,84 @@
+{
+ "status": 200,
+ "body": {
+  "background": false,
+  "completed_at": 1793375364,
+  "created_at": 1793375364,
+  "effort": "medium@2026-10-22.1",
+  "error": null,
+  "frequency_penalty": 0,
+  "id": "resp_5546a320-a668-46de-b2e4-70dd4fb95ebb",
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 300,
+  "max_tool_calls": null,
+  "metadata": {},
+  "model": "openai/gpt-6-luna",
+  "object": "response",
+  "output": [
+   {
+    "content": [
+     {
+      "annotations": [],
+      "text": "Red",
+      "type": "output_text"
+     }
+    ],
+    "id": "msg_45aa66ad-03ae-4831-a59f-f1339057b6a3",
+    "role": "assistant",
+    "status": "completed",
+    "type": "message"
+   }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0,
+  "preset": "medium@2026-10-22.1",
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "store": false,
+  "temperature": 1,
+  "text": {
+   "format": {
+    "type": "text"
+   }
+  },
+  "tool_choice": "auto",
+  "tools": [
+   {
+    "type": "web_search"
+   },
+   {
+    "type": "fetch_url"
+   }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "",
+  "usage": {
+   "cost": {
+    "cache_creation_cost": 1e-05,
+    "cache_read_cost": 1e-05,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 3e-05,
+    "total_cost": 5e-05
+   },
+   "input_tokens": 1374,
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 52,
+    "cache_read_input_tokens": 1319,
+    "cached_tokens": 1319
+   },
+   "output_tokens": 68,
+   "output_tokens_details": {
+    "reasoning_tokens": 61
+   },
+   "total_tokens": 1442
+  },
+  "user": null
+ }
+}
