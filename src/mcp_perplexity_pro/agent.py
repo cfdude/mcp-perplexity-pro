@@ -19,7 +19,7 @@ import json
 import logging
 import re
 import time
-from collections.abc import AsyncIterator, Coroutine, Iterable, Mapping
+from collections.abc import AsyncIterator, Coroutine, Iterable, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -204,6 +204,26 @@ def _web_search_tool(options: AskOptions) -> dict[str, Any] | None:
     return tool if len(tool) > 1 else None
 
 
+def _with_parts(
+    input: str | list[dict[str, Any]],  # noqa: A002 - the API's own field name
+    parts: Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """The ``input`` of a call that carries attachments: one user message of parts."""
+
+    def item(text: str) -> dict[str, Any]:
+        content = [{"type": "input_text", "text": text}, *copy.deepcopy(list(parts))]
+        return {"type": "message", "role": "user", "content": content}
+
+    if isinstance(input, str):
+        return [item(input)]
+    last = input[-1] if input else None
+    if not (isinstance(last, dict) and last.get("role") == "user"):
+        raise ValueError("attachments need a user message as the last input item")
+    if not isinstance(last.get("content"), str):
+        raise ValueError("the last input item already holds parts")
+    return [*copy.deepcopy(input[:-1]), item(last["content"])]
+
+
 def build_request(
     options: AskOptions,
     input: str | list[dict[str, Any]],  # noqa: A002 - the API's own field name
@@ -212,6 +232,7 @@ def build_request(
     background: bool = False,
     previous_response_id: str | None = None,
     reasoning_effort: str | None = None,
+    attachments: Sequence[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Validate ``options`` and build the ``POST /v1/agent`` body (design D2).
 
@@ -224,6 +245,11 @@ def build_request(
     (every preset, explicit-model and configured-model call) it carries no ``reasoning`` key. It
     is distinct from the top-level ``effort``, which names a preset. A level with a preset route
     or outside ``matrix.LEVELS`` is a caller bug, not a user error, so it raises ``ValueError``.
+
+    ``attachments`` are the already-built parts of ``media.build_parts`` (none, or an empty list,
+    builds the body this function always built). With parts the ``input`` becomes ONE user message
+    item whose content is the ``input_text`` part followed by the parts in order; for a replay
+    list the same is done to its last item, the new user message. Nothing else changes.
     """
     if reasoning_effort is not None:
         if options.model is None:
@@ -266,7 +292,7 @@ def build_request(
         request["model"] = options.model
     else:
         request["effort"] = options.preset  # the API's name for the preset (`preset` is deprecated)
-    request["input"] = copy.deepcopy(input)
+    request["input"] = copy.deepcopy(input) if not attachments else _with_parts(input, attachments)
     if options.instructions is not None:
         if not isinstance(options.instructions, str):
             raise _bad("instructions", "must be a string.")
