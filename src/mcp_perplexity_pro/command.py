@@ -28,6 +28,7 @@ from typing import Any  # noqa: E402
 from mcp_perplexity_pro import help_text  # noqa: E402
 
 PREFIX = "perplexity_"
+ATTACHMENT_TOOLS = ("perplexity_ask", "perplexity_chat")  # the tools that take attachments
 EXTRA_COMMANDS = ("help", "serve")
 
 
@@ -331,6 +332,22 @@ def _structured(raw: str, flag: str, kind: str) -> Any:
     return _load(raw, flag)
 
 
+_PREFIXED = re.compile(r"^[a-z]+/[a-z0-9.+-]+::")
+_URLISH = ("data:", "https://", "http://")
+
+
+def normalise_attachment(item: str) -> str:
+    """One ``--attachments`` value for the tool: a relative path becomes absolute against this
+    command's working directory and a leading ``~/`` is expanded (the tool has no working
+    directory and refuses a relative path). A URL, a ``data:`` string and a value with a
+    ``<media type>::`` prefix are left exactly as given."""
+    if _PREFIXED.match(item) or item.lower().startswith(_URLISH):
+        return item
+    if item == "~" or item.startswith("~/"):
+        item = os.path.expanduser(item)
+    return item if os.path.isabs(item) else os.path.join(os.getcwd(), item)
+
+
 def collect_arguments(tool: ToolSpec, ns: argparse.Namespace) -> dict[str, Any]:
     """The tool arguments from the parsed namespace: ``--args-json`` first, explicit flags and
     positionals on top, omitted parameters absent. Raises ``UsageError`` for a still-missing
@@ -360,6 +377,11 @@ def collect_arguments(tool: ToolSpec, ns: argparse.Namespace) -> dict[str, Any]:
         elif kind == "string_or_list" and isinstance(value, list):
             value = value[0] if len(value) == 1 else value
         arguments[name] = value
+    if tool.name in ATTACHMENT_TOOLS and isinstance(arguments.get("attachments"), list):
+        arguments["attachments"] = [
+            normalise_attachment(v) if isinstance(v, str) and v.strip() else v
+            for v in arguments["attachments"]
+        ]
     missing = [n for n in tool.required if n not in arguments]
     if missing:
         raise UsageError(f"missing required argument(s): {', '.join(missing)}")

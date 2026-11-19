@@ -40,7 +40,7 @@ def register(server: FastMCP) -> None:
     ) -> ToolResult:
         """How to use this server: start with action index (a short page that picks the right
         tool), then tool with a tool name, or topic (routing, costs, citations, errors,
-        projects). Free; makes no API call."""
+        projects, attachments). Free; makes no API call."""
         if action not in ACTIONS:
             raise _bad(f"action: must be one of {', '.join(ACTIONS)}.")
         settings = ctx.lifespan_context.settings

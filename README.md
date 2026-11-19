@@ -181,6 +181,7 @@ value. No `.env` file is read.
 | `PERPLEXITY_CLASSIFIER` | `rules` | `dynamic` mode only: `rules` (fixed offline rules) or `decisions` (the Decisions API picks the tier, the rules back it up). Ignored with a warning in other modes |
 | `PERPLEXITY_MATRIX_REFRESH` | `86400` | Seconds between refreshes of the model matrix (see "Model matrix"); `0` refreshes only at start, otherwise 300 to 604800 |
 | `PERPLEXITY_MATRIX_PROBE` | `new` | `new` probes models neither the matrix file nor the packaged baseline knows (a few cents at most per refresh); `off` never probes, case-insensitive |
+| `PERPLEXITY_ATTACH_ROOTS` | none | Colon-separated absolute directories. When set, a local file may be attached only from inside one of them (checked on the opened file's real path). Over HTTP local paths are refused unless this is set. A built-in deny list (`~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config`, `~/.claude`, `~/.kube`, the data directory, `ecosystem*.cjs`, `.env*`) applies whatever it says |
 | `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD`, `PERPLEXITY_TIER_COMPLEX` | none | `custom` mode: the three tier models, all required there. `dynamic` mode: optional, each replaces that tier's default |
 
 Variables starting with `FASTMCP_` belong to FastMCP and are not used for this server's own
