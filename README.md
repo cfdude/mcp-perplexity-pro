@@ -120,6 +120,7 @@ configuration start); `perplexity-pro serve` runs the same server.
 uv run perplexity-pro ask "What is new in Python?" --depth fast
 uv run perplexity-pro search "rust borrow checker" "zig comptime" --domains=-reddit.com
 uv run perplexity-pro chat send --title notes --message "Remember: teal."
+uv run perplexity-pro ask "What is this?" --model openai/gpt-6-luna --attachments shot.png
 uv run perplexity-pro models --json | jq '.routing'
 uv run perplexity-pro usage --group-by tool
 uv run perplexity-pro help            # the index; `help ask`, `help costs`, `help topic projects`
@@ -139,6 +140,7 @@ schemas, so a new tool parameter appears as a flag without an edit.
 | Lists | repeat the flag: `--domains python.org --domains docs.python.org`; a search takes several queries as positionals |
 | Objects and arrays | JSON: `--json-schema '{...}'`, `--json-schema @schema.json` or `--json-schema -` (standard input, once); an untyped value such as decide's `--state` is JSON when it is an object or array and text otherwise |
 | Anything else | `--args-json '{"query": "q", "depth": "low"}'` (JSON, `@file` or `-`), merged first; flags win; a JSON `null` means not given |
+| Attachments | `--attachments VALUE`, repeated, on `ask` and `chat` only (see "Attachments"); a relative path is made absolute against the command's working directory and `~/` is expanded before the tool sees it, a `https://` URL or `data:` value is left as written, and a `<media type>::` prefix is kept with the path after it made absolute |
 | A value that starts with a dash | `--domains=-reddit.com`, and `--` before a query that starts with one |
 
 Output is the tool's readable text on standard output, or the structured result with `--json`.
@@ -180,8 +182,8 @@ value. No `.env` file is read.
 | `PERPLEXITY_MODEL` | `perplexity/sonar` | `standard` mode: the model a call that names nothing uses; `dynamic` mode: the `standard` tier's model |
 | `PERPLEXITY_CLASSIFIER` | `rules` | `dynamic` mode only: `rules` (fixed offline rules) or `decisions` (the Decisions API picks the tier, the rules back it up). Ignored with a warning in other modes |
 | `PERPLEXITY_MATRIX_REFRESH` | `86400` | Seconds between refreshes of the model matrix (see "Model matrix"); `0` refreshes only at start, otherwise 300 to 604800 |
-| `PERPLEXITY_MATRIX_PROBE` | `new` | `new` probes models neither the matrix file nor the packaged baseline knows (a few cents at most per refresh); `off` never probes, case-insensitive |
-| `PERPLEXITY_ATTACH_ROOTS` | none | Colon-separated absolute directories. When set, a local file may be attached only from inside one of them (checked on the opened file's real path). Over HTTP local paths are refused unless this is set. A built-in deny list (`~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config`, `~/.claude`, `~/.kube`, the data directory, `ecosystem*.cjs`, `.env*`) applies whatever it says |
+| `PERPLEXITY_MATRIX_PROBE` | `new` | `new` probes models whose efforts or input kinds neither the matrix file nor the packaged baseline knows, and asks a refused input kind again once its answer is 24 hours old (at most 10 models and about $0.25 of reported cost per refresh, effort and input probes together; one document probe of the dearest model cost up to $0.0207 in the 2026-10-30 sweep); `off` never probes, case-insensitive. With `off` the local attachment gate still reads a refusal older than 24 hours as unknown, so a stale refusal does not block a model for ever |
+| `PERPLEXITY_ATTACH_ROOTS` | none | Colon-separated absolute directories. When set, a local file may be attached only from inside one of them, checked on the opened file's real path; a path outside them, whether or not it exists, gets one uniform refusal that names no path. Over HTTP local paths are refused unless this is set (stdio allows any readable path). A built-in deny list applies whatever it says: `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config`, `~/.claude`, `~/.kube`, `~/.docker`, the data directory, and the base names `ecosystem*.cjs`, `.env`, `.env.*`, `.envrc`, `*.env`, `*.env.*`, `.netrc`, `.npmrc` and `.pypirc`. See "Attachments" |
 | `PERPLEXITY_TIER_LIGHT`, `PERPLEXITY_TIER_STANDARD`, `PERPLEXITY_TIER_COMPLEX` | none | `custom` mode: the three tier models, all required there. `dynamic` mode: optional, each replaces that tier's default |
 
 Variables starting with `FASTMCP_` belong to FastMCP and are not used for this server's own
@@ -293,8 +295,10 @@ reports a typo on the first call.
 The server keeps a small file, `model_matrix.json`, in the data directory: for every model in
 Perplexity's live list its provider, prices, whether it is still listed (`available` or `removed`)
 and its **efforts**, which `reasoning.effort` levels (`minimal`, `low`, `medium`, `high`, `xhigh`,
-`max`) the Agent API accepts for it. Nothing in it is typed by hand and nothing routes by it yet; it
-is the fact base for model routing.
+`max`) the Agent API accepts for it, and its **inputs**, which attachment kinds (`image`, `document`)
+it accepts, refuses or has not been asked about. Nothing in it is typed by hand and nothing routes
+by it yet (the attachment gate reads the inputs; see "Attachments"); it is the fact base for model
+routing.
 
 - **Never empty.** A baseline of all 54 models as of 2026-10-17 ships inside the package, so the
   matrix is the baseline on a first start, after a deleted file, and after a corrupt one (a file
@@ -317,12 +321,28 @@ is the fact base for model routing.
   (`perplexity_usage` shows it under `(none)`). On 2026-10-17 probing all 54 models at six levels cost
   $0.197 in total ($0.0036 on average, at most $0.036 for one model). A fresh install of a release
   probes nothing, because the baseline already knows every model it was built with.
+- **Input kinds are probed too.** The baseline records the sweep of 2026-10-30 (one image and one
+  document request to each of the 54 models). A model with a kind still unknown is asked once per
+  kind after a control request of the same round, and the answer is decided by HTTP status: a 200
+  that completed is accepted, only a 400 that names the modality refusal (the route does not
+  support this document type or source) is a refusal, and a generic `invalid request`, a 429, a 5xx,
+  a timeout or a failed run leaves the kind unknown. A refusal is asked again once it is 24 hours old, and the
+  local gate treats a refusal that old as unknown. These requests count toward the same 10 models
+  and $0.25 per refresh as the effort probe and are usage events with tool `model_matrix`. Measured
+  per request over the 54 sweep requests of 2026-10-30 (`openspec/changes/media-inputs/acceptance/sweep.json`):
+  an image request averaged $0.0005 and a document request $0.0021 (both include requests that
+  reported no cost; priced requests only: $0.00056 and $0.0026), at worst $0.0037 (image,
+  `google/gemini-3.1-pro-preview`) and $0.0207 (document, `anthropic/claude-fable-5-1`), and the ten
+  dearest models with both kinds cost $0.10. **An older server sharing the data directory** ignores
+  `inputs` and drops it from `model_matrix.json` on its next write; the newer server then probes
+  again, at most about $0.02 per model. The file's version stays 1 and no guard exists for this, so
+  run one server version per data directory when that matters.
 - **Accepted is not effective.** The probe learns which levels the API takes, not whether a level
   changes the answer: on a trivial prompt only 3 of 9 models tried showed reasoning tokens or cost
   moving with effort. In the 2026-10-17 probe 45 of 54 models accepted every level; `gpt-5`,
   `gpt-5-mini`, `gpt-5-nano`, `gpt-5.1` and Kimi K3 refused `xhigh` and `max`, `gemini-3.1-pro-preview` refused `minimal`, and
   `deepseek-v4-pro`, `grok-4.20-multi-agent` and `grok-4.20-reasoning` refused every level.
-- **See it.** `perplexity_models` shows each model's efforts and the matrix's origin (`file` or
+- **See it.** `perplexity_models` shows each model's efforts, its inputs and the matrix's origin (`file` or
   `baseline`), when it was fetched and how many models are still unprobed. To start over, delete
   `model_matrix.json`; to stop automatic work, set `PERPLEXITY_MATRIX_REFRESH=0` and
   `PERPLEXITY_MATRIX_PROBE=off`.
@@ -336,7 +356,7 @@ no usage event, no project). It has three actions:
 |---|---|---|
 | `index` (default) | none | A page of about 900 bytes: a list that maps a need to a tool, one line per tool saying whether it is free, billed or asynchronous, the topic names and the active routing mode |
 | `tool` | a tool name | What the tool is for, whether a call is billed, asynchronous or can delete data, its cost, one example call, its arguments (read from the tool's own schema, so they cannot drift), the result keys per action and the errors with their fixes |
-| `topic` | `routing`, `costs`, `citations`, `errors` or `projects` | One short topic page, at most 3000 bytes |
+| `topic` | `routing`, `costs`, `citations`, `errors`, `projects` or `attachments` | One short topic page, at most 3000 bytes |
 
 ```json
 {"name": "perplexity_help", "arguments": {"action": "tool", "name": "perplexity_search"}}
@@ -490,6 +510,144 @@ alone. A parsed value nested deeper than 100 levels is returned as `answer_json:
 warning (read the `answer` text), because the structured result cannot be serialised beyond about
 300 levels.
 
+### Attachments
+
+`perplexity_ask` and `perplexity_chat` `send` take an optional `attachments`: a list of at most 10
+strings, each an image or a document. `perplexity_research` and every other tool do not take
+attachments, and the command line has `--attachments` on `ask` and `chat` only. A call with no
+attachments, or an empty list, is built exactly as before. The query stays required: an
+attachment never replaces it.
+
+**The three forms.** Each string is one of:
+
+| Form | Example | What happens |
+|---|---|---|
+| A local path | `/Users/me/shot.png`, `~/report.pdf` | Absolute or starting with `~/` (a relative path is refused; `perplexity-pro` makes it absolute first). The server reads the file and sends it as base64 |
+| An HTTPS URL | `https://example.com/report.pdf` | Sent to the API as it is. **This server never fetches it**, resolves its host or checks it is reachable: the provider retrieves it. Port 443 or none, at most 2048 characters, no credentials, fragment, backslash or control character, and a plain ASCII host (an internationalized host must be written in punycode; an IPv6 literal is refused). `http://` is refused because the API needs HTTPS |
+| A `data:` URI | `data:image/png;base64,iVBORw0KGgo=` | Decoded strictly, at most 1 MiB decoded (larger input belongs in a path or a URL). Parameters before `;base64`, such as `;charset=utf-8`, are accepted and dropped |
+
+Any item may start with a media type and `::` (`application/pdf::https://example.com/download?id=7`),
+which says what a URL with no recognizable extension is. On a path or a `data:` URI the prefix must
+equal the type the server derives, or the call is refused. The scheme is read case-insensitively.
+
+**Types.** The kind is derived from the media type and never asked for. Images: PNG, JPEG, WEBP and
+GIF. Documents: PDF, DOC, DOCX, UTF-8 TXT and RTF. A path's type comes from its extension (`.png`,
+`.jpg`, `.jpeg`, `.webp`, `.gif`, `.pdf`, `.doc`, `.docx`, `.txt`, `.rtf`), a `data:` URI's from the
+URI, a URL's from the prefix or else the extension of its path. The first bytes of a file or a
+decoded `data:` item must match the type (the image signatures, `%PDF-`, the OLE signature for DOC,
+the ZIP signature for DOCX, `{\rtf`, and valid UTF-8 with no NUL byte for TXT), or the call is
+refused and nothing is sent. **Audio and video are refused locally** (`.mp3`, `.wav`, `.mp4`,
+`.mov` and the like, or an `audio/` or `video/` type): the API accepts neither.
+
+**Limits**, all checked before any request, with the API's own limits as the backstop:
+
+| Limit | Value |
+|---|---|
+| Attachments per call | 10 |
+| One file | 20 MiB decoded |
+| One call, all files and `data:` items | 32 MiB decoded |
+| One `data:` item | 1 MiB decoded |
+| Path string / URL | 4096 / 2048 characters |
+| Decoded bytes in flight in the whole process | 64 MiB; a call that cannot get its share within 30 seconds fails `rate_limited` (a local wait: no `Retry-After` applies) |
+| Request body | 64 MiB, computed before any base64 is built (the caps above keep it under about 44 MiB) |
+| Documents in one chat | 30 documents and 50 MiB of document bytes, counting what a chained follow-up inherits; URL documents count toward the 30 and add no bytes |
+
+**Reading a local path is guarded.** The file is opened without following a final symbolic link and
+without blocking, must be a regular file (a directory, FIFO, socket, device or link is
+`invalid_request`, a missing file `not_found`), and is read no further than one byte past its limit.
+The roots and the deny list are applied to the opened file's real path, never to the string you
+wrote, so a symlinked parent cannot escape and `/Users/me/work-secrets` is not inside
+`/Users/me/work`. Over **stdio**, with `PERPLEXITY_ATTACH_ROOTS` unset, any readable path is
+allowed. Over **HTTP**, local paths are refused unless `PERPLEXITY_ATTACH_ROOTS` is set (the server
+logs one line at start saying so); URLs and `data:` items are unaffected. With roots set, a path
+that is denied or outside them gets one uniform `invalid_request` ("the path is not readable or not
+allowed"), whether or not the file exists, so a restricted server does not reveal which paths
+exist; inside the roots, a missing file is `not_found` and an unreadable one `invalid_request`,
+naming the path as written (cut to 200 characters). The deny list (`~/.ssh`, `~/.aws`, `~/.gnupg`,
+`~/.config`, `~/.claude`, `~/.kube`, `~/.docker`, the data directory, and the base names
+`ecosystem*.cjs`, `.env`, `.env.*`, `.envrc`, `*.env`, `*.env.*`, `.netrc`, `.npmrc` and `.pypirc`)
+applies in every transport and under any roots. The roots and the deny directories are resolved
+with `realpath` first, and compared ignoring case only on a case-insensitive volume. This is
+protection against a confused or hostile caller, not a sandbox: with stdio and no roots, whoever can
+call the tool can attach any file the server's user can read and the deny list does not name. Set
+`PERPLEXITY_ATTACH_ROOTS` whenever the caller is not fully trusted.
+
+**Which model reads it.** The gate checks the final route (an explicit `model`, a tier's model, the
+default model) against the model matrix, with the kinds the call carries. A model the matrix
+records as refusing a kind is refused locally with `invalid_request`, naming the model and the kind
+and listing up to five accepting models, and no request is made. A model the matrix does not know,
+or whose kind is unknown (or whose only refusal is older than 24 hours), is sent the attachment and
+the API answers: the matrix lags the API, and a wrong local refusal is worse than one 400. A `depth`
+carries media only where it was verified (images at `fast`, `low` and `medium`; documents at `fast`
+and `medium`); any other depth and kind is refused locally, naming an explicit model as the way
+out. `perplexity_models` shows each model's `inputs`. An upstream 400 on a call that carried new
+attachments stays `invalid_request` with a hint: a model that cannot read images answers the generic
+`invalid request`, and the hint then says the model may not accept that kind and points to
+`perplexity_models`; a descriptive body is kept and the hint names the kinds sent. If the 400 says
+the model itself is not served, the text says `model <id> is not served by the API` instead, and
+the matrix is not told the kind was refused. A run that comes back `failed` with a `refusal` error
+for a document is `unexpected_response` with a hint that another model may read it (it is still
+recorded: it was billed).
+
+**Cost.** Attachments add input tokens, so a call can cost more than the figures in "Cost by depth",
+and there is no spending cap. The result's `usage` reports the tokens and the reported cost, and
+the call is recorded as one usage event like any other. In the live acceptance of 2026-11-19 (five
+attachments, a PNG, a PDF, a text file and an image and a PDF by URL, each on `openai/gpt-6-luna`
+and on depth `fast`; `openspec/changes/media-inputs/acceptance/live-5-1.md`) a call on the model
+cost $0.00001 to $0.00009 and a call on `fast` $0.00103 to $0.00162. A large PDF can be many
+thousands of tokens, so check `usage` after the first call. Attachments combine with `search` and
+the search filters. A call that fails local validation stores nothing, spends nothing and creates
+no project.
+
+**What is stored.** File bytes, base64 and `data:` URIs are never written to the database, a
+result, an error message or a usage event, and the request body is never logged. A log record about
+an attachment holds at most its position, kind, media type, decoded size and the first 12 hex
+characters of its SHA-256. Error text, usage rows and logs are scrubbed of `data:` URI bodies and of
+long base64 runs (`[media removed]`), and a URL quoted in any of them loses its credentials, query
+and fragment, because a signed URL's secret lives there. Text that is **stored or logged** (a usage
+row, a log record) shows a quoted URL as scheme and host only; the error returned to the caller
+keeps the URL's path, without credentials, query and fragment. A `data:` item is shown only as its
+position and media type.
+
+**In a chat.** `send` takes `attachments` on any turn, with the same rules. The stored user message
+is the text, a newline and one trailer line, for example
+`[attachments: shot.png (image/png, 2048 bytes, sha256 3f2a9c4b1d0e)]`: a file or `data:` item shows
+its name (at most 60 characters, with `;`, brackets, parentheses and control characters replaced by
+`_`), type, size and a 12-character digest; a URL shows only its host, type and a digest of its
+host and path. A trailer over 1500 characters ends with `+N more: <d> documents, <i> images, <b>
+bytes`, which still counts toward the per-chat limits. A line of your own that begins
+`[attachments:` is stored with a leading backslash, so a stored trailer is always genuine. `read`
+shows the trailer as part of the message. A chained follow-up sends only the new message and
+`previous_response_id`: the provider keeps the earlier files across turns and even a change of
+model (verified 2026-10-30), so a question about an earlier PDF needs no re-attach, and the model
+gate uses the new attachments' kinds plus the kinds named in the chat's stored notes. **`replay`
+cannot resend files** (the server never kept them): it sends the stored history, whose earlier
+turns carry only their trailers as text, starts a new provider chain, marks that turn
+`[attachments: restart; ...]` (just `[attachments: restart]` when it adds none), and its result
+carries a warning that N earlier attachments were not resent and can be attached again on that
+turn. Files and the document count restart from that turn, and the per-chat document limits do not
+apply to a replay's earlier attachments. A chained send that the API refuses with a 400 for a new
+attachment gets the attachment hint, not the advice to send again with `replay`; a 400 on a
+follow-up that carries only inherited kinds still gets that advice.
+
+Examples (a stdio server reading the paths; the model is one the acceptance run used):
+
+```json
+{"name": "perplexity_ask", "arguments": {"query": "What colour is this?", "model": "openai/gpt-6-luna", "attachments": ["/Users/me/shot.png"]}}
+```
+
+```json
+{"name": "perplexity_chat", "arguments": {"action": "send", "title": "Q3 report", "message": "Summarize this", "attachments": ["/Users/me/report.pdf"]}}
+```
+
+A refusal before any request (the live acceptance's `c_audio` step, run through the command; the
+path is shortened):
+
+```text
+$ perplexity-pro ask "Transcribe" --model openai/gpt-6-luna --attachments audio.wav
+[invalid_request] attachments[0]: audio is not supported (the API accepts neither audio nor video) Run perplexity-pro help ask for its arguments and examples.
+```
+
 ### `perplexity_ask`
 
 One web-grounded question, answered synchronously and statelessly. It never waits for a background
@@ -512,6 +670,7 @@ run. A `completed` or `incomplete` run returns a result; any other status is an
 | `instructions` | string | none | System-style instructions, at most 10000 characters |
 | `max_output_tokens` | integer 1 to 64000 | none | Cap on answer tokens. A run that hits it is `incomplete` |
 | `json_schema` | object | none | A JSON Schema whose root type is `object`, at most 20000 characters serialized, for a structured answer. The parsed answer is `answer_json` |
+| `attachments` | list of strings | none | At most 10 images or documents: absolute or `~/` paths, HTTPS URLs or `data:` URIs, each with an optional `<media type>::` prefix. They add input tokens. See "Attachments" |
 
 A search filter (`domains`, `recency`, `after`, `before`, `country`, `max_results`) replaces the
 preset's own tools with the web search tool alone, so a filtered `medium` run loses the preset's
@@ -631,6 +790,7 @@ by-id action in an absent project is `not_found`; `list` in one is empty).
 | `chat_id` | integer | none | `send`: continue this chat; omit it to start a new one. `read` and `delete`: the chat |
 | `project` | string | `default` | The project the chat belongs to |
 | `replay` | boolean | `false` | `send` with `chat_id`: resend the stored history instead of continuing from the previous response (see below) |
+| `attachments` | list of strings | none | `send` only: as in `perplexity_ask` (see "Attachments" for what a chat stores, a chained follow-up and `replay`) |
 | `depth`, `tier`, `model`, `search`, `domains`, `recency`, `after`, `before`, `country`, `max_results`, `instructions`, `max_output_tokens` | as in `perplexity_ask` | as there | `send` only. `depth` and `tier` may change on every turn (a chained send may switch model: probed 2026-10-13); `high` and `xhigh` are refused. There is no `json_schema` |
 | `limit` | integer | 20 (`list`), 50 (`read`) | `list`: chats to return, 1 to 100, newest first. `read`: the last N messages, 1 to 200 |
 | `confirm` | boolean | `false` | `delete` needs `true`; removing a chat cannot be undone |
@@ -1428,7 +1588,7 @@ retained.
 ### `perplexity_models`
 
 Lists the models available to the configured key, from the live `GET /v1/models`, with prices as
-the API reports them. The list and the prices are never typed by hand, so they track Perplexity; each model's accepted effort levels come from the model matrix (see "Model matrix").
+the API reports them. The list and the prices are never typed by hand, so they track Perplexity; each model's accepted effort levels and input kinds come from the model matrix (see "Model matrix").
 
 | Argument | Type | Default | Meaning |
 |---|---|---|---|
@@ -1439,7 +1599,7 @@ Output (`structuredContent`, with the same data rendered as text):
 
 | Key | Meaning |
 |---|---|
-| `models` | Entries with `id`, `provider` (the API's `owned_by`), `pricing`: `input`, `output`, `cache_read`, `cache_write`, `unit` (a field the API did not supply is `null`), and `efforts` from the model matrix: `accepted` and `refused` as lists of effort levels and `source` (`probe`, `baseline` or `unprobed`; an unprobed model lists none). A model the matrix does not hold has no `efforts` |
+| `models` | Entries with `id`, `provider` (the API's `owned_by`), `pricing`: `input`, `output`, `cache_read`, `cache_write`, `unit` (a field the API did not supply is `null`), and `efforts` from the model matrix: `accepted` and `refused` as lists of effort levels and `source` (`probe`, `baseline` or `unprobed`; an unprobed model lists none). A model the matrix does not hold has no `efforts`. `inputs` is one short string of the attachment kinds the matrix records for the model: the accepted kinds, then the refused ones in parentheses (`image,document`, `image (refused document)`, `(refused document)`). **An empty string means unknown, not unsupported**, and a model the matrix does not hold has an empty string. Audio and video are not accepted by the API at all, so they never appear. The text table shows `-` for empty and says how many models have an unknown kind |
 | `providers` | Every provider in the live list, ignoring the filter, so a typo in `provider` shows the real names |
 | `stale` | `true` when the live request failed and an older cached list is shown instead |
 | `age_seconds` | Seconds since the list was fetched live |
@@ -1659,11 +1819,11 @@ client can read the category three ways:
 
 | Category | Meaning |
 |---|---|
-| `invalid_request` | A missing or mistyped argument, an invalid project name, or HTTP 400/422 from the API |
+| `invalid_request` | A missing or mistyped argument, an invalid project name, an attachment that fails a local check (see "Attachments") or HTTP 400/422 from the API |
 | `authentication` | The API rejected the key (HTTP 401) |
 | `forbidden` | The key is not allowed to do this (HTTP 403) |
-| `not_found` | Unknown tool, a project that does not exist, or HTTP 404 from the API |
-| `rate_limited` | HTTP 429 after the allowed attempts, or at once when `Retry-After` exceeds `PERPLEXITY_MAX_RETRY_WAIT` |
+| `not_found` | Unknown tool, a project that does not exist, a local attachment file that does not exist (inside the allowed roots, or with no roots set), or HTTP 404 from the API |
+| `rate_limited` | HTTP 429 after the allowed attempts, or at once when `Retry-After` exceeds `PERPLEXITY_MAX_RETRY_WAIT`. Also a call whose attachments could not get their share of the 64 MiB in-flight budget within 30 seconds: a local wait, with no `Retry-After` |
 | `upstream_failure` | HTTP 5xx from the API |
 | `network_timeout` | The API did not connect or answer within the timeouts |
 | `unexpected_response` | Any other HTTP status, or a response missing a field the server needs |
@@ -1685,6 +1845,10 @@ client can read the category three ways:
   server writes. It is not stored in the data directory.
 - **Owner-only data.** The data directory is created with mode 0700 and the database with 0600;
   a looser existing directory is tightened or startup fails naming it.
+- **Attachments.** Local files are read only as described in "Attachments": no symbolic link as the
+  final component, the real path checked against `PERPLEXITY_ATTACH_ROOTS` and a built-in deny list,
+  and local paths refused over HTTP unless roots are set. Attachment bytes are never stored or
+  logged, and text that is stored or logged shows a URL as scheme and host only.
 - The server never writes into the working directory of the project that calls it.
 
 ## Data and backups
@@ -1695,7 +1859,7 @@ Everything persistent lives in `PERPLEXITY_DATA_DIR` (default `~/.perplexity-pro
 |---|---|
 | `perplexity.db` | The SQLite database: projects, usage events, chats and their messages, research jobs with their queries and results, embedding chunks with their vectors (WAL mode, so `perplexity.db-wal` and `perplexity.db-shm` appear while it is open) |
 | `migrate.lock` | Lock file so two processes starting together cannot migrate at once |
-| `model_matrix.json` | The model matrix (prices, availability and accepted effort levels per model), written atomically by the refresh task of a serving process; safe to delete (see "Model matrix") |
+| `model_matrix.json` | The model matrix (prices, availability, accepted effort levels and input kinds per model), written atomically by the refresh task of a serving process; safe to delete (see "Model matrix") |
 | `model_matrix.lock` | Lock file for the matrix writes, so two servers sharing the directory do not overwrite each other |
 | `backup-<rev>.db` | Copy of the database as it was at schema revision `<rev>`, taken automatically before a migration touches a database that already has a revision (for example `backup-0001.db`, or `backup-0004.db` when a revision-0004 database starts on this release) |
 
@@ -1799,7 +1963,14 @@ src/mcp_perplexity_pro/
                   the result's cost
   matrix.py       the model matrix file: load with the packaged baseline, merge, atomic write under
                   a lock (pure, no network)
-  matrix_refresh.py  the refresh task and the effort probe of a serving process
+  matrix_refresh.py  the refresh task, the effort probe and the input probe of a serving process
+  media.py        attachments: the grammar of an item, kinds and types, signatures, URL rules, limits
+                  and the request parts (pure)
+  media_read.py   the local read of a path: safe open, roots and deny list on the real path, the
+                  process-wide byte budget
+  media_gate.py   the model gate for a call's kinds and the hints for an upstream refusal
+  media_notes.py  the stored attachment note of a chat turn and what a chat counts from it
+  call_flow.py    the shared order of an ask or chat send: selectors, attachment parse, resolve, gate
   data/           model_matrix_baseline.json, the matrix every install starts from (packaged)
   routing.py      which model answers an ask or chat: the routing mode, resolve() for the three
                   selectors, the instructions and description text (pure)
