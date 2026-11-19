@@ -18,6 +18,11 @@ from mcp_perplexity_pro.routing import Route
 
 GENERIC_400 = "invalid request"  # the API's body for several unrelated mistakes
 MAX_NAMED_MODELS = 5
+# The one description of the parameter on ask and chat: at most 100 characters (spec agent-ask),
+# the cost note, nothing about retention.
+ATTACHMENTS_DESCRIPTION = (
+    "Paths, https URLs or data: URIs of images/documents, at most 10; they add input tokens"
+)
 
 
 def kinds_text(kinds: Iterable[str]) -> str:

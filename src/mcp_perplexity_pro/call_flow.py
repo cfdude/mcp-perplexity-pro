@@ -27,6 +27,7 @@ from typing import Any
 
 from mcp_perplexity_pro import media, media_gate, media_read
 from mcp_perplexity_pro.errors import PerplexityError
+from mcp_perplexity_pro.media_notes import ChatNotes
 from mcp_perplexity_pro.routing import Route, dynamic_route
 from mcp_perplexity_pro.settings import TIER_NAMES
 
@@ -73,9 +74,10 @@ def gate_route(app: Any, route: Route, kinds: frozenset[str], *, tentative: bool
 
 
 def inherited_kinds(chat: Any) -> frozenset[str]:
-    """The input kinds named by the earlier turns of ``chat`` (its stored attachment notes). A
-    no-op returning no kinds until attachments exist; attachments own it from here on."""
-    return frozenset()
+    """The input kinds named by the earlier turns of a chat: ``chat`` is its ``ChatNotes`` (the
+    genuine trailers of its stored user messages), read from the last chain restart on. Anything
+    else, ``None`` included, names no kind."""
+    return chat.inherited_kinds() if isinstance(chat, ChatNotes) else frozenset()
 
 
 def required_kinds(new: frozenset[str], chat: Any, *, replay: bool) -> frozenset[str]:

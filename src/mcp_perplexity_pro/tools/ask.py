@@ -23,6 +23,7 @@ from mcp_perplexity_pro.agent import (
 )
 from mcp_perplexity_pro.errors import PerplexityError
 from mcp_perplexity_pro.help_text import POINTER
+from mcp_perplexity_pro.media_gate import ATTACHMENTS_DESCRIPTION
 from mcp_perplexity_pro.routing import (
     Route,
     check_selectors,
@@ -35,10 +36,6 @@ from mcp_perplexity_pro.storage.projects import DEFAULT_PROJECT, validate_projec
 
 TOOL = "perplexity_ask"
 GENERIC_400 = "invalid request"  # the API's body for several unrelated mistakes (design D6)
-# At most 100 characters (spec agent-ask): the form, the cost note, nothing about retention.
-ATTACHMENTS_DESCRIPTION = (
-    "Paths, https URLs or data: URIs of images/documents, at most 10; they add input tokens"
-)
 
 
 class Routing(BaseModel):
