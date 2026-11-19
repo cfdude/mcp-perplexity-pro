@@ -226,6 +226,10 @@ async def _send(
     build_request(options, message, store=False)  # validates every option; discarded
     name = validate_project_name(project or DEFAULT_PROJECT)
 
+    # Unlike ask, a chat reads its files BEFORE the route gate: the kinds the route must carry
+    # include those of the chat's stored notes, and the notes are read inside ``_send_read``
+    # (after the chat is loaded). The cost: a call the gate then refuses has already read up to
+    # 32 MiB. Nothing is sent and no event is recorded for it.
     async with call_flow.held(app, items, message) as loaded:
         return await _send_read(
             app,

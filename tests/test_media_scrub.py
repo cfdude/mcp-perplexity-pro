@@ -139,3 +139,9 @@ def test_url_scrub_is_linear_on_hostile_input():
     started = time.perf_counter()
     redact_text(hostile)
     assert time.perf_counter() - started < 2
+
+
+def test_a_word_that_ends_in_data_is_not_a_data_uri():
+    text = "metadata:foo,AbCdEf0123 and subdata:xyz"
+    assert scrub_media(text) == text
+    assert scrub_media("(data:image/png;base64,iVBOR)") == "(data:" + MARK + ")"

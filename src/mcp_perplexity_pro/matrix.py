@@ -433,7 +433,10 @@ def preset_accepts(preset: str, kinds: Iterable[str]) -> Answer:
 def model_not_served(status: int, message: str, model: str | None = None) -> bool:
     """True for the 400 ``validation failed: model ... is not supported``, and for a 404 or 410
     only when ``message`` names the requested ``model`` (so a job poll's 404 never matches). The
-    one classifier of a gone model: the baseline rules and the input probe call it."""
+    one classifier of a gone model: the baseline rules and the input probe call it. The 404/410
+    branch is RESERVED: every caller today passes the status of an upstream 400 only, so it is
+    never exercised in production; it stays so a later caller that sees a 404 for a model has the
+    rule ready (and a job poll's 404, which names no model, can never match)."""
     if status == 400:
         return bool(_NOT_SERVED.search(message))
     if status in (404, 410):
