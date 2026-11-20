@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "as_of": "2026-11-11",
+  "as_of": "2026-11-19",
   "task_classes": {
     "coding": {
       "benchmarks": [
@@ -51,7 +51,16 @@
   },
   "models": {
     "openai/gpt-6-luna": {
-      "scores": {}
+      "scores": {
+        "gpqa_diamond": {
+          "score": 90.47,
+          "source_url": "https://epoch.ai/benchmarks/gpqa-diamond",
+          "as_of": "2026-09-22",
+          "basis": "independent",
+          "harness": "Epoch AI Benchmarking Hub, row gpt-6-luna_max (run id 7F3QFMAkwnCV62HcvxP96q), mean_score from epoch.ai/data/benchmark_data.zip gpqa_diamond.csv, CC BY 4.0",
+          "verified_at": "2026-11-19"
+        }
+      }
     },
     "anthropic/claude-haiku-5-5": {
       "scores": {
@@ -70,6 +79,14 @@
           "basis": "vendor",
           "harness": "Claude Code --bare, max thinking effort, safeguards on (system card 8.4)",
           "verified_at": "2026-11-11"
+        },
+        "gpqa_diamond": {
+          "score": 89.65,
+          "source_url": "https://epoch.ai/benchmarks/gpqa-diamond",
+          "as_of": "2026-10-09",
+          "basis": "independent",
+          "harness": "Epoch AI Benchmarking Hub, row claude-haiku-5-5_max (run id ZEKWTGJiWFscHimMkiUmec), mean_score from epoch.ai/data/benchmark_data.zip gpqa_diamond.csv, CC BY 4.0",
+          "verified_at": "2026-11-19"
         }
       }
     },
@@ -122,14 +139,48 @@
           "basis": "vendor",
           "harness": "Claude Code --bare, max thinking effort, safeguards on (system card 8.5)",
           "verified_at": "2026-11-11"
+        },
+        "gpqa_diamond": {
+          "score": 95.58,
+          "source_url": "https://epoch.ai/benchmarks/gpqa-diamond",
+          "as_of": "2026-09-29",
+          "basis": "independent",
+          "harness": "Epoch AI Benchmarking Hub, row claude-sonnet-5-5_max (run id QPk8jbJvo4986sbWtdte6J), mean_score from epoch.ai/data/benchmark_data.zip gpqa_diamond.csv, CC BY 4.0",
+          "verified_at": "2026-11-19"
         }
       }
     },
     "openai/gpt-6.1-sol": {
-      "scores": {}
+      "scores": {
+        "gpqa_diamond": {
+          "score": 95.39,
+          "source_url": "https://epoch.ai/benchmarks/gpqa-diamond",
+          "as_of": "2026-09-29",
+          "basis": "independent",
+          "harness": "Epoch AI Benchmarking Hub, row gpt-6.1-sol_max (run id LspviLnbeZ82WCngWp6rwR), mean_score from epoch.ai/data/benchmark_data.zip gpqa_diamond.csv, CC BY 4.0",
+          "verified_at": "2026-11-19"
+        }
+      }
     },
     "openai/gpt-6.1-terra": {
-      "scores": {}
+      "scores": {
+        "gpqa_diamond": {
+          "score": 94.32,
+          "source_url": "https://epoch.ai/benchmarks/gpqa-diamond",
+          "as_of": "2026-10-26",
+          "basis": "independent",
+          "harness": "Epoch AI Benchmarking Hub, row gpt-6.1-terra_max (run id 5Jm2Rvv9sNx7M8nodinFAp), mean_score from epoch.ai/data/benchmark_data.zip gpqa_diamond.csv, CC BY 4.0",
+          "verified_at": "2026-11-19"
+        },
+        "terminal_bench_4_0": {
+          "score": 50.3,
+          "source_url": "https://openai.com/index/introducing-gpt-6-1-terra/",
+          "as_of": "2026-10-26",
+          "basis": "vendor",
+          "harness": "maximum reasoning effort; as_of is the Epoch AI release date of the model, the page shows no date",
+          "verified_at": "2026-11-19"
+        }
+      }
     },
     "anthropic/claude-opus-5-5": {
       "scores": {

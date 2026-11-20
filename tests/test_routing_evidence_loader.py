@@ -170,7 +170,7 @@ def test_a_lookalike_host_is_not_rejected():
 
 def test_verified_before_it_was_recorded_or_in_the_future_is_invalid():
     invalid(document(scores={"b/mid": {"b1": figure(as_of="2026-10-20", verified="2026-10-10")}}))
-    invalid(document(scores={"b/mid": {"b1": figure(verified="2026-11-12")}}))
+    invalid(document(scores={"b/mid": {"b1": figure(verified="2026-11-20")}}))
 
 
 def test_verified_on_the_load_date_and_on_as_of_are_valid():

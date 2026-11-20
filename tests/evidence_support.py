@@ -8,7 +8,7 @@ from typing import Any
 
 from mcp_perplexity_pro import routing_evidence as ev
 
-TODAY = date(2026, 11, 11)
+TODAY = date(2026, 11, 19)
 
 
 def figure(score: Any = 70, *, verified: str | None = "2026-11-10", **over: Any) -> dict[str, Any]:
