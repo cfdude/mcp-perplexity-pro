@@ -545,7 +545,8 @@ measured across one audited repository, a rule carried by a mandatory task secti
    `headSha` (equal to that head or an ancestor of it), whatever position it holds: one the reviewed
    head does not reach reads as a stale verdict and refuses the archive.
    ONE EXCLUSION, and it is not a judgment call: the commit that moves
-   `openspec/changes/<id>/` under `archive/`, and any commit that only relocates or deletes a
+   the change's directory (`changeRoot` from `openspec status --change <id> --json`) into its archive,
+   and any commit that only relocates or deletes a
    change's artifacts rather than implementing its work, is lifecycle bookkeeping and
    MUST NOT be attributed. That move lands after the reviewed range by construction, so
    attributing it
@@ -614,49 +615,46 @@ measured across one audited repository, a rule carried by a mandatory task secti
    cannot be matched precisely stays retrieval-only.
    Name which of the three it is out loud. A process lesson filed as a feature request
    never gets built, and a product gap written down as a lesson never gets fixed.
+8. **Prove every guard can fail.** For each guard this change adds, MUTATE it — remove or invert its
+   condition — and run the tests: one must fail. Save and commit the run as
+   `mutation-evidence.txt` beside the change or plan. A SURVIVING mutant is a finding to fix,
+   not a test to delete. No guard added: say so, and why, instead. Write every RED note
+   task-relative ("fails after 2.4"), never a bare "fails today"; re-run it when its own task
+   starts. The `mutation-pass` skill carries the method.
 
 ## Intake — triage an ask against the whole backlog BEFORE registering it
 
-The ask is the ONLY moment the whole backlog is cheap to consider: after registration nothing
-ever re-reads it as a set, so an ask that duplicates existing work in another shape becomes a
-permanent second epic. The dedup that already exists is IDENTITY-based — same id, or the same
-`externalUrl` — which catches a re-run of sync and nothing else. Measured in this plugin's own
-repository: four live pairs are one change registered twice under different lanes and
-different names, and identity dedup found none of them.
+The ask is the ONLY moment the whole backlog is cheap to consider: afterwards nothing re-reads it
+as a set, so an ask that duplicates existing work in another shape becomes a permanent second
+epic. The dedup that exists is IDENTITY-based (same id, or the same `externalUrl`) and catches a
+re-run of sync and nothing else. (Evidence: the conductor skill, Intake.)
 
 1. **Get the candidate set mechanically.** Before any `add-epic`, run
-   `/pm:triage "<the ask, in its own words>"`. It returns the existing epics that share
-   distinctive vocabulary with the ask (each with the shared tokens that put it there), the
-   lane this repo's routing picks, and the backlog's current shape. It returns
-   `verdict: null` and that is not a placeholder: the engine computes what is WORTH READING
-   and never decides. Nothing about a lexical overlap is a claim that two asks are the same.
+   `/pm:triage "<the ask, in its own words>"` (`--ask=<ask>` if it starts with `-`). It returns the epics that share
+   distinctive vocabulary with the ask (with the shared tokens), the open `releases[]`, the lane
+   this repo's routing picks, and the backlog's shape. Its `verdict: null` is not a placeholder: the engine computes
+   what is WORTH READING and never decides. A lexical overlap is not a claim that two asks are one.
 2. **READ the candidates — do not skim the scores.** Open each one that could plausibly be
    the same work. A high score with unrelated intent is a miss; a low score on an epic whose
-   description turns out to cover the ask is a hit. This is the judgment the surface exists
-   to make cheap, and it is yours.
+   description covers the ask is a hit. That judgment is yours.
 3. **Record the relationship you found**, rather than leaving it in the conversation:
    `add-epic … --link "relates-to:<id>:<why>"` where the two asks inform each other;
    `--link "supersedes:<id>:<why>"` where this ask REPLACES an existing epic — then end the
    superseded one with its own disposition (`--outcome superseded --reason "<what replaced
-   it>"`), because a consolidation that leaves both epics open has consolidated nothing.
-   A candidate `triage` marks `superseded: true` is already dead — do not consolidate into it.
-4. **Decide the lane; do not inherit it.** `triage` already ran `suggest-lane` for you and
-   its answer reads THE ASK — the words, the size, this repo's `laneRouting` overrides — and
-   nothing else. It cannot ask what a person would ask, whether this work SERVES something
-   already committed to, because pm holds no milestone or product context to weigh and the
-   engine will not invent one. The suggestion is an input; the lane is your call.
-   THE TIE-BREAK IS ASYMMETRIC, and it is not a matter of taste. `claude-code` means no spec,
-   no plan, no gate and no stories — right for a genuine sub-2-hour tweak, and the reason a
-   misrouted epic leaves no record of what it was FOR. Over-processing costs hours;
-   under-processing costs the record permanently, and nothing later can reconstruct it. So an
-   unresolved routing question resolves AWAY from `claude-code`, never into it.
+   it>"`): a consolidation that leaves both epics open has consolidated nothing. A candidate
+   `triage` marks `superseded: true` is already dead — do not consolidate into it.
+4. **Decide the lane; do not inherit it.** `triage` already ran `suggest-lane`; its answer
+   reads THE ASK (the words, the size, this repo's `laneRouting` overrides) and nothing else. It
+   cannot ask whether this work SERVES something already committed to: pm holds no milestone or product context to weigh beyond the release records `triage` lists. The suggestion is an input;
+   the lane is your call. THE TIE-BREAK IS ASYMMETRIC: `claude-code` means no spec,
+   no plan, no gate and no stories — right for a sub-2-hour tweak, and a misrouted epic leaves
+   no record of what it was FOR. Over-processing costs hours; under-processing costs the record
+   permanently. So an unresolved routing question resolves AWAY from `claude-code`, never into it.
    Whenever you register in a lane other than the one routing suggested, say why on the epic:
-   `update-epic <id> --notes "lane: <chosen> not <routed> — <why>"`. The tracker-sync
-   procedures below already demand that line; it binds every path that registers an epic,
-   this one included. Measured in pm's OWN repository, not necessarily yours: 83% of epics sat
-   in `claude-code`, 51 of them already archived, none carrying an artifact link.
-5. **Say no out loud when the answer is no.** Not every ask should be taken on, and declining
-   by never registering it destroys the record that anybody considered it. Register it, then
+   `update-epic <id> --notes "lane: <chosen> not <routed> — <why>"`. It binds every path
+   that registers an epic, the tracker-sync procedures below included.
+5. **Say no out loud when the answer is no.** Declining by never registering destroys the
+   record that anybody considered it. Register it, then
    `update-epic <id> --status archived --outcome declined --reason "<why not>" --no-deferrals`.
    Two commands, deliberately: creating an epic directly at `archived` stamps an engine record
    carrying no reason, which is the silence this step removes.
@@ -703,46 +701,11 @@ gate, or a recorded disposition.
    only in an output style, carry it into the dispatch prompt yourself — otherwise the child
    cannot honour a preference it was never given.
 
-## Epic-level autonomy
+## Procedures emitted on use
 
-An epic's `autonomy` block (`.conductor/state.json`) can grant it broad execution trust —
-`level: "off"` by default (today's behavior, unchanged). Setting `level: "autonomous"`
-removes the need to ask before each phase transition, but NEVER removes a genuine safety stop.
-This is development-time only — it never covers actions with irreversible EXTERNAL side
-effects (sending email/Slack, deploying to production, third-party API calls, pushing to a
-shared branch); those are out of scope regardless of autonomy level.
+- Before `set-autonomy <id> --context "<note>"`, load the `conductor` skill's "Epic-level autonomy — the preflight scan".
 
-1. **Preflight before flipping the switch** — see the `conductor` skill's
-   "Epic-level autonomy — the preflight scan" section for the full process. In short: read
-   the epic's full source, produce a short batch of destructive-risk-points +
-   genuine-unknowns questions, get the user's answers, THEN record them:
-   `set-autonomy <id> --preauthorize "<action>:<reason>"` / `--context "<note>"`, and only
-   then `set-autonomy <id> --level autonomous`. For routine, repeated categories of action
-   instead of enumerating each one, use the shorthand
-   `--preauthorize "category:<filesystem|network|schema|external-api>:<reason>"` — see the
-   `conductor` skill's "Epic-level autonomy" section for the exact keyword heuristic each
-   category matches at decision-rule time.
-2. **Execution-time decision rule** — check every destructive action against these, in
-   order, before treating it as a stop:
-   a. Already pre-authorized in the preflight — either an exact `action` match or the
-      action falls under a granted `category` (per the category heuristic)? → proceed,
-      record via `--notify`. A REVOKED grant covers NOTHING, and neither does a grant that
-      names nothing — an empty action or category, which a state file written before the
-      revoke shipped can still hold and which no `--revoke` can name. Both authorise nothing
-      whatever the level says, and `set-autonomy <id> --level autonomous` prints the live
-      grants it is arming so you can read what is actually in force.
-   b. No backup/restore path exists? → STOP regardless of autonomy level.
-   c. Destructive but restorable (backed up first)? → WARN — `--notify` it immediately, proceed.
-   d. No context to act on? → STOP — a real gap, not a false stall.
-   e. Consequential and not yet notified? → `--notify` it immediately, then proceed.
-3. **Notify incrementally, not at the end** — `--notify` writes durably to `state.json`'s
-   `notifications[]` the moment a WARN-class (c) or consequential (e) decision is made. Do this
-   AS EACH DECISION HAPPENS, not batched — a session can be compacted or interrupted mid-epic,
-   and anything not yet `--notify`'d is lost when that happens.
-4. **End-of-epic report** — on completion, read back the accumulated `notifications[]` and
-   report what was asked, what was done, and the decisions made in the user's absence (drawn
-   from that log, not from memory), with an explicit "are you OK with these?" checkpoint, THEN
-   run tests. Leave room to iterate — including rewriting code — if the user is not satisfied.
+The omitted section joins this block once its feature is in use.
 
 ## Execution profile
 
@@ -817,6 +780,19 @@ mode this guards against is silent: hand-editing `.conductor/state.json` to flip
 anyone reported it, even though `/pm:feedback` existed the whole time. A filed issue is
 cheap; an unreported recurring papercut is not — silent pain is where a product fails its
 users.
+
+## Boards
+
+The `project-boards` skill and `/pm:boards` draw the backlog and release boards from `board --json`. Refresh them after
+`/pm:sync`, a status change, a release or mission write, or a gate record. `set-boards off` turns them off.
+
+## OpenSpec addenda
+
+`openspec update` rewrites `.claude/skills/openspec-*` and `.claude/commands/opsx/*`; keep any pm clause here, never there.
+- Archive: in the generated archive skill's step 6, a spec the sync deliberately kept and reported is also a match.
+- Never run `/opsx:onboard`: it archives with no gate or disposition.
+- `/opsx:verify` flags `<!-- pm:lifecycle -->` tasks as CRITICAL: a false positive (#261). Never tick or unmark one.
+- `/opsx:bulk-archive` records no dispositions: afterwards run `update-epic <id> --status archived --outcome <outcome> --reason "<why>"` per member, with a deferral assertion (`--no-deferrals` only if there are none).
 
 ## Re-read the source before an epic becomes the work
 
