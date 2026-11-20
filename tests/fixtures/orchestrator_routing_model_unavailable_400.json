@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": null,
+    "message": "routing: model anthropic/claude-opus-5-5 is not available",
+    "param": "routing",
+    "type": "invalid_request_error"
+  }
+}

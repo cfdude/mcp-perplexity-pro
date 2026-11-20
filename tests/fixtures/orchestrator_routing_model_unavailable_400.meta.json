@@ -1,0 +1,33 @@
+{
+  "endpoint": "/orchestrator/v1/chat/completions",
+  "method": "POST",
+  "http_status": 400,
+  "capture_date": "2026-11-19",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after, x-ratelimit-* and x-perplexity-autoroute-*.",
+  "request_note": "custom route naming a model above the tier: 400 from routing validation, not 402",
+  "response_headers": {
+    "x-request-id": "732c5da3-1ed0-4e82-ae7b-b1ec3e2c2b41"
+  },
+  "request": {
+    "model": "perplexity/auto",
+    "max_tokens": 16,
+    "routing": {
+      "default_model": "anthropic/claude-opus-5-5",
+      "routes": [
+        {
+          "name": "a",
+          "description": "anything",
+          "model": "openai/gpt-6-luna"
+        }
+      ]
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "hi"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "endpoint": "/orchestrator/v1/chat/completions",
+  "method": "POST",
+  "http_status": 404,
+  "capture_date": "2026-11-19",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after, x-ratelimit-* and x-perplexity-autoroute-*.",
+  "request_note": "model id not in the catalog",
+  "response_headers": {
+    "x-request-id": "70844ffb-1efc-48a3-8731-86a35962a96a"
+  },
+  "request": {
+    "model": "perplexity/not-a-model",
+    "max_tokens": 16,
+    "messages": [
+      {
+        "role": "user",
+        "content": "hi"
+      }
+    ]
+  }
+}

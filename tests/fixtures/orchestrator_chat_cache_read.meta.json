@@ -1,0 +1,20 @@
+{
+  "endpoint": "/orchestrator/v1/chat/completions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-11-19",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after, x-ratelimit-* and x-perplexity-autoroute-*.",
+  "request_note": "the same prompt again: cached_tokens 2866, cache_write_tokens 0 (prompt_tokens still counts all 2869)",
+  "response_headers": {
+    "x-ratelimit-limit-requests": "3",
+    "x-ratelimit-remaining-requests": "2",
+    "x-ratelimit-reset-requests": "1s",
+    "x-request-id": "1e5536eb-36bd-4a91-b2c2-5beaa9d474a2"
+  },
+  "request": {
+    "_large_request": true,
+    "note": "identical to the cache_write request"
+  }
+}

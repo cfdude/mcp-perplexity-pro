@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": null,
+    "message": "routing requires model perplexity/auto",
+    "param": "routing",
+    "type": "invalid_request_error"
+  }
+}

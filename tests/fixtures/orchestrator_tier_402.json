@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": null,
+    "message": "The model 'anthropic/claude-opus-5-5' requires usage tier 2 or higher, and your organization is on tier 1. Usage tiers increase automatically with your total credit purchases. See https://docs.perplexity.ai/docs/admin/rate-limits-usage-tiers.",
+    "param": null,
+    "type": "invalid_request_error"
+  }
+}

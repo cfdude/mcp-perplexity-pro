@@ -1,0 +1,26 @@
+{
+  "endpoint": "/orchestrator/v1/chat/completions",
+  "method": "POST",
+  "http_status": 200,
+  "capture_date": "2026-11-19",
+  "content_type": "application/json",
+  "scrubbed": "nothing: no account-specific values were present",
+  "note": "Request headers and the API key are never recorded. response_headers lists only x-request-id, retry-after, x-ratelimit-* and x-perplexity-autoroute-*.",
+  "request_note": "anthropic model, short prompt: same usage shape as OpenAI models",
+  "response_headers": {
+    "x-ratelimit-limit-requests": "3",
+    "x-ratelimit-remaining-requests": "2",
+    "x-ratelimit-reset-requests": "1s",
+    "x-request-id": "371bd7d6-eb8a-45c6-93c5-b17b648de02f"
+  },
+  "request": {
+    "model": "anthropic/claude-haiku-5-5",
+    "max_tokens": 32,
+    "messages": [
+      {
+        "role": "user",
+        "content": "Reply ok"
+      }
+    ]
+  }
+}
