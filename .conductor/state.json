@@ -924,7 +924,7 @@
       "id": "routing-router-api-backend",
       "title": "Perplexity Router API as an open-model backend",
       "priority": "P3",
-      "status": "later",
+      "status": "archived",
       "role": "epic",
       "lane": "external",
       "links": [
@@ -939,8 +939,19 @@
       "description": "Private preview, access requested. Routes to open-weight models only. Blocked until access is granted.",
       "attributedCommits": [],
       "createdAt": "2026-10-07T00:03:33.184Z",
-      "touchedAt": "2026-10-07T00:03:43.939Z",
-      "number": 1011
+      "touchedAt": "2026-11-20T00:11:23.659Z",
+      "number": 1011,
+      "disposition": {
+        "outcome": "superseded",
+        "recordedAt": "2026-11-20T00:11:23.658Z",
+        "reason": "Router API preview became the generally available Orchestrator API; replaced by orchestrator-api"
+      },
+      "deferralAssertion": {
+        "assertedAt": "2026-11-20T00:11:23.657Z",
+        "deferrals": [],
+        "declined": []
+      },
+      "completedAt": "2026-11-20T00:11:23.658Z"
     },
     {
       "id": "routing-modes-config",
@@ -1844,10 +1855,45 @@
       },
       "completedAt": "2026-10-30T01:48:04.005Z",
       "number": 1021
+    },
+    {
+      "id": "orchestrator-api",
+      "title": "Orchestrator API: perplexity_complete tool, tier-aware model list, auto-route passthrough",
+      "priority": "P2",
+      "status": "planned",
+      "role": "epic",
+      "lane": "openspec",
+      "links": [
+        {
+          "type": "supersedes",
+          "epic": "routing-router-api-backend",
+          "reason": "Router API preview became the generally available Orchestrator API"
+        },
+        {
+          "type": "relates-to",
+          "epic": "routing-v2",
+          "reason": "Orchestrator perplexity/auto may serve as a comparison arm for the routing measuring stick"
+        }
+      ],
+      "reconcileNeeded": false,
+      "description": "Perplexity Orchestrator API went GA 2026-11-19 (base https://api.perplexity.ai/orchestrator/v1; chat/completions, responses, messages; GET /models lists 42 priced models; perplexity/auto with a routing object picks a model per request, headers x-perplexity-autoroute-*; per-token billing, no search or citations; tiers 0/1/2 gate models). Candidate scope: a perplexity_complete tool, an orchestrator entry in the usage and pricing parsers, tier-aware catalog, routing passthrough. Probe 2026-11-19: models 200 with 42 entries, auto call 200 routed to openai/gpt-6-luna.",
+      "notes": [
+        {
+          "at": "2026-11-20T00:11:23.029Z",
+          "actor": "agent",
+          "text": "lane: openspec (new tool, new API, shared pricing and usage code) — suggest-lane returned null"
+        }
+      ],
+      "attributedCommits": [],
+      "createdAt": "2026-11-20T00:11:23.029Z",
+      "number": 1022,
+      "touchedAt": "2026-11-20T00:11:28.344Z",
+      "summary": "Add Perplexity's Orchestrator API (GA 2026-11-19) as a fifth API: direct model calls, tier-aware models, auto-routing",
+      "whyNow": "Orchestrator went GA the same day routing-v2 stalled on missing benchmark evidence; its auto-router may be a cheaper comparison arm"
     }
   ],
   "detourStack": [],
-  "revision": 503,
+  "revision": 506,
   "archiveBackfilledAt": "2026-10-07T00:03:05.027Z",
   "pmVersion": "0.56.0",
   "platform": "claude-code",
@@ -2389,5 +2435,5 @@
     }
   ],
   "reviewMode": "standard",
-  "nextEpicNumber": 1022
+  "nextEpicNumber": 1023
 }
